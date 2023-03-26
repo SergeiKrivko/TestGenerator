@@ -167,7 +167,7 @@ class TestsWidget(QWidget):
 
     def move_pos_test_up(self):
         index = self.test_list_widget.pos_test_list.currentRow()
-        if index == 0:
+        if index <= 0:
             return
         self.pos_tests[index], self.pos_tests[index - 1] = self.pos_tests[index - 1], self.pos_tests[index]
         self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
@@ -183,7 +183,7 @@ class TestsWidget(QWidget):
 
     def move_neg_test_up(self):
         index = self.test_list_widget.neg_test_list.currentRow()
-        if index == 0:
+        if index <= 0:
             return
         self.neg_tests[index], self.neg_tests[index - 1] = self.neg_tests[index - 1], self.neg_tests[index]
         self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
@@ -283,6 +283,18 @@ class TestsWidget(QWidget):
 
             elif "Выходные данные" in lines[i]:
                 self.options_widget.set_value("Выходные данные:", lines[i + 1].strip())
+
+        pos_count = 0
+        neg_count = 0
+        for file in os.listdir(f"{self.path}/func_tests/data"):
+            if file[:4] == 'pos_' and file[6:9] == '_in':
+                pos_count += 1
+            elif file[:4] == 'neg_' and file[6:9] == '_in':
+                neg_count += 1
+        for i in range(len(self.pos_tests), pos_count):
+            self.pos_tests.append(['-', '', ''])
+        for i in range(len(self.neg_tests), neg_count):
+            self.neg_tests.append(['-', '', ''])
 
         for i in range(len(self.pos_tests)):
             if os.path.isfile(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_in.txt"):
