@@ -316,6 +316,19 @@ class TestsWidget(QWidget):
                     self.neg_tests[i][2] = file.read()
                     file.close()
 
+    def save_a_test(self, index, type='pos'):
+        os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
+
+        tests = self.pos_tests if type == 'pos' else self.neg_tests
+
+        file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w")
+        file_in.write(tests[index][1])
+        file_in.close()
+
+        file_out = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", "w")
+        file_out.write(tests[index][2])
+        file_out.close()
+
     def generate_test(self, index, type='pos'):
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
@@ -324,21 +337,16 @@ class TestsWidget(QWidget):
         file_in.write(tests[index][1])
         file_in.close()
 
-        if tests[index][2].strip() or not os.path.isfile(f"{self.path}/main.c"):
-            file = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", 'w', encoding='utf-8')
-            file.write(tests[index][2])
-            file.close()
-        else:
-            if not os.path.isfile(f"{self.path}/app.exe"):
-                os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
-                          f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
-                errors = read_file(f"{self.path}/temp.txt")
-                if errors:
-                    QMessageBox.warning(self, "Ошибка компиляции", errors)
-                if os.path.isfile(f"{self.path}/temp.txt"):
-                    os.remove(f"{self.path}/temp.txt")
-            os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
-                      f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
+        if not os.path.isfile(f"{self.path}/app.exe"):
+            os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
+                      f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
+            errors = read_file(f"{self.path}/temp.txt")
+            if errors:
+                QMessageBox.warning(self, "Ошибка компиляции", errors)
+            if os.path.isfile(f"{self.path}/temp.txt"):
+                os.remove(f"{self.path}/temp.txt")
+        os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
+                  f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
     def save_tests(self):
         if not os.path.isfile(f"{self.path}/main.c") and not self.pos_tests and not self.neg_tests:
@@ -359,7 +367,7 @@ class TestsWidget(QWidget):
 
             for i in range(len(self.neg_tests)):
                 readme.write(f"- {i + 1:0>2} - {self.neg_tests[i][0]}\n")
-                self.generate_test(i, 'neg')
+                self.save_a_test(i, 'neg')
         except Exception as ex:
             QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
 

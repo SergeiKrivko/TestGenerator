@@ -149,6 +149,8 @@ class OptionsWidget(QWidget):
             widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
                                 item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
             value = str(item.get('initial', ''))
+            if 'echo_mode' in item:
+                widget.setEchoMode(item.get('echo_mode'))
             widget.setText(value)
         elif item['type'] == bool or item['type'] == 'bool':
             widget = QCheckBox()

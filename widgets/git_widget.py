@@ -1,7 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QPushButton, QLabel, QListWidget, QListWidgetItem
-from widgets.options_window import OptionsWidget
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QPushButton, QLabel, QListWidget, \
+    QListWidgetItem, QLineEdit
+from widgets.options_window import OptionsWidget, OptionsWindow
 import os
 
 
@@ -38,6 +39,8 @@ class GitWidget(QWidget):
             self.update_files_list()
         elif key == 'Commit':
             self.commit()
+        elif key == 'Push':
+            self.git_push()
 
     def parce_lab_number(self, s):
         if s[:7] != f"lab_{self.settings['lab']:0>2}_":
@@ -67,11 +70,53 @@ class GitWidget(QWidget):
     def commit(self):
         old_dir = os.getcwd()
         os.chdir(self.settings['path'])
-        os.system("git status")
-        # print(f"git commit -m \"{self.options_widget['Описание коммита:']}\"")
         os.system(f"git commit -m \"{self.options_widget['Описание коммита:']}\"")
         os.chdir(old_dir)
         self.update_files_list()
+
+    def git_push(self):
+        old_dir = os.getcwd()
+        os.chdir(self.settings['path'])
+
+        file = open(f"{self.settings['path']}/temp.txt", 'w', encoding='utf-8')
+        file.write(self.settings.get('git_login', '') + '\n')
+        file.write(self.settings.get('git_password', ''))
+        file.close()
+
+        os.system(f"git push origin lab_{self.settings['lab']:0>2} < {self.settings['path']}/temp.txt > "
+                  f"{self.settings['path']}/temp_errors.txt")
+        errors = read_file(f"{self.settings['path']}temp_errors.txt")
+
+        if errors.strip():
+            options_window = OptionsWindow({
+                "Логин:": {'type': str, 'width': 250},
+                "Пароль": {'type': str, 'width': 250, 'echo_mode': QLineEdit.Password}
+            })
+            options_window.show()
+            options_window.returnPressed.connect(self.git_push_from_window)
+        if os.path.isfile(f"{self.settings['path']}/temp.txt"):
+            os.remove(f"{self.settings['path']}/temp.txt")
+        if os.path.isfile(f"{self.settings['path']}/temp_errors.txt"):
+            os.remove(f"{self.settings['path']}/temp_errors.txt")
+        os.chdir(old_dir)
+
+    def git_push_from_window(self, settings):
+        old_dir = os.getcwd()
+        os.chdir(self.settings['path'])
+
+        file = open(f"{self.settings['path']}/temp.txt", 'w', encoding='utf-8')
+        file.write(self.settings.get('git_login', '') + '\n')
+        file.write(self.settings.get('git_password', ''))
+        file.close()
+
+        os.system(f"git push origin lab_{settings['lab']:0>2} < {self.settings['path']}/temp.txt > "
+                  f"{self.settings['path']}/temp_errors.txt")
+
+        if os.path.isfile(f"{self.settings['path']}/temp.txt"):
+            os.remove(f"{self.settings['path']}/temp.txt")
+        if os.path.isfile(f"{self.settings['path']}/temp_errors.txt"):
+            os.remove(f"{self.settings['path']}/temp_errors.txt")
+        os.chdir(old_dir)
 
     def update_files_list(self):
         old_dir = os.getcwd()
@@ -87,7 +132,7 @@ class GitWidget(QWidget):
     def show(self) -> None:
         self.update_files_list()
         super(GitWidget, self).show()
-        
+
     def hide(self) -> None:
         super(GitWidget, self).hide()
 

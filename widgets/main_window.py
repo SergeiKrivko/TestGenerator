@@ -16,7 +16,7 @@ class MainWindow(QMainWindow):
         self.settings = dict() if not os.path.isfile("settings.txt") else \
             json.loads(open('settings.txt', encoding='utf-8').read())
         if 'compiler' not in self.settings:
-            self.settings['compiler'] = 'gcc'
+            self.settings['compiler'] = 'gcc -std=c99 -Wall -Werror'
         if '-lm' not in self.settings:
             self.settings['-lm'] = True
 
