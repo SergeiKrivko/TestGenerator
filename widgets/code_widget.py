@@ -84,6 +84,7 @@ class CodeWidget(QWidget):
     def open_code(self):
         self.get_path()
         try:
+            self.test_res_widget.clear()
             self.code_edit.setText("")
             file = open(f"{self.path}/main.c")
             self.code_edit.setText(file.read())

@@ -66,6 +66,8 @@ class TestingWidget(QWidget):
 
         self.tests = []
 
+        self.current_task = (0, 0, 0)
+
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
             self.settings['lab'] = self.options_widget["Номер лабы:"]
@@ -96,6 +98,14 @@ class TestingWidget(QWidget):
 
     def open_task(self):
         self.get_path()
+        task = self.settings['lab'], self.settings['task'], self.settings['var']
+        if task != self.current_task:
+            self.tests.clear()
+            self.in_data.setText("")
+            self.out_data.setText("")
+            self.prog_out.setText("")
+            self.tests_list.clear()
+            self.current_task = task
         try:
             self.code_widget.setText("")
             file = open(f"{self.path}/main.c")
@@ -135,6 +145,7 @@ class TestingWidget(QWidget):
             self.get_path(True)
         self.tests.clear()
         self.tests_list.clear()
+        self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
         os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
                   f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
         errors = read_file(f"{self.path}/temp.txt")
