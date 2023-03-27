@@ -347,6 +347,8 @@ class TestsWidget(QWidget):
                 os.remove(f"{self.path}/temp.txt")
         os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
                   f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
+        if self.settings.get('clear_words', False):
+            clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
     def save_tests(self):
         if not os.path.isfile(f"{self.path}/main.c") and not self.pos_tests and not self.neg_tests:
@@ -361,7 +363,7 @@ class TestsWidget(QWidget):
                          f"## Позитивные тесты:\n")
             for i in range(len(self.pos_tests)):
                 readme.write(f"- {i + 1:0>2} - {self.pos_tests[i][0]}\n")
-                self.generate_test(i, 'pos')
+                self.save_a_test(i, 'pos')
 
             readme.write("\n## Негативные тесты:\n")
 
@@ -387,3 +389,20 @@ def read_file(path):
     res = file.read()
     file.close()
     return res
+
+
+def clear_words(path):
+    text = read_file(path)
+    text.replace('\n', ' \n')
+    text.replace('\t', ' \t')
+    result = []
+    for word in text.split(' '):
+        try:
+            float(word)
+            result.append(word)
+        except Exception:
+            pass
+
+    file = open(path, 'w', encoding='utf-8')
+    file.write(" ".join(result).strip())
+    file.close()
