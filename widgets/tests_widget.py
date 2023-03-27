@@ -350,11 +350,17 @@ class TestsWidget(QWidget):
         if self.settings.get('clear_words', False):
             clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
+    def remove_files(self):
+        for file in os.listdir(f"{self.path}/func_tests/data"):
+            if file[:4] in ('pos_', 'neg_') and file[6:] in ('_in.txt', '_out.txt'):
+                os.remove(f"{self.path}/func_tests/data/{file}")
+
     def save_tests(self):
         if not os.path.isfile(f"{self.path}/main.c") and not self.pos_tests and not self.neg_tests:
             return
         try:
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
+            self.remove_files()
             readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8')
             readme.write(f"# Тесты для лабораторной работы №{self.settings['lab']:0>2}, задания №"
                          f"{self.settings['task']:0>2}\n\n"
