@@ -89,8 +89,10 @@ class TestingWidget(QWidget):
 
     def update_options(self):
         self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
-        self.options_widget.set_value('Номер задания:', self.settings.get('task', self.options_widget['Номер задания:']))
-        self.options_widget.set_value('Номер варианта:', self.settings.get('var', self.options_widget['Номер варианта:']))
+        self.options_widget.set_value('Номер задания:',
+                                      self.settings.get('task', self.options_widget['Номер задания:']))
+        self.options_widget.set_value('Номер варианта:',
+                                      self.settings.get('var', self.options_widget['Номер варианта:']))
 
     def open_task(self):
         self.get_path()
@@ -145,9 +147,9 @@ class TestingWidget(QWidget):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
-                         f"{self.path}/temp.txt")
-            self.tests.append((comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
-                                          f"{self.path}/temp.txt"),
+                                  f"{self.path}/temp.txt")
+            self.tests.append((self.comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
+                                               f"{self.path}/temp.txt"),
                                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
                                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
                                read_file(f"{self.path}/temp.txt"), f"pos{i}"))
@@ -161,9 +163,9 @@ class TestingWidget(QWidget):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
-                         f"{self.path}/temp.txt")
-            self.tests.append((comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
-                                          f"{self.path}/temp.txt"),
+                                  f"{self.path}/temp.txt")
+            self.tests.append((self.comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
+                                               f"{self.path}/temp.txt"),
                                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
                                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
                                read_file(f"{self.path}/temp.txt"), f"neg{i}"))
@@ -178,30 +180,52 @@ class TestingWidget(QWidget):
             os.remove(f"{self.path}/temp.txt")
         self.testing_signal.emit(self.tests)
 
+    def comparator(self, path1, path2):
+        if self.settings.get('comparator', 0) == 0:
+            return comparator1(path1, path2)
+        if self.settings.get('comparator', 0) == 1:
+            return comparator2(path1, path2)
+
     def show(self) -> None:
         self.update_options()
         self.open_task()
         super(TestingWidget, self).show()
 
 
-def comparator(path1, path2):
-    file1 = open(path1, encoding='utf-8')
+def comparator1(path1, path2):
     lst1 = []
-    for word in file1.read().split():
+    for word in read_file(path1).split():
         try:
             lst1.append(float(word))
         except Exception:
             pass
-    file1.close()
 
-    file2 = open(path2, encoding='utf-8')
     lst2 = []
-    for word in file2.read().split():
+    for word in read_file(path2).split():
         try:
             lst2.append(float(word))
         except Exception:
             pass
-    file2.close()
+
+    return lst1 == lst2
+
+
+def comparator2(path1, path2):
+    lst1 = []
+    for word in read_file(path1).split():
+        try:
+            float(word)
+            lst1.append(word)
+        except Exception:
+            pass
+
+    lst2 = []
+    for word in read_file(path2).split():
+        try:
+            float(word)
+            lst2.append(word)
+        except Exception:
+            pass
 
     return lst1 == lst2
 

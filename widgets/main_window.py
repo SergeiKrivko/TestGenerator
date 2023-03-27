@@ -50,7 +50,9 @@ class MainWindow(QMainWindow):
                            'width': 400},
             "Ключ -lm": {'type': bool, 'initial': True, 'name': OptionsWindow.NAME_RIGHT},
             "Удалять слова при генерации выходного файла": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
-                                                            'initial': self.settings.get('clear_words', False)}
+                                                            'initial': self.settings.get('clear_words', False)},
+            "Сравнение чисел:": {'type': 'combo', 'values': ['как числа', 'как текст'],
+                                 'initial': self.settings.get('comparator', 0), 'name': OptionsWindow.NAME_LEFT}
         })
         self.options_window.returnPressed.connect(self.save_settings)
 
@@ -74,6 +76,7 @@ class MainWindow(QMainWindow):
         self.settings['compiler'] = dct['Компилятор']
         self.settings['-lm'] = dct['Ключ -lm']
         self.settings['clear_words'] = dct["Удалять слова при генерации выходного файла"]
+        self.settings['comparator'] = dct["Сравнение чисел:"]
 
     def show_tests(self):
         self.testing_widget.hide()
@@ -108,6 +111,10 @@ class MainWindow(QMainWindow):
         self.show_testing()
 
     def closeEvent(self, a0):
+        self.code_widget.hide()
+        self.testing_widget.hide()
+        self.testing_widget.hide()
+        self.git_widget.hide()
         file = open("settings.txt", 'w', encoding="utf-8")
         file.write(json.dumps(self.settings))
         file.close()
