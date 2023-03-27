@@ -144,29 +144,33 @@ class TestingWidget(QWidget):
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > {self.path}/temp.txt")
-            self.tests.append((comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt", f"{self.path}/temp.txt"),
+            exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
+                         f"{self.path}/temp.txt")
+            self.tests.append((comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
+                                          f"{self.path}/temp.txt"),
                                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
                                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
                                read_file(f"{self.path}/temp.txt"), f"pos{i}"))
-            if self.tests[-1][0]:
-                item = QListWidgetItem(f"pos{i} \tPASSED")
+            if self.tests[-1][0] and not exit_code:
+                item = QListWidgetItem(f"pos{i} \tPASSED\texit: {exit_code}")
             else:
-                item = QListWidgetItem(f"pos{i} \tFAILED")
+                item = QListWidgetItem(f"pos{i} \tFAILED\texit: {exit_code}")
             self.tests_list.addItem(item)
             i += 1
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > {self.path}/temp.txt")
-            self.tests.append((comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt", f"{self.path}/temp.txt"),
+            exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
+                         f"{self.path}/temp.txt")
+            self.tests.append((comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
+                                          f"{self.path}/temp.txt"),
                                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
                                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
                                read_file(f"{self.path}/temp.txt"), f"neg{i}"))
-            if self.tests[-1][0]:
-                item = QListWidgetItem(f"neg{i} \tPASSED")
+            if self.tests[-1][0] and exit_code:
+                item = QListWidgetItem(f"neg{i} \tPASSED\texit: {exit_code}")
             else:
-                item = QListWidgetItem(f"neg{i} \tFAILED")
+                item = QListWidgetItem(f"neg{i} \tFAILED\texit: {exit_code}")
             self.tests_list.addItem(item)
             i += 1
 
