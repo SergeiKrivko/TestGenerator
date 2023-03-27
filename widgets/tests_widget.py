@@ -115,7 +115,10 @@ class TestsWidget(QWidget):
             return
         self.pos_tests.pop(ind)
         self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
-        self.test_list_widget.pos_test_list.setCurrentRow(ind if ind < len(self.pos_tests) else ind - 1)
+        if len(self.pos_tests) == 0:
+            self.test_edit_widget.set_disabled()
+        else:
+            self.test_list_widget.pos_test_list.setCurrentRow(ind if ind < len(self.pos_tests) else ind - 1)
 
     def delete_neg_test(self):
         if len(self.neg_tests) == 0:
@@ -125,7 +128,10 @@ class TestsWidget(QWidget):
             return
         self.neg_tests.pop(ind)
         self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
-        self.test_list_widget.neg_test_list.setCurrentRow(ind if ind < len(self.neg_tests) else ind - 1)
+        if len(self.neg_tests) == 0:
+            self.test_edit_widget.set_disabled()
+        else:
+            self.test_list_widget.neg_test_list.setCurrentRow(ind if ind < len(self.neg_tests) else ind - 1)
 
     def select_pos_test(self):
         self.test_list_widget.neg_test_list.setCurrentItem(None)
@@ -250,6 +256,7 @@ class TestsWidget(QWidget):
         self.readme_parser()
         self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
         self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+        self.test_edit_widget.set_disabled()
 
     def readme_parser(self):
         self.pos_tests.clear()

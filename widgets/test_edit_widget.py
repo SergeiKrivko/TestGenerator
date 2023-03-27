@@ -42,3 +42,17 @@ class TestEditWidget(QWidget):
         self.test_name_edit.setText(description)
         self.test_in_edit.setText(data_in)
         self.test_out_edit.setText(data_out)
+
+        self.test_in_edit.setDisabled(False)
+        self.test_out_edit.setDisabled(False)
+        self.test_name_edit.setDisabled(False)
+        self.button_generate.setDisabled(False)
+
+    def set_disabled(self):
+        self.test_in_edit.setDisabled(True)
+        self.test_out_edit.setDisabled(True)
+        self.test_name_edit.setDisabled(True)
+        self.button_generate.setDisabled(True)
+        self.test_in_edit.setText("")
+        self.test_out_edit.setText("")
+        self.test_name_edit.setText("")
