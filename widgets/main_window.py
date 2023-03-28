@@ -6,6 +6,7 @@ from widgets.options_window import OptionsWindow
 from widgets.tests_widget import TestsWidget
 from widgets.git_widget import GitWidget
 from widgets.menu_bar import MenuBar
+from commands import CommandManager
 import json
 import os
 
@@ -27,10 +28,12 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         central_widget.setLayout(layout)
 
+        self.cm = CommandManager(self.settings)
+
         self.tests_widget = TestsWidget(self.settings)
         layout.addWidget(self.tests_widget)
 
-        self.testing_widget = TestingWidget(self.settings)
+        self.testing_widget = TestingWidget(self.settings, self.cm)
         layout.addWidget(self.testing_widget)
         self.testing_widget.hide()
 

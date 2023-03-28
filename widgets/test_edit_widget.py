@@ -17,7 +17,7 @@ class TestEditWidget(QWidget):
         layout.addLayout(h_layout)
 
         layout1 = QVBoxLayout()
-        h_layout.addLayout(layout1)
+        h_layout.addLayout(layout1, 1)
         label = QLabel("Входные данные")
         label.setFixedHeight(20)
         layout1.addWidget(label)
@@ -26,7 +26,7 @@ class TestEditWidget(QWidget):
         layout1.addWidget(self.test_in_edit)
 
         layout2 = QVBoxLayout()
-        h_layout.addLayout(layout2)
+        h_layout.addLayout(layout2, 1)
         layout_h2 = QHBoxLayout()
         layout2.addLayout(layout_h2)
         layout_h2.addWidget(QLabel("Выходные данные"))

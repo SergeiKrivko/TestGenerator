@@ -9,9 +9,10 @@ from widgets.options_window import OptionsWidget
 class TestingWidget(QWidget):
     testing_signal = pyqtSignal(list)
 
-    def __init__(self, settings):
+    def __init__(self, settings, cm):
         super(TestingWidget, self).__init__()
         self.settings = settings
+        self.cm = cm
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -38,7 +39,8 @@ class TestingWidget(QWidget):
         layout2 = QVBoxLayout()
         layout.addLayout(layout2)
 
-        layout2.addWidget(QLabel("Список тестов"))
+        self.coverage_label = QLabel()
+        layout2.addWidget(self.coverage_label)
         self.tests_list = QListWidget()
         self.tests_list.itemSelectionChanged.connect(self.open_test_info)
         layout2.addWidget(self.tests_list)
@@ -146,14 +148,7 @@ class TestingWidget(QWidget):
         self.tests.clear()
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
-                  f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
-        errors = read_file(f"{self.path}/temp.txt")
-        if errors:
-            QMessageBox.warning(self, "Ошибка компиляции", errors)
-            if os.path.isfile(f"{self.path}/temp.txt"):
-                os.remove(f"{self.path}/temp.txt")
-            return
+        self.cm.compile2()
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
@@ -190,6 +185,8 @@ class TestingWidget(QWidget):
         if os.path.isfile(f"{self.path}/temp.txt"):
             os.remove(f"{self.path}/temp.txt")
         self.testing_signal.emit(self.tests)
+
+        self.coverage_label.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
     def comparator(self, path1, path2):
         if self.settings.get('comparator', 0) == 0:

@@ -1,7 +1,9 @@
 import os
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem, QTabWidget
+
+from widgets.files_widget import FilesWidget
 from widgets.options_window import OptionsWidget
 
 
@@ -11,6 +13,7 @@ class CodeWidget(QWidget):
     def __init__(self, settings):
         super(CodeWidget, self).__init__()
         self.settings = settings
+        self.current_file = ''
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -28,7 +31,18 @@ class CodeWidget(QWidget):
 
         self.test_res_widget = QListWidget()
         self.test_res_widget.setMaximumWidth(175)
-        layout_left.addWidget(self.test_res_widget)
+
+        self.files_widget = FilesWidget(self.settings)
+        self.files_widget.setMaximumWidth(175)
+
+        self.files_widget.files_list.currentRowChanged.connect(self.open_code)
+        self.files_widget.renameFile.connect(self.rename_file)
+
+        self.tab_widget = QTabWidget()
+        self.tab_widget.addTab(self.files_widget, "Файлы")
+        self.tab_widget.addTab(self.test_res_widget, "Тесты")
+        self.tab_widget.setMaximumWidth(175)
+        layout_left.addWidget(self.tab_widget)
 
         self.code_edit = QTextEdit()
         self.code_edit.setFont(QFont("Courier", 10))
@@ -49,10 +63,10 @@ class CodeWidget(QWidget):
                         self.options_widget.set_value('Номер варианта:', i)
                         break
             self.settings['var'] = self.options_widget["Номер варианта:"]
-            self.open_code()
+            self.first_open()
         elif key == 'Номер варианта:':
             self.settings['var'] = self.options_widget["Номер варианта:"]
-            self.open_code()
+            self.first_open()
         elif key == 'Тестировать':
             self.save_code()
             self.testing_signal.emit()
@@ -81,12 +95,30 @@ class CodeWidget(QWidget):
                                                 f"{self.options_widget['Номер задания:']:0>2}_" \
                                                 f"{self.options_widget['Номер варианта:']:0>2}"
 
+    def rename_file(self, name):
+        self.current_file = name
+
+    def first_open(self):
+        self.files_widget.update_files_list()
+        for i in range(self.files_widget.files_list.count()):
+            if self.files_widget.files_list.item(i) == 'main.c':
+                self.files_widget.files_list.setCurrentRow(i)
+                self.files_widget.files_list.setCurrentRow(i)
+                return
+
     def open_code(self):
+        self.tab_widget.setCurrentIndex(0)
         self.get_path()
         try:
-            self.test_res_widget.clear()
+            index = self.files_widget.files_list.currentRow()
+            if index == -1:
+                return
+
+            self.save_code()
+
             self.code_edit.setText("")
-            file = open(f"{self.path}/main.c")
+            self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
+            file = open(self.current_file)
             self.code_edit.setText(file.read())
             file.close()
         except Exception:
@@ -96,18 +128,19 @@ class CodeWidget(QWidget):
         code = self.code_edit.toPlainText()
         if code:
             os.makedirs(self.path, exist_ok=True)
-            file = open(f"{self.path}/main.c", 'w', encoding='utf=8')
+            file = open(f"{self.current_file}", 'w', encoding='utf=8')
             file.write(code)
             file.close()
 
     def update_test_info(self, test_list):
+        self.tab_widget.setCurrentIndex(1)
         self.test_res_widget.clear()
         for test in test_list:
             self.test_res_widget.addItem(QListWidgetItem(f"{test[4]} \t{'PASSED' if test[0] else 'FAILED'}"))
 
     def show(self) -> None:
         self.update_options()
-        self.open_code()
+        self.first_open()
         super(CodeWidget, self).show()
 
     def hide(self):
