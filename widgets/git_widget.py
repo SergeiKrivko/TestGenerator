@@ -79,8 +79,8 @@ class GitWidget(QWidget):
         os.chdir(self.settings['path'])
 
         file = open(f"{self.settings['path']}/temp.txt", 'w', encoding='utf-8')
-        file.write(self.settings.get('git_login', '') + '\n')
-        file.write(self.settings.get('git_password', ''))
+        file.write(self.settings.get('git_login', '-') + '\n')
+        file.write(self.settings.get('git_password', '-'))
         file.close()
 
         os.system(f"git push origin lab_{self.settings['lab']:0>2} < {self.settings['path']}/temp.txt > "

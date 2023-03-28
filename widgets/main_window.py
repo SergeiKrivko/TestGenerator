@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
 
         self.cm = CommandManager(self.settings)
 
-        self.tests_widget = TestsWidget(self.settings)
+        self.tests_widget = TestsWidget(self.settings, self.cm)
         layout.addWidget(self.tests_widget)
 
         self.testing_widget = TestingWidget(self.settings, self.cm)

@@ -148,7 +148,8 @@ class TestingWidget(QWidget):
         self.tests.clear()
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        self.cm.compile2()
+        if not self.cm.compile2():
+            return
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):

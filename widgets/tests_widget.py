@@ -7,9 +7,10 @@ import os
 
 
 class TestsWidget(QWidget):
-    def __init__(self, settings):
+    def __init__(self, settings, cm):
         super(TestsWidget, self).__init__()
         self.settings = settings
+        self.cm = cm
 
         layout = QHBoxLayout()
         layout1 = QVBoxLayout()
@@ -70,6 +71,7 @@ class TestsWidget(QWidget):
             self.open_tests()
         else:
             self.open_project()
+        self.file_compiled = False
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -344,14 +346,9 @@ class TestsWidget(QWidget):
         file_in.write(tests[index][1])
         file_in.close()
 
-        if not os.path.isfile(f"{self.path}/app.exe"):
-            os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
-                      f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
-            errors = read_file(f"{self.path}/temp.txt")
-            if errors:
-                QMessageBox.warning(self, "Ошибка компиляции", errors)
-            if os.path.isfile(f"{self.path}/temp.txt"):
-                os.remove(f"{self.path}/temp.txt")
+        if not os.path.isfile(f"{self.path}/app.exe") and not self.cm.compile2():
+            return
+
         os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
                   f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
         if self.settings.get('clear_words', False):
