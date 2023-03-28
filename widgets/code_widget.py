@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem, QTabWidget
 
@@ -136,7 +136,12 @@ class CodeWidget(QWidget):
         self.tab_widget.setCurrentIndex(1)
         self.test_res_widget.clear()
         for test in test_list:
-            self.test_res_widget.addItem(QListWidgetItem(f"{test[4]} \t{'PASSED' if test[0] else 'FAILED'}"))
+            item = QListWidgetItem(f"{test[4]} \t{'PASSED' if test[0] else 'FAILED'}")
+            if test[0]:
+                item.setForeground(Qt.green)
+            else:
+                item.setForeground(Qt.red)
+            self.test_res_widget.addItem(item)
 
     def show(self) -> None:
         self.update_options()

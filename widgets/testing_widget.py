@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QListWidget, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, QMessageBox, \
     QListWidgetItem
@@ -161,8 +161,10 @@ class TestingWidget(QWidget):
                                read_file(f"{self.path}/temp.txt"), f"pos{i}"))
             if self.tests[-1][0] and not exit_code:
                 item = QListWidgetItem(f"pos{i} \tPASSED\texit: {exit_code}")
+                item.setForeground(Qt.green)
             else:
                 item = QListWidgetItem(f"pos{i} \tFAILED\texit: {exit_code}")
+                item.setForeground(Qt.red)
             self.tests_list.addItem(item)
             i += 1
 
@@ -177,8 +179,10 @@ class TestingWidget(QWidget):
                                read_file(f"{self.path}/temp.txt"), f"neg{i}"))
             if self.tests[-1][0] and exit_code:
                 item = QListWidgetItem(f"neg{i} \tPASSED\texit: {exit_code}")
+                item.setForeground(Qt.green)
             else:
                 item = QListWidgetItem(f"neg{i} \tFAILED\texit: {exit_code}")
+                item.setForeground(Qt.red)
             self.tests_list.addItem(item)
             i += 1
 
