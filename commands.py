@@ -52,6 +52,10 @@ class CommandManager:
             os.chdir(old_dir)
             return False
 
+        for file in os.listdir(self.path):
+            if ".o" in file:
+                os.remove(f"{self.path}/{file}")
+
         os.chdir(old_dir)
         return True
 
