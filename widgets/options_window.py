@@ -82,7 +82,7 @@ class OptionsWidget(QWidget):
         layout.setAlignment(Qt.AlignTop)
         for key, item in dct.items():
             label = QLabel(str(key), self)
-            widget, value = self.get_widget(item)
+            widget, value = self.get_widget(key, item)
             if item.get('name') == OptionsWindow.NAME_LEFT:
                 h_layout = QHBoxLayout()
                 h_layout.setAlignment(Qt.AlignLeft)
@@ -103,7 +103,6 @@ class OptionsWidget(QWidget):
                 layout.addWidget(widget)
             self.widgets[key] = widget
             self.values[key] = value
-            self.connect_widget(key)
 
         self.setLayout(layout)
 
@@ -126,118 +125,136 @@ class OptionsWidget(QWidget):
         elif self.dct[item]['type'] == 'combo':
             self.widgets[item].setCurrentIndex(value)
 
-    @staticmethod
-    def get_widget(item):
+    def get_widget(self, key, item):
         if item['type'] == int or item['type'] == 'int':
-            widget = QSpinBox()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            value = item.get('initial', 0)
-            widget.setValue(value)
-            widget.setMinimum(item.get('min', -100000000))
-            widget.setMaximum(item.get('max', 100000000))
+            return self.spin_box(key, item)
         elif item['type'] == float or item['type'] == 'float':
-            widget = QDoubleSpinBox()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            value = item.get('initial', 0)
-            widget.setValue(value)
-            widget.setMinimum(item.get('min', -100000000))
-            widget.setMaximum(item.get('max', 100000000))
+            return self.double_spin_box(key, item)
         elif item['type'] == str or item['type'] == 'str':
-            widget = QLineEdit()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            value = str(item.get('initial', ''))
-            if 'echo_mode' in item:
-                widget.setEchoMode(item.get('echo_mode'))
-            widget.setText(value)
+            return self.line_edit(key, item)
         elif item['type'] == bool or item['type'] == 'bool':
-            widget = QCheckBox()
-            widget.setFixedHeight(item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            value = item.get('initial', False)
-            widget.setChecked(value)
+            return self.check_box(key, item)
         elif item['type'] == 'combo':
-            widget = QComboBox()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            for el in item.get('values', []):
-                widget.addItem(str(el))
-            value = item.get('initial', 0)
-            widget.setCurrentIndex(value)
-            widget.setMaxVisibleItems(item.get('max_visible', 6))
+            return self.combo_box(key, item)
         elif item['type'] == 'file':
-            widget = QWidget()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            layout = QHBoxLayout()
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
-            widget1 = QLineEdit()
-            value = item.get('initial', 'select file')
-            widget1.setText(value)
-            widget2 = QPushButton()
-            widget2.setText('Files')
-            widget2.setFixedSize(40, item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            layout.addWidget(widget1)
-            layout.addWidget(widget2)
-            widget.setLayout(layout)
-            widget.widget_1 = widget1
-            widget.widget_2 = widget2
+            return self.file_widget(key, item)
         elif item['type'] == 'button':
-            widget = QPushButton()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            widget.setText(item.get('text', ''))
-            value = item.get('initial', False) if item.get('checkable', False) else False
-            widget.setCheckable(item.get('checkable', False))
+            return self.button(key, item)
         elif item['type'] == 'size':
-            widget = QWidget()
-            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-            layout = QHBoxLayout()
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(0)
-            value = item.get('initial', (0, 0))
-            widget1 = QSpinBox()
-            widget1.setValue(value[0])
-            widget1.setMinimum(item.get('min', (0, 0))[0])
-            widget1.setMaximum(item.get('max', (10000000, 10000000))[0])
-            widget2 = QSpinBox()
-            widget2.setValue(value[1])
-            widget2.setMinimum(item.get('min', (0, 0))[1])
-            widget2.setMaximum(item.get('max', (10000000, 10000000))[1])
-            layout.addWidget(widget1)
-            label = QLabel()
-            label.setText('x')
-            layout.addWidget(label)
-            label.setFixedWidth(10)
-            layout.addWidget(widget2)
-            widget.setLayout(layout)
-            widget.widget_1 = widget1
-            widget.widget_2 = widget2
+            return self.size_widget(key, item)
         else:
             raise TypeError(f"unknown value type {item['type']}")
+
+    def spin_box(self, key, item):
+        widget = QSpinBox()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        value = item.get('initial', 0)
+        widget.setValue(value)
+        widget.setMinimum(item.get('min', -100000000))
+        widget.setMaximum(item.get('max', 100000000))
+        widget.valueChanged.connect(lambda value: self.set_dict_value(key, value))
         return widget, value
 
-    def connect_widget(self, key):
-        widget = self.widgets[key]
-        if self.dct[key]['type'] in (int, 'int', float, 'float'):
-            widget.valueChanged.connect(lambda value: self.set_dict_value(key, value))
-        elif self.dct[key]['type'] in (str, 'str'):
-            widget.textChanged.connect(lambda value: self.set_dict_value(key, value))
-        elif self.dct[key]['type'] in (bool, 'bool'):
-            widget.clicked.connect(lambda value: self.set_dict_value(key, value))
-        elif self.dct[key]['type'] == 'combo':
-            widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
-        elif self.dct[key]['type'] == 'file':
-            self.connect_file_dialog(key, widget, self.dct[key].get('mode', 'save'), self.dct[key].get('caption', ''),
-                                     self.dct[key].get('directory', ''), self.dct[key].get('filter', ''))
-        elif self.dct[key]['type'] == 'button':
-            widget.clicked.connect(lambda value: self.set_dict_value(key, value))
-        if self.dct[key]['type'] == 'size':
-            widget.widget_1.valueChanged.connect(lambda value: self.set_dict_value(key, (value, widget.widget_2.value())))
-            widget.widget_2.valueChanged.connect(lambda value: self.set_dict_value(key, (widget.widget_1.value(), value)))
+    def double_spin_box(self, key, item):
+        widget = QDoubleSpinBox()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        value = item.get('initial', 0)
+        widget.setValue(value)
+        widget.setMinimum(item.get('min', -100000000))
+        widget.setMaximum(item.get('max', 100000000))
+        widget.valueChanged.connect(lambda value: self.set_dict_value(key, value))
+        return widget, value
+
+    def line_edit(self, key, item):
+        widget = QLineEdit()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        value = str(item.get('initial', ''))
+        if 'echo_mode' in item:
+            widget.setEchoMode(item.get('echo_mode'))
+        widget.setText(value)
+        widget.textChanged.connect(lambda value: self.set_dict_value(key, value))
+        return widget, value
+
+    def check_box(self, key, item):
+        widget = QCheckBox()
+        widget.setFixedHeight(item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        value = item.get('initial', False)
+        widget.setChecked(value)
+        widget.clicked.connect(lambda value: self.set_dict_value(key, value))
+        return widget, value
+
+    def combo_box(self, key, item):
+        widget = QComboBox()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        for el in item.get('values', []):
+            widget.addItem(str(el))
+        value = item.get('initial', 0)
+        widget.setCurrentIndex(value)
+        widget.setMaxVisibleItems(item.get('max_visible', 6))
+        widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
+        return widget, value
+
+    def file_widget(self, key, item):
+        widget = QWidget()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        widget1 = QLineEdit()
+        value = item.get('initial', 'select file')
+        widget1.setText(value)
+        widget2 = QPushButton()
+        widget2.setText('Files')
+        widget2.setFixedSize(40, item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        layout.addWidget(widget1)
+        layout.addWidget(widget2)
+        widget.setLayout(layout)
+        self.connect_file_dialog(key, widget, widget1, widget2, self.dct[key].get('mode', 'save'),
+                                 self.dct[key].get('caption', ''), self.dct[key].get('directory', ''),
+                                 self.dct[key].get('filter', ''))
+        return widget, value
+
+    def button(self, key, item):
+        widget = QPushButton()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        widget.setText(item.get('text', ''))
+        value = item.get('initial', False) if item.get('checkable', False) else False
+        widget.setCheckable(item.get('checkable', False))
+        widget.clicked.connect(lambda value: self.set_dict_value(key, value))
+        return widget, value
+
+    def size_widget(self, key, item):
+        widget = QWidget()
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        value = item.get('initial', (0, 0))
+        widget1 = QSpinBox()
+        widget1.setValue(value[0])
+        widget1.setMinimum(item.get('min', (0, 0))[0])
+        widget1.setMaximum(item.get('max', (10000000, 10000000))[0])
+        widget2 = QSpinBox()
+        widget2.setValue(value[1])
+        widget2.setMinimum(item.get('min', (0, 0))[1])
+        widget2.setMaximum(item.get('max', (10000000, 10000000))[1])
+        layout.addWidget(widget1)
+        label = QLabel()
+        label.setText('x')
+        layout.addWidget(label)
+        label.setFixedWidth(10)
+        layout.addWidget(widget2)
+        widget.setLayout(layout)
+        widget1.valueChanged.connect(lambda value: self.set_dict_value(key, (value, widget2.value())))
+        widget2.valueChanged.connect(lambda value: self.set_dict_value(key, (widget1.value(), value)))
+        return widget, value
 
     def set_widgets_width(self, width):
         for key, item in self.dct.items():
@@ -252,7 +269,7 @@ class OptionsWidget(QWidget):
         self.set_widgets_width(width)
         self.set_widgets_height(height)
 
-    def connect_file_dialog(self, key, widget, type, caption, directory, filter):
+    def connect_file_dialog(self, key, widget, widget1, widget2, type, caption, directory, filter):
         def triggerd(*args):
             if type == 'save':
                 file = QFileDialog.getSaveFileName(None, caption, directory, filter)[0]
@@ -265,8 +282,8 @@ class OptionsWidget(QWidget):
             if file:
                 widget.widget_1.setText(file)
                 self.set_dict_value(key, file)
-        widget.widget_1.textChanged.connect(lambda value: self.set_dict_value(key, value))
-        widget.widget_2.clicked.connect(triggerd)
+        widget1.textChanged.connect(lambda value: self.set_dict_value(key, value))
+        widget2.clicked.connect(triggerd)
 
 
 def main():

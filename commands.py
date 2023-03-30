@@ -27,12 +27,13 @@ class CommandManager:
                 os.remove(f"{self.path}/temp.txt")
             return
 
-    def compile2(self):
+    def compile2(self, coverage=False):
         self.update_path()
         old_dir = os.getcwd()
         os.chdir(self.path)
 
-        os.system(f"{self.settings['compiler']} -c {self.path}/?*.c --coverage -g 2> {self.path}/temp.txt")
+        os.system(f"{self.settings['compiler']} -c {self.path}/?*.c {'--coverage' if coverage else ''} -g "
+                  f"2> {self.path}/temp.txt")
         errors = CommandManager.read_file(f"{self.path}/temp.txt")
         if errors:
             QMessageBox.warning(None, "Ошибка компиляции", errors)
@@ -41,8 +42,8 @@ class CommandManager:
             os.chdir(old_dir)
             return False
 
-        os.system(f"{self.settings['compiler']} --coverage -o {self.path}/app.exe {self.path}/?*.o"
-                  f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
+        os.system(f"{self.settings['compiler']} {'--coverage' if coverage else ''} -o {self.path}/app.exe "
+                  f"{self.path}/?*.o {' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
 
         errors = CommandManager.read_file(f"{self.path}/temp.txt")
         if errors:
@@ -76,7 +77,7 @@ class CommandManager:
                 f.close()
 
         for file in os.listdir(self.path):
-            if '.gcda' in file or '.gcno' in file or 'temp.txt' in file:
+            if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
                 os.remove(f"{self.path}/{file}")
 
         return count / total_count * 100

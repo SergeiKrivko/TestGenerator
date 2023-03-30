@@ -143,12 +143,16 @@ class TestingWidget(QWidget):
                                                 f"{self.options_widget['Номер варианта:']:0>2}"
 
     def testing(self):
+        self.get_path(True)
+        old_dir = os.getcwd()
+        os.chdir(self.path)
+
         if self.isHidden():
             self.get_path(True)
         self.tests.clear()
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        if not self.cm.compile2():
+        if not self.cm.compile2(coverage=True):
             return
 
         i = 1
@@ -192,6 +196,8 @@ class TestingWidget(QWidget):
         self.testing_signal.emit(self.tests)
 
         self.coverage_label.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
+
+        os.chdir(old_dir)
 
     def comparator(self, path1, path2):
         if self.settings.get('comparator', 0) == 0:
