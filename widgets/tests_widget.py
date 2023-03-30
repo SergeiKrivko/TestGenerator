@@ -67,10 +67,6 @@ class TestsWidget(QWidget):
         self.selected_test = 'pos'
 
         self.path = ''
-        if 'path' in self.settings and os.path.isdir(self.settings['path']):
-            self.open_tests()
-        else:
-            self.open_project()
         self.file_compiled = False
 
     def option_changed(self, key):
@@ -222,12 +218,6 @@ class TestsWidget(QWidget):
             self.neg_tests[index][2] = file.read()
             file.close()
             self.test_edit_widget.test_out_edit.setText(self.neg_tests[index][2])
-
-    def open_project(self):
-        path = QFileDialog.getExistingDirectory(directory=self.settings.get('path', os.getcwd()))
-        if path:
-            self.settings['path'] = path
-            self.open_tests()
 
     def get_path(self, from_settings=False):
         if from_settings:

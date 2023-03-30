@@ -1,8 +1,7 @@
 import os
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QListWidget, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, QMessageBox, \
-    QListWidgetItem
+from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit
 from widgets.options_window import OptionsWidget
 
 
@@ -153,6 +152,8 @@ class TestingWidget(QWidget):
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
         if not self.cm.compile2(coverage=True):
+            self.cm.clear_coverage_files()
+            os.chdir(old_dir)
             return
 
         i = 1
@@ -166,7 +167,7 @@ class TestingWidget(QWidget):
                                read_file(f"{self.path}/temp.txt"), f"pos{i}"))
             if self.tests[-1][0] and not exit_code:
                 item = QListWidgetItem(f"pos{i} \tPASSED\texit: {exit_code}")
-                item.setForeground(Qt.green)
+                item.setForeground(Qt.darkGreen)
             else:
                 item = QListWidgetItem(f"pos{i} \tFAILED\texit: {exit_code}")
                 item.setForeground(Qt.red)
@@ -184,7 +185,7 @@ class TestingWidget(QWidget):
                                read_file(f"{self.path}/temp.txt"), f"neg{i}"))
             if self.tests[-1][0] and exit_code:
                 item = QListWidgetItem(f"neg{i} \tPASSED\texit: {exit_code}")
-                item.setForeground(Qt.green)
+                item.setForeground(Qt.darkGreen)
             else:
                 item = QListWidgetItem(f"neg{i} \tFAILED\texit: {exit_code}")
                 item.setForeground(Qt.red)

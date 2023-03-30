@@ -76,11 +76,14 @@ class CommandManager:
                         break
                 f.close()
 
+        self.clear_coverage_files()
+
+        return count / total_count * 100
+
+    def clear_coverage_files(self):
         for file in os.listdir(self.path):
             if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
                 os.remove(f"{self.path}/{file}")
-
-        return count / total_count * 100
 
     @staticmethod
     def read_file(path):

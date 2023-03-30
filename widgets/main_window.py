@@ -14,8 +14,11 @@ import os
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-        self.settings = dict() if not os.path.isfile("settings.txt") else \
+        settings = dict() if not os.path.isfile("settings.txt") else \
             json.loads(open('settings.txt', encoding='utf-8').read())
+        self.settings = settings.get(settings.get('path', ''), dict())
+        self.settings['path'] = settings.get('path', '')
+        del settings
         if 'compiler' not in self.settings:
             self.settings['compiler'] = 'gcc -std=c99 -Wall -Werror'
         if '-lm' not in self.settings:
@@ -69,6 +72,11 @@ class MainWindow(QMainWindow):
         })
         self.setMenuBar(self.menu_bar)
 
+        if 'path' in self.settings and os.path.isdir(self.settings.get('path', '')):
+            self.tests_widget.open_tests()
+        else:
+            self.open_project()
+
     def open_project(self):
         path = QFileDialog.getExistingDirectory(directory=self.settings.get('path', os.getcwd()))
         if path:
@@ -114,11 +122,16 @@ class MainWindow(QMainWindow):
         self.show_testing()
 
     def closeEvent(self, a0):
+        settings = dict() if not os.path.isfile("settings.txt") else \
+            json.loads(open('settings.txt', encoding='utf-8').read())
+        settings[self.settings['path']] = self.settings
+        settings['path'] = self.settings['path']
+        self.settings.pop('path')
         self.code_widget.hide()
         self.testing_widget.hide()
         self.testing_widget.hide()
         self.git_widget.hide()
         file = open("settings.txt", 'w', encoding="utf-8")
-        file.write(json.dumps(self.settings))
+        file.write(json.dumps(settings))
         file.close()
         super(MainWindow, self).close()
