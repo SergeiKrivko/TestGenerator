@@ -71,6 +71,7 @@ class FilesWidget(QWidget):
 
     def create_file(self, *args):
         self.get_path()
+        os.makedirs(self.path, exist_ok=True)
         if not os.path.isfile(f"{self.path}/new_file.c"):
             open(f"{self.path}/new_file.c", 'w').close()
         else:

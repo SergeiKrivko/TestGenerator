@@ -1,12 +1,17 @@
 import os
+
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit
+from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
+    QPushButton
 from widgets.options_window import OptionsWidget
 
 
 class TestingWidget(QWidget):
-    testing_signal = pyqtSignal(list)
+    testing_start = pyqtSignal(list)
+    add_test = pyqtSignal(str, QColor)
+    clear_tests = pyqtSignal()
+    testing_end = pyqtSignal()
 
     def __init__(self, settings, cm):
         super(TestingWidget, self).__init__()
@@ -24,11 +29,15 @@ class TestingWidget(QWidget):
             'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
                                'name': OptionsWidget.NAME_LEFT},
             'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
-                                'name': OptionsWidget.NAME_LEFT},
-            'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
+                                'name': OptionsWidget.NAME_LEFT}
         })
         self.options_widget.clicked.connect(self.option_changed)
         layout1.addWidget(self.options_widget)
+
+        self.button = QPushButton('Тестировать')
+        layout1.addWidget(self.button)
+        self.button.clicked.connect(self.button_pressed)
+        self.button.setFixedWidth(180)
 
         self.code_widget = QTextEdit()
         self.code_widget.setFont(QFont("Courier", 10))
@@ -68,6 +77,9 @@ class TestingWidget(QWidget):
         self.tests = []
 
         self.current_task = (0, 0, 0)
+        self.old_dir = os.getcwd()
+        self.ui_disable_func = None
+        self.test_count = 0
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -87,8 +99,6 @@ class TestingWidget(QWidget):
         elif key == 'Номер варианта:':
             self.settings['var'] = self.options_widget["Номер варианта:"]
             self.open_task()
-        elif key == 'Тестировать':
-            self.testing()
 
     def update_options(self):
         self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
@@ -141,9 +151,38 @@ class TestingWidget(QWidget):
                                                 f"{self.options_widget['Номер задания:']:0>2}_" \
                                                 f"{self.options_widget['Номер варианта:']:0>2}"
 
+    def add_list_item(self, res, in_file, out_file, prog_out, name, exit_code):
+        self.tests.append((res, in_file, out_file, prog_out, name, exit_code))
+        item = self.tests_list.item(self.test_count)
+        if res and ('pos' in name and not exit_code or 'neg' in name and exit_code):
+            item.setText(f"{name} \tPASSED\texit: {exit_code}")
+            item.setForeground(Qt.darkGreen)
+            self.add_test.emit(f"{name} \tPASSED", Qt.darkGreen)
+        else:
+            item.setText(f"{name} \tFAILED\texit: {exit_code}")
+            self.add_test.emit(f"{name} \tPASSED", Qt.red)
+            item.setForeground(Qt.red)
+        self.test_count += 1
+
+    def button_pressed(self, *args):
+        if self.button.text() == "Тестировать":
+            self.testing()
+        else:
+            self.stop_testing()
+
+    def stop_testing(self):
+        self.cm.looper.terminate()
+        self.cm.looper.wait()
+        self.button.setText("Тестировать")
+
     def testing(self):
+        self.options_widget.setDisabled(True)
+        self.ui_disable_func(True)
+        self.button.setText("Прервать тестирование")
+        self.button.setDisabled(True)
+
         self.get_path(True)
-        old_dir = os.getcwd()
+        self.old_dir = os.getcwd()
         os.chdir(self.path)
 
         if self.isHidden():
@@ -151,54 +190,45 @@ class TestingWidget(QWidget):
         self.tests.clear()
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        if not self.cm.compile2(coverage=True):
-            self.cm.clear_coverage_files()
-            os.chdir(old_dir)
-            return
+        self.cm.testing(self.comparator)
+
+        self.cm.looper.test_complete.connect(self.add_list_item)
+        self.cm.looper.end_testing.connect(self.end_testing)
+
+        lst = []
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
-                                  f"{self.path}/temp.txt")
-            self.tests.append((self.comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
-                                               f"{self.path}/temp.txt"),
-                               read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
-                               read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
-                               read_file(f"{self.path}/temp.txt"), f"pos{i}"))
-            if self.tests[-1][0] and not exit_code:
-                item = QListWidgetItem(f"pos{i} \tPASSED\texit: {exit_code}")
-                item.setForeground(Qt.darkGreen)
-            else:
-                item = QListWidgetItem(f"pos{i} \tFAILED\texit: {exit_code}")
-                item.setForeground(Qt.red)
+            item = QListWidgetItem(f"pos{i}\tin progress...")
+            item.setForeground(Qt.gray)
             self.tests_list.addItem(item)
+            lst.append(f"pos{i}\tin progress...")
             i += 1
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
-                                  f"{self.path}/temp.txt")
-            self.tests.append((self.comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
-                                               f"{self.path}/temp.txt"),
-                               read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
-                               read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
-                               read_file(f"{self.path}/temp.txt"), f"neg{i}"))
-            if self.tests[-1][0] and exit_code:
-                item = QListWidgetItem(f"neg{i} \tPASSED\texit: {exit_code}")
-                item.setForeground(Qt.darkGreen)
-            else:
-                item = QListWidgetItem(f"neg{i} \tFAILED\texit: {exit_code}")
-                item.setForeground(Qt.red)
+            item = QListWidgetItem(f"neg{i}\tin progress...")
+            item.setForeground(Qt.gray)
             self.tests_list.addItem(item)
+            lst.append(f"neg{i}\tin progress...")
             i += 1
+
+        self.test_count = 0
+        self.testing_start.emit(lst)
+
+    def end_testing(self):
+        self.options_widget.setDisabled(False)
+        self.ui_disable_func(False)
+        self.button.setText("Тестировать")
+        self.button.setDisabled(False)
 
         if os.path.isfile(f"{self.path}/temp.txt"):
             os.remove(f"{self.path}/temp.txt")
-        self.testing_signal.emit(self.tests)
+        self.testing_end.emit()
 
         self.coverage_label.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
-        os.chdir(old_dir)
+        os.chdir(self.old_dir)
 
     def comparator(self, path1, path2):
         if self.settings.get('comparator', 0) == 0:

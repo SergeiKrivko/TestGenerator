@@ -48,6 +48,7 @@ class CodeWidget(QWidget):
         self.code_edit.setFont(QFont("Courier", 10))
         layout.addWidget(self.code_edit)
         self.path = ''
+        self.test_count = 0
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -132,16 +133,22 @@ class CodeWidget(QWidget):
             file.write(code)
             file.close()
 
-    def update_test_info(self, test_list):
-        self.tab_widget.setCurrentIndex(1)
+    def testing_start(self, lst):
+        self.test_count = 0
         self.test_res_widget.clear()
-        for test in test_list:
-            item = QListWidgetItem(f"{test[4]} \t{'PASSED' if test[0] else 'FAILED'}")
-            if test[0]:
-                item.setForeground(Qt.green)
-            else:
-                item.setForeground(Qt.red)
+        self.options_widget.setDisabled(True)
+        for test in lst:
+            item = QListWidgetItem(test)
+            item.setForeground(Qt.gray)
             self.test_res_widget.addItem(item)
+
+    def add_test(self, text, color):
+        self.test_res_widget.item(self.test_count).setText(text)
+        self.test_res_widget.item(self.test_count).setForeground(color)
+        self.test_count += 1
+
+    def end_testing(self):
+        self.options_widget.setDisabled(False)
 
     def show(self) -> None:
         self.update_options()
