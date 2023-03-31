@@ -57,7 +57,7 @@ class OptionsWindow(QMainWindow):
         self.main_widget.set_widgets_size(width, height)
 
     def __getitem__(self, item):
-        return self.main_widget.values[item]
+        return self.main_widget[item]
 
     def fix_size(self):
         self.setFixedSize(self.size())
@@ -107,10 +107,12 @@ class OptionsWidget(QWidget):
         self.setLayout(layout)
 
     def __getitem__(self, item):
+        if isinstance(item, tuple):
+            return self.values[item[0]][1][item[1]]
         return self.values[item]
 
     def set_dict_value(self, item, value):
-        if value != self.values[item] or self.dct[item]['type'] == 'button':
+        if item not in self.values or value != self.values[item] or self.dct[item]['type'] == 'button':
             self.values[item] = value
             self.clicked.emit(item)
 
@@ -187,15 +189,26 @@ class OptionsWidget(QWidget):
         return widget, value
 
     def combo_box(self, key, item):
-        widget = QComboBox()
-        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-        for el in item.get('values', []):
-            widget.addItem(str(el))
-        value = item.get('initial', 0)
-        widget.setCurrentIndex(value)
+        if isinstance(item.get('values'), dict):
+            widget = SuperComboBox(item)
+            widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, (
+                value, dict() if widget.widgets[value] is None else widget.widgets[value].values)))
+            value = item.get('initial', 0)
+            widget.setCurrentIndex(value)
+            if widget.widgets[value]:
+                value = value, widget.widgets[value].values
+            else:
+                value = value, None
+        else:
+            widget = QComboBox()
+            for el in item.get('values', []):
+                widget.addItem(str(el))
+            widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+            widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
+            value = item.get('initial', 0)
+            widget.setCurrentIndex(value)
         widget.setMaxVisibleItems(item.get('max_visible', 6))
-        widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
         return widget, value
 
     def file_widget(self, key, item):
@@ -286,6 +299,50 @@ class OptionsWidget(QWidget):
         widget2.clicked.connect(triggerd)
 
 
+class SuperComboBox(QWidget):
+    currentIndexChanged = pyqtSignal(int)
+
+    def __init__(self, item):
+        super(SuperComboBox, self).__init__()
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+        self.main_combo_box = QComboBox()
+        self.main_combo_box.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        layout.addWidget(self.main_combo_box)
+        value = item.get('initial', 0)
+
+        struct = item.get('values', dict())
+        self.widgets = [None] * len(struct)
+        i = 0
+        for key, item2 in struct.items():
+            print(item2)
+            self.main_combo_box.addItem(str(key))
+            if item2:
+                widget = OptionsWidget(item2)
+                layout.addWidget(widget)
+                widget.hide()
+                self.widgets[i] = widget
+            i += 1
+
+        self.main_combo_box.setCurrentIndex(value)
+        self.main_combo_box.setMaxVisibleItems(item.get('max_visible', 6))
+        self.main_combo_box.currentIndexChanged.connect(self.setCurrentIndex)
+
+    def setCurrentIndex(self, index):
+        for el in self.widgets:
+            if el:
+                el.hide()
+        self.main_combo_box.setCurrentIndex(index)
+        if isinstance(self.widgets[index], OptionsWidget):
+            self.widgets[index].show()
+        self.currentIndexChanged.emit(index)
+
+    def setMaxVisibleItems(self, count):
+        self.main_combo_box.setMaxVisibleItems(count)
+
+
 def main():
     app = QApplication([])
     window = OptionsWindow(
@@ -298,7 +355,12 @@ def main():
                        'name': OptionsWindow.NAME_SKIP},
             'value6': {'type': 'file', 'width': 250},
             'button': {'type': 'button', 'text': 'PRESS ME', 'name': OptionsWindow.NAME_SKIP},
-            'size': {'type': 'size'}
+            'size': {'type': 'size'},
+            'value7': {'type': 'combo', 'values': {
+                'int': {'value': {'type': int, 'min': -100}},
+                'float': {'value': {'type': float, 'initial': 10}},
+                'str': {'value': {'type': str, 'initial': 'initial_text'}}
+            }}
         }
     )
     window.show()

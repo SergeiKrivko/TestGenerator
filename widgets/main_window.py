@@ -59,8 +59,18 @@ class MainWindow(QMainWindow):
             "Ключ -lm": {'type': bool, 'initial': True, 'name': OptionsWindow.NAME_RIGHT},
             "Удалять слова при генерации выходного файла": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                                             'initial': self.settings.get('clear_words', False)},
-            "Сравнение чисел:": {'type': 'combo', 'values': ['как числа', 'как текст'],
-                                 'initial': self.settings.get('comparator', 0), 'name': OptionsWindow.NAME_LEFT}
+            "Компаратор для позитивных тестов:": {'type': 'combo', 'values': {
+                'Числа': {'value': {'type': float, 'initial': 0, 'min': 0, 'name': OptionsWindow.NAME_SKIP}},
+                'Числа как текст': None,
+                'Текст после подстроки': {'value': {'type': str, 'initial': 'Result:', 'name': OptionsWindow.NAME_SKIP}}
+            },
+                                 'initial': self.settings.get('comparator', 0)},
+            "Компаратор для негативных тестов:": {'type': 'combo', 'values': {
+                'Числа': {'value': {'type': float, 'initial': 0, 'min': 0, 'name': OptionsWindow.NAME_SKIP}},
+                'Числа как текст': None,
+                'Текст после подстроки': {'value': {'type': str, 'initial': 'Result:', 'name': OptionsWindow.NAME_SKIP}}
+            },
+                                                  'initial': self.settings.get('comparator', 0)}
         })
         self.options_window.returnPressed.connect(self.save_settings)
 
@@ -90,7 +100,8 @@ class MainWindow(QMainWindow):
         self.settings['compiler'] = dct['Компилятор']
         self.settings['-lm'] = dct['Ключ -lm']
         self.settings['clear_words'] = dct["Удалять слова при генерации выходного файла"]
-        self.settings['comparator'] = dct["Сравнение чисел:"]
+        self.settings['pos_comparator'] = dct["Компаратор для позитивных тестов:"]
+        self.settings['neg_comparator'] = dct["Компаратор для негативных тестов:"]
 
     def show_tests(self):
         self.testing_widget.hide()

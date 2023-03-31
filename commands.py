@@ -88,9 +88,9 @@ class CommandManager:
             if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
                 os.remove(f"{self.path}/{file}")
 
-    def testing(self, comparator):
+    def testing(self, pos_comparator, neg_comparator):
         self.update_path()
-        self.looper = Looper(self.compile2, self.path, comparator)
+        self.looper = Looper(self.compile2, self.path, pos_comparator, neg_comparator)
         self.looper.start()
 
     def test_count(self):
@@ -118,11 +118,12 @@ class Looper(QThread):
     test_complete = pyqtSignal(bool, str, str, str, str, int)
     end_testing = pyqtSignal()
 
-    def __init__(self, compiler, path, comparator):
+    def __init__(self, compiler, path, pos_comparator, neg_comparator):
         super(Looper, self).__init__()
         self.compiler = compiler
         self.path = path
-        self.comparator = comparator
+        self.pos_comparator = pos_comparator
+        self.neg_comparator = neg_comparator
 
     def run(self):
         if not self.compiler(coverage=True):
@@ -132,7 +133,7 @@ class Looper(QThread):
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
                                   f"{self.path}/temp.txt")
-            self.test_complete.emit(self.comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
+            self.test_complete.emit(self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
                                                     f"{self.path}/temp.txt"),
                                     CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
                                     CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
@@ -143,7 +144,7 @@ class Looper(QThread):
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
                                   f"{self.path}/temp.txt")
-            self.test_complete.emit(self.comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
+            self.test_complete.emit(self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
                                                     f"{self.path}/temp.txt"),
                                     CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
                                     CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),

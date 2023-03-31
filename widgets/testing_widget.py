@@ -190,7 +190,7 @@ class TestingWidget(QWidget):
         self.tests.clear()
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        self.cm.testing(self.comparator)
+        self.cm.testing(self.pos_comparator, self.neg_comparator)
 
         self.cm.looper.test_complete.connect(self.add_list_item)
         self.cm.looper.end_testing.connect(self.end_testing)
@@ -230,11 +230,23 @@ class TestingWidget(QWidget):
 
         os.chdir(self.old_dir)
 
-    def comparator(self, path1, path2):
-        if self.settings.get('comparator', 0) == 0:
-            return comparator1(path1, path2)
-        if self.settings.get('comparator', 0) == 1:
+    def pos_comparator(self, path1, path2):
+        comparator = self.settings.get('pos_comparator', (0, {'value': 0}))
+        if comparator[0] == 0:
+            return comparator1(path1, path2, comparator[1]['value'])
+        if comparator[0] == 1:
             return comparator2(path1, path2)
+        if comparator[0] == 2:
+            return comparator3(path1, path2, comparator[1]['value'])
+
+    def neg_comparator(self, path1, path2):
+        comparator = self.settings.get('neg_comparator', (0, {'value': 0}))
+        if comparator[0] == 0:
+            return comparator1(path1, path2, comparator[1]['value'])
+        if comparator[0] == 1:
+            return comparator2(path1, path2)
+        if comparator[0] == 2:
+            return comparator3(path1, path2, comparator[1]['value'])
 
     def show(self) -> None:
         self.update_options()
@@ -242,7 +254,7 @@ class TestingWidget(QWidget):
         super(TestingWidget, self).show()
 
 
-def comparator1(path1, path2):
+def comparator1(path1, path2, eps=0):
     lst1 = []
     for word in read_file(path1).split():
         try:
@@ -257,7 +269,10 @@ def comparator1(path1, path2):
         except Exception:
             pass
 
-    return lst1 == lst2
+    for a, b in zip(lst1, lst2):
+        if abs(a - b) > eps:
+            return False
+    return True
 
 
 def comparator2(path1, path2):
@@ -278,6 +293,13 @@ def comparator2(path1, path2):
             pass
 
     return lst1 == lst2
+
+
+def comparator3(path1, path2, substring):
+    text1 = read_file(path1)
+    text2 = read_file(path2)
+
+    return text1[text1.index(substring):] == text2[text2.index(substring):]
 
 
 def read_file(path):
