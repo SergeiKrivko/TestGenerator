@@ -317,7 +317,6 @@ class SuperComboBox(QWidget):
         self.widgets = [None] * len(struct)
         i = 0
         for key, item2 in struct.items():
-            print(item2)
             self.main_combo_box.addItem(str(key))
             if item2:
                 widget = OptionsWidget(item2)

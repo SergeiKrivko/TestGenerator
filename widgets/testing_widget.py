@@ -242,10 +242,12 @@ class TestingWidget(QWidget):
     def neg_comparator(self, path1, path2):
         comparator = self.settings.get('neg_comparator', (0, {'value': 0}))
         if comparator[0] == 0:
-            return comparator1(path1, path2, comparator[1]['value'])
+            return True
         if comparator[0] == 1:
-            return comparator2(path1, path2)
+            return comparator1(path1, path2, comparator[1]['value'])
         if comparator[0] == 2:
+            return comparator2(path1, path2)
+        if comparator[0] == 3:
             return comparator3(path1, path2, comparator[1]['value'])
 
     def show(self) -> None:

@@ -53,6 +53,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.git_widget)
         self.git_widget.hide()
 
+        pos_comparator = self.settings.get('pos_comparator', (0, 0))[0]
+        neg_comparator = self.settings.get('neg_comparator', (0, 0))[0]
+
         self.options_window = OptionsWindow({
             "Компилятор": {'type': str, 'initial': self.settings.get('compiler', 'gcc -std=c99 -Wall -Werror'),
                            'width': 400},
@@ -60,17 +63,24 @@ class MainWindow(QMainWindow):
             "Удалять слова при генерации выходного файла": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                                             'initial': self.settings.get('clear_words', False)},
             "Компаратор для позитивных тестов:": {'type': 'combo', 'values': {
-                'Числа': {'value': {'type': float, 'initial': 0, 'min': 0, 'name': OptionsWindow.NAME_SKIP}},
+                'Числа': {'value': {'type': float, 'initial': 0 if pos_comparator != 0 else self.settings.get(
+                    'pos_comparator', (0, 0))[1].get('value', 0),
+                                    'min': 0, 'name': OptionsWindow.NAME_SKIP}},
                 'Числа как текст': None,
-                'Текст после подстроки': {'value': {'type': str, 'initial': 'Result:', 'name': OptionsWindow.NAME_SKIP}}
+                'Текст после подстроки': {'value': {'type': str, 'initial': '' if pos_comparator != 2 else self.settings.get(
+                    'pos_comparator', (0, ''))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
-                                 'initial': self.settings.get('comparator', 0)},
+                                 'initial': self.settings.get('pos_comparator', (0, 0))[0]},
             "Компаратор для негативных тестов:": {'type': 'combo', 'values': {
-                'Числа': {'value': {'type': float, 'initial': 0, 'min': 0, 'name': OptionsWindow.NAME_SKIP}},
+                'Нет': None,
+                'Числа': {'value': {'type': float, 'initial': 0 if neg_comparator != 1 else self.settings.get(
+                    'neg_comparator', (0, 0))[1].get('value', 0),
+                                    'min': 0, 'name': OptionsWindow.NAME_SKIP}},
                 'Числа как текст': None,
-                'Текст после подстроки': {'value': {'type': str, 'initial': 'Result:', 'name': OptionsWindow.NAME_SKIP}}
+                'Текст после подстроки': {'value': {'type': str, 'initial': '' if neg_comparator != 3 else self.settings.get(
+                    'neg_comparator', (0, ''))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
-                                                  'initial': self.settings.get('comparator', 0)}
+                                                  'initial': self.settings.get('neg_comparator', (0, 0))[0]}
         })
         self.options_window.returnPressed.connect(self.save_settings)
 
