@@ -3,7 +3,7 @@ import os
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton
+    QPushButton, QMessageBox
 from widgets.options_window import OptionsWidget
 
 
@@ -194,6 +194,7 @@ class TestingWidget(QWidget):
 
         self.cm.looper.test_complete.connect(self.add_list_item)
         self.cm.looper.end_testing.connect(self.end_testing)
+        self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
 
         lst = []
 
@@ -227,6 +228,20 @@ class TestingWidget(QWidget):
         self.testing_end.emit()
 
         self.coverage_label.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
+
+        os.chdir(self.old_dir)
+
+    def testing_is_terminated(self, errors):
+        self.options_widget.setDisabled(False)
+        self.ui_disable_func(False)
+        self.button.setText("Тестировать")
+        self.button.setDisabled(False)
+
+        if os.path.isfile(f"{self.path}/temp.txt"):
+            os.remove(f"{self.path}/temp.txt")
+        self.testing_end.emit()
+
+        QMessageBox.warning(self, "Error", errors)
 
         os.chdir(self.old_dir)
 
@@ -300,6 +315,8 @@ def comparator2(path1, path2):
 def comparator3(path1, path2, substring):
     text1 = read_file(path1)
     text2 = read_file(path2)
+    if substring not in text1 or substring not in text2:
+        return False
 
     return text1[text1.index(substring):] == text2[text2.index(substring):]
 

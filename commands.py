@@ -37,29 +37,27 @@ class CommandManager:
                          f"2> {self.path}/temp.txt")
         errors = CommandManager.read_file(f"{self.path}/temp.txt")
         if code:
-            QMessageBox.warning(None, "Ошибка компиляции", errors)
             if os.path.isfile(f"{self.path}/temp.txt"):
                 os.remove(f"{self.path}/temp.txt")
             os.chdir(old_dir)
-            return False
+            return False, errors
 
         code = os.system(f"{self.settings['compiler']} {'--coverage' if coverage else ''} -o {self.path}/app.exe "
                          f"{self.path}/?*.o {' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
 
         errors = CommandManager.read_file(f"{self.path}/temp.txt")
         if code:
-            QMessageBox.warning(None, "Ошибка компиляции", errors)
             if os.path.isfile(f"{self.path}/temp.txt"):
                 os.remove(f"{self.path}/temp.txt")
             os.chdir(old_dir)
-            return False
+            return False, errors
 
         for file in os.listdir(self.path):
             if ".o" in file:
                 os.remove(f"{self.path}/{file}")
 
         os.chdir(old_dir)
-        return True
+        return True, ''
 
     def collect_coverage(self):
         total_count = 0
@@ -117,6 +115,7 @@ class CommandManager:
 class Looper(QThread):
     test_complete = pyqtSignal(bool, str, str, str, str, int)
     end_testing = pyqtSignal()
+    testing_terminate = pyqtSignal(str)
 
     def __init__(self, compiler, path, pos_comparator, neg_comparator):
         super(Looper, self).__init__()
@@ -126,7 +125,9 @@ class Looper(QThread):
         self.neg_comparator = neg_comparator
 
     def run(self):
-        if not self.compiler(coverage=True):
+        code, errors = self.compiler(coverage=True)
+        if not code:
+            self.testing_terminate.emit(errors)
             return
 
         i = 1

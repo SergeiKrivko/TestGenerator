@@ -76,8 +76,9 @@ class FilesWidget(QWidget):
             open(f"{self.path}/new_file.c", 'w').close()
         else:
             i = 1
-            while not os.path.isfile(f"{self.path}/new_file_{i}.c"):
-                open(f"{self.path}/new_file_{i}", 'w').close()
+            while os.path.isfile(f"{self.path}/new_file_{i}.c"):
+                i += 1
+            open(f"{self.path}/new_file_{i}.c", 'w').close()
         self.update_files_list()
 
     def delete_file(self, *args):
