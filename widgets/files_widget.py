@@ -1,8 +1,8 @@
 import os
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem, QLineEdit, \
-    QPushButton, QMessageBox, QDialogButtonBox, QDialog, QLabel
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
+    QPushButton, QDialogButtonBox, QDialog, QLabel
 
 
 class FilesWidget(QWidget):

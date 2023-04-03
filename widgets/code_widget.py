@@ -137,9 +137,11 @@ class CodeWidget(QWidget):
         self.test_count = 0
         self.test_res_widget.clear()
         self.options_widget.setDisabled(True)
+        self.tab_widget.setCurrentIndex(1)
         for test in lst:
             item = QListWidgetItem(test)
             item.setForeground(Qt.gray)
+            item.setFont(QFont("Courier", 10))
             self.test_res_widget.addItem(item)
 
     def add_test(self, text, color):

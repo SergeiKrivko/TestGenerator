@@ -113,7 +113,7 @@ class CommandManager:
 
 
 class Looper(QThread):
-    test_complete = pyqtSignal(bool, str, str, str, str, int)
+    test_complete = pyqtSignal(bool, str, int)
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
@@ -134,22 +134,22 @@ class Looper(QThread):
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
                                   f"{self.path}/temp.txt")
+            if exit_code % 256 == 0:
+                exit_code //= 256
             self.test_complete.emit(self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
-                                                    f"{self.path}/temp.txt"),
-                                    CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
-                                    CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
-                                    CommandManager.read_file(f"{self.path}/temp.txt"), f"pos{i}", exit_code)
+                                                        f"{self.path}/temp.txt"),
+                                    CommandManager.read_file(f"{self.path}/temp.txt"), exit_code)
             i += 1
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
                                   f"{self.path}/temp.txt")
+            if exit_code % 256 == 0:
+                exit_code //= 256
             self.test_complete.emit(self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
-                                                    f"{self.path}/temp.txt"),
-                                    CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
-                                    CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
-                                    CommandManager.read_file(f"{self.path}/temp.txt"), f"neg{i}", exit_code)
+                                                        f"{self.path}/temp.txt"),
+                                    CommandManager.read_file(f"{self.path}/temp.txt"), exit_code)
             i += 1
 
         self.end_testing.emit()

@@ -74,8 +74,6 @@ class TestingWidget(QWidget):
         self.out_data.setFont(QFont("Courier", 10))
         layout3.addWidget(self.out_data)
 
-        self.tests = []
-
         self.current_task = (0, 0, 0)
         self.old_dir = os.getcwd()
         self.ui_disable_func = None
@@ -111,7 +109,6 @@ class TestingWidget(QWidget):
         self.get_path()
         task = self.settings['lab'], self.settings['task'], self.settings['var']
         if task != self.current_task:
-            self.tests.clear()
             self.in_data.setText("")
             self.out_data.setText("")
             self.prog_out.setText("")
@@ -126,13 +123,11 @@ class TestingWidget(QWidget):
             print(f"{ex.__class__.__name__}: {ex}")
 
     def open_test_info(self):
-        index = self.tests_list.currentRow()
-        if index < 0 or index >= len(self.tests):
-            return
-        test_data = self.tests[self.tests_list.currentRow()]
-        self.in_data.setText((test_data[1]))
-        self.out_data.setText((test_data[2]))
-        self.prog_out.setText((test_data[3]))
+        item = self.tests_list.currentItem()
+        if isinstance(item, TestingListWidgetItem):
+            self.in_data.setText(item.in_data)
+            self.out_data.setText(item.out_data)
+            self.prog_out.setText(item.prog_out)
 
     def get_path(self, from_settings=False):
         if from_settings:
@@ -151,18 +146,12 @@ class TestingWidget(QWidget):
                                                 f"{self.options_widget['Номер задания:']:0>2}_" \
                                                 f"{self.options_widget['Номер варианта:']:0>2}"
 
-    def add_list_item(self, res, in_file, out_file, prog_out, name, exit_code):
-        self.tests.append((res, in_file, out_file, prog_out, name, exit_code))
-        item = self.tests_list.item(self.test_count)
-        if res and ('pos' in name and not exit_code or 'neg' in name and exit_code):
-            item.setText(f"{name} \tPASSED\texit: {exit_code}")
-            item.setForeground(Qt.darkGreen)
-            self.add_test.emit(f"{name} \tPASSED", Qt.darkGreen)
-        else:
-            item.setText(f"{name} \tFAILED\texit: {exit_code}")
-            self.add_test.emit(f"{name} \tPASSED", Qt.red)
-            item.setForeground(Qt.red)
+    def add_list_item(self, res, prog_out, exit_code):
+        self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code)
+        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  {'PASSED' if res else 'FAILED'}",
+                           Qt.darkGreen if res else Qt.red)
         self.test_count += 1
+        self.open_test_info()
 
     def button_pressed(self, *args):
         if self.button.text() == "Тестировать":
@@ -187,7 +176,6 @@ class TestingWidget(QWidget):
 
         if self.isHidden():
             self.get_path(True)
-        self.tests.clear()
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
         self.cm.testing(self.pos_comparator, self.neg_comparator)
@@ -200,18 +188,18 @@ class TestingWidget(QWidget):
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            item = QListWidgetItem(f"pos{i}\tin progress...")
-            item.setForeground(Qt.gray)
-            self.tests_list.addItem(item)
-            lst.append(f"pos{i}\tin progress...")
+            self.tests_list.addItem(TestingListWidgetItem(
+                f"pos{i}", read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
+                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt")))
+            lst.append(f"pos{i}")
             i += 1
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            item = QListWidgetItem(f"neg{i}\tin progress...")
-            item.setForeground(Qt.gray)
-            self.tests_list.addItem(item)
-            lst.append(f"neg{i}\tin progress...")
+            self.tests_list.addItem(TestingListWidgetItem(
+                f"neg{i}", read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
+                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt")))
+            lst.append(f"neg{i}")
             i += 1
 
         self.test_count = 0
@@ -242,6 +230,11 @@ class TestingWidget(QWidget):
         self.testing_end.emit()
 
         QMessageBox.warning(self, "Error", errors)
+
+        for i in range(self.test_count, self.tests_list.count()):
+            self.tests_list.item(i).set_terminated()
+
+        self.cm.clear_coverage_files()
 
         os.chdir(self.old_dir)
 
@@ -326,3 +319,34 @@ def read_file(path):
     res = file.read()
     file.close()
     return res
+
+
+class TestingListWidgetItem(QListWidgetItem):
+    in_progress = 0
+    passed = 1
+    failed = 2
+    terminated = 3
+
+    def __init__(self, name, in_data, out_data):
+        super(TestingListWidgetItem, self).__init__()
+        self.setText(f"{name:6}  in progress…")
+        self.setForeground(Qt.gray)
+        self.name = name
+        self.in_data = in_data
+        self.out_data = out_data
+        self.status = TestingListWidgetItem.in_progress
+        self.prog_out = ''
+        self.exit_code = 0
+        self.setFont(QFont("Courier", 10))
+
+    def set_completed(self, res, prog_out, exit_code):
+        self.status = TestingListWidgetItem.passed if res else TestingListWidgetItem.failed
+        self.prog_out = prog_out
+        self.exit_code = exit_code
+        self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
+        self.setForeground(Qt.darkGreen if res else Qt.red)
+
+    def set_terminated(self, message="terminated"):
+        self.status = TestingListWidgetItem.terminated
+        self.setText(f"{self.name:6}  {message}")
+        self.setForeground(Qt.gray)
