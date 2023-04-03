@@ -64,21 +64,21 @@ class MainWindow(QMainWindow):
                                                             'initial': self.settings.get('clear_words', False)},
             "Компаратор для позитивных тестов:": {'type': 'combo', 'values': {
                 'Числа': {'value': {'type': float, 'initial': 0 if pos_comparator != 0 else self.settings.get(
-                    'pos_comparator', (0, 0))[1].get('value', 0),
+                    'pos_comparator', (0, {'value': 0}))[1].get('value', 0),
                                     'min': 0, 'name': OptionsWindow.NAME_SKIP}},
                 'Числа как текст': None,
                 'Текст после подстроки': {'value': {'type': str, 'initial': '' if pos_comparator != 2 else self.settings.get(
-                    'pos_comparator', (0, ''))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
+                    'pos_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
                                  'initial': self.settings.get('pos_comparator', (0, 0))[0]},
             "Компаратор для негативных тестов:": {'type': 'combo', 'values': {
                 'Нет': None,
                 'Числа': {'value': {'type': float, 'initial': 0 if neg_comparator != 1 else self.settings.get(
-                    'neg_comparator', (0, 0))[1].get('value', 0),
+                    'neg_comparator', (0, {'value': 0}))[1].get('value', 0),
                                     'min': 0, 'name': OptionsWindow.NAME_SKIP}},
                 'Числа как текст': None,
                 'Текст после подстроки': {'value': {'type': str, 'initial': '' if neg_comparator != 3 else self.settings.get(
-                    'neg_comparator', (0, ''))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
+                    'neg_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
                                                   'initial': self.settings.get('neg_comparator', (0, 0))[0]}
         })
