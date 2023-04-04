@@ -72,15 +72,48 @@ class OptionsWidget(QWidget):
     INITIAL_WIDGET_HEIGHT = 25
     clicked = pyqtSignal(str)
 
-    def __init__(self, dct, parent=None):
+    def __init__(self, dct, parent=None, margins=None):
         super(OptionsWidget, self).__init__(parent)
         self.dct = dct
         self.values = dict()
         self.widgets = dict()
 
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
+        main_layout = QVBoxLayout()
+        if margins:
+            main_layout.setContentsMargins(*margins)
+        main_layout.setAlignment(Qt.AlignTop)
         for key, item in dct.items():
+            if 'h_line' in key:
+                horizontal_layout = QHBoxLayout()
+                for key2, item2 in item.items():
+                    label = QLabel(str(key2), self)
+                    widget, value = self.get_widget(key2, item2)
+                    if item2.get('name') == OptionsWindow.NAME_LEFT:
+                        h_layout = QHBoxLayout()
+                        h_layout.setAlignment(Qt.AlignLeft)
+                        h_layout.addWidget(label)
+                        h_layout.addWidget(widget)
+                        horizontal_layout.addLayout(h_layout)
+                    elif item2.get('name') == OptionsWindow.NAME_RIGHT:
+                        h_layout = QHBoxLayout()
+                        h_layout.setAlignment(Qt.AlignLeft)
+                        h_layout.addWidget(widget)
+                        h_layout.addWidget(label)
+                        horizontal_layout.addLayout(h_layout)
+                    elif item2.get('name') != OptionsWindow.NAME_SKIP:
+                        v_layout = QVBoxLayout()
+                        v_layout.setAlignment(Qt.AlignLeft)
+                        v_layout.addWidget(label)
+                        v_layout.addWidget(widget)
+                        horizontal_layout.addLayout(v_layout)
+                    else:
+                        label.hide()
+                        horizontal_layout.addWidget(widget)
+                    self.widgets[key2] = widget
+                    self.values[key2] = value
+                main_layout.addLayout(horizontal_layout)
+                continue
+
             label = QLabel(str(key), self)
             widget, value = self.get_widget(key, item)
             if item.get('name') == OptionsWindow.NAME_LEFT:
@@ -88,23 +121,26 @@ class OptionsWidget(QWidget):
                 h_layout.setAlignment(Qt.AlignLeft)
                 h_layout.addWidget(label)
                 h_layout.addWidget(widget)
-                layout.addLayout(h_layout)
+                main_layout.addLayout(h_layout)
             elif item.get('name') == OptionsWindow.NAME_RIGHT:
                 h_layout = QHBoxLayout()
                 h_layout.setAlignment(Qt.AlignLeft)
                 h_layout.addWidget(widget)
                 h_layout.addWidget(label)
-                layout.addLayout(h_layout)
+                main_layout.addLayout(h_layout)
             elif item.get('name') != OptionsWindow.NAME_SKIP:
-                layout.addWidget(label)
-                layout.addWidget(widget)
+                v_layout = QVBoxLayout()
+                v_layout.setAlignment(Qt.AlignLeft)
+                v_layout.addWidget(label)
+                v_layout.addWidget(widget)
+                main_layout.addLayout(v_layout)
             else:
                 label.hide()
-                layout.addWidget(widget)
+                main_layout.addWidget(widget)
             self.widgets[key] = widget
             self.values[key] = value
 
-        self.setLayout(layout)
+        self.setLayout(main_layout)
 
     def __getitem__(self, item):
         if isinstance(item, tuple):
@@ -112,19 +148,19 @@ class OptionsWidget(QWidget):
         return self.values[item]
 
     def set_dict_value(self, item, value):
-        if item not in self.values or value != self.values[item] or self.dct[item]['type'] == 'button':
+        if item not in self.values or value != self.values[item] or isinstance(self.widgets[item], QPushButton):
             self.values[item] = value
             self.clicked.emit(item)
 
     def set_value(self, item, value):
         self.values[item] = value
-        if self.dct[item]['type'] in [int, 'int', float, 'float']:
+        if isinstance(self.widgets[item], (QSpinBox, QDoubleSpinBox)):
             self.widgets[item].setValue(value)
-        elif self.dct[item]['type'] in [str, 'str']:
+        elif isinstance(self.widgets[item], QLineEdit):
             self.widgets[item].setText(value)
-        elif self.dct[item]['type'] in [bool, 'bool']:
+        elif isinstance(self.widgets[item], QCheckBox):
             self.widgets[item].setChecked(value)
-        elif self.dct[item]['type'] == 'combo':
+        elif isinstance(self.widgets[item], QComboBox):
             self.widgets[item].setCurrentIndex(value)
 
     def get_widget(self, key, item):
@@ -346,7 +382,7 @@ def main():
     app = QApplication([])
     window = OptionsWindow(
         {
-            'value1': {'type': int, 'min': -100},
+            'h_line1': {'value1': {'type': int, 'min': -100}, 'value1-1': {'type': int, 'min': -100}},
             'value2': {'type': float, 'initial': 10},
             'value3': {'type': str, 'initial': 'initial_text'},
             'value4': {'type': bool, 'initial': True, 'name': OptionsWindow.NAME_RIGHT},

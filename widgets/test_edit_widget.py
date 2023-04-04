@@ -6,12 +6,15 @@ class TestEditWidget(QWidget):
     def __init__(self, parent=None):
         super(TestEditWidget, self).__init__(parent)
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        layout.addWidget(QLabel("Описание теста"))
+        h_layout1 = QHBoxLayout()
+        layout.addLayout(h_layout1)
+        h_layout1.addWidget(QLabel("Описание теста"))
         self.test_name_edit = QLineEdit()
         self.test_name_edit.setFont(QFont("Calibri", 10))
-        layout.addWidget(self.test_name_edit)
+        h_layout1.addWidget(self.test_name_edit)
 
         h_layout = QHBoxLayout()
         layout.addLayout(h_layout)

@@ -8,6 +8,7 @@ class TestTableWidget(QWidget):
     def __init__(self):
         super(TestTableWidget, self).__init__()
         layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         pos_layout = QVBoxLayout()
         layout.addLayout(pos_layout)
