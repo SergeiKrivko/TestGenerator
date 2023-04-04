@@ -10,7 +10,7 @@ class CodeEditor(QsciScintilla):
 
         # Set the default font
         font = QFont()
-        font.setFamily('Ubuntu')
+        font.setFamily('Courier')
         font.setFixedPitch(True)
         font.setPointSize(10)
         self.setFont(font)
@@ -47,12 +47,22 @@ class CodeEditor(QsciScintilla):
         # courier.
         #
 
-        lexer = QsciLexerCPP()
+        lexer = QsciLexerCPP(None)
         lexer.setDefaultFont(font)
         self.setLexer(lexer)
 
-        text = bytearray(str.encode("Ubuntu"))
-        # 32, "Courier New"
+        self.setAutoCompletionSource(QsciScintilla.AcsAll)
+        self.setAutoCompletionThreshold(1)
+        self.setAutoCompletionCaseSensitivity(True)
+        self.setAutoCompletionReplaceWord(True)
+
+        self.setIndentationsUseTabs(False)
+        self.setTabWidth(4)
+        self.setIndentationGuides(True)
+        self.setTabIndents(True)
+        self.setAutoIndent(True)
+
+        text = bytearray(str.encode("Courier"))
         self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, text)
 
         # Don't want to see the horizontal scrollbar at all
@@ -62,6 +72,8 @@ class CodeEditor(QsciScintilla):
 
         # not too small
         self.setMinimumSize(600, 450)
+
+        self.setCallTipsVisible(0)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on

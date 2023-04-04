@@ -1,4 +1,6 @@
 import os
+from time import time
+
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem, QTabWidget
@@ -47,6 +49,8 @@ class CodeWidget(QWidget):
 
         self.code_edit = CodeEditor()
         self.code_edit.setFont(QFont("Courier", 10))
+        self.code_edit.textChanged.connect(self.save_code)
+        self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)
         layout.addWidget(self.code_edit)
         self.path = ''
         self.test_count = 0
@@ -118,8 +122,6 @@ class CodeWidget(QWidget):
             if index == -1:
                 return
 
-            self.save_code()
-
             self.code_edit.setText("")
             self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
             self.file_update_time = os.path.getmtime(self.current_file)
@@ -132,22 +134,32 @@ class CodeWidget(QWidget):
     def save_code(self, forced=False):
         code = self.code_edit.text()
         if code:
-            print(not forced, os.path.isfile(self.current_file),
-                              self.file_update_time != os.path.getmtime(self.current_file))
-            if not forced or (os.path.isfile(self.current_file) and
-                              self.file_update_time != os.path.getmtime(self.current_file)):
-                dlg = CustomDialog("Данный файл был отредактирован "
-                                   "также в другом месте. Сохранить текущие изменения?")
-                if dlg.exec():
-                    self.save_code(forced=True)
-                else:
-                    self.open_code()
+            os.makedirs(self.path, exist_ok=True)
+            file = open(f"{self.current_file}", 'w', encoding='utf=8')
+            file.write(code)
+            file.close()
+            self.file_update_time = os.path.getmtime(f"{self.current_file}")
+        # if code:
+        #     if not forced and os.path.isfile(self.current_file) and \
+        #                       self.file_update_time != os.path.getmtime(self.current_file):
+        #         dlg = CustomDialog("Данный файл был отредактирован "
+        #                            "также в другом месте. Сохранить текущие изменения?")
+        #         if dlg.exec():
+        #             self.save_code(forced=True)
+        #         else:
+        #             self.open_code(forced=True)
+        #     else:
+        #         os.makedirs(self.path, exist_ok=True)
+        #         file = open(f"{self.current_file}", 'w', encoding='utf=8')
+        #         file.write(code)
+        #         file.close()
+        #         self.file_update_time = os.path.getmtime(f"{self.current_file}")
 
-            else:
-                os.makedirs(self.path, exist_ok=True)
-                file = open(f"{self.current_file}", 'w', encoding='utf=8')
-                file.write(code)
-                file.close()
+    def check_if_code_changed(self):
+        if os.path.isfile(self.current_file) and self.file_update_time != os.path.getmtime(self.current_file):
+            pos = self.code_edit.getCursorPosition()
+            self.open_code()
+            self.code_edit.setCursorPosition(*pos)
 
     def testing_start(self, lst):
         self.test_count = 0
@@ -174,5 +186,4 @@ class CodeWidget(QWidget):
         super(CodeWidget, self).show()
 
     def hide(self):
-        self.save_code()
         super(CodeWidget, self).hide()

@@ -71,6 +71,8 @@ class MainWindow(QMainWindow):
                     'pos_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
                                  'initial': self.settings.get('pos_comparator', (0, 0))[0]},
+            "Тестирование по памяти": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
+                                       'initial': self.settings.get('memory_testing', 0)},
             "Компаратор для негативных тестов:": {'type': 'combo', 'values': {
                 'Нет': None,
                 'Числа': {'value': {'type': float, 'initial': 0 if neg_comparator != 1 else self.settings.get(
@@ -112,6 +114,7 @@ class MainWindow(QMainWindow):
         self.settings['clear_words'] = dct["Удалять слова при генерации выходного файла"]
         self.settings['pos_comparator'] = dct["Компаратор для позитивных тестов:"]
         self.settings['neg_comparator'] = dct["Компаратор для негативных тестов:"]
+        self.settings['memory_testing'] = dct["Тестирование по памяти"]
 
     def show_tests(self):
         self.testing_widget.hide()

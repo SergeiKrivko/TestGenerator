@@ -1,8 +1,8 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
-    QPushButton, QDialogButtonBox, QDialog, QLabel
+    QPushButton, QDialogButtonBox, QDialog, QLabel, QListWidgetItem
 
 
 class FilesWidget(QWidget):
@@ -48,11 +48,22 @@ class FilesWidget(QWidget):
 
         for file in os.listdir(self.path):
             for el in FilesWidget.ignore_files:
-                if el in file:
+                if file.endswith(el):
                     break
             else:
                 if '.' in file:
-                    self.files_list.addItem(file)
+                    item = QListWidgetItem(file)
+                    if file.endswith("main.c"):
+                        item.setForeground(Qt.darkRed)
+                    elif file.endswith(".c"):
+                        item.setForeground(Qt.red)
+                    elif file.endswith(".h"):
+                        item.setForeground(Qt.darkYellow)
+                    elif file.endswith(".txt"):
+                        item.setForeground(Qt.blue)
+                    elif file.endswith(".md"):
+                        item.setForeground(Qt.cyan)
+                    self.files_list.addItem(item)
 
     def open_file(self):
         if self.files_list.currentRow() != -1:

@@ -174,7 +174,7 @@ class TestingWidget(QWidget):
             self.get_path(True)
         self.tests_list.clear()
         self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        self.cm.testing(self.pos_comparator, self.neg_comparator)
+        self.cm.testing(self.pos_comparator, self.neg_comparator, self.settings.get('memory_testing', False))
 
         self.cm.looper.test_complete.connect(self.add_list_item)
         self.cm.looper.end_testing.connect(self.end_testing)
@@ -186,7 +186,8 @@ class TestingWidget(QWidget):
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             self.tests_list.addItem(TestingListWidgetItem(
                 f"pos{i}", read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
-                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt")))
+                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
+                self.settings.get('memory_testing', False)))
             lst.append(f"pos{i}")
             i += 1
 
@@ -194,7 +195,8 @@ class TestingWidget(QWidget):
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             self.tests_list.addItem(TestingListWidgetItem(
                 f"neg{i}", read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
-                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt")))
+                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
+                self.settings.get('memory_testing', False)))
             lst.append(f"neg{i}")
             i += 1
 
@@ -323,7 +325,7 @@ class TestingListWidgetItem(QListWidgetItem):
     failed = 2
     terminated = 3
 
-    def __init__(self, name, in_data, out_data):
+    def __init__(self, name, in_data, out_data, memory_testing=False):
         super(TestingListWidgetItem, self).__init__()
         self.setText(f"{name:6}  in progress…")
         self.setForeground(Qt.gray)
@@ -334,14 +336,18 @@ class TestingListWidgetItem(QListWidgetItem):
         self.prog_out = ''
         self.exit_code = 0
         self.setFont(QFont("Courier", 10))
+        self.memory_testing = memory_testing
 
     def set_completed(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.status = TestingListWidgetItem.passed if res else TestingListWidgetItem.failed
         self.prog_out = prog_out
         self.exit_code = exit_code
-        self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5} "
-                     f"{'MEMORY_OK' if memory_res else 'MEMORY_FAIL'}")
-        self.setToolTip(valgrind_out)
+        if self.memory_testing:
+            self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5} "
+                         f"{'MEMORY_OK' if memory_res else 'MEMORY_FAIL'}")
+            self.setToolTip(valgrind_out)
+        else:
+            self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
         self.setForeground(Qt.darkGreen if res and memory_res else Qt.red)
 
     def set_terminated(self, message="terminated"):
