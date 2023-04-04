@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListW
 
 from widgets.files_widget import FilesWidget
 from widgets.options_window import OptionsWidget
+from widgets.syntax_highlighter import CodeEditor
 
 
 class CodeWidget(QWidget):
@@ -44,7 +45,7 @@ class CodeWidget(QWidget):
         self.tab_widget.setMaximumWidth(175)
         layout_left.addWidget(self.tab_widget)
 
-        self.code_edit = QTextEdit()
+        self.code_edit = CodeEditor()
         self.code_edit.setFont(QFont("Courier", 10))
         layout.addWidget(self.code_edit)
         self.path = ''
@@ -126,7 +127,7 @@ class CodeWidget(QWidget):
             pass
 
     def save_code(self):
-        code = self.code_edit.toPlainText()
+        code = self.code_edit.text()
         if code:
             os.makedirs(self.path, exist_ok=True)
             file = open(f"{self.current_file}", 'w', encoding='utf=8')
