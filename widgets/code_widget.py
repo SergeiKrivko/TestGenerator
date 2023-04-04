@@ -3,7 +3,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem, QTabWidget
 
-from widgets.files_widget import FilesWidget
+from widgets.files_widget import FilesWidget, CustomDialog
 from widgets.options_window import OptionsWidget
 from widgets.syntax_highlighter import CodeEditor
 
@@ -50,6 +50,7 @@ class CodeWidget(QWidget):
         layout.addWidget(self.code_edit)
         self.path = ''
         self.test_count = 0
+        self.file_update_time = 0
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -102,6 +103,7 @@ class CodeWidget(QWidget):
 
     def first_open(self):
         self.files_widget.update_files_list()
+        self.tab_widget.setCurrentIndex(0)
         for i in range(self.files_widget.files_list.count()):
             if self.files_widget.files_list.item(i) == 'main.c':
                 self.files_widget.files_list.setCurrentRow(i)
@@ -120,19 +122,32 @@ class CodeWidget(QWidget):
 
             self.code_edit.setText("")
             self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
+            self.file_update_time = os.path.getmtime(self.current_file)
             file = open(self.current_file)
             self.code_edit.setText(file.read())
             file.close()
         except Exception:
             pass
 
-    def save_code(self):
+    def save_code(self, forced=False):
         code = self.code_edit.text()
         if code:
-            os.makedirs(self.path, exist_ok=True)
-            file = open(f"{self.current_file}", 'w', encoding='utf=8')
-            file.write(code)
-            file.close()
+            print(not forced, os.path.isfile(self.current_file),
+                              self.file_update_time != os.path.getmtime(self.current_file))
+            if not forced or (os.path.isfile(self.current_file) and
+                              self.file_update_time != os.path.getmtime(self.current_file)):
+                dlg = CustomDialog("Данный файл был отредактирован "
+                                   "также в другом месте. Сохранить текущие изменения?")
+                if dlg.exec():
+                    self.save_code(forced=True)
+                else:
+                    self.open_code()
+
+            else:
+                os.makedirs(self.path, exist_ok=True)
+                file = open(f"{self.current_file}", 'w', encoding='utf=8')
+                file.write(code)
+                file.close()
 
     def testing_start(self, lst):
         self.test_count = 0

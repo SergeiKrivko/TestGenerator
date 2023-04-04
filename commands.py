@@ -113,7 +113,7 @@ class CommandManager:
 
 
 class Looper(QThread):
-    test_complete = pyqtSignal(bool, str, int)
+    test_complete = pyqtSignal(bool, str, int, bool, str)
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
@@ -134,24 +134,36 @@ class Looper(QThread):
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
                                   f"{self.path}/temp.txt")
+            prog_out = CommandManager.read_file(f"{self.path}/temp.txt")
+            comparator_res = self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
+                                                 f"{self.path}/temp.txt")
             if exit_code % 256 == 0:
                 exit_code //= 256
-            self.test_complete.emit(not exit_code and
-                                    self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
-                                                        f"{self.path}/temp.txt"),
-                                    CommandManager.read_file(f"{self.path}/temp.txt"), exit_code)
+
+            os.system(f"valgrind -q ./app.exe < "
+                      f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt > /dev/null 2> temp.txt")
+            valgrind_out = CommandManager.read_file(f"{self.path}/temp.txt")
+
+            self.test_complete.emit(not exit_code and comparator_res,
+                                    prog_out, exit_code, not valgrind_out, valgrind_out)
             i += 1
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
                                   f"{self.path}/temp.txt")
+            prog_out = CommandManager.read_file(f"{self.path}/temp.txt")
+            comparator_res = self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
+                                                 f"{self.path}/temp.txt")
             if exit_code % 256 == 0:
                 exit_code //= 256
-            self.test_complete.emit(exit_code and
-                                    self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
-                                                        f"{self.path}/temp.txt"),
-                                    CommandManager.read_file(f"{self.path}/temp.txt"), exit_code)
+
+            os.system(f"valgrind -q ./app.exe < "
+                      f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt > /dev/null 2> temp.txt")
+            valgrind_out = CommandManager.read_file(f"{self.path}/temp.txt")
+
+            self.test_complete.emit(exit_code and comparator_res,
+                                    prog_out, exit_code, not valgrind_out, valgrind_out)
             i += 1
 
         self.end_testing.emit()

@@ -42,6 +42,10 @@ class FilesWidget(QWidget):
     def update_files_list(self):
         self.get_path()
         self.files_list.clear()
+
+        if not os.path.isdir(self.path):
+            return
+
         for file in os.listdir(self.path):
             for el in FilesWidget.ignore_files:
                 if el in file:

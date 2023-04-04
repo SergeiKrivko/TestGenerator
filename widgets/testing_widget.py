@@ -18,61 +18,64 @@ class TestingWidget(QWidget):
         self.settings = settings
         self.cm = cm
 
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
-        layout1 = QVBoxLayout()
-        layout.addLayout(layout1)
 
         self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
-                            'name': OptionsWidget.NAME_LEFT},
-            'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
-                               'name': OptionsWidget.NAME_LEFT},
-            'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
-                                'name': OptionsWidget.NAME_LEFT}
+            'h_line': {
+                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
+                                'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
+                                   'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
+                                    'name': OptionsWidget.NAME_LEFT, 'width': 60}
+            }
         })
         self.options_widget.clicked.connect(self.option_changed)
-        layout1.addWidget(self.options_widget)
+        layout.addWidget(self.options_widget)
 
         self.button = QPushButton('Тестировать')
-        layout1.addWidget(self.button)
+        layout.addWidget(self.button)
         self.button.clicked.connect(self.button_pressed)
         self.button.setFixedWidth(180)
 
-        self.code_widget = QTextEdit()
-        self.code_widget.setFont(QFont("Courier", 10))
-        self.code_widget.setReadOnly(True)
-        layout1.addWidget(self.code_widget)
-
-        layout2 = QVBoxLayout()
+        layout2 = QHBoxLayout()
         layout.addLayout(layout2)
 
+        l = QVBoxLayout()
+        layout2.addLayout(l)
         self.coverage_label = QLabel()
-        layout2.addWidget(self.coverage_label)
+        l.addWidget(self.coverage_label)
         self.tests_list = QListWidget()
         self.tests_list.itemSelectionChanged.connect(self.open_test_info)
-        layout2.addWidget(self.tests_list)
+        l.addWidget(self.tests_list)
 
-        layout2.addWidget(QLabel("Входные данные"))
-        self.in_data = QTextEdit()
-        self.in_data.setReadOnly(True)
-        self.in_data.setFont(QFont("Courier", 10))
-        layout2.addWidget(self.in_data)
-
-        layout3 = QVBoxLayout()
-        layout.addLayout(layout3)
-
-        layout3.addWidget(QLabel("Вывод программы"))
+        l = QVBoxLayout()
+        layout2.addLayout(l)
+        l.addWidget(QLabel("Вывод программы"))
         self.prog_out = QTextEdit()
         self.prog_out.setReadOnly(True)
         self.prog_out.setFont(QFont("Courier", 10))
-        layout3.addWidget(self.prog_out)
+        l.addWidget(self.prog_out)
 
-        layout3.addWidget(QLabel("Эталонный вывод"))
+        layout3 = QHBoxLayout()
+        layout.addLayout(layout3)
+
+        l = QVBoxLayout()
+        layout3.addLayout(l)
+        l.addWidget(QLabel("Входные данные"))
+        self.in_data = QTextEdit()
+        self.in_data.setReadOnly(True)
+        self.in_data.setFont(QFont("Courier", 10))
+        l.addWidget(self.in_data)
+
+        l = QVBoxLayout()
+        layout3.addLayout(l)
+        l.addWidget(QLabel("Эталонный вывод"))
         self.out_data = QTextEdit()
         self.out_data.setReadOnly(True)
         self.out_data.setFont(QFont("Courier", 10))
-        layout3.addWidget(self.out_data)
+        l.addWidget(self.out_data)
 
         self.current_task = (0, 0, 0)
         self.old_dir = os.getcwd()
@@ -114,13 +117,6 @@ class TestingWidget(QWidget):
             self.prog_out.setText("")
             self.tests_list.clear()
             self.current_task = task
-        try:
-            self.code_widget.setText("")
-            file = open(f"{self.path}/main.c")
-            self.code_widget.setText(file.read())
-            file.close()
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
 
     def open_test_info(self):
         item = self.tests_list.currentItem()
@@ -146,10 +142,10 @@ class TestingWidget(QWidget):
                                                 f"{self.options_widget['Номер задания:']:0>2}_" \
                                                 f"{self.options_widget['Номер варианта:']:0>2}"
 
-    def add_list_item(self, res, prog_out, exit_code):
-        self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code)
+    def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
+        self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  {'PASSED' if res else 'FAILED'}",
-                           Qt.darkGreen if res else Qt.red)
+                           Qt.darkGreen if res and memory_res else Qt.red)
         self.test_count += 1
         self.open_test_info()
 
@@ -339,12 +335,14 @@ class TestingListWidgetItem(QListWidgetItem):
         self.exit_code = 0
         self.setFont(QFont("Courier", 10))
 
-    def set_completed(self, res, prog_out, exit_code):
+    def set_completed(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.status = TestingListWidgetItem.passed if res else TestingListWidgetItem.failed
         self.prog_out = prog_out
         self.exit_code = exit_code
-        self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
-        self.setForeground(Qt.darkGreen if res else Qt.red)
+        self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5} "
+                     f"{'MEMORY_OK' if memory_res else 'MEMORY_FAIL'}")
+        self.setToolTip(valgrind_out)
+        self.setForeground(Qt.darkGreen if res and memory_res else Qt.red)
 
     def set_terminated(self, message="terminated"):
         self.status = TestingListWidgetItem.terminated
