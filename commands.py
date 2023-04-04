@@ -136,7 +136,8 @@ class Looper(QThread):
                                   f"{self.path}/temp.txt")
             if exit_code % 256 == 0:
                 exit_code //= 256
-            self.test_complete.emit(self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
+            self.test_complete.emit(not exit_code and
+                                    self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
                                                         f"{self.path}/temp.txt"),
                                     CommandManager.read_file(f"{self.path}/temp.txt"), exit_code)
             i += 1
@@ -147,7 +148,8 @@ class Looper(QThread):
                                   f"{self.path}/temp.txt")
             if exit_code % 256 == 0:
                 exit_code //= 256
-            self.test_complete.emit(self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
+            self.test_complete.emit(exit_code and
+                                    self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
                                                         f"{self.path}/temp.txt"),
                                     CommandManager.read_file(f"{self.path}/temp.txt"), exit_code)
             i += 1
