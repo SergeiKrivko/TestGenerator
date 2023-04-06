@@ -1,5 +1,7 @@
+import os
+
 from PyQt5.QtGui import QFont, QColor, QFontMetrics
-from PyQt5.Qsci import QsciScintilla, QsciLexerCPP
+from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciAPIs
 
 
 class CodeEditor(QsciScintilla):
@@ -47,14 +49,15 @@ class CodeEditor(QsciScintilla):
         # courier.
         #
 
-        lexer = QsciLexerCPP(None)
-        lexer.setDefaultFont(font)
-        self.setLexer(lexer)
+        self.lexer = QsciLexerCPP(None)
+        self.lexer.setDefaultFont(font)
+        self.setLexer(self.lexer)
 
         self.setAutoCompletionSource(QsciScintilla.AcsAll)
         self.setAutoCompletionThreshold(1)
         self.setAutoCompletionCaseSensitivity(True)
         self.setAutoCompletionReplaceWord(True)
+        self.setCallTipsStyle(QsciScintilla.CallTipsNoContext)
 
         self.setIndentationsUseTabs(False)
         self.setTabWidth(4)
@@ -82,3 +85,40 @@ class CodeEditor(QsciScintilla):
         else:
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
+    def open_file(self, path, file):
+        with open(f"{path}/{file}") as file:
+            self.setText(file.read())
+            file.seek(0)
+
+            self.api = QsciAPIs(self.lexer)
+
+            for line in file:
+                line = line.strip()
+                if line.startswith("#include \"") and line.endswith("\""):
+                    f = line.split()[1].strip('\"')
+                    if os.path.isfile(f"{path}/{f}"):
+                        for el in parce_header(f"{path}/{f}"):
+                            self.api.add(el)
+
+            self.api.prepare()
+            self.lexer.setAPIs(self.api)
+
+
+def parce_header(path):
+    func_types = 'int', 'char', 'void', 'double', 'float'
+    with open(path, encoding='utf-8') as header_file:
+        for line in header_file:
+            line = line.strip()
+            if line.startswith('#define') and len(s := line.split()) == 3:
+                yield s[1]
+            elif line.startswith('typedef') and len(s := line.split()) >= 3:
+                s = s[2]
+                if '[' in s:
+                    yield s[:s.index('[')]
+                else:
+                    yield s
+            else:
+                for func_type in func_types:
+                    if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
+                        yield line.replace(func_type, '', 1)
+                        break

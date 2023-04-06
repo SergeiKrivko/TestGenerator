@@ -125,9 +125,7 @@ class CodeWidget(QWidget):
             self.code_edit.setText("")
             self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
             self.file_update_time = os.path.getmtime(self.current_file)
-            file = open(self.current_file)
-            self.code_edit.setText(file.read())
-            file.close()
+            self.code_edit.open_file(self.path, self.files_widget.files_list.currentItem().text())
         except Exception:
             pass
 
