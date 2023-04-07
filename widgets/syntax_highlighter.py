@@ -240,7 +240,14 @@ def parce_main_file(path):
                 types_txt.seek(0)
                 for var_type in types_txt:
                     if line.startswith(var_type.strip()) and ' ' in line and line.endswith(";"):
-                        res_dict[current_func][0].append(line.split()[1])
+                        lst = line[line.index(' ') + 1:-1].split(',')
+                        for el in lst:
+                            el = el.strip().replace('=', ' ')
+                            el = el.replace('[', ' ')
+                            if ' ' in el:
+                                res_dict[current_func][0].append(el[:el.index(' ')])
+                            else:
+                                res_dict[current_func][0].append(el)
             i += 1
     res_dict['__general__'] = res_dict['__general__'][0], res_dict['__general__'][1], i
     types_txt.close()

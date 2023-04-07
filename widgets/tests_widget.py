@@ -277,10 +277,10 @@ class TestsWidget(QWidget):
                     else:
                         break
 
-            elif "Вход" in lines[i]:
+            elif "Вход" in lines[i] or "Входные данные" in lines[i]:
                 self.options_widget.set_value("Вход:", lines[i + 1].strip())
 
-            elif "Выход" in lines[i]:
+            elif "Выход" in lines[i] or "Выходные данные" in lines[i]:
                 self.options_widget.set_value("Выход:", lines[i + 1].strip())
 
         pos_count = 0
@@ -374,8 +374,8 @@ class TestsWidget(QWidget):
             readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8')
             readme.write(f"# Тесты для лабораторной работы №{self.settings['lab']:0>2}, задания №"
                          f"{self.settings['task']:0>2}\n\n"
-                         f"## Вход\n{self.options_widget['Вход:']}\n\n"
-                         f"## Выход\n{self.options_widget['Выход:']}\n\n"
+                         f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
+                         f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
                          f"## Позитивные тесты:\n")
             for i in range(len(self.pos_tests)):
                 readme.write(f"- {i + 1:0>2} - {self.pos_tests[i][0]}\n")
