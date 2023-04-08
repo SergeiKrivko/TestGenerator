@@ -227,7 +227,7 @@ def parce_main_file(path):
                                 lst = []
                                 for p in params:
                                     if ' ' in p:
-                                        lst.append(p.split()[1])
+                                        lst.append(p.split()[1].lstrip("*"))
                                 res_dict[header] = lst, i, i
                                 if not header.endswith(";"):
                                     current_func = header
@@ -242,7 +242,7 @@ def parce_main_file(path):
                     if line.startswith(var_type.strip()) and ' ' in line and line.endswith(";"):
                         lst = line[line.index(' ') + 1:-1].split(',')
                         for el in lst:
-                            el = el.strip().replace('=', ' ')
+                            el = el.strip().lstrip("*").replace('=', ' ')
                             el = el.replace('[', ' ')
                             if ' ' in el:
                                 res_dict[current_func][0].append(el[:el.index(' ')])

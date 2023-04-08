@@ -9,6 +9,7 @@ unsigned long long int
 unsigned long long
 unsigned float
 unsigned double
+unsigned
 int
 char
 short int
@@ -19,3 +20,5 @@ long long int
 long long
 float
 double
+union
+struct

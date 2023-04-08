@@ -5,5 +5,11 @@ while
 break
 continue
 return
+typedef
+case
+switch
+auto
+extern
+const
 #include
 #define

@@ -85,6 +85,7 @@ class OptionsWidget(QWidget):
         for key, item in dct.items():
             if 'h_line' in key:
                 horizontal_layout = QHBoxLayout()
+                horizontal_layout.setAlignment(Qt.AlignLeft)
                 for key2, item2 in item.items():
                     label = QLabel(str(key2), self)
                     widget, value = self.get_widget(key2, item2)
