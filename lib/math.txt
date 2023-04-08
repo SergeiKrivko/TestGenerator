@@ -1,0 +1,5 @@
+double pow(double __x, double __y);
+double sqrt(double __x);
+double fabs(double __x);
+float fabsf(float __x);
+double round(double __x);

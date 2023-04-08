@@ -1,0 +1,4 @@
+int scanf(const char *__restrict __format, ...);
+int printf(const char *__restrict __format, ...);
+int puts (const char *__s);
+#define EOF (-1)
