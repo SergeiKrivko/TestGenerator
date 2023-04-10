@@ -80,11 +80,12 @@ class CodeEditor(QsciScintilla):
 
         self.apis = {
             'words': [tuple(parce_file("lib/words.txt")), True],
-            'types': [tuple(parce_file("lib/types.txt")), True],
-            'stdio.h': [tuple(parce_header("lib/stdio.txt")), True],
-            'math.h': [tuple(parce_header("lib/math.txt")), True],
-            'stdlib.h': [tuple(parce_header("lib/stdlib.txt")), True]
+            'types': [tuple(parce_file("lib/types.txt")), True]
         }
+        self.libs = tuple(get_lib())
+        for lib in self.libs:
+            self.apis[lib] = [tuple(parce_header(f"lib/{lib.replace('.h', '.txt')}")), True]
+
         self.apis2 = dict()
         self.path = ""
         self.current_file = ""
@@ -105,12 +106,12 @@ class CodeEditor(QsciScintilla):
             self.setText(file.read())
             file.seek(0)
 
-            for lib in ("stdio.h", "math.h", "stdlib.h"):
+            for lib in self.libs:
                 self.apis[lib][1] = False
 
             for line in file:
                 line = line.strip()
-                for lib in ("stdio.h", "math.h", "stdlib.h"):
+                for lib in self.libs:
                     if line == f"#include <{lib}>":
                         self.apis[lib][1] = True
                 else:
@@ -127,7 +128,7 @@ class CodeEditor(QsciScintilla):
             if pos != self.current_row and self.current_file:
                 self.current_row = pos
                 for line in self.text().split("\n"):
-                    for lib in ("stdio.h", "math.h", "stdlib.h"):
+                    for lib in self.libs:
                         if line == f"#include <{lib}>":
                             self.apis[lib][1] = True
                     else:
@@ -252,3 +253,10 @@ def parce_main_file(path):
     res_dict['__general__'] = res_dict['__general__'][0], res_dict['__general__'][1], i
     types_txt.close()
     return res_dict
+
+
+def get_lib():
+    for lib in os.listdir("lib"):
+        if lib not in ("words", "types") and lib.endswith(".txt"):
+            yield lib.replace(".txt", ".h")
+
