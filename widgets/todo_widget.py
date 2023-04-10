@@ -93,6 +93,9 @@ class TODOWidget(QWidget):
         for task, description in self.cm.parce_todo_md():
             self.list_widget.addItem(TODOItem(task, description))
 
+        for path, line, description in self.cm.parce_todo_in_code():
+            self.list_widget.addItem(CodeTODOItem(path, line, description))
+
         self.list_widget.sortItems()
 
     def show(self) -> None:
@@ -110,13 +113,24 @@ class TODOItem(QListWidgetItem):
         super(TODOItem, self).__init__()
         self.task = task
         self.description = description
-        self.setText(f"{'Задание ' + str(task) if task else 'Общее':20}\t{description}")
+        self.setText(f"{'Задание ' + str(task) if task else 'Общее':35}\t{description}")
         self.setForeground(Qt.blue)
 
     def set_description(self, description):
         self.description = description
-        self.setText(f"{'Задание ' + str(self.task) if self.task else 'Общее':20}\t{description}")
+        self.setText(f"{'Задание ' + str(self.task) if self.task else 'Общее':35}\t{description}")
 
     def set_task(self, task):
         self.task = task
-        self.setText(f"{'Задание ' + str(self.task) if self.task else 'Общее':20}\t{self.description}")
+        self.setText(f"{'Задание ' + str(self.task) if self.task else 'Общее':35}\t{self.description}")
+
+
+class CodeTODOItem(QListWidgetItem):
+    def __init__(self, path, line, description):
+        super(CodeTODOItem, self).__init__()
+        self.path = path
+        self.description = description
+        self.line = line
+        self.setText(f"{self.path + '  ' + str(line):30}\t{self.description}")
+        self.setForeground(Qt.darkYellow)
+

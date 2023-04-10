@@ -139,6 +139,20 @@ class CommandManager:
             pass
         return res
 
+    def parce_todo_in_code(self):
+        res = []
+        for folder in os.listdir(self.settings['path']):
+            if os.path.isdir(f"{self.settings['path']}/{folder}"):
+                for file in os.listdir(f"{self.settings['path']}/{folder}"):
+                    if file.endswith(".c") or file.endswith(".h"):
+                        i = 0
+                        for line in (f := open(f"{self.settings['path']}/{folder}/{file}")):
+                            if "// TODO:" in line:
+                                res.append((f"{folder}/{file}", i, line[line.index("// TODO:") + 8:].strip()))
+                            i += 1
+                        f.close()
+        return res
+
 
 class Looper(QThread):
     test_complete = pyqtSignal(bool, str, int, bool, str)
