@@ -7,6 +7,7 @@ from widgets.tests_widget import TestsWidget
 from widgets.git_widget import GitWidget
 from widgets.menu_bar import MenuBar
 from commands import CommandManager
+from widgets.todo_widget import TODOWidget
 import json
 import os
 
@@ -53,6 +54,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.git_widget)
         self.git_widget.hide()
 
+        self.todo_widget = TODOWidget(self.settings, self.cm)
+        layout.addWidget(self.todo_widget)
+        self.todo_widget.hide(save_data=False)
+
         pos_comparator = self.settings.get('pos_comparator', (0, 0))[0]
         neg_comparator = self.settings.get('neg_comparator', (0, 0))[0]
 
@@ -91,6 +96,7 @@ class MainWindow(QMainWindow):
             'Код': (self.show_code, None),
             'Тесты': (self.show_tests, None),
             'Тестирование': (self.show_testing, None),
+            'TODO': (self.show_todo, None),
             'Git': (self.show_git, None),
             'Настройки': (self.options_window.show, None)
         })
@@ -120,24 +126,35 @@ class MainWindow(QMainWindow):
         self.testing_widget.hide()
         self.code_widget.hide()
         self.git_widget.hide()
+        self.todo_widget.hide()
         self.tests_widget.show()
 
     def show_testing(self):
         self.tests_widget.hide()
         self.code_widget.hide()
         self.git_widget.hide()
+        self.todo_widget.hide()
         self.testing_widget.show()
 
     def show_code(self):
         self.testing_widget.hide()
         self.tests_widget.hide()
         self.git_widget.hide()
+        self.todo_widget.hide()
         self.code_widget.show()
+
+    def show_todo(self):
+        self.testing_widget.hide()
+        self.tests_widget.hide()
+        self.git_widget.hide()
+        self.code_widget.hide()
+        self.todo_widget.show()
 
     def show_git(self):
         self.testing_widget.hide()
         self.tests_widget.hide()
         self.code_widget.hide()
+        self.todo_widget.hide()
         self.git_widget.show()
 
     def open_test_from_code(self):
@@ -148,15 +165,16 @@ class MainWindow(QMainWindow):
         self.show_testing()
 
     def closeEvent(self, a0):
+        self.todo_widget.hide()
+        self.code_widget.hide()
+        self.testing_widget.hide()
+        self.testing_widget.hide()
+        self.git_widget.hide()
         settings = dict() if not os.path.isfile("settings.txt") else \
             json.loads(open('settings.txt', encoding='utf-8').read())
         settings[self.settings['path']] = self.settings
         settings['path'] = self.settings['path']
         self.settings.pop('path')
-        self.code_widget.hide()
-        self.testing_widget.hide()
-        self.testing_widget.hide()
-        self.git_widget.hide()
         file = open("settings.txt", 'w', encoding="utf-8")
         file.write(json.dumps(settings))
         file.close()

@@ -111,6 +111,30 @@ class CommandManager:
         except Exception:
             return ''
 
+    def list_of_tasks(self):
+        res = []
+        for file in os.listdir(self.settings['path']):
+            if file.startswith(f"lab_{self.settings['lab']:0>2}_"):
+                try:
+                    res.append(int(file[7:9]))
+                except Exception:
+                    pass
+        res.sort()
+        return res
+
+    def parce_todo_md(self):
+        res = []
+        file = open(f"{self.settings['path']}/todo_{self.settings['lab']:0>2}.md")
+        task = -1
+        for line in file:
+            if line.startswith('## Общее'):
+                task = 0
+            elif line.startswith('## Задание'):
+                task = int(line.split()[2])
+            elif line.startswith('- '):
+                res.append((task, line[1:].strip()))
+        return res
+
 
 class Looper(QThread):
     test_complete = pyqtSignal(bool, str, int, bool, str)

@@ -131,7 +131,7 @@ class OptionsWidget(QWidget):
                 main_layout.addLayout(h_layout)
             elif item.get('name') != OptionsWindow.NAME_SKIP:
                 v_layout = QVBoxLayout()
-                v_layout.setAlignment(Qt.AlignLeft)
+                v_layout.setAlignment(Qt.AlignTop)
                 v_layout.addWidget(label)
                 v_layout.addWidget(widget)
                 main_layout.addLayout(v_layout)
