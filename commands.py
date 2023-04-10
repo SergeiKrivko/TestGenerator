@@ -124,15 +124,19 @@ class CommandManager:
 
     def parce_todo_md(self):
         res = []
-        file = open(f"{self.settings['path']}/todo_{self.settings['lab']:0>2}.md")
-        task = -1
-        for line in file:
-            if line.startswith('## Общее'):
-                task = 0
-            elif line.startswith('## Задание'):
-                task = int(line.split()[2])
-            elif line.startswith('- '):
-                res.append((task, line[1:].strip()))
+        try:
+            file = open(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md")
+            task = -1
+            for line in file:
+                if line.startswith('## Общее'):
+                    task = 0
+                elif line.startswith('## Задание'):
+                    task = int(line.split()[2])
+                elif line.startswith('- '):
+                    res.append((task, line[1:].strip()))
+                res.sort()
+        except Exception:
+            pass
         return res
 
 

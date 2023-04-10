@@ -69,7 +69,8 @@ class TODOWidget(QWidget):
 
                 self.list_widget.sortItems()
 
-                file = open(f"{self.settings['path']}/todo_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8')
+                os.makedirs(f"{self.settings['path']}/TODO", exist_ok=True)
+                file = open(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8')
                 file.write(f"# Лабораторная работа №{self.settings['lab']}: список задач\n\n")
 
                 task = -1
@@ -83,8 +84,8 @@ class TODOWidget(QWidget):
                 file.close()
                 break
         else:
-            if os.path.isfile(f"{self.settings['path']}/todo_{self.settings['lab']:0>2}.md"):
-                os.remove(f"{self.settings['path']}/todo_{self.settings['lab']:0>2}.md")
+            if os.path.isfile(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md"):
+                os.remove(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md")
 
     def open_lab(self):
         self.list_widget.clear()

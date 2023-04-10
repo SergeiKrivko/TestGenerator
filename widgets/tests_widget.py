@@ -408,17 +408,20 @@ def read_file(path):
 
 
 def clear_words(path):
-    text = read_file(path)
-    text.replace('\n', ' \n')
-    text.replace('\t', ' \t')
+    file = open(path, 'r', encoding='utf-8')
     result = []
-    for word in text.split(' '):
-        try:
-            float(word)
-            result.append(word)
-        except Exception:
-            pass
+    for line in file:
+        lst = []
+        for word in line.split():
+            try:
+                float(word)
+                lst.append(word)
+            except Exception:
+                pass
+        if len(lst):
+            result.append(' '.join(lst))
+    file.close()
 
     file = open(path, 'w', encoding='utf-8')
-    file.write(" ".join(result).strip())
+    file.write("\n".join(result))
     file.close()
