@@ -56,6 +56,7 @@ class MainWindow(QMainWindow):
 
         self.todo_widget = TODOWidget(self.settings, self.cm)
         layout.addWidget(self.todo_widget)
+        self.todo_widget.jumpToCode.connect(self.jump_to_code_from_todo)
         self.todo_widget.hide(save_data=False)
 
         pos_comparator = self.settings.get('pos_comparator', (0, 0))[0]
@@ -113,6 +114,14 @@ class MainWindow(QMainWindow):
         if path:
             self.settings['path'] = path
             self.tests_widget.open_tests()
+
+    def jump_to_code_from_todo(self, file_name, line):
+        self.show_code()
+        for i in range(self.code_widget.files_widget.files_list.count()):
+            if self.code_widget.files_widget.files_list.item(i).text() == file_name:
+                self.code_widget.files_widget.files_list.setCurrentRow(i)
+                self.code_widget.code_edit.setCursorPosition(line, 0)
+                break
 
     def save_settings(self, dct):
         self.settings['compiler'] = dct['Компилятор']

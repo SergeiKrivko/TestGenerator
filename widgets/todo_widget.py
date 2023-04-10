@@ -1,12 +1,14 @@
 import os
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QHBoxLayout, QPushButton
 
 from widgets.options_window import OptionsWidget, OptionsWindow
 
 
 class TODOWidget(QWidget):
+    jumpToCode = pyqtSignal(str, int)
+
     def __init__(self, settings, cm):
         super(TODOWidget, self).__init__()
         self.settings = settings
@@ -56,6 +58,8 @@ class TODOWidget(QWidget):
             })
             self.window.show()
             self.window.returnPressed.connect(self.update_todo_item)
+        elif isinstance(item, CodeTODOItem):
+            self.jump_to_code()
 
     def update_todo_item(self, dct):
         item = self.list_widget.currentItem()
@@ -97,6 +101,16 @@ class TODOWidget(QWidget):
             self.list_widget.addItem(CodeTODOItem(path, line, description))
 
         self.list_widget.sortItems()
+
+    def jump_to_code(self):
+        item = self.list_widget.currentItem()
+        try:
+            if isinstance(item, CodeTODOItem):
+                self.settings['task'] = int(item.path[7:9])
+                self.settings['var'] = int(item.path[10:12])
+                self.jumpToCode.emit(item.path.split('/')[1], item.line)
+        except Exception as ex:
+            print(f"{ex.__class__.__name__}: {ex}")
 
     def show(self) -> None:
         self.open_lab()
