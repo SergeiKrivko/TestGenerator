@@ -1,11 +1,10 @@
 import os
-from time import time
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTextEdit, QListWidget, QListWidgetItem, QTabWidget
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget
 
-from widgets.files_widget import FilesWidget, CustomDialog
+from widgets.files_widget import FilesWidget
 from widgets.options_window import OptionsWidget
 from widgets.syntax_highlighter import CodeEditor
 
@@ -13,9 +12,10 @@ from widgets.syntax_highlighter import CodeEditor
 class CodeWidget(QWidget):
     testing_signal = pyqtSignal()
 
-    def __init__(self, settings):
+    def __init__(self, settings, cm):
         super(CodeWidget, self).__init__()
         self.settings = settings
+        self.cm = cm
         self.current_file = ''
 
         layout = QHBoxLayout()
@@ -33,18 +33,22 @@ class CodeWidget(QWidget):
         layout_left.addWidget(self.options_widget)
 
         self.test_res_widget = QListWidget()
-        self.test_res_widget.setMaximumWidth(175)
+        self.test_res_widget.setMaximumWidth(200)
 
         self.files_widget = FilesWidget(self.settings)
-        self.files_widget.setMaximumWidth(175)
+        self.files_widget.setMaximumWidth(200)
 
         self.files_widget.files_list.currentRowChanged.connect(self.open_code)
         self.files_widget.renameFile.connect(self.rename_file)
 
+        self.todo_widget = QListWidget()
+        self.todo_widget.setMaximumWidth(200)
+
         self.tab_widget = QTabWidget()
         self.tab_widget.addTab(self.files_widget, "Файлы")
         self.tab_widget.addTab(self.test_res_widget, "Тесты")
-        self.tab_widget.setMaximumWidth(175)
+        self.tab_widget.addTab(self.todo_widget, "TODO")
+        self.tab_widget.setFixedWidth(190)
         layout_left.addWidget(self.tab_widget)
 
         self.code_edit = CodeEditor()
@@ -114,6 +118,11 @@ class CodeWidget(QWidget):
                 self.files_widget.files_list.setCurrentRow(i)
                 return
 
+    def update_todo(self):
+        self.todo_widget.clear()
+        for path, line, text in self.cm.parse_todo_in_code(current_task=True):
+            self.todo_widget.addItem(CodeTODOItem(path, line, text))
+
     def open_code(self):
         self.tab_widget.setCurrentIndex(0)
         self.get_path()
@@ -126,6 +135,7 @@ class CodeWidget(QWidget):
             self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
             self.file_update_time = os.path.getmtime(self.current_file)
             self.code_edit.open_file(self.path, self.files_widget.files_list.currentItem().text())
+            self.update_todo()
         except Exception:
             pass
 
@@ -137,21 +147,6 @@ class CodeWidget(QWidget):
             file.write(code)
             file.close()
             self.file_update_time = os.path.getmtime(f"{self.current_file}")
-        # if code:
-        #     if not forced and os.path.isfile(self.current_file) and \
-        #                       self.file_update_time != os.path.getmtime(self.current_file):
-        #         dlg = CustomDialog("Данный файл был отредактирован "
-        #                            "также в другом месте. Сохранить текущие изменения?")
-        #         if dlg.exec():
-        #             self.save_code(forced=True)
-        #         else:
-        #             self.open_code(forced=True)
-        #     else:
-        #         os.makedirs(self.path, exist_ok=True)
-        #         file = open(f"{self.current_file}", 'w', encoding='utf=8')
-        #         file.write(code)
-        #         file.close()
-        #         self.file_update_time = os.path.getmtime(f"{self.current_file}")
 
     def check_if_code_changed(self):
         if os.path.isfile(self.current_file) and self.file_update_time != os.path.getmtime(self.current_file):
@@ -185,3 +180,12 @@ class CodeWidget(QWidget):
 
     def hide(self):
         super(CodeWidget, self).hide()
+
+
+class CodeTODOItem(QListWidgetItem):
+    def __init__(self, path, line, description):
+        super(CodeTODOItem, self).__init__()
+        self.path = os.path.basename(path)
+        self.description = description
+        self.line = line
+        self.setText(f"    {self.path:20} {line}\n{self.description}")

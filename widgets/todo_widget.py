@@ -126,7 +126,7 @@ class TODOWidget(QWidget):
         for task, description in self.cm.parce_todo_md():
             self.list_widget.addItem(TODOItem(task, description))
 
-        for path, line, description in self.cm.parce_todo_in_code():
+        for path, line, description in self.cm.parse_todo_in_code():
             self.list_widget.addItem(CodeTODOItem(path, line, description))
 
         self.list_widget.sortItems()

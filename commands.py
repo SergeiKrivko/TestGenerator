@@ -139,9 +139,13 @@ class CommandManager:
             pass
         return res
 
-    def parce_todo_in_code(self):
+    def parse_todo_in_code(self, current_task=False):
         res = []
-        for folder in os.listdir(self.settings['path']):
+        for folder in (
+                os.listdir(self.settings['path']) if not current_task else
+                (f"lab_{self.settings['lab']:0>2}_"
+                 f"{self.settings['task']:0>2}_{self.settings['var']:0>2}",)):
+
             if os.path.isdir(f"{self.settings['path']}/{folder}"):
                 for file in os.listdir(f"{self.settings['path']}/{folder}"):
                     if file.endswith(".c") or file.endswith(".h"):

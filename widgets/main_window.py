@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.testing_widget)
         self.testing_widget.hide()
 
-        self.code_widget = CodeWidget(self.settings)
+        self.code_widget = CodeWidget(self.settings, self.cm)
         layout.addWidget(self.code_widget)
         self.testing_widget.testing_start.connect(self.code_widget.testing_start)
         self.testing_widget.add_test.connect(self.code_widget.add_test)
