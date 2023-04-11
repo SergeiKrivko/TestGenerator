@@ -43,7 +43,7 @@ class TODOWidget(QWidget):
 
         self.button_delete = QPushButton("Удалить")
         self.button_delete.setFixedHeight(25)
-        self.button_delete.clicked.connect(lambda: self.list_widget.takeItem(self.list_widget.currentRow()))
+        self.button_delete.clicked.connect(self.delete_todo)
         buttons_layout.addWidget(self.button_delete)
 
         self.list_widget = QListWidget()
@@ -74,7 +74,21 @@ class TODOWidget(QWidget):
                         f"{dlg.file_combo_box.currentText()}", 'a', encoding='utf-8')
             file.write(f"// TODO: {dlg.line_edit.text()}\n")
             file.close()
+        self.create_todo_file()
         self.open_lab()
+
+    def delete_todo(self):
+        item = self.list_widget.currentItem()
+        if isinstance(item, CodeTODOItem):
+            file = open(f"{self.settings['path']}/{item.path}", encoding='utf-8')
+            text = file.read()
+            file.close()
+
+            text = text.replace(f"// TODO: {item.description.strip()}", "")
+            file = open(f"{self.settings['path']}/{item.path}", 'w', encoding='utf-8')
+            file.write(text)
+            file.close()
+        self.list_widget.takeItem(self.list_widget.currentRow())
 
     def update_todo_item(self, dct):
         item = self.list_widget.currentItem()
