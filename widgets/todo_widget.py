@@ -109,8 +109,8 @@ class TODOWidget(QWidget):
                 self.settings['task'] = int(item.path[7:9])
                 self.settings['var'] = int(item.path[10:12])
                 self.jumpToCode.emit(item.path.split('/')[1], item.line)
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        except Exception:
+            pass
 
     def show(self) -> None:
         self.open_lab()

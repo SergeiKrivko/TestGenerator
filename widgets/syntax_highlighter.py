@@ -4,6 +4,9 @@ from PyQt5.QtGui import QFont, QColor, QFontMetrics
 from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciAPIs
 
 
+headers_list = []
+
+
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
@@ -78,13 +81,14 @@ class CodeEditor(QsciScintilla):
 
         self.setCallTipsVisible(0)
 
+        headers_list.clear()
         self.apis = {
             'words': [tuple(parce_file("lib/words.txt")), True],
             'types': [tuple(parce_file("lib/types.txt")), True]
         }
         self.libs = tuple(get_lib())
         for lib in self.libs:
-            self.apis[lib] = [tuple(parce_header(f"lib/{lib.replace('.h', '.txt')}")), True]
+            self.apis[lib] = [tuple(self.parce_header(f"lib/{lib.replace('.h', '.txt')}")), True]
 
         self.apis2 = dict()
         self.path = ""
@@ -109,6 +113,7 @@ class CodeEditor(QsciScintilla):
             for lib in self.libs:
                 self.apis[lib][1] = False
 
+            headers_list.clear()
             for line in file:
                 line = line.strip()
                 for lib in self.libs:
@@ -118,13 +123,14 @@ class CodeEditor(QsciScintilla):
                     if line.startswith("#include \"") and line.endswith("\""):
                         f = line.split()[1].strip('\"')
                         if os.path.isfile(f"{path}/{f}"):
-                            self.apis[f] = [tuple(parce_header(f"{path}/{f}")), True]
+                            self.apis[f] = [tuple(self.parce_header(f"{path}/{f}")), True]
 
         self.apis2 = parce_main_file(f"{path}/{file_name}")
         self.set_api()
 
     def update_api(self, pos):
         try:
+            headers_list.clear()
             if pos != self.current_row and self.current_file:
                 self.current_row = pos
                 for line in self.text().split("\n"):
@@ -138,12 +144,12 @@ class CodeEditor(QsciScintilla):
                                 if f in self.apis:
                                     self.apis[f][1] = True
                                 else:
-                                    self.apis[f] = [tuple(parce_header(f"{self.path}/{f}")), True]
+                                    self.apis[f] = [tuple(self.parce_header(f"{self.path}/{f}")), True]
                 self.apis2 = parce_main_file(f"{self.path}/{self.current_file}")
                 self.set_api()
                 self.autoCompleteFromAPIs()
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        except Exception:
+            pass
 
     def set_api(self):
         self.api = QsciAPIs(self.lexer)
@@ -156,8 +162,8 @@ class CodeEditor(QsciScintilla):
                 if api[1] < self.getCursorPosition()[0] <= api[2]:
                     for el in api[0]:
                         self.api.add(el)
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        except Exception:
+            pass
         self.api.prepare()
         self.lexer.setAPIs(self.api)
 
@@ -168,28 +174,38 @@ class CodeEditor(QsciScintilla):
         api.prepare()
         return api
 
-
-def parce_header(path):
-    types_txt = open("lib/types.txt", encoding='utf-8')
-    with open(path, encoding='utf-8') as header_file:
-        for line in header_file:
-            line = line.strip()
-            if line.startswith('#define') and len(s := line.split()) == 3:
-                yield s[1]
-            elif line.startswith('typedef') and len(s := line.split()) >= 3:
-                s = s[2]
-                if '[' in s:
-                    yield s[:s.index('[')]
+    def parce_header(self, path):
+        print(f"parsing header {path}")
+        types_txt = open("lib/types.txt", encoding='utf-8')
+        with open(path, encoding='utf-8') as header_file:
+            for line in header_file:
+                line = line.strip()
+                for lib in self.libs:
+                    if line == f"#include <{lib}>":
+                        self.apis[lib][1] = True
                 else:
-                    yield s
-            else:
-                types_txt.seek(0)
-                for func_type in types_txt:
-                    func_type = func_type.strip()
-                    if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
-                        yield line.replace(func_type, '', 1)
-                        break
-    types_txt.close()
+                    if line.startswith("#include \"") and line.endswith("\""):
+                        f = line.split()[1].strip('\"')
+                        if f not in headers_list:
+                            headers_list.append(f)
+                            for el in self.parce_header(f"{os.path.split(path)[0]}/{f}"):
+                                yield el
+                    if line.startswith('#define') and len(s := line.split()) == 3:
+                        yield s[1]
+                    elif line.startswith('typedef') and len(s := line.split()) >= 3:
+                        s = s[2]
+                        if '[' in s:
+                            yield s[:s.index('[')]
+                        else:
+                            yield s
+                    else:
+                        types_txt.seek(0)
+                        for func_type in types_txt:
+                            func_type = func_type.strip()
+                            if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
+                                yield line.replace(func_type, '', 1)
+                                break
+        types_txt.close()
 
 
 def parce_file(path):

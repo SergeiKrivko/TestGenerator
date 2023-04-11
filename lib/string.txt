@@ -1,0 +1,6 @@
+int strlen(char *str);
+int strcmp(char *str1, char *str2);
+char strcpy(char *dest, char *src);
+char strcat(char *dest, char *src);
+char strchr(char *str, char ch);
+char strstr(char *str, char *substr);
