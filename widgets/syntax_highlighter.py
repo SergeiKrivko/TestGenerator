@@ -175,7 +175,6 @@ class CodeEditor(QsciScintilla):
         return api
 
     def parce_header(self, path):
-        print(f"parsing header {path}")
         types_txt = open("lib/types.txt", encoding='utf-8')
         with open(path, encoding='utf-8') as header_file:
             for line in header_file:

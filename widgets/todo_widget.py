@@ -1,7 +1,8 @@
 import os
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QHBoxLayout, QPushButton, QDialog, \
+    QDialogButtonBox, QLabel, QComboBox, QLineEdit
 
 from widgets.options_window import OptionsWidget, OptionsWindow
 
@@ -30,13 +31,18 @@ class TODOWidget(QWidget):
         buttons_layout.setAlignment(Qt.AlignLeft)
         layout.addLayout(buttons_layout)
 
-        self.button_add = QPushButton("+")
-        self.button_add.setFixedSize(30, 30)
+        self.button_add = QPushButton("Добавить")
+        self.button_add.setFixedHeight(25)
         self.button_add.clicked.connect(lambda: self.list_widget.addItem(TODOItem(0, '')))
         buttons_layout.addWidget(self.button_add)
 
-        self.button_delete = QPushButton("✕")
-        self.button_delete.setFixedSize(30, 30)
+        self.button_addc = QPushButton("Добавить в код")
+        self.button_addc.setFixedHeight(25)
+        self.button_addc.clicked.connect(self.add_todo_to_code)
+        buttons_layout.addWidget(self.button_addc)
+
+        self.button_delete = QPushButton("Удалить")
+        self.button_delete.setFixedHeight(25)
         self.button_delete.clicked.connect(lambda: self.list_widget.takeItem(self.list_widget.currentRow()))
         buttons_layout.addWidget(self.button_delete)
 
@@ -60,6 +66,15 @@ class TODOWidget(QWidget):
             self.window.returnPressed.connect(self.update_todo_item)
         elif isinstance(item, CodeTODOItem):
             self.jump_to_code()
+
+    def add_todo_to_code(self):
+        dlg = AddTODODialogWindow(self.settings['path'], self.settings['lab'])
+        if dlg.exec():
+            file = open(f"{self.settings['path']}/{dlg.task_combo_box.currentText()}/"
+                        f"{dlg.file_combo_box.currentText()}", 'a', encoding='utf-8')
+            file.write(f"// TODO: {dlg.line_edit.text()}\n")
+            file.close()
+        self.open_lab()
 
     def update_todo_item(self, dct):
         item = self.list_widget.currentItem()
@@ -148,3 +163,47 @@ class CodeTODOItem(QListWidgetItem):
         self.setText(f"{self.path + '  ' + str(line):30}\t{self.description}")
         self.setForeground(Qt.darkYellow)
 
+
+class AddTODODialogWindow(QDialog):
+    def __init__(self, path, lab):
+        super().__init__()
+        self.path = path
+
+        self.setWindowTitle("Добавить TODO в код")
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        h_layout = QHBoxLayout()
+        self.layout.addLayout(h_layout)
+        h_layout.addWidget(QLabel("Задание"))
+
+        self.task_combo_box = QComboBox()
+        h_layout.addWidget(self.task_combo_box)
+        self.task_combo_box.setFixedSize(125, 25)
+        self.task_combo_box.addItems(sorted(filter(lambda p: p.startswith(f"lab_{lab:0>2}_"), os.listdir(path))))
+        self.task_combo_box.currentTextChanged.connect(self.change_task)
+
+        h_layout.addWidget(QLabel("Файл"))
+        self.file_combo_box = QComboBox()
+        h_layout.addWidget(self.file_combo_box)
+        self.file_combo_box.setFixedSize(125, 25)
+        self.file_combo_box.addItems(sorted(filter(lambda p: p.endswith(".c") or p.endswith(".h"), os.listdir(
+            f"{self.path}/{self.task_combo_box.currentText()}"))))
+
+        self.line_edit = QLineEdit()
+        self.line_edit.setFixedSize(400, 25)
+        self.layout.addWidget(self.line_edit)
+
+        self.layout.addWidget(self.buttonBox)
+
+    def change_task(self):
+        self.file_combo_box.clear()
+        self.file_combo_box.addItems(sorted(filter(lambda p: p.endswith(".c") or p.endswith(".h"), os.listdir(
+            f"{self.path}/{self.task_combo_box.currentText()}"))))
