@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QMessageBox
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QMessageBox, QDialog, QDialogButtonBox, QScrollArea, \
+    QHBoxLayout, QCheckBox, QLabel
 from PyQt5.QtGui import QFont
 from widgets.options_window import OptionsWidget
 from widgets.test_table_widget import TestTableWidget
@@ -22,6 +24,7 @@ class TestsWidget(QWidget):
                                    'name': OptionsWidget.NAME_LEFT, 'width': 60},
                 'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'copy': {'type': 'button', 'text': 'Копировать', 'name': OptionsWidget.NAME_SKIP}
             },
             'h_line2': {
                 'Вход:': {'type': str, 'initial': '-', 'width': 300, 'name': OptionsWidget.NAME_LEFT},
@@ -88,6 +91,16 @@ class TestsWidget(QWidget):
             self.save_tests()
             self.settings['var'] = self.options_widget["Номер варианта:"]
             self.open_tests()
+        elif key == 'copy':
+            dlg = TestCopyWindow(self.settings)
+            if dlg.exec():
+                for t, desc, in_data, out_data in dlg.copy_tests():
+                    if t:
+                        self.pos_tests.append([desc, in_data, out_data])
+                        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+                    else:
+                        self.neg_tests.append([desc, in_data, out_data])
+                        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
 
     def update_options(self):
         self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
@@ -425,3 +438,145 @@ def clear_words(path):
     file = open(path, 'w', encoding='utf-8')
     file.write("\n".join(result))
     file.close()
+
+
+class TestCopyWindow(QDialog):
+    def __init__(self, settings):
+        super().__init__()
+        self.settings = settings
+
+        self.setWindowTitle("Копировать тесты")
+
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.options_widget = OptionsWidget({
+            'h_line': {
+                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
+                                'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
+                                   'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
+                                    'name': OptionsWidget.NAME_LEFT, 'width': 60}
+            }
+        })
+        self.layout.addWidget(self.options_widget)
+        self.options_widget.clicked.connect(self.options_changed)
+
+        self.scroll_area = QScrollArea()
+        self.widget = QWidget()
+        self.scroll_layout = QVBoxLayout()
+        self.scroll_layout.setAlignment(Qt.AlignTop)
+        self.widget.setLayout(self.scroll_layout)
+        self.scroll_area.setWidget(self.widget)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFixedSize(480, 320)
+        self.layout.addWidget(self.scroll_area)
+
+        self.layout.addWidget(self.buttonBox)
+
+        self.path = ""
+        self.test_list = []
+        self.check_boxes = []
+
+        self.get_path()
+        self.parse_readme_md()
+        self.update_list()
+
+    def options_changed(self, key):
+        if key in ('Номер лабы:', 'Номер задания:'):
+            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+                self.options_widget.set_value('Номер варианта:', -1)
+            else:
+                for i in range(100):
+                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                        self.options_widget.set_value('Номер варианта:', i)
+                        break
+        self.clear_scroll_area()
+        self.check_boxes.clear()
+        self.get_path()
+        self.parse_readme_md()
+        self.update_list()
+
+    def get_path(self, from_settings=False):
+        if from_settings:
+            if self.settings['var'] == -1:
+                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                    f"{self.settings['task']:0>2}"
+            else:
+                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
+                                                    f"{self.settings['task']:0>2}_" \
+                                                    f"{self.settings['var']:0>2}"
+        elif self.options_widget['Номер варианта:'] == -1:
+            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                                f"{self.options_widget['Номер задания:']:0>2}"
+        else:
+            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                                f"{self.options_widget['Номер задания:']:0>2}_" \
+                                                f"{self.options_widget['Номер варианта:']:0>2}"
+
+    def parse_readme_md(self):
+        if not os.path.isfile(f"{self.path}/func_tests/readme.md"):
+            return
+        file = open(f"{self.path}/func_tests/readme.md", encoding='utf-8')
+        lines = file.readlines()
+        file.close()
+        self.test_list.clear()
+
+        for i in range(len(lines)):
+            if "Позитивные тесты" in lines[i]:
+                for j in range(i + 1, len(lines)):
+                    if lines[j][:2] == '- ' and lines[j][4:7] == ' - ':
+                        self.test_list.append("POS\t" + lines[j][7:].strip())
+                    else:
+                        break
+
+            elif "Негативные тесты" in lines[i]:
+                for j in range(i + 1, len(lines)):
+                    if lines[j][:2] == '- ' and lines[j][4:7] == ' - ':
+                        self.test_list.append("NEG\t" + lines[j][7:].strip())
+                    else:
+                        break
+
+    def update_list(self):
+        for el in self.test_list:
+            widget = QWidget()
+            layout = QHBoxLayout()
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setAlignment(Qt.AlignLeft)
+            check_box = QCheckBox()
+            self.check_boxes.append(check_box)
+            layout.addWidget(check_box)
+            layout.addWidget(QLabel(el))
+            widget.setLayout(layout)
+            self.scroll_layout.addWidget(widget)
+
+    def clear_scroll_area(self):
+        for i in range(self.scroll_layout.count() - 1, -1, -1):
+            self.scroll_layout.itemAt(i).widget().deleteLater()
+
+    def copy_tests(self):
+        pos_ind = 0
+        neg_ind = 0
+        for i in range(len(self.test_list)):
+            print(self.test_list[i])
+            if self.test_list[i].startswith("POS"):
+                pos_ind += 1
+                if self.check_boxes[i].isChecked():
+                    yield True, self.test_list[i][4:], \
+                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_in.txt"), \
+                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_out.txt")
+            else:
+                neg_ind += 1
+                if self.check_boxes[i].isChecked():
+                    yield False, self.test_list[i][4:], \
+                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_in.txt"), \
+                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_out.txt")

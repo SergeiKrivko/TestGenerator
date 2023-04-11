@@ -176,7 +176,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, a0):
         self.todo_widget.hide()
         self.code_widget.hide()
-        self.testing_widget.hide()
+        self.tests_widget.hide()
         self.testing_widget.hide()
         self.git_widget.hide()
         settings = dict() if not os.path.isfile("settings.txt") else \
