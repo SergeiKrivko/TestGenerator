@@ -115,18 +115,13 @@ class GitWidget(QWidget):
         old_dir = os.getcwd()
         os.chdir(self.settings['path'])
 
-        file = open(f"{self.settings['path']}/temp.txt", 'w', encoding='utf-8')
-        file.write(settings.get('Логин:', '') + '\n')
-        file.write(settings.get('Пароль:', ''))
-        file.close()
+        os.system("git config remote.origin.url > temp.txt")
+        url = read_file('temp.txt').replace("https://", f"https://{settings['Логин:']}:{settings['Пароль:']}@")
 
-        os.system(f"git push origin lab_{self.settings['lab']:0>2} < {self.settings['path']}/temp.txt > "
-                  f"{self.settings['path']}/temp_errors.txt")
+        os.system(f"git push {url} lab_{self.settings['lab']:0>2} > {self.settings['path']}/temp_errors.txt")
 
-        # if os.path.isfile(f"{self.settings['path']}/temp.txt"):
-        #     os.remove(f"{self.settings['path']}/temp.txt")
-        # if os.path.isfile(f"{self.settings['path']}/temp_errors.txt"):
-        #     os.remove(f"{self.settings['path']}/temp_errors.txt")
+        if os.path.isfile(f"{self.settings['path']}/temp.txt"):
+            os.remove(f"{self.settings['path']}/temp.txt")
         os.chdir(old_dir)
 
     def update_files_list(self):
