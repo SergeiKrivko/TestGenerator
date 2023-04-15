@@ -49,6 +49,7 @@ class CodeWidget(QWidget):
         self.tab_widget.addTab(self.test_res_widget, "Тесты")
         self.tab_widget.addTab(self.todo_widget, "TODO")
         self.tab_widget.setFixedWidth(190)
+        self.todo_widget.doubleClicked.connect(self.jump_by_todo)
         layout_left.addWidget(self.tab_widget)
 
         self.code_edit = CodeEditor()
@@ -108,6 +109,7 @@ class CodeWidget(QWidget):
 
     def rename_file(self, name):
         self.current_file = name
+        self.open_code()
 
     def first_open(self):
         self.files_widget.update_files_list()
@@ -122,6 +124,15 @@ class CodeWidget(QWidget):
         self.todo_widget.clear()
         for path, line, text in self.cm.parse_todo_in_code(current_task=True):
             self.todo_widget.addItem(CodeTODOItem(path, line, text))
+
+    def jump_by_todo(self):
+        item = self.todo_widget.currentItem()
+        for i in range(self.files_widget.files_list.count()):
+            if self.files_widget.files_list.item(i).text() == item.path:
+                self.files_widget.files_list.setCurrentRow(i)
+                self.code_edit.setCursorPosition(item.line, 0)
+                break
+        self.tab_widget.setCurrentIndex(2)
 
     def open_code(self):
         self.tab_widget.setCurrentIndex(0)
