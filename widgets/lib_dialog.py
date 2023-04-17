@@ -1,7 +1,11 @@
+import os.path
+
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
     QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit
+
+from other.remote_libs import ListReader, FileReader
 
 
 class LibDialog(QDialog):
@@ -65,6 +69,20 @@ class LibDialog(QDialog):
         if self.new_lib_dialog.exec():
             if self.new_lib_dialog.mode_combo_box.currentIndex() == CustomLib.LOCAL:
                 self.lib_list_widget.addItem(CustomLib(self.new_lib_dialog.local_line_edit.text(), CustomLib.LOCAL))
+            elif self.new_lib_dialog.mode_combo_box.currentIndex() == CustomLib.GLOBAL:
+                self.lib_list_widget.addItem(
+                    item := CustomLib(self.new_lib_dialog.global_list_widget.currentItem().text(),
+                                      CustomLib.GLOBAL))
+                self.remote_file_reader = FileReader(self.new_lib_dialog.global_list_widget.currentItem().text())
+                self.remote_file_reader.complete.connect(lambda: self.after_file_reading(item))
+                self.remote_file_reader.start()
+
+    def after_file_reading(self, item):
+        with open('temp', encoding='utf-8') as file:
+            item.data = file.read()
+            self.open_lib()
+        if os.path.isfile('temp'):
+            os.remove('temp')
 
     def modify_lib(self):
         item = self.lib_list_widget.currentItem()
@@ -104,6 +122,10 @@ class NewLibDialog(QDialog):
         main_layout.addWidget(self.buttonBox)
         self.setLayout(main_layout)
 
+        self.remote_files_list_reader = ListReader()
+        self.remote_files_list_reader.start()
+        self.remote_files_list_reader.complete.connect(self.set_files_list)
+
     def change_mode(self):
         if self.mode_combo_box.currentIndex() == CustomLib.LOCAL:
             self.global_list_widget.hide()
@@ -118,6 +140,17 @@ class NewLibDialog(QDialog):
         elif self.mode_combo_box.currentIndex() == CustomLib.LOCAL:
             self.accept()
 
+    def set_files_list(self, lst):
+        for el in lst:
+            self.global_list_widget.addItem(el)
+
+    def exec(self) -> int:
+        self.global_list_widget.clear()
+        self.remote_files_list_reader = ListReader()
+        self.remote_files_list_reader.start()
+        self.remote_files_list_reader.complete.connect(self.set_files_list)
+        return super(NewLibDialog, self).exec()
+
 
 class CustomLib(QListWidgetItem):
     GLOBAL = 0
@@ -128,4 +161,7 @@ class CustomLib(QListWidgetItem):
         self.name = name
         self.lib_type = lib_type
         self.data = data if data else ""
-
+        if self.lib_type == CustomLib.GLOBAL:
+            self.setForeground(Qt.blue)
+        elif self.lib_type == CustomLib.LOCAL:
+            self.setForeground(Qt.red)
