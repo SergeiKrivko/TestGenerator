@@ -2,6 +2,7 @@ import os
 
 from PyQt5.QtGui import QFont, QColor, QFontMetrics
 from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciAPIs
+from other.lib import words, types
 
 
 headers_list = []
@@ -83,8 +84,8 @@ class CodeEditor(QsciScintilla):
 
         headers_list.clear()
         self.apis = {
-            'words': [tuple(parce_file("lib/words.txt")), True],
-            'types': [tuple(parce_file("lib/types.txt")), True]
+            'words': [words, True],
+            'types': [types, True]
         }
         self.libs = tuple(get_lib())
         for lib in self.libs:
@@ -175,7 +176,6 @@ class CodeEditor(QsciScintilla):
         return api
 
     def parce_header(self, path):
-        types_txt = open("lib/types.txt", encoding='utf-8')
         with open(path, encoding='utf-8') as header_file:
             for line in header_file:
                 line = line.strip()
@@ -198,13 +198,11 @@ class CodeEditor(QsciScintilla):
                         else:
                             yield s
                     else:
-                        types_txt.seek(0)
-                        for func_type in types_txt:
+                        for func_type in types:
                             func_type = func_type.strip()
                             if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
                                 yield line.replace(func_type, '', 1)
                                 break
-        types_txt.close()
 
 
 def parce_file(path):
@@ -214,7 +212,6 @@ def parce_file(path):
 
 
 def parce_main_file(path):
-    types_txt = open("lib/types.txt", encoding='utf-8')
     current_func = ""
     i = 0
     res_dict = {'__general__': ([], 0, 0)}
@@ -231,8 +228,7 @@ def parce_main_file(path):
                     else:
                         res_dict['__general__'][0].append(s)
                 else:
-                    types_txt.seek(0)
-                    for func_type in types_txt:
+                    for func_type in types:
                         func_type = func_type.strip()
                         if line.startswith(func_type) and line.count('(') == line.count(')') and \
                                 (line.endswith(');') or line.endswith(")")):
@@ -253,8 +249,7 @@ def parce_main_file(path):
                 current_func = ""
             else:
                 line = line.strip()
-                types_txt.seek(0)
-                for var_type in types_txt:
+                for var_type in types:
                     if line.startswith(var_type.strip()) and ' ' in line and line.endswith(";"):
                         lst = line[line.index(' ') + 1:-1].split(',')
                         for el in lst:
@@ -266,7 +261,6 @@ def parce_main_file(path):
                                 res_dict[current_func][0].append(el)
             i += 1
     res_dict['__general__'] = res_dict['__general__'][0], res_dict['__general__'][1], i
-    types_txt.close()
     return res_dict
 
 

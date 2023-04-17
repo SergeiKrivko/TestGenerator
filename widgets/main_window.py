@@ -1,3 +1,4 @@
+from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog
 
 from widgets.code_widget import CodeWidget
@@ -6,7 +7,7 @@ from widgets.options_window import OptionsWindow
 from widgets.tests_widget import TestsWidget
 from widgets.git_widget import GitWidget
 from widgets.menu_bar import MenuBar
-from commands import CommandManager
+from other.commands import CommandManager
 from widgets.todo_widget import TODOWidget
 import json
 import os
@@ -15,8 +16,11 @@ import os
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
-        settings = dict() if not os.path.isfile("settings.txt") else \
-            json.loads(open('settings.txt', encoding='utf-8').read())
+        self.q_settings = QSettings()
+        try:
+            settings = json.loads(self.q_settings.value("settings", defaultValue="{}"))
+        except Exception:
+            settings = dict()
         self.settings = settings.get(settings.get('path', ''), dict())
         self.settings['path'] = settings.get('path', '')
         del settings
@@ -24,6 +28,12 @@ class MainWindow(QMainWindow):
             self.settings['compiler'] = 'gcc -std=c99 -Wall -Werror'
         if '-lm' not in self.settings:
             self.settings['-lm'] = True
+        if 'lab' not in self.settings:
+            self.settings['lab'] = 1
+        if 'task' not in self.settings:
+            self.settings['task'] = 1
+        if 'var' not in self.settings:
+            self.settings['var'] = 0
 
         self.setWindowTitle("TestGenerator")
         central_widget = QWidget()
@@ -179,12 +189,15 @@ class MainWindow(QMainWindow):
         self.tests_widget.hide()
         self.testing_widget.hide()
         self.git_widget.hide()
-        settings = dict() if not os.path.isfile("settings.txt") else \
-            json.loads(open('settings.txt', encoding='utf-8').read())
+        try:
+            settings = json.loads(self.q_settings.value("settings", defaultValue="{}"))
+        except Exception:
+            settings = dict()
         settings[self.settings['path']] = self.settings
         settings['path'] = self.settings['path']
-        self.settings.pop('path')
-        file = open("settings.txt", 'w', encoding="utf-8")
-        file.write(json.dumps(settings))
-        file.close()
+        self.q_settings.setValue("settings", json.dumps(settings))
+        # self.settings.pop('path')
+        # file = open("settings.txt", 'w', encoding="utf-8")
+        # file.write(json.dumps(settings))
+        # file.close()
         super(MainWindow, self).close()
