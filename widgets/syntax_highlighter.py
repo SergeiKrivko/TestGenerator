@@ -11,7 +11,7 @@ headers_list = []
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, parent=None):
+    def __init__(self, q_settings, parent=None):
         super(CodeEditor, self).__init__(parent)
 
         # Set the default font
@@ -21,6 +21,7 @@ class CodeEditor(QsciScintilla):
         font.setPointSize(10)
         self.setFont(font)
         self.setMarginsFont(font)
+        self.q_settings = q_settings
 
         # Margin 0 is used for line numbers
         fontmetrics = QFontMetrics(font)
@@ -87,9 +88,9 @@ class CodeEditor(QsciScintilla):
             'words': [words, True],
             'types': [types, True]
         }
-        self.libs = tuple(get_lib())
-        for lib in self.libs:
-            self.apis[lib] = [tuple(self.parce_header(f"lib/{lib.replace('.h', '.txt')}")), True]
+        self.libs = tuple(self.get_lib())
+        for lib_name, lib_data in self.libs:
+            self.apis[lib_name] = [tuple(self.parse_header_str(lib_data)), False]
 
         self.apis2 = dict()
         self.path = ""
@@ -112,32 +113,34 @@ class CodeEditor(QsciScintilla):
             file.seek(0)
 
             for lib in self.libs:
-                self.apis[lib][1] = False
+                self.apis[lib[0]][1] = False
 
             headers_list.clear()
             for line in file:
                 line = line.strip()
                 for lib in self.libs:
-                    if line == f"#include <{lib}>":
-                        self.apis[lib][1] = True
+                    if line == f"#include <{lib[0]}>":
+                        self.apis[lib[0]][1] = True
                 else:
                     if line.startswith("#include \"") and line.endswith("\""):
                         f = line.split()[1].strip('\"')
                         if os.path.isfile(f"{path}/{f}"):
-                            self.apis[f] = [tuple(self.parce_header(f"{path}/{f}")), True]
+                            self.apis[f] = [tuple(self.parse_header_file(f"{path}/{f}")), True]
 
-        self.apis2 = parce_main_file(f"{path}/{file_name}")
+        self.apis2 = parse_main_file(f"{path}/{file_name}")
         self.set_api()
 
     def update_api(self, pos):
         try:
             headers_list.clear()
+            for lib in self.libs:
+                self.apis[lib[0]][1] = False
             if pos != self.current_row and self.current_file:
                 self.current_row = pos
                 for line in self.text().split("\n"):
                     for lib in self.libs:
-                        if line == f"#include <{lib}>":
-                            self.apis[lib][1] = True
+                        if line == f"#include <{lib[0]}>":
+                            self.apis[lib[0]][1] = True
                     else:
                         if line.startswith("#include \"") and line.endswith("\""):
                             f = line.split()[1].strip('\"')
@@ -145,8 +148,8 @@ class CodeEditor(QsciScintilla):
                                 if f in self.apis:
                                     self.apis[f][1] = True
                                 else:
-                                    self.apis[f] = [tuple(self.parce_header(f"{self.path}/{f}")), True]
-                self.apis2 = parce_main_file(f"{self.path}/{self.current_file}")
+                                    self.apis[f] = [tuple(self.parse_header_file(f"{self.path}/{f}")), True]
+                self.apis2 = parse_main_file(f"{self.path}/{self.current_file}")
                 self.set_api()
                 self.autoCompleteFromAPIs()
         except Exception:
@@ -175,34 +178,55 @@ class CodeEditor(QsciScintilla):
         api.prepare()
         return api
 
-    def parce_header(self, path):
+    def parse_header_file(self, path):
         with open(path, encoding='utf-8') as header_file:
             for line in header_file:
-                line = line.strip()
-                for lib in self.libs:
-                    if line == f"#include <{lib}>":
-                        self.apis[lib][1] = True
+                res = self.parse_header(line, path)
+                if res:
+                    yield res
+
+    def parse_header_str(self, string: str):
+        for line in string.split('\n'):
+            res = self.parse_header(line)
+            if res:
+                yield res
+
+    def parse_header(self, line, path=""):
+        line = line.strip()
+        for lib in self.libs:
+            if line == f"#include <{lib}>":
+                self.apis[lib][1] = True
+        else:
+            if line.startswith("#include \"") and line.endswith("\""):
+                f = line.split()[1].strip('\"')
+                if f not in headers_list:
+                    headers_list.append(f)
+                    for el in self.parse_header_file(f"{os.path.split(path)[0]}/{f}"):
+                        return el
+            if line.startswith('#define') and len(s := line.split()) == 3:
+                return s[1]
+            elif line.startswith('typedef') and len(s := line.split()) >= 3:
+                s = s[2]
+                if '[' in s:
+                    return s[:s.index('[')]
                 else:
-                    if line.startswith("#include \"") and line.endswith("\""):
-                        f = line.split()[1].strip('\"')
-                        if f not in headers_list:
-                            headers_list.append(f)
-                            for el in self.parce_header(f"{os.path.split(path)[0]}/{f}"):
-                                yield el
-                    if line.startswith('#define') and len(s := line.split()) == 3:
-                        yield s[1]
-                    elif line.startswith('typedef') and len(s := line.split()) >= 3:
-                        s = s[2]
-                        if '[' in s:
-                            yield s[:s.index('[')]
-                        else:
-                            yield s
-                    else:
-                        for func_type in types:
-                            func_type = func_type.strip()
-                            if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
-                                yield line.replace(func_type, '', 1)
-                                break
+                    return s
+            else:
+                for func_type in types:
+                    func_type = func_type.strip()
+                    if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
+                        return line.replace(func_type, '', 1)
+
+    def get_lib(self):
+        # for lib in os.listdir("lib"):
+        #     if lib not in ("words", "types") and lib.endswith(".txt"):
+        #         yield lib.replace(".txt", ".h")
+        lib_list = self.q_settings.value('lib')
+        if isinstance(lib_list, str):
+            for lib_info in lib_list.split(';'):
+                lib_name, _ = lib_info.split(':')
+                lib_data = self.q_settings.value(lib_name)
+                yield lib_name, lib_data
 
 
 def parce_file(path):
@@ -211,7 +235,7 @@ def parce_file(path):
             yield line
 
 
-def parce_main_file(path):
+def parse_main_file(path):
     current_func = ""
     i = 0
     res_dict = {'__general__': ([], 0, 0)}
@@ -262,10 +286,4 @@ def parce_main_file(path):
             i += 1
     res_dict['__general__'] = res_dict['__general__'][0], res_dict['__general__'][1], i
     return res_dict
-
-
-def get_lib():
-    for lib in os.listdir("lib"):
-        if lib not in ("words", "types") and lib.endswith(".txt"):
-            yield lib.replace(".txt", ".h")
 

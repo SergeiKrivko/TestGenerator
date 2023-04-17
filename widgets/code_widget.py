@@ -12,7 +12,7 @@ from widgets.syntax_highlighter import CodeEditor
 class CodeWidget(QWidget):
     testing_signal = pyqtSignal()
 
-    def __init__(self, settings, cm):
+    def __init__(self, settings, q_settings, cm):
         super(CodeWidget, self).__init__()
         self.settings = settings
         self.cm = cm
@@ -52,7 +52,7 @@ class CodeWidget(QWidget):
         self.todo_widget.doubleClicked.connect(self.jump_by_todo)
         layout_left.addWidget(self.tab_widget)
 
-        self.code_edit = CodeEditor()
+        self.code_edit = CodeEditor(q_settings)
         self.code_edit.setFont(QFont("Courier", 10))
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)

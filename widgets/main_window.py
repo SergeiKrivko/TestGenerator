@@ -9,6 +9,7 @@ from widgets.git_widget import GitWidget
 from widgets.menu_bar import MenuBar
 from other.commands import CommandManager
 from widgets.todo_widget import TODOWidget
+from widgets.lib_dialog import LibDialog
 import json
 import os
 
@@ -51,7 +52,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.testing_widget)
         self.testing_widget.hide()
 
-        self.code_widget = CodeWidget(self.settings, self.cm)
+        self.code_widget = CodeWidget(self.settings, self.q_settings, self.cm)
         layout.addWidget(self.code_widget)
         self.testing_widget.testing_start.connect(self.code_widget.testing_start)
         self.testing_widget.add_test.connect(self.code_widget.add_test)
@@ -100,11 +101,13 @@ class MainWindow(QMainWindow):
             },
                                                   'initial': self.settings.get('neg_comparator', (0, 0))[0]},
             "Coverage": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
-                          'initial': self.settings.get('coverage', 0)},
+                         'initial': self.settings.get('coverage', 0)},
             "Тестирование по памяти": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
-                                       'initial': self.settings.get('memory_testing', 0)}
-        })
-        self.options_window.returnPressed.connect(self.save_settings)
+                                       'initial': self.settings.get('memory_testing', 0)},
+            "lib": {'type': 'button', 'name': OptionsWindow.NAME_SKIP, 'text': 'Библиотеки'}
+        }, self, name="Настройки")
+        self.options_window.clicked.connect(self.options_window_triggered)
+        self.lib_dialog = LibDialog(self, "Библиотеки", self.q_settings)
 
         self.menu_bar = MenuBar({
             'Открыть': (self.open_project, None),
@@ -113,7 +116,7 @@ class MainWindow(QMainWindow):
             'Тестирование': (self.show_testing, None),
             'TODO': (self.show_todo, None),
             'Git': (self.show_git, None),
-            'Настройки': (self.options_window.show, None)
+            'Настройки': (self.open_settings, None)
         })
         self.setMenuBar(self.menu_bar)
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
@@ -136,6 +139,15 @@ class MainWindow(QMainWindow):
                 self.code_widget.files_widget.files_list.setCurrentRow(i)
                 self.code_widget.code_edit.setCursorPosition(line, 0)
                 break
+
+    def options_window_triggered(self, key):
+        if key == "lib":
+            if self.lib_dialog.exec():
+                pass
+
+    def open_settings(self):
+        if self.options_window.exec():
+            self.save_settings(self.options_window.values)
 
     def save_settings(self, dct):
         self.settings['compiler'] = dct['Компилятор']

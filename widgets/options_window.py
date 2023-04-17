@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, \
-    QLineEdit, QCheckBox, QComboBox, QFileDialog, QPushButton, QApplication
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, \
+    QLineEdit, QCheckBox, QComboBox, QFileDialog, QPushButton, QApplication, QDialog, QDialogButtonBox
 from PyQt5.QtCore import Qt, pyqtSignal
 
 
-class OptionsWindow(QMainWindow):
+class OptionsWindow(QDialog):
     NAME_TOP = 0
     NAME_LEFT = 1
     NAME_RIGHT = 2
@@ -11,41 +11,26 @@ class OptionsWindow(QMainWindow):
     INITIAL_WIDGET_WIDTH = 150
     INITIAL_WIDGET_HEIGHT = 25
     clicked = pyqtSignal(str)
-    returnPressed = pyqtSignal(dict)
-    cancelPressed = pyqtSignal(dict)
 
-    def __init__(self, dct):
-        super(OptionsWindow, self).__init__()
+    def __init__(self, dct, parent=None, name=""):
+        super(OptionsWindow, self).__init__(parent)
         self.dct = dct
+        self.setWindowTitle(name)
 
-        central_widget = QWidget(self)
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
 
         self.main_widget = OptionsWidget(dct, self)
         self.main_widget.clicked.connect(self.clicked.emit)
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.main_widget)
 
-        self.button_widget = QWidget()
-        self.button_widget.setFixedHeight(50)
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignRight)
+        main_layout.addWidget(self.buttonBox)
 
-        self.enter_button = QPushButton("OK")
-        self.enter_button.setFixedSize(100, 30)
-        self.enter_button.clicked.connect(lambda arg: (self.close(), self.returnPressed.emit(self.main_widget.values)))
-        layout.addWidget(self.enter_button)
-
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.setFixedSize(100, 30)
-        layout.addWidget(self.cancel_button)
-        self.cancel_button.clicked.connect(lambda arg: (self.close(), self.cancelPressed.emit(self.main_widget.values)))
-
-        self.button_widget.setLayout(layout)
-        main_layout.addWidget(self.button_widget)
-
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        self.setLayout(main_layout)
+        self.values = self.main_widget.values
 
     def set_widgets_width(self, width):
         self.main_widget.set_widgets_width(width)
@@ -79,6 +64,7 @@ class OptionsWidget(QWidget):
         self.widgets = dict()
 
         main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
         if margins:
             main_layout.setContentsMargins(*margins)
         main_layout.setAlignment(Qt.AlignTop)

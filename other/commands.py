@@ -196,7 +196,7 @@ class Looper(QThread):
 
             if self.memory_testing:
                 os.system(f"valgrind -q ./app.exe < "
-                          f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt > /dev/null 2> temp.txt")
+                          f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt > temp_null.txt 2> temp.txt")
                 valgrind_out = CommandManager.read_file(f"{self.path}/temp.txt")
             else:
                 valgrind_out = ""
@@ -222,7 +222,7 @@ class Looper(QThread):
 
             if self.memory_testing:
                 os.system(f"valgrind -q ./app.exe < "
-                          f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt > /dev/null 2> temp.txt")
+                          f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt > temp_null.txt 2> temp.txt")
                 valgrind_out = CommandManager.read_file(f"{self.path}/temp.txt")
             else:
                 valgrind_out = ""
@@ -230,6 +230,11 @@ class Looper(QThread):
             self.test_complete.emit(exit_code and comparator_res,
                                     prog_out, exit_code, not valgrind_out, valgrind_out)
             i += 1
+
+        if os.path.isfile("temp_null.txt"):
+            os.remove("temp_null.txt")
+        if os.path.isfile("temp_errors.txt"):
+            os.remove("temp_errors.txt")
 
         self.end_testing.emit()
 
