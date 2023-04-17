@@ -83,20 +83,24 @@ class MainWindow(QMainWindow):
                     'pos_comparator', (0, {'value': 0}))[1].get('value', 0),
                                     'min': 0, 'name': OptionsWindow.NAME_SKIP}},
                 'Числа как текст': None,
-                'Текст после подстроки': {'value': {'type': str, 'initial': '' if pos_comparator != 2 else self.settings.get(
-                    'pos_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
+                'Текст после подстроки': {
+                    'value': {'type': str, 'initial': '' if pos_comparator != 2 else self.settings.get(
+                        'pos_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
-                                 'initial': self.settings.get('pos_comparator', (0, 0))[0]},
+                                                  'initial': self.settings.get('pos_comparator', (0, 0))[0]},
             "Компаратор для негативных тестов:": {'type': 'combo', 'values': {
                 'Нет': None,
                 'Числа': {'value': {'type': float, 'initial': 0 if neg_comparator != 1 else self.settings.get(
                     'neg_comparator', (0, {'value': 0}))[1].get('value', 0),
                                     'min': 0, 'name': OptionsWindow.NAME_SKIP}},
                 'Числа как текст': None,
-                'Текст после подстроки': {'value': {'type': str, 'initial': '' if neg_comparator != 3 else self.settings.get(
-                    'neg_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
+                'Текст после подстроки': {
+                    'value': {'type': str, 'initial': '' if neg_comparator != 3 else self.settings.get(
+                        'neg_comparator', (0, {'value': 0}))[1].get('value', 0), 'name': OptionsWindow.NAME_SKIP}}
             },
                                                   'initial': self.settings.get('neg_comparator', (0, 0))[0]},
+            "Coverage": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
+                          'initial': self.settings.get('coverage', 0)},
             "Тестирование по памяти": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                        'initial': self.settings.get('memory_testing', 0)}
         })
@@ -140,6 +144,7 @@ class MainWindow(QMainWindow):
         self.settings['pos_comparator'] = dct["Компаратор для позитивных тестов:"]
         self.settings['neg_comparator'] = dct["Компаратор для негативных тестов:"]
         self.settings['memory_testing'] = dct["Тестирование по памяти"]
+        self.settings['coverage'] = dct["Coverage"]
 
     def show_tests(self):
         self.testing_widget.hide()

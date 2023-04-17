@@ -86,9 +86,9 @@ class CommandManager:
             if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
                 os.remove(f"{self.path}/{file}")
 
-    def testing(self, pos_comparator, neg_comparator, memory_testing):
+    def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
-        self.looper = Looper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing)
+        self.looper = Looper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing, coverage)
         self.looper.start()
 
     def test_count(self):
@@ -160,19 +160,21 @@ class CommandManager:
 
 class Looper(QThread):
     test_complete = pyqtSignal(bool, str, int, bool, str)
+    test_crush = pyqtSignal(str, int, str)
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, compiler, path, pos_comparator, neg_comparator, memory_testing=False):
+    def __init__(self, compiler, path, pos_comparator, neg_comparator, memory_testing=False, coverage=False):
         super(Looper, self).__init__()
         self.compiler = compiler
         self.memory_testing = memory_testing
         self.path = path
         self.pos_comparator = pos_comparator
         self.neg_comparator = neg_comparator
+        self.coverage = coverage
 
     def run(self):
-        code, errors = self.compiler(coverage=True)
+        code, errors = self.compiler(coverage=self.coverage)
         if not code:
             self.testing_terminate.emit(errors)
             return
@@ -180,8 +182,13 @@ class Looper(QThread):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
-                                  f"{self.path}/temp.txt")
+                                  f"{self.path}/temp.txt 2> {self.path}/temp_errors.txt")
             prog_out = CommandManager.read_file(f"{self.path}/temp.txt")
+            prog_errors = CommandManager.read_file(f"{self.path}/temp_errors.txt")
+            if prog_errors:
+                self.test_crush.emit(prog_out, exit_code, prog_errors)
+                i += 1
+                continue
             comparator_res = self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
                                                  f"{self.path}/temp.txt")
             if exit_code % 256 == 0:
@@ -201,8 +208,13 @@ class Looper(QThread):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
-                                  f"{self.path}/temp.txt")
+                                  f"{self.path}/temp.txt 2> {self.path}/temp_errors.txt")
             prog_out = CommandManager.read_file(f"{self.path}/temp.txt")
+            prog_errors = CommandManager.read_file(f"{self.path}/temp_errors.txt")
+            if prog_errors:
+                self.test_crush.emit(prog_out, exit_code, prog_errors)
+                i += 1
+                continue
             comparator_res = self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
                                                  f"{self.path}/temp.txt")
             if exit_code % 256 == 0:
