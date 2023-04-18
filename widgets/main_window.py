@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
     def options_window_triggered(self, key):
         if key == "lib":
             if self.lib_dialog.exec():
-                pass
+                self.code_widget.code_edit.update_libs()
 
     def open_settings(self):
         if self.options_window.exec():

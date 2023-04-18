@@ -3,7 +3,7 @@ import os.path
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
-    QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit
+    QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel
 
 from other.remote_libs import ListReader, FileReader
 
@@ -78,12 +78,25 @@ class LibDialog(QDialog):
             if self.new_lib_dialog.mode_combo_box.currentIndex() == CustomLib.LOCAL:
                 self.lib_list_widget.addItem(CustomLib(self.new_lib_dialog.local_line_edit.text(), CustomLib.LOCAL))
             elif self.new_lib_dialog.mode_combo_box.currentIndex() == CustomLib.GLOBAL:
-                self.lib_list_widget.addItem(
-                    item := CustomLib(self.new_lib_dialog.global_list_widget.currentItem().text(),
-                                      CustomLib.GLOBAL))
-                self.remote_file_reader = FileReader(self.new_lib_dialog.global_list_widget.currentItem().text())
-                self.remote_file_reader.complete.connect(lambda: self.after_file_reading(item))
-                self.remote_file_reader.start()
+                lib_name = self.new_lib_dialog.global_list_widget.currentItem().text()
+                for i in range(self.lib_list_widget.count()):
+                    if self.lib_list_widget.item(i).name == lib_name:
+                        dlg = CustomDialog(" ", "Данная библиотека уже установлена. Вы хотите загрузить ее заново?",
+                                           self)
+                        if dlg.exec():
+                            self.remote_file_reader = FileReader(
+                                self.new_lib_dialog.global_list_widget.currentItem().text())
+                            self.remote_file_reader.complete.connect(lambda: self.after_file_reading(
+                                self.lib_list_widget.item(i)))
+                            self.remote_file_reader.start()
+                        break
+                else:
+                    self.lib_list_widget.addItem(
+                        item := CustomLib(lib_name,
+                                          CustomLib.GLOBAL))
+                    self.remote_file_reader = FileReader(self.new_lib_dialog.global_list_widget.currentItem().text())
+                    self.remote_file_reader.complete.connect(lambda: self.after_file_reading(item))
+                    self.remote_file_reader.start()
 
     def after_file_reading(self, item):
         with open('temp', encoding='utf-8') as file:
@@ -141,6 +154,7 @@ class NewLibDialog(QDialog):
         self.local_line_edit.hide()
 
         self.global_list_widget = QListWidget()
+        self.global_list_widget.doubleClicked.connect(self.return_pressed)
         main_layout.addWidget(self.global_list_widget)
 
         main_layout.addWidget(self.buttonBox)
@@ -245,3 +259,19 @@ class CustomLib(QListWidgetItem):
             self.setForeground(Qt.blue)
         elif self.lib_type == CustomLib.LOCAL:
             self.setForeground(Qt.red)
+
+
+class CustomDialog(QDialog):
+    def __init__(self, name, message, parent=None):
+        super(CustomDialog, self).__init__(parent)
+        self.setWindowTitle(name)
+
+        QBtn = QDialogButtonBox.Ok
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel(message))
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)

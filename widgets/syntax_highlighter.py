@@ -106,6 +106,13 @@ class CodeEditor(QsciScintilla):
         else:
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
+    def update_libs(self):
+        for lib_name, _ in self.libs:
+            self.apis.pop(lib_name)
+        self.libs = tuple(self.get_lib())
+        for lib_name, lib_data in self.libs:
+            self.apis[lib_name] = [tuple(self.parse_header_str(lib_data)), False]
+
     def open_file(self, path, file_name):
         self.path = path
         self.current_file = file_name
