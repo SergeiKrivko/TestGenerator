@@ -99,24 +99,25 @@ class GitWidget(QWidget):
         errors = '-'
 
         if errors.strip():
-            options_window = OptionsWindow({
+            self.options_window = OptionsWindow({
                 "Логин:": {'type': str, 'width': 250},
                 "Пароль:": {'type': str, 'width': 250, 'echo_mode': QLineEdit.Password}
             })
-            options_window.show()
-            options_window.returnPressed.connect(self.git_push_from_window)
+            if self.options_window.exec():
+                self.git_push_from_window()
         if os.path.isfile(f"{self.settings['path']}/temp.txt"):
             os.remove(f"{self.settings['path']}/temp.txt")
         if os.path.isfile(f"{self.settings['path']}/temp_errors.txt"):
             os.remove(f"{self.settings['path']}/temp_errors.txt")
         os.chdir(old_dir)
 
-    def git_push_from_window(self, settings):
+    def git_push_from_window(self):
         old_dir = os.getcwd()
         os.chdir(self.settings['path'])
 
         os.system("git config remote.origin.url > temp.txt")
-        url = read_file('temp.txt').replace("https://", f"https://{settings['Логин:']}:{settings['Пароль:']}@")
+        url = read_file('temp.txt').replace(
+            "https://", f"https://{self.options_window.values['Логин:']}:{self.options_window.values['Пароль:']}@")
 
         os.system(f"git push {url} lab_{self.settings['lab']:0>2} > {self.settings['path']}/temp_errors.txt")
 

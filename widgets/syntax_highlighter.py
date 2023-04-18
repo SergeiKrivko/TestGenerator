@@ -62,7 +62,8 @@ class CodeEditor(QsciScintilla):
         self.setAutoCompletionThreshold(1)
         self.setAutoCompletionCaseSensitivity(True)
         self.setAutoCompletionReplaceWord(True)
-        self.setCallTipsStyle(QsciScintilla.CallTipsNoContext)
+        self.setCallTipsStyle(QsciScintilla.CallTipsContext)
+        self.setCallTipsPosition(QsciScintilla.CallTipsAboveText)
 
         self.setIndentationsUseTabs(False)
         self.setTabWidth(4)
@@ -226,7 +227,8 @@ class CodeEditor(QsciScintilla):
             for lib_info in lib_list.split(';'):
                 lib_name, _ = lib_info.split(':')
                 lib_data = self.q_settings.value(lib_name)
-                yield lib_name, lib_data
+                if lib_data:
+                    yield lib_name, lib_data
 
 
 def parce_file(path):

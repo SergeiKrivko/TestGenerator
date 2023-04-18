@@ -24,8 +24,11 @@ class ListReader(QThread):
     complete = pyqtSignal(list)
     
     def run(self) -> None:
-        lst = get_files_list()
-        self.complete.emit(lst)
+        try:
+            lst = get_files_list()
+            self.complete.emit(lst)
+        except Exception:
+            pass
 
 
 class FileReader(QThread):
@@ -37,5 +40,8 @@ class FileReader(QThread):
         self.save_as = save_as
 
     def run(self) -> None:
-        download_file(self.file_name, self.save_as)
-        self.complete.emit()
+        try:
+            download_file(self.file_name, self.save_as)
+            self.complete.emit()
+        except Exception:
+            pass
