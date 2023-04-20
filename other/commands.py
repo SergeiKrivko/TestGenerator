@@ -150,7 +150,7 @@ class CommandManager:
                 for file in os.listdir(f"{self.settings['path']}/{folder}"):
                     if file.endswith(".c") or file.endswith(".h"):
                         i = 1
-                        for line in (f := open(f"{self.settings['path']}/{folder}/{file}")):
+                        for line in (f := open(f"{self.settings['path']}/{folder}/{file}", encoding='utf-8')):
                             if "// TODO:" in line:
                                 res.append((f"{folder}/{file}", i, line[line.index("// TODO:") + 8:].strip()))
                             i += 1
