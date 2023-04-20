@@ -187,17 +187,23 @@ class CodeEditor(QsciScintilla):
         return api
 
     def parse_header_file(self, path):
-        with open(path, encoding='utf-8') as header_file:
-            for line in header_file:
-                res = self.parse_header(line, path)
-                if res:
-                    yield res
+        try:
+            with open(path, encoding='utf-8') as header_file:
+                for line in header_file:
+                    res = self.parse_header(line, path)
+                    if res:
+                        yield res
+        except Exception:
+            return
 
     def parse_header_str(self, string: str):
-        for line in string.split('\n'):
-            res = self.parse_header(line)
-            if res:
-                yield res
+        try:
+            for line in string.split('\n'):
+                res = self.parse_header(line)
+                if res:
+                    yield res
+        except Exception:
+            return
 
     def parse_header(self, line, path=""):
         line = line.strip()

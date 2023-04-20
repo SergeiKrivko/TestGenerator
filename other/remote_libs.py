@@ -22,6 +22,7 @@ def download_file(name, save_as='temp'):
 
 class ListReader(QThread):
     complete = pyqtSignal(list)
+    error = pyqtSignal(Exception)
     
     def run(self) -> None:
         try:
@@ -33,6 +34,7 @@ class ListReader(QThread):
 
 class FileReader(QThread):
     complete = pyqtSignal()
+    error = pyqtSignal(Exception)
     
     def __init__(self, file_name, save_as='temp'):
         super(FileReader, self).__init__()

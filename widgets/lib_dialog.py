@@ -3,7 +3,7 @@ import os.path
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
-    QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel
+    QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox
 
 from other.remote_libs import ListReader, FileReader
 
@@ -64,7 +64,7 @@ class LibDialog(QDialog):
             libs_list.append(f"{item.name}:{item.lib_type}")
             self.q_settings.setValue(item.name, item.data)
         self.q_settings.setValue("lib", ';'.join(libs_list))
-        
+
     def accept(self) -> None:
         self.save_libs()
         super(LibDialog, self).accept()
@@ -89,6 +89,8 @@ class LibDialog(QDialog):
                             self.remote_file_reader.complete.connect(lambda: self.after_file_reading(
                                 self.lib_list_widget.item(i)))
                             self.remote_file_reader.start()
+                            self.remote_file_reader.error.connect(lambda: QMessageBox.warning(
+                                self, "Ошибка", "Не удалось загрузить библиотеку. Проверьте подключение к интернету"))
                         break
                 else:
                     self.lib_list_widget.addItem(
@@ -96,6 +98,8 @@ class LibDialog(QDialog):
                                           CustomLib.GLOBAL))
                     self.remote_file_reader = FileReader(self.new_lib_dialog.global_list_widget.currentItem().text())
                     self.remote_file_reader.complete.connect(lambda: self.after_file_reading(item))
+                    self.remote_file_reader.error.connect(lambda: QMessageBox.warning(
+                        self, "Ошибка", "Не удалось загрузить библиотеку. Проверьте подключение к интернету"))
                     self.remote_file_reader.start()
 
     def after_file_reading(self, item):
@@ -163,6 +167,8 @@ class NewLibDialog(QDialog):
         self.remote_files_list_reader = ListReader()
         self.remote_files_list_reader.start()
         self.remote_files_list_reader.complete.connect(self.set_files_list)
+        self.remote_files_list_reader.error.connect(lambda: QMessageBox.warning(
+            self, "Ошибка", "Не удалось загрузить список библиотек. Проверьте подключение к интернету"))
 
     def change_mode(self):
         if self.mode_combo_box.currentIndex() == CustomLib.LOCAL:
