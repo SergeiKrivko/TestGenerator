@@ -70,6 +70,8 @@ class FilesWidget(QWidget):
             self.file_name.setText(self.files_list.currentItem().text())
 
     def rename_file(self):
+        if self.files_list.currentItem() is None:
+            return
         if not os.path.isfile(f"{self.path}/{self.file_name.text()}"):
             os.rename(f"{self.path}/{self.files_list.currentItem().text()}", f"{self.path}/{self.file_name.text()}")
         self.update_files_list()

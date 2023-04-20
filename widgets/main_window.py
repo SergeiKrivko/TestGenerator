@@ -14,6 +14,10 @@ import json
 import os
 
 
+line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
+line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -35,6 +39,8 @@ class MainWindow(QMainWindow):
             self.settings['task'] = 1
         if 'var' not in self.settings:
             self.settings['var'] = 0
+        if 'line_sep' not in self.settings:
+            self.settings['line_sep'] = '\n'
 
         self.setWindowTitle("TestGenerator")
         central_widget = QWidget()
@@ -74,6 +80,8 @@ class MainWindow(QMainWindow):
         neg_comparator = self.settings.get('neg_comparator', (0, 0))[0]
 
         self.options_window = OptionsWindow({
+            "Символ переноса строки: ": {'type': 'combo', 'values': line_sep.values(), 'name': OptionsWindow.NAME_LEFT,
+                                         'initial': list(line_sep.keys()).index(self.settings.get('line_sep'))},
             "Компилятор": {'type': str, 'initial': self.settings.get('compiler', 'gcc -std=c99 -Wall -Werror'),
                            'width': 400},
             "Ключ -lm": {'type': bool, 'initial': True, 'name': OptionsWindow.NAME_RIGHT},
@@ -157,6 +165,7 @@ class MainWindow(QMainWindow):
         self.settings['neg_comparator'] = dct["Компаратор для негативных тестов:"]
         self.settings['memory_testing'] = dct["Тестирование по памяти"]
         self.settings['coverage'] = dct["Coverage"]
+        self.settings['line_sep'] = list(line_sep.keys())[dct['Символ переноса строки: ']]
 
     def show_tests(self):
         self.testing_widget.hide()

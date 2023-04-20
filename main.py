@@ -4,6 +4,9 @@ from widgets.main_window import MainWindow
 
 def main():
     app = QApplication([])
+    app.setOrganizationName("SergeiKrivko")
+    app.setOrganizationDomain("https://github.com/SergeiKrivko/TestGenerator")
+    app.setApplicationName("TestGenerator")
     window = MainWindow()
     window.show()
     app.exec_()

@@ -345,11 +345,13 @@ class TestsWidget(QWidget):
 
         tests = self.pos_tests if type == 'pos' else self.neg_tests
 
-        file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w")
+        file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
+                       newline=self.settings['line_sep'])
         file_in.write(tests[index][1])
         file_in.close()
 
-        file_out = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", "w")
+        file_out = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", "w",
+                        newline=self.settings['line_sep'])
         file_out.write(tests[index][2])
         file_out.close()
 
@@ -357,7 +359,8 @@ class TestsWidget(QWidget):
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
         tests = self.pos_tests if type == 'pos' else self.neg_tests
-        file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w")
+        file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
+                       newline=self.settings['line_sep'])
         file_in.write(tests[index][1])
         file_in.close()
 
@@ -384,7 +387,7 @@ class TestsWidget(QWidget):
         try:
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
             self.remove_files()
-            readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8')
+            readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.settings['line_sep'])
             readme.write(f"# Тесты для лабораторной работы №{self.settings['lab']:0>2}, задания №"
                          f"{self.settings['task']:0>2}\n\n"
                          f"## Входные данные\n{self.options_widget['Вход:']}\n\n"

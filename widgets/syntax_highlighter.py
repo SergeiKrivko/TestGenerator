@@ -116,7 +116,7 @@ class CodeEditor(QsciScintilla):
     def open_file(self, path, file_name):
         self.path = path
         self.current_file = file_name
-        with open(f"{path}/{file_name}") as file:
+        with open(f"{path}/{file_name}", encoding='utf-8') as file:
             self.setText(file.read())
             file.seek(0)
 

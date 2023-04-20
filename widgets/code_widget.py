@@ -117,7 +117,7 @@ class CodeWidget(QWidget):
         for i in range(self.files_widget.files_list.count()):
             if self.files_widget.files_list.item(i) == 'main.c':
                 self.files_widget.files_list.setCurrentRow(i)
-                self.files_widget.files_list.setCurrentRow(i)
+                self.open_code()
                 return
 
     def update_todo(self):
@@ -137,24 +137,26 @@ class CodeWidget(QWidget):
     def open_code(self):
         self.tab_widget.setCurrentIndex(0)
         self.get_path()
+        self.code_edit.setText("")
         try:
             index = self.files_widget.files_list.currentRow()
             if index == -1:
+                self.code_edit.setDisabled(True)
                 return
 
-            self.code_edit.setText("")
             self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
             self.file_update_time = os.path.getmtime(self.current_file)
             self.code_edit.open_file(self.path, self.files_widget.files_list.currentItem().text())
             self.update_todo()
+            self.code_edit.setDisabled(False)
         except Exception:
-            pass
+            self.code_edit.setDisabled(True)
 
-    def save_code(self, forced=False):
+    def save_code(self):
         code = self.code_edit.text()
         if code:
             os.makedirs(self.path, exist_ok=True)
-            file = open(f"{self.current_file}", 'w', encoding='utf=8')
+            file = open(f"{self.current_file}", 'w', encoding='utf=8', newline=self.settings['line_sep'])
             file.write(code)
             file.close()
             self.file_update_time = os.path.getmtime(f"{self.current_file}")
