@@ -318,7 +318,7 @@ def comparator3(path1, path2, substring):
     if substring not in text1 or substring not in text2:
         return False
 
-    return text1[text1.index(substring):] == text2[text2.index(substring):]
+    return text1[text1.index(substring):].split() == text2[text2.index(substring):].split()
 
 
 def read_file(path):

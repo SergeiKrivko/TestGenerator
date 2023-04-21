@@ -103,7 +103,8 @@ class TODOWidget(QWidget):
                 self.list_widget.sortItems()
 
                 os.makedirs(f"{self.settings['path']}/TODO", exist_ok=True)
-                file = open(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8')
+                file = open(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8',
+                            newline=self.settings['line_sep'])
                 file.write(f"# Лабораторная работа №{self.settings['lab']}: список задач\n\n")
 
                 task = -1
