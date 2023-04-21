@@ -245,25 +245,25 @@ class TestingWidget(QWidget):
 
         os.chdir(self.old_dir)
 
-    def pos_comparator(self, path1, path2):
+    def pos_comparator(self, str1, str2):
         comparator = self.settings.get('pos_comparator', (0, {'value': 0}))
         if comparator[0] == 0:
-            return comparator1(path1, path2, comparator[1]['value'])
+            return comparator1(str1, str2, comparator[1]['value'])
         if comparator[0] == 1:
-            return comparator2(path1, path2)
+            return comparator2(str1, str2)
         if comparator[0] == 2:
-            return comparator3(path1, path2, comparator[1]['value'])
+            return comparator3(str1, str2, comparator[1]['value'])
 
-    def neg_comparator(self, path1, path2):
+    def neg_comparator(self, str1, str2):
         comparator = self.settings.get('neg_comparator', (0, {'value': 0}))
         if comparator[0] == 0:
             return True
         if comparator[0] == 1:
-            return comparator1(path1, path2, comparator[1]['value'])
+            return comparator1(str1, str2, comparator[1]['value'])
         if comparator[0] == 2:
-            return comparator2(path1, path2)
+            return comparator2(str1, str2)
         if comparator[0] == 3:
-            return comparator3(path1, path2, comparator[1]['value'])
+            return comparator3(str1, str2, comparator[1]['value'])
 
     def show(self) -> None:
         self.update_options()
@@ -271,16 +271,16 @@ class TestingWidget(QWidget):
         super(TestingWidget, self).show()
 
 
-def comparator1(path1, path2, eps=0):
+def comparator1(str1, str2, eps=0):
     lst1 = []
-    for word in read_file(path1).split():
+    for word in str1.split():
         try:
             lst1.append(float(word))
         except Exception:
             pass
 
     lst2 = []
-    for word in read_file(path2).split():
+    for word in str2.split():
         try:
             lst2.append(float(word))
         except Exception:
@@ -292,9 +292,9 @@ def comparator1(path1, path2, eps=0):
     return True
 
 
-def comparator2(path1, path2):
+def comparator2(str1, str2):
     lst1 = []
-    for word in read_file(path1).split():
+    for word in str1.split():
         try:
             float(word)
             lst1.append(word)
@@ -302,7 +302,7 @@ def comparator2(path1, path2):
             pass
 
     lst2 = []
-    for word in read_file(path2).split():
+    for word in str2.split():
         try:
             float(word)
             lst2.append(word)
@@ -312,13 +312,11 @@ def comparator2(path1, path2):
     return lst1 == lst2
 
 
-def comparator3(path1, path2, substring):
-    text1 = read_file(path1)
-    text2 = read_file(path2)
-    if substring not in text1 or substring not in text2:
+def comparator3(str1, str2, substring):
+    if substring not in str1 or substring not in str2:
         return False
 
-    return text1[text1.index(substring):].split() == text2[text2.index(substring):].split()
+    return str1[str1.index(substring):].split() == str2[str2.index(substring):].split()
 
 
 def read_file(path):

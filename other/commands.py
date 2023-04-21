@@ -1,13 +1,21 @@
 import os
-
+import subprocess
 from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import QMessageBox
 
 
 class CommandManager:
     def __init__(self, settings):
         self.settings = settings
         self.path = ''
+
+    @staticmethod
+    def cmd_command(args, **kwargs):
+        if os.name == 'nt':
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            return subprocess.run(args, capture_output=True, text=True, startupinfo=si, **kwargs)
+        else:
+            return subprocess.run(args, capture_output=True, text=True, **kwargs)
 
     def update_path(self):
         if self.settings['var'] == -1:
@@ -18,42 +26,31 @@ class CommandManager:
                                                 f"{self.settings['task']:0>2}_" \
                                                 f"{self.settings['var']:0>2}"
 
-    def compile(self):
-        os.system(f"{self.settings['compiler']} {self.path}/main.c -o {self.path}/app.exe"
-                  f"{' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
-        errors = CommandManager.read_file(f"{self.path}/temp.txt")
-        if errors:
-            QMessageBox.warning(None, "Ошибка компиляции", errors)
-            if os.path.isfile(f"{self.path}/temp.txt"):
-                os.remove(f"{self.path}/temp.txt")
-            return
-
     def compile2(self, coverage=False):
         self.update_path()
         old_dir = os.getcwd()
         os.chdir(self.path)
 
-        code = os.system(f"{self.settings['compiler']} -c {self.path}/?*.c {'--coverage' if coverage else ''} -g "
-                         f"2> {self.path}/temp.txt")
-        errors = CommandManager.read_file(f"{self.path}/temp.txt")
-        if code:
-            if os.path.isfile(f"{self.path}/temp.txt"):
-                os.remove(f"{self.path}/temp.txt")
+        compile_res = self.cmd_command(self.settings['compiler'].split() + ["-c"] +
+                                       (['--coverage'] if coverage else []) +
+                                       list(filter(lambda path: path.endswith('.c'), os.listdir(self.path))) + ["-g"] +
+                                       (['-lm'] if self.settings['-lm'] else []))
+        if compile_res.returncode:
             os.chdir(old_dir)
-            return False, errors
+            return False, compile_res.stderr
 
-        code = os.system(f"{self.settings['compiler']} {'--coverage' if coverage else ''} -o {self.path}/app.exe "
-                         f"{self.path}/?*.o {' -lm' if self.settings['-lm'] else ''} 2> {self.path}/temp.txt")
+        compile_res = self.cmd_command(self.settings['compiler'].split() +
+                                       (['--coverage'] if coverage else []) + ['-o'] +
+                                       [f"{self.path}/app.exe"] +
+                                       list(filter(lambda path: path.endswith('.o'), os.listdir(self.path))) +
+                                       (['-lm'] if self.settings['-lm'] else []))
 
-        errors = CommandManager.read_file(f"{self.path}/temp.txt")
-        if code:
-            if os.path.isfile(f"{self.path}/temp.txt"):
-                os.remove(f"{self.path}/temp.txt")
+        if compile_res.returncode:
             os.chdir(old_dir)
-            return False, errors
+            return False, compile_res.stderr
 
         for file in os.listdir(self.path):
-            if ".o" in file:
+            if file.endswith('.o'):
                 os.remove(f"{self.path}/{file}")
 
         os.chdir(old_dir)
@@ -66,14 +63,13 @@ class CommandManager:
         self.update_path()
         for file in os.listdir(self.path):
             if '.c' in file:
-                os.system(f"gcov {self.path}/{file} > {self.path}/temp.txt")
-                for line in (f := open(f"{self.path}/temp.txt")):
+                res = self.cmd_command(["gcov", f"{self.path}/{file}"])
+                for line in res.stdout.split('\n'):
                     if "Lines executed:" in line:
                         p, _, c = line.split(":")[1].split()
                         total_count += int(c)
                         count += round(float(p[:-1]) / 100 * int(c))
                         break
-                f.close()
 
         self.clear_coverage_files()
 
@@ -181,18 +177,14 @@ class Looper(QThread):
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/pos_{i:0>2}_in.txt > "
-                                  f"{self.path}/temp.txt 2> {self.path}/temp_errors.txt")
-            prog_out = CommandManager.read_file(f"{self.path}/temp.txt")
-            prog_errors = CommandManager.read_file(f"{self.path}/temp_errors.txt")
-            if prog_errors:
-                self.test_crush.emit(prog_out, exit_code, prog_errors)
+            res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
+                f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"))
+            if res.stderr:
+                self.test_crush.emit(res.stdout, res.returncode, res.stderr)
                 i += 1
                 continue
-            comparator_res = self.pos_comparator(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt",
-                                                 f"{self.path}/temp.txt")
-            if exit_code % 256 == 0:
-                exit_code //= 256
+            comparator_res = self.pos_comparator(
+                CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"), res.stdout)
 
             if self.memory_testing:
                 os.system(f"valgrind -q ./app.exe < "
@@ -201,24 +193,20 @@ class Looper(QThread):
             else:
                 valgrind_out = ""
 
-            self.test_complete.emit(not exit_code and comparator_res,
-                                    prog_out, exit_code, not valgrind_out, valgrind_out)
+            self.test_complete.emit(not res.returncode and comparator_res,
+                                    res.stdout, res.returncode, not valgrind_out, valgrind_out)
             i += 1
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            exit_code = os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/neg_{i:0>2}_in.txt > "
-                                  f"{self.path}/temp.txt 2> {self.path}/temp_errors.txt")
-            prog_out = CommandManager.read_file(f"{self.path}/temp.txt")
-            prog_errors = CommandManager.read_file(f"{self.path}/temp_errors.txt")
-            if prog_errors:
-                self.test_crush.emit(prog_out, exit_code, prog_errors)
+            res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
+                f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"))
+            if res.stderr:
+                self.test_crush.emit(res.stdout, res.returncode, res.stderr)
                 i += 1
                 continue
-            comparator_res = self.neg_comparator(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt",
-                                                 f"{self.path}/temp.txt")
-            if exit_code % 256 == 0:
-                exit_code //= 256
+            comparator_res = self.neg_comparator(
+                CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"), res.stdout)
 
             if self.memory_testing:
                 os.system(f"valgrind -q ./app.exe < "
@@ -227,8 +215,8 @@ class Looper(QThread):
             else:
                 valgrind_out = ""
 
-            self.test_complete.emit(exit_code and comparator_res,
-                                    prog_out, exit_code, not valgrind_out, valgrind_out)
+            self.test_complete.emit(res.returncode and comparator_res,
+                                    res.stdout, res.returncode, not valgrind_out, valgrind_out)
             i += 1
 
         if os.path.isfile("temp_null.txt"):
