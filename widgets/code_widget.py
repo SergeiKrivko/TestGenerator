@@ -12,9 +12,9 @@ from widgets.syntax_highlighter import CodeEditor
 class CodeWidget(QWidget):
     testing_signal = pyqtSignal()
 
-    def __init__(self, settings, q_settings, cm):
+    def __init__(self, sm, cm):
         super(CodeWidget, self).__init__()
-        self.settings = settings
+        self.sm = sm
         self.cm = cm
         self.current_file = ''
 
@@ -24,9 +24,9 @@ class CodeWidget(QWidget):
         layout.addLayout(layout_left)
 
         self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1)},
-            'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1)},
-            'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0)},
+            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1)},
+            'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1)},
+            'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0)},
             'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
         })
         self.options_widget.clicked.connect(self.option_changed)
@@ -35,7 +35,7 @@ class CodeWidget(QWidget):
         self.test_res_widget = QListWidget()
         self.test_res_widget.setMaximumWidth(200)
 
-        self.files_widget = FilesWidget(self.settings)
+        self.files_widget = FilesWidget(self.sm)
         self.files_widget.setMaximumWidth(200)
 
         self.files_widget.files_list.currentRowChanged.connect(self.open_code)
@@ -52,7 +52,7 @@ class CodeWidget(QWidget):
         self.todo_widget.doubleClicked.connect(self.jump_by_todo)
         layout_left.addWidget(self.tab_widget)
 
-        self.code_edit = CodeEditor(q_settings)
+        self.code_edit = CodeEditor(sm)
         self.code_edit.setFont(QFont("Courier", 10))
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)
@@ -63,49 +63,39 @@ class CodeWidget(QWidget):
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
-            self.settings['lab'] = self.options_widget["Номер лабы:"]
-            self.settings['task'] = self.options_widget["Номер задания:"]
-            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+            self.sm.set('lab', self.options_widget["Номер лабы:"])
+            self.sm.set('task', self.options_widget["Номер задания:"])
+            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                              self.options_widget['Номер задания:'], -1)):
                 self.options_widget.set_value('Номер варианта:', -1)
             else:
                 for i in range(100):
-                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                                      self.options_widget['Номер задания:'], i)):
                         self.options_widget.set_value('Номер варианта:', i)
                         break
-            self.settings['var'] = self.options_widget["Номер варианта:"]
+            self.sm.set('var', self.options_widget["Номер варианта:"])
             self.first_open()
         elif key == 'Номер варианта:':
-            self.settings['var'] = self.options_widget["Номер варианта:"]
+            self.sm.set('var', self.options_widget["Номер варианта:"])
             self.first_open()
         elif key == 'Тестировать':
             self.save_code()
             self.testing_signal.emit()
 
     def update_options(self):
-        self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
+        self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
         self.options_widget.set_value('Номер задания:',
-                                      self.settings.get('task', self.options_widget['Номер задания:']))
+                                      self.sm.get('task', self.options_widget['Номер задания:']))
         self.options_widget.set_value('Номер варианта:',
-                                      self.settings.get('var', self.options_widget['Номер варианта:']))
+                                      self.sm.get('var', self.options_widget['Номер варианта:']))
 
     def get_path(self, from_settings=False):
         if from_settings:
-            if self.settings['var'] == -1:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}"
-            else:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}_" \
-                                                    f"{self.settings['var']:0>2}"
-        elif self.options_widget['Номер варианта:'] == -1:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}"
+            self.path = self.sm.lab_path()
         else:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}_" \
-                                                f"{self.options_widget['Номер варианта:']:0>2}"
+            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
+                                         self.options_widget['Номер варианта:'])
 
     def rename_file(self, name):
         self.current_file = name
@@ -156,7 +146,7 @@ class CodeWidget(QWidget):
         code = self.code_edit.text()
         if code:
             os.makedirs(self.path, exist_ok=True)
-            file = open(f"{self.current_file}", 'w', encoding='utf=8', newline=self.settings['line_sep'])
+            file = open(f"{self.current_file}", 'w', encoding='utf=8', newline=self.sm['line_sep'])
             file.write(code)
             file.close()
             self.file_update_time = os.path.getmtime(f"{self.current_file}")

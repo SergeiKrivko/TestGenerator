@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel
-
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel, \
+    QComboBox
 
 BUTTONS_MAX_WIDTH = 30
 
@@ -10,6 +10,9 @@ class TestTableWidget(QWidget):
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+
+        # Positive tests
+
         pos_layout = QVBoxLayout()
         layout.addLayout(pos_layout)
 
@@ -40,6 +43,16 @@ class TestTableWidget(QWidget):
         self.pos_test_list = QListWidget()
         pos_layout.addWidget(self.pos_test_list)
 
+        pos_comparator_layout = QHBoxLayout()
+        pos_comparator_layout.addWidget(QLabel('Компаратор:'))
+        self.pos_comparator_widget = QComboBox()
+        self.pos_comparator_widget.addItems(['По умолчанию', 'Числа', 'Числа как текст', 'Текст после подстроки'])
+        self.pos_comparator_widget.setMaximumWidth(200)
+        pos_comparator_layout.addWidget(self.pos_comparator_widget)
+        pos_layout.addLayout(pos_comparator_layout)
+
+        # Negative tests
+
         neg_layout = QVBoxLayout()
         layout.addLayout(neg_layout)
 
@@ -69,6 +82,14 @@ class TestTableWidget(QWidget):
 
         self.neg_test_list = QListWidget()
         neg_layout.addWidget(self.neg_test_list)
+
+        neg_comparator_layout = QHBoxLayout()
+        neg_comparator_layout.addWidget(QLabel('Компаратор:'))
+        self.neg_comparator_widget = QComboBox()
+        self.neg_comparator_widget.addItems(['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки'])
+        self.neg_comparator_widget.setMaximumWidth(200)
+        neg_comparator_layout.addWidget(self.neg_comparator_widget)
+        neg_layout.addLayout(neg_comparator_layout)
 
     def update_pos_items(self, item_list):
         self.pos_test_list.clear()

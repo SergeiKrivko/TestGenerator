@@ -11,7 +11,7 @@ headers_list = []
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, q_settings, parent=None):
+    def __init__(self, sm, parent=None):
         super(CodeEditor, self).__init__(parent)
 
         # Set the default font
@@ -21,7 +21,7 @@ class CodeEditor(QsciScintilla):
         font.setPointSize(10)
         self.setFont(font)
         self.setMarginsFont(font)
-        self.q_settings = q_settings
+        self.sm = sm
 
         # Margin 0 is used for line numbers
         fontmetrics = QFontMetrics(font)
@@ -235,11 +235,11 @@ class CodeEditor(QsciScintilla):
         # for lib in os.listdir("lib"):
         #     if lib not in ("words", "types") and lib.endswith(".txt"):
         #         yield lib.replace(".txt", ".h")
-        lib_list = self.q_settings.value('lib')
+        lib_list = self.sm.get_general('lib')
         if isinstance(lib_list, str):
             for lib_info in lib_list.split(';'):
                 lib_name, _ = lib_info.split(':')
-                lib_data = self.q_settings.value(lib_name)
+                lib_data = self.sm.get_general(lib_name)
                 if lib_data:
                     yield lib_name, lib_data
 

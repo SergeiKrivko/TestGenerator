@@ -9,20 +9,20 @@ import os
 
 
 class TestsWidget(QWidget):
-    def __init__(self, settings, cm):
+    def __init__(self, sm, cm):
         super(TestsWidget, self).__init__()
-        self.settings = settings
+        self.sm = sm
         self.cm = cm
 
         layout = QVBoxLayout()
 
         self.options_widget = OptionsWidget({
             'h_line1': {
-                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
+                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
                                 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
+                'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1),
                                    'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
+                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0),
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60},
                 'copy': {'type': 'button', 'text': 'Копировать', 'name': OptionsWidget.NAME_SKIP}
             },
@@ -74,25 +74,25 @@ class TestsWidget(QWidget):
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
             self.save_tests()
-            self.settings['lab'] = self.options_widget["Номер лабы:"]
-            self.settings['task'] = self.options_widget["Номер задания:"]
-            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+            self.sm.set('lab', self.options_widget["Номер лабы:"])
+            self.sm.set('task', self.options_widget["Номер задания:"])
+            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                              self.options_widget['Номер задания:'], -1)):
                 self.options_widget.set_value('Номер варианта:', -1)
             else:
                 for i in range(100):
-                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                                      self.options_widget['Номер задания:'], i)):
                         self.options_widget.set_value('Номер варианта:', i)
                         break
-            self.settings['var'] = self.options_widget["Номер варианта:"]
+            self.sm.set('var', self.options_widget["Номер варианта:"])
             self.open_tests()
         elif key == 'Номер варианта:':
             self.save_tests()
-            self.settings['var'] = self.options_widget["Номер варианта:"]
+            self.sm.set('var', self.options_widget["Номер варианта:"])
             self.open_tests()
         elif key == 'copy':
-            dlg = TestCopyWindow(self.settings)
+            dlg = TestCopyWindow(self.sm)
             if dlg.exec():
                 for t, desc, in_data, out_data in dlg.copy_tests():
                     if t:
@@ -103,11 +103,11 @@ class TestsWidget(QWidget):
                         self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
 
     def update_options(self):
-        self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
+        self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
         self.options_widget.set_value('Номер задания:',
-                                      self.settings.get('task', self.options_widget['Номер задания:']))
+                                      self.sm.get('task', self.options_widget['Номер задания:']))
         self.options_widget.set_value('Номер варианта:',
-                                      self.settings.get('var', self.options_widget['Номер варианта:']))
+                                      self.sm.get('var', self.options_widget['Номер варианта:']))
 
     def add_pos_test(self):
         self.pos_tests.append(['-', '', ''])
@@ -233,30 +233,20 @@ class TestsWidget(QWidget):
 
     def get_path(self, from_settings=False):
         if from_settings:
-            if self.settings['var'] == -1:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}"
-            else:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}_" \
-                                                    f"{self.settings['var']:0>2}"
-        elif self.options_widget['Номер варианта:'] == -1:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}"
+            self.path = self.sm.lab_path()
         else:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}_" \
-                                                f"{self.options_widget['Номер варианта:']:0>2}"
+            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
+                                         self.options_widget['Номер варианта:'])
 
     def open_tests(self):
         self.get_path()
         try:
-            self.code_widget.setText("")
-            file = open(f"{self.path}/main.c")
-            self.code_widget.setText(file.read())
-            file.close()
-        except Exception:
-            pass
+            self.test_list_widget.pos_comparator_widget.setCurrentIndex(self.sm.get('pos_comparators', dict()).get(
+                (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1) + 1)
+            self.test_list_widget.neg_comparator_widget.setCurrentIndex(self.sm.get('neg_comparators', dict()).get(
+                (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1) + 1)
+        except Exception as ex:
+            print(f"{ex.__class__.__name__}")
         self.readme_parser()
         self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
         self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
@@ -346,12 +336,12 @@ class TestsWidget(QWidget):
         tests = self.pos_tests if type == 'pos' else self.neg_tests
 
         file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
-                       newline=self.settings['line_sep'])
+                       newline=self.sm.get('line_sep'))
         file_in.write(tests[index][1])
         file_in.close()
 
         file_out = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", "w",
-                        newline=self.settings['line_sep'])
+                        newline=self.sm.get('line_sep'))
         file_out.write(tests[index][2])
         file_out.close()
 
@@ -360,7 +350,7 @@ class TestsWidget(QWidget):
 
         tests = self.pos_tests if type == 'pos' else self.neg_tests
         file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
-                       newline=self.settings['line_sep'])
+                       newline=self.sm.get('line_sep'))
         file_in.write(tests[index][1])
         file_in.close()
 
@@ -369,9 +359,15 @@ class TestsWidget(QWidget):
             if not self.cm.compile2(coverage=False):
                 return
 
-        os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
-                  f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
-        if self.settings.get('clear_words', False):
+        res = self.cm.cmd_command([f"{self.path}/app.exe"],
+                                  input=read_file(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt"))
+        file = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", 'w', encoding='utf-8',
+                    newline=self.sm.get('line_sep'))
+        file.write(res.stdout)
+        file.close()
+        # os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
+        #           f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
+        if self.sm.get('clear_words', False):
             clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
         self.cm.clear_coverage_files()
@@ -387,9 +383,9 @@ class TestsWidget(QWidget):
         try:
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
             self.remove_files()
-            readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.settings['line_sep'])
-            readme.write(f"# Тесты для лабораторной работы №{self.settings['lab']:0>2}, задания №"
-                         f"{self.settings['task']:0>2}\n\n"
+            readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+            readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
+                         f"{self.sm.get('task'):0>2}\n\n"
                          f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
                          f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
                          f"## Позитивные тесты:\n")
@@ -402,6 +398,15 @@ class TestsWidget(QWidget):
             for i in range(len(self.neg_tests)):
                 readme.write(f"- {i + 1:0>2} - {self.neg_tests[i][0]}\n")
                 self.save_a_test(i, 'neg')
+
+            dct = self.sm.get('pos_comparators', dict())
+            dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
+                self.test_list_widget.pos_comparator_widget.currentIndex() - 1
+            self.sm.set('pos_comparators', dct)
+            dct = self.sm.get('neg_comparators', dict())
+            dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
+                self.test_list_widget.neg_comparator_widget.currentIndex() - 1
+            self.sm.set('neg_comparators', dct)
         except Exception as ex:
             QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
 
@@ -446,7 +451,7 @@ def clear_words(path):
 class TestCopyWindow(QDialog):
     def __init__(self, settings):
         super().__init__()
-        self.settings = settings
+        self.sm = settings
 
         self.setWindowTitle("Копировать тесты")
 
@@ -461,11 +466,11 @@ class TestCopyWindow(QDialog):
 
         self.options_widget = OptionsWidget({
             'h_line': {
-                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
+                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
                                 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
+                'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1),
                                    'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
+                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0),
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60}
             }
         })
@@ -494,13 +499,13 @@ class TestCopyWindow(QDialog):
 
     def options_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
-            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+            if os.path.isdir(self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                               f"{self.options_widget['Номер задания:']:0>2}"):
                 self.options_widget.set_value('Номер варианта:', -1)
             else:
                 for i in range(100):
-                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                    if os.path.isdir(self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
+                                                       f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
                         self.options_widget.set_value('Номер варианта:', i)
                         break
         self.clear_scroll_area()
@@ -511,20 +516,20 @@ class TestCopyWindow(QDialog):
 
     def get_path(self, from_settings=False):
         if from_settings:
-            if self.settings['var'] == -1:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}"
+            if self.sm['var'] == -1:
+                self.path = self.sm['path'] + f"/lab_{self.sm['lab']:0>2}_" \
+                                              f"{self.sm['task']:0>2}"
             else:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}_" \
-                                                    f"{self.settings['var']:0>2}"
+                self.path = self.sm['path'] + f"/lab_{self.sm['lab']:0>2}_" \
+                                              f"{self.sm['task']:0>2}_" \
+                                              f"{self.sm['var']:0>2}"
         elif self.options_widget['Номер варианта:'] == -1:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}"
+            self.path = self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                          f"{self.options_widget['Номер задания:']:0>2}"
         else:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}_" \
-                                                f"{self.options_widget['Номер варианта:']:0>2}"
+            self.path = self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
+                                          f"{self.options_widget['Номер задания:']:0>2}_" \
+                                          f"{self.options_widget['Номер варианта:']:0>2}"
 
     def parse_readme_md(self):
         if not os.path.isfile(f"{self.path}/func_tests/readme.md"):

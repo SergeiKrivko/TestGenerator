@@ -7,15 +7,16 @@ import os
 
 
 class GitWidget(QWidget):
-    def __init__(self, settings):
+    def __init__(self, sm, cm):
         super(GitWidget, self).__init__()
-        self.settings = settings
+        self.sm = sm
+        self.cm = cm
         self.widgets = []
         layout = QHBoxLayout()
         self.setLayout(layout)
 
         self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
+            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
                             'name': OptionsWidget.NAME_LEFT},
             'add_code': {'type': 'button', 'text': 'Добавить весь код', 'name': OptionsWidget.NAME_SKIP},
             'add_tests': {'type': 'button', 'text': 'Добавить все тесты', 'name': OptionsWidget.NAME_SKIP},
@@ -34,11 +35,10 @@ class GitWidget(QWidget):
 
     def options_changed(self, key):
         if key == 'Номер лабы:':
-            self.settings['lab'] = self.options_widget["Номер лабы:"]
+            self.sm['lab'] = self.options_widget["Номер лабы:"]
             old_dir = os.getcwd()
-            os.chdir(self.settings['path'])
-            os.system(f"git reset > {self.settings['path']}/temp.txt")
-            os.remove(f"{self.settings['path']}/temp.txt")
+            os.chdir(self.sm.path)
+            res = self.cm.cmd_command(['git', 'reset'])
             os.chdir(old_dir)
             self.update_files_list()
         elif key == 'add_code':
@@ -53,7 +53,7 @@ class GitWidget(QWidget):
             self.git_push()
 
     def parce_lab_number(self, s):
-        if s[:7] != f"lab_{self.settings['lab']:0>2}_":
+        if s[:7] != f"lab_{self.sm['lab']:0>2}_":
             return 0, 0
         if len(s) == 9:
             try:
@@ -67,35 +67,34 @@ class GitWidget(QWidget):
 
     def git_add(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
+        os.chdir(self.sm.path)
         path = self.files_list_widget.currentItem().text()
         if path[0] == ' ' or path[:2] == '??':
-            os.system(f"git add {path[2:]}")
+            self.cm.cmd_command(["git", 'add', path[2:]])
         else:
-            os.system(f"git reset --{path[2:]} > {self.settings['path']}/temp.txt")
-            os.remove(f"{self.settings['path']}/temp.txt")
+            self.cm.cmd_command(['git', 'reset', f'--{path[2:]}'])
         os.chdir(old_dir)
         self.update_files_list()
 
     def commit(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
-        os.system(f"git commit -m \"{self.options_widget['Описание коммита:']}\"")
+        os.chdir(self.sm.path)
+        self.cm.cmd_command(['git', 'commit', '-m', f"\"{self.options_widget['Описание коммита:']}\""])
         os.chdir(old_dir)
         self.update_files_list()
 
     def git_push(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
+        os.chdir(self.sm.path)
 
-        # file = open(f"{self.settings['path']}/temp.txt", 'w', encoding='utf-8')
-        # file.write(self.settings.get('git_login', '-') + '\n')
-        # file.write(self.settings.get('git_password', '-'))
+        # file = open(f"{self.sm.path}/temp.txt", 'w', encoding='utf-8')
+        # file.write(self.sm.get('git_login', '-') + '\n')
+        # file.write(self.sm.get('git_password', '-'))
         # file.close()
         #
-        # os.system(f"git push origin lab_{self.settings['lab']:0>2} < {self.settings['path']}/temp.txt > "
-        #           f"{self.settings['path']}/temp_errors.txt")
-        # errors = read_file(f"{self.settings['path']}temp_errors.txt")
+        # os.system(f"git push origin lab_{self.sm['lab']:0>2} < {self.sm.path}/temp.txt > "
+        #           f"{self.sm.path}/temp_errors.txt")
+        # errors = read_file(f"{self.sm.path}temp_errors.txt")
         errors = '-'
 
         if errors.strip():
@@ -105,31 +104,30 @@ class GitWidget(QWidget):
             })
             if self.options_window.exec():
                 self.git_push_from_window()
-        if os.path.isfile(f"{self.settings['path']}/temp.txt"):
-            os.remove(f"{self.settings['path']}/temp.txt")
-        if os.path.isfile(f"{self.settings['path']}/temp_errors.txt"):
-            os.remove(f"{self.settings['path']}/temp_errors.txt")
+        if os.path.isfile(f"{self.sm.path}/temp.txt"):
+            os.remove(f"{self.sm.path}/temp.txt")
+        if os.path.isfile(f"{self.sm.path}/temp_errors.txt"):
+            os.remove(f"{self.sm.path}/temp_errors.txt")
         os.chdir(old_dir)
 
     def git_push_from_window(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
+        os.chdir(self.sm.path)
 
-        os.system("git config remote.origin.url > temp.txt")
-        url = read_file('temp.txt').replace(
+        res = self.cm.cmd_command(['git', 'config', 'remote.origin.url'])
+        url = res.stdout.replace(
             "https://", f"https://{self.options_window.values['Логин:']}:{self.options_window.values['Пароль:']}@")
 
-        os.system(f"git push {url} lab_{self.settings['lab']:0>2} > {self.settings['path']}/temp_errors.txt")
+        self.cm.cmd_command(['git', 'push', 'url', f"lab_{self.sm['lab']:0>2}"])
 
-        if os.path.isfile(f"{self.settings['path']}/temp.txt"):
-            os.remove(f"{self.settings['path']}/temp.txt")
         os.chdir(old_dir)
 
     def update_files_list(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
-        os.system(f"git status --porcelain > {self.settings['path']}temp.txt")
-        git_status = read_file(f"{self.settings['path']}temp.txt", readlines=True)
+        os.chdir(self.sm.path)
+        res = self.cm.cmd_command(['git', 'status', '--porcelain'])
+
+        git_status = res.stdout
 
         self.files_list_widget.clear()
         for line in git_status:
@@ -138,29 +136,29 @@ class GitWidget(QWidget):
 
     def all_code_to_index(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
-        for dir in os.listdir(self.settings['path']):
-            if dir.startswith(f"lab_{self.settings['lab']:0>2}"):
-                for file in os.listdir(f"{self.settings['path']}/{dir}"):
+        os.chdir(self.sm.path)
+        for dir in os.listdir(self.sm.path):
+            if dir.startswith(f"lab_{self.sm['lab']:0>2}"):
+                for file in os.listdir(f"{self.sm.path}/{dir}"):
                     if '.c' in file or '.h' in file:
-                        os.system(f"git add {dir}/{file}")
+                        self.cm.cmd_command(['git', 'add', f"{dir}/{file}"])
         os.chdir(old_dir)
         self.update_files_list()
 
     def all_tests_to_index(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
-        for dir in os.listdir(self.settings['path']):
-            if dir.startswith(f"lab_{self.settings['lab']:0>2}"):
-                os.system(f"git add {dir}/func_tests/readme.md")
-                os.system(f"git add {dir}/func_tests/data")
+        os.chdir(self.sm.path)
+        for dir in os.listdir(self.sm.path):
+            if dir.startswith(f"lab_{self.sm['lab']:0>2}"):
+                self.cm.cmd_command(['git', 'add', f"{dir}/func_tests/readme.md"])
+                self.cm.cmd_command(['git', 'add', f"{dir}/func_tests/data/"])
         os.chdir(old_dir)
         self.update_files_list()
 
     def git_reset(self):
         old_dir = os.getcwd()
-        os.chdir(self.settings['path'])
-        os.system("git reset")
+        os.chdir(self.sm.path)
+        self.cm.cmd_command(['git', 'reset'])
         os.chdir(old_dir)
         self.update_files_list()
 

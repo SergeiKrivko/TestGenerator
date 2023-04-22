@@ -1,6 +1,6 @@
 import os.path
 
-from PyQt5.QtCore import QSettings, Qt
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
     QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox
@@ -9,12 +9,12 @@ from other.remote_libs import ListReader, FileReader
 
 
 class LibDialog(QDialog):
-    def __init__(self, parent, name, q_settings: QSettings):
+    def __init__(self, parent, name, sm):
         super(LibDialog, self).__init__(parent)
 
         self.setWindowTitle(name)
         self.new_lib_dialog = NewLibDialog(self, "Библиотеки автозавершения кода")
-        self.q_settings = q_settings
+        self.sm = sm
 
         QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
         self.buttonBox = QDialogButtonBox(QBtn)
@@ -33,12 +33,12 @@ class LibDialog(QDialog):
         lib_layout.addWidget(self.button_add_lib)
 
         self.lib_list_widget = QListWidget()
-        libs = q_settings.value("lib")
+        libs = sm.get_general("lib")
         if isinstance(libs, str):
             for lib_info in libs.split(';'):
                 lib_name, lib_type = lib_info.split(':')
                 lib_type = int(lib_type)
-                lib_data = q_settings.value(lib_name)
+                lib_data = sm.get_general(lib_name)
                 self.lib_list_widget.addItem(CustomLib(lib_name, lib_type, lib_data if lib_data else ""))
         self.lib_list_widget.currentRowChanged.connect(self.open_lib)
         self.lib_list_widget.doubleClicked.connect(self.open_lib_dialog)
@@ -62,8 +62,8 @@ class LibDialog(QDialog):
         for i in range(self.lib_list_widget.count()):
             item = self.lib_list_widget.item(i)
             libs_list.append(f"{item.name}:{item.lib_type}")
-            self.q_settings.setValue(item.name, item.data)
-        self.q_settings.setValue("lib", ';'.join(libs_list))
+            self.sm.set_general(item.name, item.data)
+        self.sm.set_general("lib", ';'.join(libs_list))
 
     def accept(self) -> None:
         self.save_libs()
@@ -125,13 +125,13 @@ class LibDialog(QDialog):
                 self.lib_dialog = GlobalLibDialog(item.name, self)
                 if self.lib_dialog.exec():
                     if self.lib_dialog.status == GlobalLibDialog.DELETE:
-                        self.q_settings.remove(item.name)
+                        self.sm.remove(item.name)
                         self.lib_list_widget.takeItem(self.lib_list_widget.currentRow())
             elif item.lib_type == CustomLib.LOCAL:
                 self.lib_dialog = LocalLibDialog(item.name, self)
                 if self.lib_dialog.exec():
                     if self.lib_dialog.status == LocalLibDialog.DELETE:
-                        self.q_settings.remove(item.name)
+                        self.sm.remove(item.name)
                         self.lib_list_widget.takeItem(self.lib_list_widget.currentRow())
 
 

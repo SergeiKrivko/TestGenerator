@@ -9,9 +9,9 @@ class FilesWidget(QWidget):
     renameFile = pyqtSignal(str)
     ignore_files = [".exe", ".o", "temp.txt"]
 
-    def __init__(self, settings):
+    def __init__(self, sm):
         super(FilesWidget, self).__init__()
-        self.settings = settings
+        self.sm = sm
 
         self.setMaximumWidth(175)
         files_layout = QVBoxLayout()
@@ -78,13 +78,7 @@ class FilesWidget(QWidget):
         self.renameFile.emit(self.file_name.text())
 
     def get_path(self):
-        if self.settings['var'] == -1:
-            self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                f"{self.settings['task']:0>2}"
-        else:
-            self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                f"{self.settings['task']:0>2}_" \
-                                                f"{self.settings['var']:0>2}"
+        self.path = self.sm.lab_path()
 
     def create_file(self, *args):
         self.get_path()

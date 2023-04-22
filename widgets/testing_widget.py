@@ -13,9 +13,9 @@ class TestingWidget(QWidget):
     clear_tests = pyqtSignal()
     testing_end = pyqtSignal()
 
-    def __init__(self, settings, cm):
+    def __init__(self, sm, cm):
         super(TestingWidget, self).__init__()
-        self.settings = settings
+        self.sm = sm
         self.cm = cm
 
         layout = QVBoxLayout()
@@ -23,11 +23,11 @@ class TestingWidget(QWidget):
 
         self.options_widget = OptionsWidget({
             'h_line': {
-                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
+                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
                                 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'initial': self.settings.get('task', 1),
+                'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1),
                                    'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.settings.get('var', 0),
+                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0),
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60}
             }
         })
@@ -84,33 +84,33 @@ class TestingWidget(QWidget):
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
-            self.settings['lab'] = self.options_widget["Номер лабы:"]
-            self.settings['task'] = self.options_widget["Номер задания:"]
-            if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                     f"{self.options_widget['Номер задания:']:0>2}"):
+            self.sm.set('lab', self.options_widget["Номер лабы:"])
+            self.sm.set('task', self.options_widget["Номер задания:"])
+            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                              self.options_widget['Номер задания:'], -1)):
                 self.options_widget.set_value('Номер варианта:', -1)
             else:
                 for i in range(100):
-                    if os.path.isdir(self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                             f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                                      self.options_widget['Номер задания:'], i)):
                         self.options_widget.set_value('Номер варианта:', i)
                         break
-            self.settings['var'] = self.options_widget["Номер варианта:"]
+            self.sm.set('var', self.options_widget["Номер варианта:"])
             self.open_task()
         elif key == 'Номер варианта:':
-            self.settings['var'] = self.options_widget["Номер варианта:"]
+            self.sm.set('var', self.options_widget["Номер варианта:"])
             self.open_task()
 
     def update_options(self):
-        self.options_widget.set_value('Номер лабы:', self.settings.get('lab', self.options_widget['Номер лабы:']))
+        self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
         self.options_widget.set_value('Номер задания:',
-                                      self.settings.get('task', self.options_widget['Номер задания:']))
+                                      self.sm.get('task', self.options_widget['Номер задания:']))
         self.options_widget.set_value('Номер варианта:',
-                                      self.settings.get('var', self.options_widget['Номер варианта:']))
+                                      self.sm.get('var', self.options_widget['Номер варианта:']))
 
     def open_task(self):
         self.get_path()
-        task = self.settings['lab'], self.settings['task'], self.settings['var']
+        task = self.sm['lab'], self.sm['task'], self.sm['var']
         if task != self.current_task:
             self.in_data.setText("")
             self.out_data.setText("")
@@ -127,20 +127,10 @@ class TestingWidget(QWidget):
 
     def get_path(self, from_settings=False):
         if from_settings:
-            if self.settings['var'] == -1:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}"
-            else:
-                self.path = self.settings['path'] + f"/lab_{self.settings['lab']:0>2}_" \
-                                                    f"{self.settings['task']:0>2}_" \
-                                                    f"{self.settings['var']:0>2}"
-        elif self.options_widget['Номер варианта:'] == -1:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}"
+            self.path = self.sm.lab_path()
         else:
-            self.path = self.settings['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                                f"{self.options_widget['Номер задания:']:0>2}_" \
-                                                f"{self.options_widget['Номер варианта:']:0>2}"
+            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
+                                         self.options_widget['Номер варианта:'])
 
     def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
@@ -179,9 +169,9 @@ class TestingWidget(QWidget):
         if self.isHidden():
             self.get_path(True)
         self.tests_list.clear()
-        self.current_task = self.settings['lab'], self.settings['task'], self.settings['var']
-        self.cm.testing(self.pos_comparator, self.neg_comparator, self.settings.get('memory_testing', False),
-                        self.settings.get('coverage', False))
+        self.current_task = self.sm['lab'], self.sm['task'], self.sm['var']
+        self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
+                        self.sm.get('coverage', False))
 
         self.cm.looper.test_complete.connect(self.add_list_item)
         self.cm.looper.test_crush.connect(self.add_crush_list_item)
@@ -195,7 +185,7 @@ class TestingWidget(QWidget):
             self.tests_list.addItem(TestingListWidgetItem(
                 f"pos{i}", read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
                 read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
-                self.settings.get('memory_testing', False)))
+                self.sm.get('memory_testing', False)))
             lst.append(f"pos{i}")
             i += 1
 
@@ -204,7 +194,7 @@ class TestingWidget(QWidget):
             self.tests_list.addItem(TestingListWidgetItem(
                 f"neg{i}", read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
                 read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
-                self.settings.get('memory_testing', False)))
+                self.sm.get('memory_testing', False)))
             lst.append(f"neg{i}")
             i += 1
 
@@ -221,7 +211,7 @@ class TestingWidget(QWidget):
             os.remove(f"{self.path}/temp.txt")
         self.testing_end.emit()
 
-        if self.settings.get('coverage', False):
+        if self.sm.get('coverage', False):
             self.coverage_label.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         os.chdir(self.old_dir)
@@ -246,24 +236,30 @@ class TestingWidget(QWidget):
         os.chdir(self.old_dir)
 
     def pos_comparator(self, str1, str2):
-        comparator = self.settings.get('pos_comparator', (0, {'value': 0}))
-        if comparator[0] == 0:
-            return comparator1(str1, str2, comparator[1]['value'])
-        if comparator[0] == 1:
+        comparator = self.sm.get('pos_comparators', dict()).get(
+            (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1)
+        if comparator == -1:
+            comparator = self.sm.get('pos_comparator', 0)
+        if comparator == 0:
+            return comparator1(str1, str2, self.sm.get('epsilon', 0))
+        if comparator == 1:
             return comparator2(str1, str2)
-        if comparator[0] == 2:
-            return comparator3(str1, str2, comparator[1]['value'])
+        if comparator == 2:
+            return comparator3(str1, str2, self.sm.get('pos_substring', ''))
 
     def neg_comparator(self, str1, str2):
-        comparator = self.settings.get('neg_comparator', (0, {'value': 0}))
-        if comparator[0] == 0:
+        comparator = self.sm.get('neg_comparators', dict()).get(
+            (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1)
+        if comparator == -1:
+            comparator = self.sm.get('neg_comparator', 0)
+        if comparator == 0:
             return True
-        if comparator[0] == 1:
-            return comparator1(str1, str2, comparator[1]['value'])
-        if comparator[0] == 2:
+        if comparator == 1:
+            return comparator1(str1, str2, self.sm.get('epsilon', 0))
+        if comparator == 2:
             return comparator2(str1, str2)
-        if comparator[0] == 3:
-            return comparator3(str1, str2, comparator[1]['value'])
+        if comparator == 3:
+            return comparator3(str1, str2, self.sm.get('neg_substring', ''))
 
     def show(self) -> None:
         self.update_options()
