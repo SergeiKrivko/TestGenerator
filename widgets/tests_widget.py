@@ -421,7 +421,6 @@ class TestsWidget(QWidget):
         self.options_widget.set_widget_style_sheet('Вход:', self.tm.style_sheet)
         self.options_widget.set_widget_style_sheet('Выход:', self.tm.style_sheet)
 
-
     def show(self):
         self.update_options()
         self.open_tests()
@@ -511,13 +510,13 @@ class TestCopyWindow(QDialog):
 
     def options_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
-            if os.path.isdir(self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                               f"{self.options_widget['Номер задания:']:0>2}"):
+            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
+                                              -1)):
                 self.options_widget.set_value('Номер варианта:', -1)
             else:
                 for i in range(100):
-                    if os.path.isdir(self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_"
-                                                       f"{self.options_widget['Номер задания:']:0>2}_{i:0>2}"):
+                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
+                                                      self.options_widget['Номер задания:'], i)):
                         self.options_widget.set_value('Номер варианта:', i)
                         break
         self.clear_scroll_area()
@@ -528,28 +527,18 @@ class TestCopyWindow(QDialog):
 
     def get_path(self, from_settings=False):
         if from_settings:
-            if self.sm['var'] == -1:
-                self.path = self.sm['path'] + f"/lab_{self.sm['lab']:0>2}_" \
-                                              f"{self.sm['task']:0>2}"
-            else:
-                self.path = self.sm['path'] + f"/lab_{self.sm['lab']:0>2}_" \
-                                              f"{self.sm['task']:0>2}_" \
-                                              f"{self.sm['var']:0>2}"
-        elif self.options_widget['Номер варианта:'] == -1:
-            self.path = self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                          f"{self.options_widget['Номер задания:']:0>2}"
+            self.path = self.sm.lab_path()
         else:
-            self.path = self.sm['path'] + f"/lab_{self.options_widget['Номер лабы:']:0>2}_" \
-                                          f"{self.options_widget['Номер задания:']:0>2}_" \
-                                          f"{self.options_widget['Номер варианта:']:0>2}"
+            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
+                                         self.options_widget['Номер варианта:'])
 
     def parse_readme_md(self):
+        self.test_list.clear()
         if not os.path.isfile(f"{self.path}/func_tests/readme.md"):
             return
         file = open(f"{self.path}/func_tests/readme.md", encoding='utf-8')
         lines = file.readlines()
         file.close()
-        self.test_list.clear()
 
         for i in range(len(lines)):
             if "Позитивные тесты" in lines[i]:
@@ -587,7 +576,6 @@ class TestCopyWindow(QDialog):
         pos_ind = 0
         neg_ind = 0
         for i in range(len(self.test_list)):
-            print(self.test_list[i])
             if self.test_list[i].startswith("POS"):
                 pos_ind += 1
                 if self.check_boxes[i].isChecked():

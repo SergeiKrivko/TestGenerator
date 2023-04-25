@@ -88,7 +88,8 @@ class MainWindow(QMainWindow):
                          'initial': self.sm.get('coverage', 0)},
             "Тестирование по памяти": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                        'initial': self.sm.get('memory_testing', 0)},
-            "lib": {'type': 'button', 'name': OptionsWindow.NAME_SKIP, 'text': 'Библиотеки'}
+            "lib": {'type': 'button', 'name': OptionsWindow.NAME_SKIP, 'text': 'Библиотеки'},
+            "Тема:": {'type': 'combo'}
         }, self, name="Настройки")
         self.options_window.clicked.connect(self.options_window_triggered)
         self.lib_dialog = LibDialog(self, "Библиотеки", self.sm)
