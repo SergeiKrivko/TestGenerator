@@ -166,7 +166,7 @@ class CodeWidget(QWidget):
         self.tab_widget.setCurrentIndex(1)
         for test in lst:
             item = QListWidgetItem(test)
-            item.setForeground(Qt.gray)
+            item.setForeground(self.tm['TestInProgress'])
             item.setFont(QFont("Courier", 10))
             self.test_res_widget.addItem(item)
 
@@ -179,15 +179,35 @@ class CodeWidget(QWidget):
         self.options_widget.setDisabled(False)
 
     def set_theme(self):
+        tab_style_sheet = f"""
+        QTabWidget::pane {{
+            color: {self.tm['BgColor']};
+            }}
+        QTabBar::tab {{
+            color: {self.tm['TextColor']};
+            background-color: {self.tm['MainColor']};
+            border-bottom-color: {self.tm['TextColor']};
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            border: 1px solid {self.tm['BorderColor']};
+            win-width: 20ex;
+            padding: 4px;
+            }}
+        QTabBar::tab:selected {{
+        background-color: {self.tm['BgColor']};
+        }}
+        """
+
         self.code_edit.setStyleSheet(self.tm.style_sheet)
         self.test_res_widget.setStyleSheet(self.tm.style_sheet)
         self.todo_widget.setStyleSheet(self.tm.style_sheet)
+        self.tab_widget.setStyleSheet(tab_style_sheet)
         self.code_edit.set_theme()
         self.files_widget.set_theme()
-        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Тестировать', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Тестировать', self.tm.buttons_style_sheet)
 
     def show(self) -> None:
         self.update_options()

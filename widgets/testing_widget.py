@@ -84,14 +84,14 @@ class TestingWidget(QWidget):
         self.test_count = 0
 
     def set_theme(self):
-        self.button.setStyleSheet(self.tm.style_sheet)
+        self.button.setStyleSheet(self.tm.buttons_style_sheet)
         self.tests_list.setStyleSheet(self.tm.style_sheet)
         self.prog_out.setStyleSheet(self.tm.style_sheet)
         self.in_data.setStyleSheet(self.tm.style_sheet)
         self.out_data.setStyleSheet(self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -146,13 +146,13 @@ class TestingWidget(QWidget):
     def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  {'PASSED' if res else 'FAILED'}",
-                           Qt.darkGreen if res and memory_res else Qt.red)
+                           self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
         self.test_count += 1
         self.open_test_info()
 
     def add_crush_list_item(self, prog_out, exit_code, prog_errors):
         self.tests_list.item(self.test_count).set_crushed(prog_out, exit_code, prog_errors)
-        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  CRUSHED", Qt.darkRed)
+        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  CRUSHED", self.tm['TestCrushed'])
         self.test_count += 1
         self.open_test_info()
 
@@ -194,7 +194,7 @@ class TestingWidget(QWidget):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             self.tests_list.addItem(TestingListWidgetItem(
-                f"pos{i}", read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
+                self.tm, f"pos{i}", read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
                 read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
                 self.sm.get('memory_testing', False)))
             lst.append(f"pos{i}")
@@ -203,7 +203,7 @@ class TestingWidget(QWidget):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             self.tests_list.addItem(TestingListWidgetItem(
-                f"neg{i}", read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
+                self.tm, f"neg{i}", read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
                 read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
                 self.sm.get('memory_testing', False)))
             lst.append(f"neg{i}")
@@ -340,10 +340,11 @@ class TestingListWidgetItem(QListWidgetItem):
     terminated = 3
     crushed = 2
 
-    def __init__(self, name, in_data, out_data, memory_testing=False):
+    def __init__(self, tm, name, in_data, out_data, memory_testing=False):
         super(TestingListWidgetItem, self).__init__()
+        self.tm = tm
         self.setText(f"{name:6}  in progress…")
-        self.setForeground(Qt.gray)
+        self.setForeground(self.tm['TestInProgress'])
         self.name = name
         self.in_data = in_data
         self.out_data = out_data
@@ -363,7 +364,7 @@ class TestingListWidgetItem(QListWidgetItem):
             self.setToolTip(valgrind_out)
         else:
             self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
-        self.setForeground(Qt.darkGreen if res and memory_res else Qt.red)
+        self.setForeground(self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
 
     def set_crushed(self, prog_out, exit_code, prog_errors):
         self.status = TestingListWidgetItem.crushed
@@ -371,9 +372,9 @@ class TestingListWidgetItem(QListWidgetItem):
         self.exit_code = exit_code
         self.setText(f"{self.name:6}  CRUSHED   exit: {exit_code:<5} ")
         self.setToolTip(prog_errors)
-        self.setForeground(Qt.darkRed)
+        self.setForeground(self.tm['TestCrushed'])
 
     def set_terminated(self, message="terminated"):
         self.status = TestingListWidgetItem.terminated
         self.setText(f"{self.name:6}  {message}")
-        self.setForeground(Qt.gray)
+        self.setForeground(self.tm['TestInProgress'])

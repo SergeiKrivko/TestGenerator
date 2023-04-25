@@ -9,7 +9,7 @@ class OptionsWindow(QDialog):
     NAME_RIGHT = 2
     NAME_SKIP = 3
     INITIAL_WIDGET_WIDTH = 150
-    INITIAL_WIDGET_HEIGHT = 25
+    INITIAL_WIDGET_HEIGHT = 24
     clicked = pyqtSignal(str)
 
     def __init__(self, dct, parent=None, name=""):

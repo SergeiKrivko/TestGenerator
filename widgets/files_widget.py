@@ -55,15 +55,15 @@ class FilesWidget(QWidget):
                 if '.' in file:
                     item = QListWidgetItem(file)
                     if file.endswith("main.c"):
-                        item.setForeground(Qt.darkRed)
+                        item.setForeground(self.tm['MainC'])
                     elif file.endswith(".c"):
-                        item.setForeground(Qt.red)
+                        item.setForeground(self.tm['CFile'])
                     elif file.endswith(".h"):
-                        item.setForeground(Qt.darkYellow)
+                        item.setForeground(self.tm['HFile'])
                     elif file.endswith(".txt"):
-                        item.setForeground(Qt.blue)
+                        item.setForeground(self.tm['TxtFile'])
                     elif file.endswith(".md"):
-                        item.setForeground(Qt.cyan)
+                        item.setForeground(self.tm['MdFile'])
                     self.files_list.addItem(item)
 
     def open_file(self):

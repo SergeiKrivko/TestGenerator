@@ -65,6 +65,6 @@ class TestEditWidget(QWidget):
         self.test_name_edit.setStyleSheet(self.tm.style_sheet)
         self.test_in_edit.setStyleSheet(self.tm.style_sheet)
         self.test_out_edit.setStyleSheet(self.tm.style_sheet)
-        self.button_generate.setStyleSheet(self.tm.style_sheet)
+        self.button_generate.setStyleSheet(self.tm.buttons_style_sheet)
 
 

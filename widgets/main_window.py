@@ -36,8 +36,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(layout)
 
         self.cm = CommandManager(self.sm)
-        # self.tm = ThemeManager(self.sm.get_general('theme'))
-        self.tm = ThemeManager('darcula')
+        self.tm = ThemeManager(self.sm.get_general('theme'))
 
         self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.tests_widget)
@@ -69,7 +68,7 @@ class MainWindow(QMainWindow):
                                          'initial': list(line_sep.keys()).index(self.sm.get('line_sep', '\n'))},
             "Компилятор": {'type': str, 'initial': self.sm.get('compiler', 'gcc -std=c99 -Wall -Werror'),
                            'width': 400},
-            "Ключ -lm": {'type': bool, 'initial': True, 'name': OptionsWindow.NAME_RIGHT},
+            "Ключ -lm": {'type': bool, 'initial': self.sm.get('-lm', True), 'name': OptionsWindow.NAME_RIGHT},
             "Удалять слова при генерации выходного файла": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                                             'initial': self.sm.get('clear_words', False)},
             "Компаратор для позитивных тестов:": {'type': 'combo',
@@ -89,7 +88,8 @@ class MainWindow(QMainWindow):
             "Тестирование по памяти": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                        'initial': self.sm.get('memory_testing', 0)},
             "lib": {'type': 'button', 'name': OptionsWindow.NAME_SKIP, 'text': 'Библиотеки'},
-            "Тема:": {'type': 'combo'}
+            "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWindow.NAME_LEFT,
+                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)}
         }, self, name="Настройки")
         self.options_window.clicked.connect(self.options_window_triggered)
         self.lib_dialog = LibDialog(self, "Библиотеки", self.sm)
@@ -119,6 +119,15 @@ class MainWindow(QMainWindow):
         self.tests_widget.set_theme()
         self.code_widget.set_theme()
         self.testing_widget.set_theme()
+        self.menu_bar.setStyleSheet(f"""
+        QMenuBar {{
+        color: {self.tm['TextColor']};
+        background-color: {self.tm['BgColor']};
+        }}
+        QMenuBar::item::selected {{
+        background-color: {self.tm['MainColor']};
+        }}
+        """)
 
     def open_project(self, show_tests=True):
         path = QFileDialog.getExistingDirectory(directory=self.sm.get_general('__project__', os.getcwd()))
@@ -159,6 +168,9 @@ class MainWindow(QMainWindow):
         self.sm.set('pos_substring', dct['Подстрока для позитивных тестов:'])
         self.sm.set('neg_substring', dct['Подстрока для негативных тестов:'])
         self.sm.set('line_sep', list(line_sep.keys())[dct['Символ переноса строки: ']])
+        self.sm.set_general('theme', th := list(self.tm.themes.keys())[dct['Тема:']])
+        self.tm.set_theme(th)
+        self.set_theme()
 
     def show_tests(self):
         self.testing_widget.hide()

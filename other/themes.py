@@ -18,8 +18,17 @@ basic_theme = {
     'CaretLineBackgroundColor': QColor('#FFE4E4'),
     'MainColor': '#FFFFFF',
     'BgColor': '#F0F0F0',
-    'Border': '2px solid #A0A0A0',
-    'TextColor': '#000000'
+    'BorderColor': '#A0A0A0',
+    'TextColor': '#000000',
+    'TestPassed': QColor('#12A013'),
+    'TestFailed': QColor('#F82525'),
+    'TestInProgress': QColor('#A0A0A0'),
+    'TestCrushed': QColor('#A01010'),
+    'MainC': QColor('#A01010'),
+    'CFile': QColor('#F82525'),
+    'HFile': QColor('#99922C'),
+    'TxtFile': QColor('#2065D4'),
+    'MdFile': QColor('#1BBDD4')
 }
 
 
@@ -65,10 +74,19 @@ class ThemeManager:
                     'CaretLineBackgroundColor': QColor('#323232'),
                     'MainColor': '#606060',
                     'BgColor': '#303030',
-                    'Border': '2px solid #101010',
-                    'TextColor': '#F0F0F0'
+                    'BorderColor': '#101010',
+                    'TextColor': '#F0F0F0',
+                    'TestPassed': QColor('#CBF742'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrushed': QColor('#A01010'),
+                    'MainC': QColor('#000478'),
+                    'CFile': QColor('#78176F'),
+                    'HFile': QColor('#BBB529'),
+                    'TxtFile': QColor('#D6D6D6'),
+                    'MdFile': QColor('#95D68C')
                 }),
-            'theme3':
+            'ocean':
                 Theme({
                     'CodeColors':
                         {
@@ -86,10 +104,19 @@ class ThemeManager:
                     'CaretLineBackgroundColor': QColor('#A5C9CA'),
                     'MainColor': '#E7F6F2',
                     'BgColor': '#A5C9CA',
-                    'Border': '2px solid #395B64',
-                    'TextColor': '#2C3333'
+                    'BorderColor': '#395B64',
+                    'TextColor': '#2C3333',
+                    'TestPassed': QColor('#449C38'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrushed': QColor('#A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'MdFile': QColor('#1BBDD4')
                 }),
-            'theme4':
+            'fresh':
                 Theme({
                     'CodeColors':
                         {
@@ -107,8 +134,47 @@ class ThemeManager:
                     'CaretLineBackgroundColor': QColor('#90B77D'),
                     'MainColor': '#D2D79F',
                     'BgColor': '#90B77D',
-                    'Border': '2px solid #42855B',
-                    'TextColor': '#483838'
+                    'BorderColor': '#42855B',
+                    'TextColor': '#483838',
+                    'TestPassed': QColor('#327329'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrushed': QColor('A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'MdFile': QColor('#1BBDD4')
+                }),
+            'neon':
+                Theme({
+                    'CodeColors':
+                        {
+                            'Identifier': QColor('#274D66'),
+                            'PreProcessor': QColor('#8A3199'),
+                            'CommentLine': QColor('#1F2A40'),
+                            'CommentDoc': QColor('#1F2A40'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#304070'),
+                            'DoubleQuotedString': QColor('#DE435C'),
+                            'SingleQuotedString': QColor('#5F864C')
+                        },
+                    'Paper': QColor('#F9FFD0'),
+                    'CaretLineBackgroundColor': QColor('#FEFFA6'),
+                    'MainColor': '#F9FFD0',
+                    'BgColor': '#F5EA5A',
+                    'BorderColor': '#39B5E0',
+                    'TextColor': '#A31ACB',
+                    'TestPassed': QColor('#327329'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrushed': QColor('A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'MdFile': QColor('#1BBDD4')
                 }),
         }
 
@@ -130,17 +196,54 @@ class ThemeManager:
 
     def set_theme(self, theme_name):
         self.theme_name = theme_name
+        if theme_name not in self.themes:
+            self.theme_name = ThemeManager.BASIC_THEME
         self.theme = self.themes.get(theme_name, self.themes[ThemeManager.BASIC_THEME])
         self.bg_style_sheet = f"color: {self['TextColor']};" \
                               f"background-color: {self['BgColor']};"
         self.style_sheet = f"color: {self['TextColor']};" \
                            f"background-color: {self['MainColor']};" \
-                           f"border: {self['Border']};" \
-                           f"border-radius: 6px;"
+                           f"border: 1px solid {self['BorderColor']};" \
+                           f"border-radius: 4px;"
+        self.buttons_style_sheet = f"""
+        QPushButton {{ {self.style_sheet} }}
+        QPushButton::hover {{
+            background-color: {self['BgColor']};
+        }}
+        QPushButton::disabled {{
+            color: {self['BgColor']};
+            border-color: {self['MainColor']};
+        }}
+        """
         self.combo_box_style_sheet = f"QComboBox{{{self.style_sheet}}}" \
                                      "QComboBox::drop-down:button {border-radius: 5px;}"
-        s = ''
-        self.spin_box_style_sheet = self.style_sheet
+        self.spin_box_style_sheet = f"""
+        QSpinBox {{
+            {self.style_sheet}
+        }}
+        QSpinBox::up-button {{
+            color: {self['TextColor']};
+            background-color: {self['MainColor']};
+            border: 1px solid {self['BorderColor']};
+            border-top-right-radius: 3px;
+        }}
+        QSpinBox::up-button::disabled {{
+            border: 0px solid {self['BorderColor']};
+        }}
+        QSpinBox::down-button {{
+            color: {self['TextColor']};
+            background-color: {self['MainColor']};
+            border: 1px solid {self['BorderColor']};
+            border-bottom-right-radius: 3px;
+        }}
+        QSpinBox::down-button::disabled {{
+            border: 0px solid {self['BorderColor']};
+        }}
+        QSpinBox::disabled {{
+            color: {self['BgColor']};
+            border-color: {self['MainColor']};
+        }}
+        """
 
     def add_custom_theme(self, theme_name, theme_data):
         self.themes[theme_name] = Theme(theme_data)
