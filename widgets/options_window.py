@@ -41,6 +41,9 @@ class OptionsWindow(QDialog):
     def set_widgets_size(self, width, height):
         self.main_widget.set_widgets_size(width, height)
 
+    def set_widget_style_sheet(self, key, style_sheet):
+        self.main_widget.set_widget_style_sheet(key, style_sheet)
+
     def __getitem__(self, item):
         return self.main_widget[item]
 
@@ -138,6 +141,9 @@ class OptionsWidget(QWidget):
         if item not in self.values or value != self.values[item] or isinstance(self.widgets[item], QPushButton):
             self.values[item] = value
             self.clicked.emit(item)
+
+    def set_widget_style_sheet(self, key, style_sheet):
+        self.widgets[key].setStyleSheet(style_sheet)
 
     def set_value(self, item, value):
         self.values[item] = value

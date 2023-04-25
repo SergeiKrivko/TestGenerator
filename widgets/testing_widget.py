@@ -13,10 +13,11 @@ class TestingWidget(QWidget):
     clear_tests = pyqtSignal()
     testing_end = pyqtSignal()
 
-    def __init__(self, sm, cm):
+    def __init__(self, sm, cm, tm):
         super(TestingWidget, self).__init__()
         self.sm = sm
         self.cm = cm
+        self.tm = tm
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -81,6 +82,16 @@ class TestingWidget(QWidget):
         self.old_dir = os.getcwd()
         self.ui_disable_func = None
         self.test_count = 0
+
+    def set_theme(self):
+        self.button.setStyleSheet(self.tm.style_sheet)
+        self.tests_list.setStyleSheet(self.tm.style_sheet)
+        self.prog_out.setStyleSheet(self.tm.style_sheet)
+        self.in_data.setStyleSheet(self.tm.style_sheet)
+        self.out_data.setStyleSheet(self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.style_sheet)
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):

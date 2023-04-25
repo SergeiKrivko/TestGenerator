@@ -12,10 +12,11 @@ from widgets.syntax_highlighter import CodeEditor
 class CodeWidget(QWidget):
     testing_signal = pyqtSignal()
 
-    def __init__(self, sm, cm):
+    def __init__(self, sm, cm, tm):
         super(CodeWidget, self).__init__()
         self.sm = sm
         self.cm = cm
+        self.tm = tm
         self.current_file = ''
 
         layout = QHBoxLayout()
@@ -35,7 +36,7 @@ class CodeWidget(QWidget):
         self.test_res_widget = QListWidget()
         self.test_res_widget.setMaximumWidth(200)
 
-        self.files_widget = FilesWidget(self.sm)
+        self.files_widget = FilesWidget(self.sm, self.tm)
         self.files_widget.setMaximumWidth(200)
 
         self.files_widget.files_list.currentRowChanged.connect(self.open_code)
@@ -52,7 +53,7 @@ class CodeWidget(QWidget):
         self.todo_widget.doubleClicked.connect(self.jump_by_todo)
         layout_left.addWidget(self.tab_widget)
 
-        self.code_edit = CodeEditor(sm)
+        self.code_edit = CodeEditor(sm, tm)
         self.code_edit.setFont(QFont("Courier", 10))
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)
@@ -139,6 +140,7 @@ class CodeWidget(QWidget):
             self.code_edit.open_file(self.path, self.files_widget.files_list.currentItem().text())
             self.update_todo()
             self.code_edit.setDisabled(False)
+            self.set_theme()
         except Exception:
             self.code_edit.setDisabled(True)
 
@@ -175,6 +177,17 @@ class CodeWidget(QWidget):
 
     def end_testing(self):
         self.options_widget.setDisabled(False)
+
+    def set_theme(self):
+        self.code_edit.setStyleSheet(self.tm.style_sheet)
+        self.test_res_widget.setStyleSheet(self.tm.style_sheet)
+        self.todo_widget.setStyleSheet(self.tm.style_sheet)
+        self.code_edit.set_theme()
+        self.files_widget.set_theme()
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Тестировать', self.tm.style_sheet)
 
     def show(self) -> None:
         self.update_options()

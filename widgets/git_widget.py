@@ -123,16 +123,19 @@ class GitWidget(QWidget):
         os.chdir(old_dir)
 
     def update_files_list(self):
-        old_dir = os.getcwd()
-        os.chdir(self.sm.path)
-        res = self.cm.cmd_command(['git', 'status', '--porcelain'])
-
-        git_status = res.stdout
-
         self.files_list_widget.clear()
-        for line in git_status:
-            self.files_list_widget.addItem(QListWidgetItem(line.rstrip()))
-        os.chdir(old_dir)
+        try:
+            old_dir = os.getcwd()
+            os.chdir(self.sm.path)
+            res = self.cm.cmd_command(['git', 'status', '--porcelain'])
+
+            git_status = res.stdout
+
+            for line in git_status:
+                self.files_list_widget.addItem(QListWidgetItem(line.rstrip()))
+            os.chdir(old_dir)
+        except Exception:
+            pass
 
     def all_code_to_index(self):
         old_dir = os.getcwd()

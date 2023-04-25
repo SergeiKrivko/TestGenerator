@@ -11,7 +11,7 @@ headers_list = []
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, sm, parent=None):
+    def __init__(self, sm, tm, parent=None):
         super(CodeEditor, self).__init__(parent)
 
         # Set the default font
@@ -22,23 +22,18 @@ class CodeEditor(QsciScintilla):
         self.setFont(font)
         self.setMarginsFont(font)
         self.sm = sm
+        self.tm = tm
 
         # Margin 0 is used for line numbers
         fontmetrics = QFontMetrics(font)
         self.setMarginsFont(font)
         self.setMarginWidth(0, fontmetrics.width("00000") + 6)
         self.setMarginLineNumbers(0, True)
-        self.setMarginsBackgroundColor(QColor("#cccccc"))
 
         # Clickable margin 1 for showing markers
         self.setMarginSensitivity(1, True)
-        #        self.connect(self,
-        #            SIGNAL('marginClicked(int, int, Qt::KeyboardModifiers)'),
-        #            self.on_margin_clicked)
         self.markerDefine(QsciScintilla.RightArrow,
                           self.ARROW_MARKER_NUM)
-        self.setMarkerBackgroundColor(QColor("#ee1111"),
-                                      self.ARROW_MARKER_NUM)
 
         # Brace matching: enable for a brace immediately before or after
         # the current position
@@ -47,12 +42,6 @@ class CodeEditor(QsciScintilla):
 
         # Current line visible with special background color
         self.setCaretLineVisible(True)
-        self.setCaretLineBackgroundColor(QColor("#ffe4e4"))
-
-        # Set Python lexer
-        # Set style for Python comments (style number 1) to a fixed-width
-        # courier.
-        #
 
         self.lexer = QsciLexerCPP(None)
         self.lexer.setDefaultFont(font)
@@ -74,13 +63,7 @@ class CodeEditor(QsciScintilla):
         text = bytearray(str.encode("Courier"))
         self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, text)
 
-        # Don't want to see the horizontal scrollbar at all
-        # Use raw message to Scintilla here (all messages are documented
-        # here: http://www.scintilla.org/ScintillaDoc.html)
         self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 0)
-
-        # not too small
-        self.setMinimumSize(600, 450)
 
         self.setCallTipsVisible(0)
 
@@ -98,6 +81,14 @@ class CodeEditor(QsciScintilla):
         self.current_file = ""
         self.current_row = 0
         self.cursorPositionChanged.connect(self.update_api)
+
+    def set_theme(self):
+        self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
+        self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))
+        for key, item in self.tm.code_colors():
+            self.lexer.setColor(item, QsciLexerCPP.__dict__[key])
+        self.lexer.setPaper(self.tm['Paper'])
+        self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on

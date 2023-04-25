@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog
 
+from other.themes import ThemeManager
 from widgets.code_widget import CodeWidget
 from widgets.testing_widget import TestingWidget
 from widgets.options_window import OptionsWindow
@@ -24,26 +25,28 @@ class MainWindow(QMainWindow):
         self.sm = SettingsManager()
 
         if not os.path.isdir(self.sm.get_general('__project__', '')):
-            pass
+            self.open_project(False)
         else:
             self.sm.repair_settings()
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        central_widget.setLayout(layout)
+        self.central_widget.setLayout(layout)
 
         self.cm = CommandManager(self.sm)
+        # self.tm = ThemeManager(self.sm.get_general('theme'))
+        self.tm = ThemeManager('darcula')
 
-        self.tests_widget = TestsWidget(self.sm, self.cm)
+        self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.tests_widget)
 
-        self.testing_widget = TestingWidget(self.sm, self.cm)
+        self.testing_widget = TestingWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.testing_widget)
         self.testing_widget.hide()
 
-        self.code_widget = CodeWidget(self.sm, self.cm)
+        self.code_widget = CodeWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.code_widget)
         self.testing_widget.testing_start.connect(self.code_widget.testing_start)
         self.testing_widget.add_test.connect(self.code_widget.add_test)
@@ -102,17 +105,27 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menu_bar)
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
 
+        self.set_theme()
+
         if not os.path.isdir(self.sm.get_general('__project__', '')):
             self.open_project()
         else:
             self.tests_widget.open_tests()
 
-    def open_project(self):
+    def set_theme(self):
+        self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
+        self.menu_bar.setStyleSheet(self.tm.bg_style_sheet)
+        self.tests_widget.set_theme()
+        self.code_widget.set_theme()
+        self.testing_widget.set_theme()
+
+    def open_project(self, show_tests=True):
         path = QFileDialog.getExistingDirectory(directory=self.sm.get_general('__project__', os.getcwd()))
         if path:
             self.sm.set_general('__project__', path)
             self.sm.repair_settings()
-            self.show_tests()
+            if show_tests:
+                self.show_tests()
 
     def jump_to_code_from_todo(self, file_name, line):
         self.show_code()

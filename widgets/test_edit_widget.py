@@ -3,11 +3,12 @@ from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLay
 
 
 class TestEditWidget(QWidget):
-    def __init__(self, parent=None):
-        super(TestEditWidget, self).__init__(parent)
+    def __init__(self, tm):
+        super(TestEditWidget, self).__init__()
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+        self.tm = tm
 
         h_layout1 = QHBoxLayout()
         layout.addLayout(h_layout1)
@@ -59,3 +60,11 @@ class TestEditWidget(QWidget):
         self.test_in_edit.setText("")
         self.test_out_edit.setText("")
         self.test_name_edit.setText("")
+
+    def set_theme(self):
+        self.test_name_edit.setStyleSheet(self.tm.style_sheet)
+        self.test_in_edit.setStyleSheet(self.tm.style_sheet)
+        self.test_out_edit.setStyleSheet(self.tm.style_sheet)
+        self.button_generate.setStyleSheet(self.tm.style_sheet)
+
+

@@ -9,10 +9,11 @@ import os
 
 
 class TestsWidget(QWidget):
-    def __init__(self, sm, cm):
+    def __init__(self, sm, cm, tm):
         super(TestsWidget, self).__init__()
         self.sm = sm
         self.cm = cm
+        self.tm = tm
 
         layout = QVBoxLayout()
 
@@ -38,7 +39,7 @@ class TestsWidget(QWidget):
         self.code_widget.setFont(QFont("Courier", 10))
         self.code_widget.setReadOnly(True)
 
-        self.test_list_widget = TestTableWidget()
+        self.test_list_widget = TestTableWidget(self.tm)
         self.test_list_widget.setMinimumWidth(400)
         self.test_list_widget.setMinimumHeight(150)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
@@ -53,7 +54,7 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)
 
-        self.test_edit_widget = TestEditWidget()
+        self.test_edit_widget = TestEditWidget(self.tm)
         self.test_edit_widget.setMinimumHeight(300)
         self.test_edit_widget.test_name_edit.textChanged.connect(self.set_test_name)
         self.test_edit_widget.test_in_edit.textChanged.connect(self.set_test_in)
@@ -409,6 +410,17 @@ class TestsWidget(QWidget):
             self.sm.set('neg_comparators', dct)
         except Exception as ex:
             QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
+
+    def set_theme(self):
+        self.test_list_widget.set_theme()
+        self.test_edit_widget.set_theme()
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('copy', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Вход:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Выход:', self.tm.style_sheet)
+
 
     def show(self):
         self.update_options()

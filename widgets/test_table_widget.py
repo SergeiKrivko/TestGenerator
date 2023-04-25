@@ -1,3 +1,5 @@
+import os.path
+
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel, \
     QComboBox
 
@@ -5,11 +7,12 @@ BUTTONS_MAX_WIDTH = 30
 
 
 class TestTableWidget(QWidget):
-    def __init__(self):
+    def __init__(self, tm):
         super(TestTableWidget, self).__init__()
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
+        self.tm = tm
 
         # Positive tests
 
@@ -86,7 +89,8 @@ class TestTableWidget(QWidget):
         neg_comparator_layout = QHBoxLayout()
         neg_comparator_layout.addWidget(QLabel('Компаратор:'))
         self.neg_comparator_widget = QComboBox()
-        self.neg_comparator_widget.addItems(['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки'])
+        self.neg_comparator_widget.addItems(
+            ['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки'])
         self.neg_comparator_widget.setMaximumWidth(200)
         neg_comparator_layout.addWidget(self.neg_comparator_widget)
         neg_layout.addLayout(neg_comparator_layout)
@@ -101,3 +105,16 @@ class TestTableWidget(QWidget):
         for i in range(len(item_list)):
             self.neg_test_list.addItem(QListWidgetItem(item_list[i]))
 
+    def set_theme(self):
+        self.pos_test_list.setStyleSheet(self.tm.style_sheet)
+        self.pos_add_button.setStyleSheet(self.tm.style_sheet)
+        self.pos_delete_button.setStyleSheet(self.tm.style_sheet)
+        self.pos_button_up.setStyleSheet(self.tm.style_sheet)
+        self.pos_button_down.setStyleSheet(self.tm.style_sheet)
+        self.pos_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.neg_test_list.setStyleSheet(self.tm.style_sheet)
+        self.neg_add_button.setStyleSheet(self.tm.style_sheet)
+        self.neg_delete_button.setStyleSheet(self.tm.style_sheet)
+        self.neg_button_up.setStyleSheet(self.tm.style_sheet)
+        self.neg_button_down.setStyleSheet(self.tm.style_sheet)
+        self.neg_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)

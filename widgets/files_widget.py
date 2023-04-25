@@ -9,9 +9,10 @@ class FilesWidget(QWidget):
     renameFile = pyqtSignal(str)
     ignore_files = [".exe", ".o", "temp.txt"]
 
-    def __init__(self, sm):
+    def __init__(self, sm, tm):
         super(FilesWidget, self).__init__()
         self.sm = sm
+        self.tm = tm
 
         self.setMaximumWidth(175)
         files_layout = QVBoxLayout()
@@ -100,12 +101,18 @@ class FilesWidget(QWidget):
             os.remove(f"{self.path}/{self.files_list.currentItem().text()}")
             self.update_files_list()
 
+    def set_theme(self):
+        self.file_name.setStyleSheet(self.tm.style_sheet)
+        self.button_add_file.setStyleSheet(self.tm.style_sheet)
+        self.button_delete_file.setStyleSheet(self.tm.style_sheet)
+        self.files_list.setStyleSheet(self.tm.style_sheet)
+
 
 class CustomDialog(QDialog):
     def __init__(self, message):
         super().__init__()
 
-        self.setWindowTitle("HELLO!")
+        self.setWindowTitle("Удаление файла")
 
         QBtn = QDialogButtonBox.Yes | QDialogButtonBox.No
 
