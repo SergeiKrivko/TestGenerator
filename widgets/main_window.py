@@ -54,11 +54,11 @@ class MainWindow(QMainWindow):
         self.code_widget.test_res_widget.doubleClicked.connect(self.open_test_from_code)
         self.code_widget.hide()
 
-        self.git_widget = GitWidget(self.sm, self.cm)
+        self.git_widget = GitWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.git_widget)
         self.git_widget.hide()
 
-        self.todo_widget = TODOWidget(self.sm, self.cm)
+        self.todo_widget = TODOWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.todo_widget)
         self.todo_widget.jumpToCode.connect(self.jump_to_code_from_todo)
         self.todo_widget.hide(save_data=False)
@@ -119,6 +119,8 @@ class MainWindow(QMainWindow):
         self.tests_widget.set_theme()
         self.code_widget.set_theme()
         self.testing_widget.set_theme()
+        self.todo_widget.set_theme()
+        self.git_widget.set_theme()
         self.menu_bar.setStyleSheet(f"""
         QMenuBar {{
         color: {self.tm['TextColor']};

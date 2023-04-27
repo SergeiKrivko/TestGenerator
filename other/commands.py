@@ -56,7 +56,7 @@ class CommandManager:
 
         self.update_path()
         for file in os.listdir(self.path):
-            if '.c' in file:
+            if file.endswith('.c'):
                 res = self.cmd_command(["gcov", f"{self.path}/{file}"])
                 for line in res.stdout.split('\n'):
                     if "Lines executed:" in line:

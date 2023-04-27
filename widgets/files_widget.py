@@ -105,7 +105,7 @@ class FilesWidget(QWidget):
         self.file_name.setStyleSheet(self.tm.style_sheet)
         self.button_add_file.setStyleSheet(self.tm.style_sheet)
         self.button_delete_file.setStyleSheet(self.tm.style_sheet)
-        self.files_list.setStyleSheet(self.tm.style_sheet)
+        self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
 
 
 class CustomDialog(QDialog):

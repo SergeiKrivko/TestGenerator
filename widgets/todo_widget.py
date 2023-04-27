@@ -10,10 +10,11 @@ from widgets.options_window import OptionsWidget, OptionsWindow
 class TODOWidget(QWidget):
     jumpToCode = pyqtSignal(str, int)
 
-    def __init__(self, settings, cm):
+    def __init__(self, settings, cm, tm):
         super(TODOWidget, self).__init__()
         self.settings = settings
         self.cm = cm
+        self.tm = tm
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -50,6 +51,13 @@ class TODOWidget(QWidget):
         layout.addWidget(self.list_widget)
         self.list_widget.doubleClicked.connect(self.open_todo)
 
+    def set_theme(self):
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
+        self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.button_add.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_addc.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete.setStyleSheet(self.tm.buttons_style_sheet)
+
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
             self.settings['lab'] = self.options_widget["Номер лабы:"]
@@ -62,15 +70,15 @@ class TODOWidget(QWidget):
                 'Задание:': {'type': 'combo', 'values': ['Общее'] + self.cm.list_of_tasks(), 'initial': item.task},
                 'Описание:': {'type': str, 'width': 500, 'initial': item.description},
             })
-            self.window.show()
-            self.window.returnPressed.connect(self.update_todo_item)
+            if self.window.exec():
+                self.update_todo_item(self.window.values)
         elif isinstance(item, CodeTODOItem):
             self.jump_to_code()
 
     def add_todo_to_code(self):
-        dlg = AddTODODialogWindow(self.settings['path'], self.settings['lab'])
+        dlg = AddTODODialogWindow(self.settings.path, self.settings['lab'])
         if dlg.exec():
-            file = open(f"{self.settings['path']}/{dlg.task_combo_box.currentText()}/"
+            file = open(f"{self.settings.path}/{dlg.task_combo_box.currentText()}/"
                         f"{dlg.file_combo_box.currentText()}", 'a', encoding='utf-8')
             file.write(f"// TODO: {dlg.line_edit.text()}\n")
             file.close()
@@ -80,12 +88,12 @@ class TODOWidget(QWidget):
     def delete_todo(self):
         item = self.list_widget.currentItem()
         if isinstance(item, CodeTODOItem):
-            file = open(f"{self.settings['path']}/{item.path}", encoding='utf-8')
+            file = open(f"{self.settings.path}/{item.path}", encoding='utf-8')
             text = file.read()
             file.close()
 
             text = text.replace(f"// TODO: {item.description.strip()}", "")
-            file = open(f"{self.settings['path']}/{item.path}", 'w', encoding='utf-8')
+            file = open(f"{self.settings.path}/{item.path}", 'w', encoding='utf-8')
             file.write(text)
             file.close()
         self.list_widget.takeItem(self.list_widget.currentRow())
@@ -102,8 +110,8 @@ class TODOWidget(QWidget):
 
                 self.list_widget.sortItems()
 
-                os.makedirs(f"{self.settings['path']}/TODO", exist_ok=True)
-                file = open(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8',
+                os.makedirs(f"{self.settings.path}/TODO", exist_ok=True)
+                file = open(f"{self.settings.path}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8',
                             newline=self.settings['line_sep'])
                 file.write(f"# Лабораторная работа №{self.settings['lab']}: список задач\n\n")
 
@@ -118,8 +126,8 @@ class TODOWidget(QWidget):
                 file.close()
                 break
         else:
-            if os.path.isfile(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md"):
-                os.remove(f"{self.settings['path']}/TODO/lab_{self.settings['lab']:0>2}.md")
+            if os.path.isfile(f"{self.settings.path}/TODO/lab_{self.settings['lab']:0>2}.md"):
+                os.remove(f"{self.settings.path}/TODO/lab_{self.settings['lab']:0>2}.md")
 
     def open_lab(self):
         self.list_widget.clear()

@@ -20,6 +20,8 @@ basic_theme = {
     'BgColor': '#F0F0F0',
     'BorderColor': '#A0A0A0',
     'TextColor': '#000000',
+    'ColorSelected': '#CCE8FF',
+    'ColorHover': '#E5F3FF',
     'TestPassed': QColor('#12A013'),
     'TestFailed': QColor('#F82525'),
     'TestInProgress': QColor('#A0A0A0'),
@@ -76,6 +78,8 @@ class ThemeManager:
                     'BgColor': '#303030',
                     'BorderColor': '#101010',
                     'TextColor': '#F0F0F0',
+                    'ColorSelected': '#909090',
+                    'ColorHover': '#777777',
                     'TestPassed': QColor('#CBF742'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -106,6 +110,8 @@ class ThemeManager:
                     'BgColor': '#A5C9CA',
                     'BorderColor': '#395B64',
                     'TextColor': '#2C3333',
+                    'ColorSelected': '#A2D7E5',
+                    'ColorHover': '#C1EDF5',
                     'TestPassed': QColor('#449C38'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -136,6 +142,8 @@ class ThemeManager:
                     'BgColor': '#90B77D',
                     'BorderColor': '#42855B',
                     'TextColor': '#483838',
+                    'ColorSelected': '#A3CF63',
+                    'ColorHover': '#BAD78C',
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -166,6 +174,40 @@ class ThemeManager:
                     'BgColor': '#F5EA5A',
                     'BorderColor': '#39B5E0',
                     'TextColor': '#A31ACB',
+                    'ColorSelected': '#CFA0D9',
+                    'ColorHover': '#EEC1F0',
+                    'TestPassed': QColor('#327329'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrushed': QColor('A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'MdFile': QColor('#1BBDD4')
+                }),
+            'coffee':
+                Theme({
+                    'CodeColors':
+                        {
+                            'Identifier': QColor('#5C3D2E'),
+                            'PreProcessor': QColor('#4B6587'),
+                            'CommentLine': QColor('#4F0E0E'),
+                            'CommentDoc': QColor('#4F0E0E'),
+                            'Keyword': QColor('#FF8303'),
+                            'Number': QColor('#38470B'),
+                            'Operator': QColor('#5C3D2E'),
+                            'DoubleQuotedString': QColor('#911F27'),
+                            'SingleQuotedString': QColor('#911F27')
+                        },
+                    'Paper': QColor('#FFDCC5'),
+                    'CaretLineBackgroundColor': QColor('#D9B28D'),
+                    'MainColor': '#D9B28D',
+                    'BgColor': '#D7B19D',
+                    'BorderColor': '#865439',
+                    'TextColor': '#402218',
+                    'ColorSelected': '#E8C3B0',
+                    'ColorHover': '#E0BB9D',
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -205,10 +247,22 @@ class ThemeManager:
                            f"background-color: {self['MainColor']};" \
                            f"border: 1px solid {self['BorderColor']};" \
                            f"border-radius: 4px;"
+        self.list_widget_style_sheet = f"""
+        QListWidget {{
+        {self.style_sheet}
+        }}
+        QListWidget::item:hover {{
+        background-color: {self['ColorHover']};
+        }}
+        QListWidget::item:selected {{
+        color: {self['TextColor']};
+        background-color: {self['ColorSelected']};
+        }}
+        """
         self.buttons_style_sheet = f"""
         QPushButton {{ {self.style_sheet} }}
         QPushButton::hover {{
-            background-color: {self['BgColor']};
+            background-color: {self['ColorHover']};
         }}
         QPushButton::disabled {{
             color: {self['BgColor']};

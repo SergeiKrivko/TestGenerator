@@ -106,13 +106,13 @@ class TestTableWidget(QWidget):
             self.neg_test_list.addItem(QListWidgetItem(item_list[i]))
 
     def set_theme(self):
-        self.pos_test_list.setStyleSheet(self.tm.style_sheet)
+        self.pos_test_list.setStyleSheet(self.tm.list_widget_style_sheet)
         self.pos_add_button.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_delete_button.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_button_up.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_button_down.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.neg_test_list.setStyleSheet(self.tm.style_sheet)
+        self.neg_test_list.setStyleSheet(self.tm.list_widget_style_sheet)
         self.neg_add_button.setStyleSheet(self.tm.buttons_style_sheet)
         self.neg_delete_button.setStyleSheet(self.tm.buttons_style_sheet)
         self.neg_button_up.setStyleSheet(self.tm.buttons_style_sheet)

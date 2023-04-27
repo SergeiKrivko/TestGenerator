@@ -38,7 +38,7 @@ class TestingWidget(QWidget):
         self.button = QPushButton('Тестировать')
         layout.addWidget(self.button)
         self.button.clicked.connect(self.button_pressed)
-        self.button.setFixedWidth(180)
+        self.button.setFixedSize(180, 26)
 
         layout2 = QHBoxLayout()
         layout.addLayout(layout2)
@@ -85,7 +85,7 @@ class TestingWidget(QWidget):
 
     def set_theme(self):
         self.button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.tests_list.setStyleSheet(self.tm.style_sheet)
+        self.tests_list.setStyleSheet(self.tm.list_widget_style_sheet)
         self.prog_out.setStyleSheet(self.tm.style_sheet)
         self.in_data.setStyleSheet(self.tm.style_sheet)
         self.out_data.setStyleSheet(self.tm.style_sheet)

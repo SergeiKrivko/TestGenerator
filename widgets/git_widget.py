@@ -7,10 +7,11 @@ import os
 
 
 class GitWidget(QWidget):
-    def __init__(self, sm, cm):
+    def __init__(self, sm, cm, tm):
         super(GitWidget, self).__init__()
         self.sm = sm
         self.cm = cm
+        self.tm = tm
         self.widgets = []
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -32,6 +33,16 @@ class GitWidget(QWidget):
         self.files_list_widget.setFont(QFont("Courier", 10))
         self.files_list_widget.doubleClicked.connect(self.git_add)
         layout.addWidget(self.files_list_widget)
+
+    def set_theme(self):
+        self.files_list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
+        self.options_widget.set_widget_style_sheet('add_code', self.tm.buttons_style_sheet)
+        self.options_widget.set_widget_style_sheet('add_tests', self.tm.buttons_style_sheet)
+        self.options_widget.set_widget_style_sheet('git_reset', self.tm.buttons_style_sheet)
+        self.options_widget.set_widget_style_sheet('Описание коммита:', self.tm.style_sheet)
+        self.options_widget.set_widget_style_sheet('Commit', self.tm.buttons_style_sheet)
+        self.options_widget.set_widget_style_sheet('Push', self.tm.buttons_style_sheet)
 
     def options_changed(self, key):
         if key == 'Номер лабы:':
