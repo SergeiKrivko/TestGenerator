@@ -1,4 +1,5 @@
 import os
+from subprocess import run, TimeoutExpired
 import subprocess
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -13,9 +14,9 @@ class CommandManager:
         if os.name == 'nt':
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            return subprocess.run(args, capture_output=True, text=True, startupinfo=si, **kwargs)
+            return run(args, capture_output=True, text=True, startupinfo=si, **kwargs)
         else:
-            return subprocess.run(args, capture_output=True, text=True, **kwargs)
+            return run(args, capture_output=True, text=True, **kwargs)
 
     def update_path(self):
         self.path = self.sm.lab_path()
@@ -78,7 +79,8 @@ class CommandManager:
 
     def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
-        self.looper = Looper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing, coverage)
+        self.looper = Looper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing, coverage,
+                             time_limit=self.sm.get('time_limit'))
         self.looper.start()
 
     def test_count(self):
@@ -151,11 +153,14 @@ class CommandManager:
 class Looper(QThread):
     test_complete = pyqtSignal(bool, str, int, bool, str)
     test_crush = pyqtSignal(str, int, str)
+    test_timeout = pyqtSignal()
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, compiler, path, pos_comparator, neg_comparator, memory_testing=False, coverage=False):
+    def __init__(self, compiler, path, pos_comparator, neg_comparator, memory_testing=False, coverage=False,
+                 time_limit=10):
         super(Looper, self).__init__()
+        self.time_limit = time_limit
         self.compiler = compiler
         self.memory_testing = memory_testing
         self.path = path
@@ -171,8 +176,13 @@ class Looper(QThread):
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
-                f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"))
+            try:
+                res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
+                    f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"), timeout=self.time_limit)
+            except TimeoutExpired:
+                self.test_timeout.emit()
+                i += 1
+                continue
             if res.stderr:
                 self.test_crush.emit(res.stdout, res.returncode, res.stderr)
                 i += 1
@@ -193,8 +203,13 @@ class Looper(QThread):
 
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
-                f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"))
+            try:
+                res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
+                    f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"), timeout=self.time_limit)
+            except TimeoutExpired:
+                self.test_timeout.emit()
+                i += 1
+                continue
             if res.stderr:
                 self.test_crush.emit(res.stdout, res.returncode, res.stderr)
                 i += 1

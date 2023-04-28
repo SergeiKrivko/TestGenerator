@@ -87,6 +87,8 @@ class MainWindow(QMainWindow):
                          'initial': self.sm.get('coverage', 0)},
             "Тестирование по памяти": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                        'initial': self.sm.get('memory_testing', 0)},
+            "Ограничение по времени:": {'type': float, 'min': 0.01, 'max': 600, 'name': OptionsWindow.NAME_LEFT,
+                                        'initial': self.sm.get('time_limit', 10)},
             "lib": {'type': 'button', 'name': OptionsWindow.NAME_SKIP, 'text': 'Библиотеки'},
             "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWindow.NAME_LEFT,
                       'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)}
@@ -171,6 +173,7 @@ class MainWindow(QMainWindow):
         self.sm.set('neg_substring', dct['Подстрока для негативных тестов:'])
         self.sm.set('line_sep', list(line_sep.keys())[dct['Символ переноса строки: ']])
         self.sm.set_general('theme', th := list(self.tm.themes.keys())[dct['Тема:']])
+        self.sm.set('time_limit', dct['Ограничение по времени:'])
         self.tm.set_theme(th)
         self.set_theme()
 

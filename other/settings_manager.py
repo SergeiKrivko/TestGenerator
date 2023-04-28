@@ -62,3 +62,5 @@ class SettingsManager:
                 self.set('neg_comparator', 0)
             if not isinstance(self.get('line_sep'), str):
                 self.set('line_sep', '\n')
+            if not isinstance(self.get('time_limit'), (float, int)):
+                self.set('time_limit', 10)

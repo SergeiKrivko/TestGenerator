@@ -156,6 +156,12 @@ class TestingWidget(QWidget):
         self.test_count += 1
         self.open_test_info()
 
+    def add_timeout_list_item(self):
+        self.tests_list.item(self.test_count).set_timeout()
+        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  TIMEOUT", self.tm['TestFailed'])
+        self.test_count += 1
+        self.open_test_info()
+
     def button_pressed(self, *args):
         if self.button.text() == "Тестировать":
             self.testing()
@@ -186,6 +192,7 @@ class TestingWidget(QWidget):
 
         self.cm.looper.test_complete.connect(self.add_list_item)
         self.cm.looper.test_crush.connect(self.add_crush_list_item)
+        self.cm.looper.test_timeout.connect(self.add_timeout_list_item)
         self.cm.looper.end_testing.connect(self.end_testing)
         self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
 
@@ -373,6 +380,11 @@ class TestingListWidgetItem(QListWidgetItem):
         self.setText(f"{self.name:6}  CRUSHED   exit: {exit_code:<5} ")
         self.setToolTip(prog_errors)
         self.setForeground(self.tm['TestCrushed'])
+
+    def set_timeout(self):
+        self.status = TestingListWidgetItem.failed
+        self.setText(f"{self.name:6}  TIMEOUT")
+        self.setForeground(self.tm['TestFailed'])
 
     def set_terminated(self, message="terminated"):
         self.status = TestingListWidgetItem.terminated
