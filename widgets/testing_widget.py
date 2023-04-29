@@ -244,7 +244,7 @@ class TestingWidget(QWidget):
             os.remove(f"{self.path}/temp.txt")
         self.testing_end.emit()
 
-        QMessageBox.warning(self, "Error", errors)
+        QMessageBox.warning(None, "Error", errors)
 
         for i in range(self.test_count, self.tests_list.count()):
             self.tests_list.item(i).set_terminated()

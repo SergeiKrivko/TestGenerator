@@ -21,15 +21,18 @@ class FilesWidget(QWidget):
         self.path = ''
 
         self.file_name = QLineEdit()
+        self.file_name.setFixedHeight(24)
         files_layout.addWidget(self.file_name)
 
         buttons_layout = QHBoxLayout()
         files_layout.addLayout(buttons_layout)
         self.button_add_file = QPushButton()
         self.button_add_file.setText("+")
+        self.button_add_file.setFixedHeight(20)
         buttons_layout.addWidget(self.button_add_file)
         self.button_delete_file = QPushButton()
         self.button_delete_file.setText("✕")
+        self.button_delete_file.setFixedHeight(20)
         buttons_layout.addWidget(self.button_delete_file)
 
         self.files_list = QListWidget()
@@ -103,8 +106,8 @@ class FilesWidget(QWidget):
 
     def set_theme(self):
         self.file_name.setStyleSheet(self.tm.style_sheet)
-        self.button_add_file.setStyleSheet(self.tm.style_sheet)
-        self.button_delete_file.setStyleSheet(self.tm.style_sheet)
+        self.button_add_file.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete_file.setStyleSheet(self.tm.buttons_style_sheet)
         self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
 
 

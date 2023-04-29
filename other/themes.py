@@ -6,6 +6,7 @@ basic_theme = {
         {
             'Identifier': Qt.black,
             'PreProcessor': Qt.darkYellow,
+            'Comment': Qt.darkGreen,
             'CommentLine': Qt.darkGreen,
             'CommentDoc': Qt.darkGreen,
             'Keyword': Qt.darkBlue,
@@ -62,13 +63,14 @@ class ThemeManager:
                 Theme({
                     'CodeColors':
                         {
-                            'Identifier': QColor('#FFFFFF'),
+                            'Identifier': QColor('#DFDFDF'),
                             'PreProcessor': QColor('#BBB529'),
+                            'Comment': QColor('#74797B'),
                             'CommentLine': QColor('#74797B'),
                             'CommentDoc': QColor('#74797B'),
                             'Keyword': QColor('#CC7832'),
                             'Number': QColor('#5191A6'),
-                            'Operator': QColor('#FFFFFF'),
+                            'Operator': QColor('#DFDFDF'),
                             'DoubleQuotedString': QColor('#5F864C'),
                             'SingleQuotedString': QColor('#5F864C')
                         },
@@ -96,6 +98,7 @@ class ThemeManager:
                         {
                             'Identifier': QColor('#274D66'),
                             'PreProcessor': QColor('#8A3199'),
+                            'Comment': QColor('#1F2A40'),
                             'CommentLine': QColor('#1F2A40'),
                             'CommentDoc': QColor('#1F2A40'),
                             'Keyword': QColor('#CC7832'),
@@ -128,6 +131,7 @@ class ThemeManager:
                         {
                             'Identifier': QColor('#274D66'),
                             'PreProcessor': QColor('#8A3199'),
+                            'Comment': QColor('#1F2A40'),
                             'CommentLine': QColor('#1F2A40'),
                             'CommentDoc': QColor('#1F2A40'),
                             'Keyword': QColor('#CC7832'),
@@ -160,6 +164,7 @@ class ThemeManager:
                         {
                             'Identifier': QColor('#274D66'),
                             'PreProcessor': QColor('#8A3199'),
+                            'Comment': QColor('#1F2A40'),
                             'CommentLine': QColor('#1F2A40'),
                             'CommentDoc': QColor('#1F2A40'),
                             'Keyword': QColor('#CC7832'),
@@ -222,7 +227,6 @@ class ThemeManager:
 
         self.theme_name = ''
         self.theme = None
-        self.set_theme(theme_name)
         self.style_sheet = ''
         self.bg_style_sheet = ''
         self.set_theme(theme_name)
@@ -241,15 +245,18 @@ class ThemeManager:
         if theme_name not in self.themes:
             self.theme_name = ThemeManager.BASIC_THEME
         self.theme = self.themes.get(theme_name, self.themes[ThemeManager.BASIC_THEME])
-        self.bg_style_sheet = f"color: {self['TextColor']};" \
+        self.bg_style_sheet = f"color: {self['TextColor']};\n" \
                               f"background-color: {self['BgColor']};"
-        self.style_sheet = f"color: {self['TextColor']};" \
-                           f"background-color: {self['MainColor']};" \
-                           f"border: 1px solid {self['BorderColor']};" \
+        self.style_sheet = f"color: {self['TextColor']};\n" \
+                           f"background-color: {self['MainColor']};\n" \
+                           f"border: 1px solid {self['BorderColor']};\n" \
                            f"border-radius: 4px;"
         self.list_widget_style_sheet = f"""
         QListWidget {{
         {self.style_sheet}
+        }}
+        QListWidget::item {{
+        border-radius: 6px;
         }}
         QListWidget::item:hover {{
         background-color: {self['ColorHover']};
@@ -257,6 +264,42 @@ class ThemeManager:
         QListWidget::item:selected {{
         color: {self['TextColor']};
         background-color: {self['ColorSelected']};
+        border-radius: 6px;
+        }}
+        QListWidget QScrollBar:vertical {{
+        background: {self['MainColor']};
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+        width: 12px;
+        margin: 0px;
+        }}
+        QListWidget QScrollBar:horizontal {{
+        background: {self['MainColor']};
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+        height: 12px;
+        margin: 0px;
+        }}
+        QListWidget QScrollBar::handle::vertical {{
+        background-color: {self['BorderColor']};
+        margin: 2px;
+        border-radius: 4px;
+        min-height: 20px;
+        }}
+        QListWidget QScrollBar::handle::horizontal {{
+        background-color: {self['BorderColor']};
+        margin: 2px;
+        border-radius: 4px;
+        min-width: 20px;
+        }}
+        QListWidget QScrollBar::sub-page, QScrollBar::add-page {{
+        background: none;
+        }}
+        QListWidget QScrollBar::sub-line, QScrollBar::add-line {{
+        background: none;
+        height: 0px;
+        subcontrol-position: left;
+        subcontrol-origin: margin;
         }}
         """
         self.buttons_style_sheet = f"""
@@ -269,8 +312,25 @@ class ThemeManager:
             border-color: {self['MainColor']};
         }}
         """
-        self.combo_box_style_sheet = f"QComboBox{{{self.style_sheet}}}" \
-                                     "QComboBox::drop-down:button {border-radius: 5px;}"
+        self.combo_box_style_sheet = f"""
+        QComboBox {{
+        {self.style_sheet}
+        }}
+        QComboBox::hover {{
+        background-color: {self['ColorHover']};
+        }}
+        QComboBox::drop-down:button {{
+        border-radius: 5px;
+        }}
+        QComboBox QAbstractItemView {{
+        color: {self['TextColor']};
+        background-color: {self['MainColor']};
+        border: 1px solid {self['BorderColor']};
+        selection-color: {self['TextColor']};
+        selection-background-color: {self['ColorHover']};
+        border-radius: 4px;
+        }}
+        """
         self.spin_box_style_sheet = f"""
         QSpinBox {{
             {self.style_sheet}
@@ -284,6 +344,9 @@ class ThemeManager:
         QSpinBox::up-button::disabled {{
             border: 0px solid {self['BorderColor']};
         }}
+        QSpinBox::up-button::hover {{
+            background-color: {self['ColorHover']};
+        }}
         QSpinBox::down-button {{
             color: {self['TextColor']};
             background-color: {self['MainColor']};
@@ -292,6 +355,9 @@ class ThemeManager:
         }}
         QSpinBox::down-button::disabled {{
             border: 0px solid {self['BorderColor']};
+        }}
+        QSpinBox::down-button::hover {{
+            background-color: {self['ColorHover']};
         }}
         QSpinBox::disabled {{
             color: {self['BgColor']};

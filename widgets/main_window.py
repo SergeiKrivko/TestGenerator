@@ -1,3 +1,6 @@
+from time import sleep
+
+from PyQt5.QtCore import QThread
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog
 
 from other.themes import ThemeManager
@@ -108,12 +111,14 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menu_bar)
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
 
-        self.set_theme()
-
         if not os.path.isdir(self.sm.get_general('__project__', '')):
             self.open_project()
         else:
             self.tests_widget.open_tests()
+
+        self.looper = Looper()
+        self.looper.finished.connect(self.set_theme)
+        self.looper.start()
 
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
@@ -226,3 +231,8 @@ class MainWindow(QMainWindow):
         self.testing_widget.hide()
         self.git_widget.hide()
         super(MainWindow, self).close()
+
+
+class Looper(QThread):
+    def run(self):
+        sleep(0.0001)

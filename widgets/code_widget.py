@@ -193,8 +193,11 @@ class CodeWidget(QWidget):
             win-width: 20ex;
             padding: 4px;
             }}
+        QTabBar::tab:hover {{
+        background-color: {self.tm['ColorHover']};
+        }}
         QTabBar::tab:selected {{
-        background-color: {self.tm['BgColor']};
+        background-color: {self.tm['ColorSelected']};
         }}
         """
 
