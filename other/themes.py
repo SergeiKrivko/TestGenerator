@@ -15,8 +15,8 @@ basic_theme = {
             'DoubleQuotedString': QColor(255, 50, 120),
             'SingleQuotedString': QColor(255, 50, 120)
         },
-    'Paper': Qt.white,
-    'CaretLineBackgroundColor': QColor('#FFE4E4'),
+    'Paper': QColor(Qt.white),
+    'CaretLineBackgroundColor': QColor('#E5F3FF'),
     'MainColor': '#FFFFFF',
     'BgColor': '#F0F0F0',
     'BorderColor': '#A0A0A0',
@@ -108,7 +108,7 @@ class ThemeManager:
                             'SingleQuotedString': QColor('#5F864C')
                         },
                     'Paper': QColor('#E7F6F2'),
-                    'CaretLineBackgroundColor': QColor('#A5C9CA'),
+                    'CaretLineBackgroundColor': QColor('#C1EDF5'),
                     'MainColor': '#E7F6F2',
                     'BgColor': '#A5C9CA',
                     'BorderColor': '#395B64',
@@ -141,7 +141,7 @@ class ThemeManager:
                             'SingleQuotedString': QColor('#5F864C')
                         },
                     'Paper': QColor('#D2D79F'),
-                    'CaretLineBackgroundColor': QColor('#90B77D'),
+                    'CaretLineBackgroundColor': QColor('#BAD78C'),
                     'MainColor': '#D2D79F',
                     'BgColor': '#90B77D',
                     'BorderColor': '#42855B',
@@ -174,7 +174,7 @@ class ThemeManager:
                             'SingleQuotedString': QColor('#5F864C')
                         },
                     'Paper': QColor('#F9FFD0'),
-                    'CaretLineBackgroundColor': QColor('#FEFFA6'),
+                    'CaretLineBackgroundColor': QColor('#EEC1F0'),
                     'MainColor': '#F9FFD0',
                     'BgColor': '#F5EA5A',
                     'BorderColor': '#39B5E0',
@@ -206,7 +206,7 @@ class ThemeManager:
                             'SingleQuotedString': QColor('#911F27')
                         },
                     'Paper': QColor('#FFDCC5'),
-                    'CaretLineBackgroundColor': QColor('#D9B28D'),
+                    'CaretLineBackgroundColor': QColor('#F2CEB1'),
                     'MainColor': '#D9B28D',
                     'BgColor': '#D7B19D',
                     'BorderColor': '#865439',
@@ -296,6 +296,46 @@ class ThemeManager:
         background: none;
         }}
         QListWidget QScrollBar::sub-line, QScrollBar::add-line {{
+        background: none;
+        height: 0px;
+        subcontrol-position: left;
+        subcontrol-origin: margin;
+        }}
+        """
+        self.text_edit_style_sheet = f"""
+        QTextEdit {{
+        {self.style_sheet}
+        }}
+        QTextEdit QScrollBar:vertical {{
+        background: {self['MainColor']};
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+        width: 12px;
+        margin: 0px;
+        }}
+        QTextEdit QScrollBar:horizontal {{
+        background: {self['MainColor']};
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        height: 12px;
+        margin: 0px;
+        }}
+        QTextEdit QScrollBar::handle::vertical {{
+        background-color: {self['BorderColor']};
+        margin: 2px;
+        border-radius: 4px;
+        min-height: 20px;
+        }}
+        QTextEdit QScrollBar::handle::horizontal {{
+        background-color: {self['BorderColor']};
+        margin: 2px;
+        border-radius: 4px;
+        min-width: 20px;
+        }}
+        QTextEdit QScrollBar::sub-page, QScrollBar::add-page {{
+        background: none;
+        }}
+        QTextEdit QScrollBar::sub-line, QScrollBar::add-line {{
         background: none;
         height: 0px;
         subcontrol-position: left;

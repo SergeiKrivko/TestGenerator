@@ -75,10 +75,11 @@ class MainWindow(QMainWindow):
             "Удалять слова при генерации выходного файла": {'type': bool, 'name': OptionsWindow.NAME_RIGHT,
                                                             'initial': self.sm.get('clear_words', False)},
             "Компаратор для позитивных тестов:": {'type': 'combo',
-                                                  'values': ['Числа', 'Числа как текст', 'Текст после подстроки'],
+                                                  'values': ['Числа', 'Числа как текст', 'Текст после подстроки',
+                                                             'Слова после подстроки', 'Текст', 'Слова'],
                                                   'initial': self.sm.get('pos_comparator', 0)},
-            "Компаратор для негативных тестов:": {'type': 'combo', 'values': ['Нет', 'Числа', 'Числа как текст',
-                                                                              'Текст после подстроки'],
+            "Компаратор для негативных тестов:": {'type': 'combo', 'values': [
+                'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки', 'Слова после подстроки', 'Текст', 'Слова'],
                                                   'initial': self.sm.get('pos_comparator', 0)},
             'Погрешность сравнения чисел:': {'type': float, 'initial': self.sm.get('epsilon', 0),
                                              'name': OptionsWindow.NAME_LEFT},
@@ -115,10 +116,6 @@ class MainWindow(QMainWindow):
             self.open_project()
         else:
             self.tests_widget.open_tests()
-
-        self.looper = Looper()
-        self.looper.finished.connect(self.set_theme)
-        self.looper.start()
 
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
@@ -231,8 +228,3 @@ class MainWindow(QMainWindow):
         self.testing_widget.hide()
         self.git_widget.hide()
         super(MainWindow, self).close()
-
-
-class Looper(QThread):
-    def run(self):
-        sleep(0.0001)

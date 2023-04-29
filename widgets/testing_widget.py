@@ -86,9 +86,9 @@ class TestingWidget(QWidget):
     def set_theme(self):
         self.button.setStyleSheet(self.tm.buttons_style_sheet)
         self.tests_list.setStyleSheet(self.tm.list_widget_style_sheet)
-        self.prog_out.setStyleSheet(self.tm.style_sheet)
-        self.in_data.setStyleSheet(self.tm.style_sheet)
-        self.out_data.setStyleSheet(self.tm.style_sheet)
+        self.prog_out.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.in_data.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.out_data.setStyleSheet(self.tm.text_edit_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
@@ -264,6 +264,12 @@ class TestingWidget(QWidget):
             return comparator2(str1, str2)
         if comparator == 2:
             return comparator3(str1, str2, self.sm.get('pos_substring', ''))
+        if comparator == 3:
+            return comparator4(str1, str2, self.sm.get('pos_substring', ''))
+        if comparator == 4:
+            return comparator5(str1, str2)
+        if comparator == 5:
+            return comparator5(str1, str2)
 
     def neg_comparator(self, str1, str2):
         comparator = self.sm.get('neg_comparators', dict()).get(
@@ -278,6 +284,12 @@ class TestingWidget(QWidget):
             return comparator2(str1, str2)
         if comparator == 3:
             return comparator3(str1, str2, self.sm.get('neg_substring', ''))
+        if comparator == 4:
+            return comparator4(str1, str2, self.sm.get('neg_substring', ''))
+        if comparator == 5:
+            return comparator5(str1, str2)
+        if comparator == 6:
+            return comparator6(str1, str2)
 
     def show(self) -> None:
         self.update_options()
@@ -330,7 +342,22 @@ def comparator3(str1, str2, substring):
     if substring not in str1 or substring not in str2:
         return False
 
+    return str1[str1.index(substring):] == str2[str2.index(substring):]
+
+
+def comparator4(str1, str2, substring):
+    if substring not in str1 or substring not in str2:
+        return False
+
     return str1[str1.index(substring):].split() == str2[str2.index(substring):].split()
+
+
+def comparator5(str1, str2):
+    return str1 == str2
+
+
+def comparator6(str1, str2):
+    return str1.split() == str2.split()
 
 
 def read_file(path):

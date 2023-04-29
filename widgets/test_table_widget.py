@@ -49,7 +49,8 @@ class TestTableWidget(QWidget):
         pos_comparator_layout = QHBoxLayout()
         pos_comparator_layout.addWidget(QLabel('Компаратор:'))
         self.pos_comparator_widget = QComboBox()
-        self.pos_comparator_widget.addItems(['По умолчанию', 'Числа', 'Числа как текст', 'Текст после подстроки'])
+        self.pos_comparator_widget.addItems(['По умолчанию', 'Числа', 'Числа как текст', 'Текст после подстроки',
+                                             'Слова после подстроки', 'Текст', 'Слова'])
         self.pos_comparator_widget.setMaximumWidth(200)
         pos_comparator_layout.addWidget(self.pos_comparator_widget)
         pos_layout.addLayout(pos_comparator_layout)
@@ -90,7 +91,8 @@ class TestTableWidget(QWidget):
         neg_comparator_layout.addWidget(QLabel('Компаратор:'))
         self.neg_comparator_widget = QComboBox()
         self.neg_comparator_widget.addItems(
-            ['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки'])
+            ['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки',
+             'Слова после подстроки', 'Текст', 'Слова'])
         self.neg_comparator_widget.setMaximumWidth(200)
         neg_comparator_layout.addWidget(self.neg_comparator_widget)
         neg_layout.addLayout(neg_comparator_layout)

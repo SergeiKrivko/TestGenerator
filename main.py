@@ -9,6 +9,7 @@ def main():
     app.setApplicationName("TestGenerator")
     window = MainWindow()
     window.show()
+    window.set_theme()
     app.exec_()
 
 

@@ -63,8 +63,8 @@ class TestEditWidget(QWidget):
 
     def set_theme(self):
         self.test_name_edit.setStyleSheet(self.tm.style_sheet)
-        self.test_in_edit.setStyleSheet(self.tm.style_sheet)
-        self.test_out_edit.setStyleSheet(self.tm.style_sheet)
+        self.test_in_edit.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.test_out_edit.setStyleSheet(self.tm.text_edit_style_sheet)
         self.button_generate.setStyleSheet(self.tm.buttons_style_sheet)
 
 

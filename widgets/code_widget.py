@@ -201,7 +201,6 @@ class CodeWidget(QWidget):
         }}
         """
 
-        self.code_edit.setStyleSheet(self.tm.style_sheet)
         self.test_res_widget.setStyleSheet(self.tm.list_widget_style_sheet)
         self.todo_widget.setStyleSheet(self.tm.list_widget_style_sheet)
         self.tab_widget.setStyleSheet(tab_style_sheet)

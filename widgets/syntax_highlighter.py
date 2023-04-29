@@ -89,6 +89,33 @@ class CodeEditor(QsciScintilla):
             self.lexer.setColor(item, QsciLexerCPP.__dict__[key])
         self.lexer.setPaper(self.tm['Paper'])
         self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
+        self.setStyleSheet(f"""
+                QsciScintilla {{
+                {self.tm.style_sheet}
+                }}
+                QsciScintilla QScrollBar:vertical {{
+                background: rgba{self.tm['Paper'].getRgb()};
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+                width: 12px;
+                margin: 0px;
+                }}
+                QsciScintilla QScrollBar::handle::vertical {{
+                background-color: {self.tm['BorderColor']};
+                margin: 2px;
+                border-radius: 4px;
+                min-height: 20px;
+                }}
+                QsciScintilla QScrollBar::sub-page, QScrollBar::add-page {{
+                background: none;
+                }}
+                QsciScintilla QScrollBar::sub-line, QScrollBar::add-line {{
+                background: none;
+                height: 0px;
+                subcontrol-position: left;
+                subcontrol-origin: margin;
+                }}
+                """)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
