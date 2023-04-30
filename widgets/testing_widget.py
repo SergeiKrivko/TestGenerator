@@ -269,7 +269,7 @@ class TestingWidget(QWidget):
         if comparator == 4:
             return comparator5(str1, str2)
         if comparator == 5:
-            return comparator5(str1, str2)
+            return comparator6(str1, str2)
 
     def neg_comparator(self, str1, str2):
         comparator = self.sm.get('neg_comparators', dict()).get(
