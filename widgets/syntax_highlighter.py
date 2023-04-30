@@ -1,12 +1,6 @@
-import os
-
 from PyQt5.QtGui import QFont, QColor, QFontMetrics
 from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciAPIs
-from other.lib import words, types
 from other.code_autocompletion import CodeAutocompletionManager
-
-
-headers_list = []
 
 
 class CodeEditor(QsciScintilla):
@@ -81,6 +75,8 @@ class CodeEditor(QsciScintilla):
             self.lexer.setColor(item, QsciLexerCPP.__dict__[key])
         self.lexer.setPaper(self.tm['Paper'])
         self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
+        self.setMatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
+        self.setMatchedBraceForegroundColor(self.tm['BraceColor'])
         self.setStyleSheet(f"""
                 QsciScintilla {{
                 {self.tm.style_sheet}
