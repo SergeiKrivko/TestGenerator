@@ -259,53 +259,55 @@ class ThemeManager:
                            f"border-radius: 4px;"
         self.list_widget_style_sheet = f"""
         QListWidget {{
-        {self.style_sheet}
+            {self.style_sheet}
         }}
         QListWidget::item {{
-        border-radius: 6px;
+            border-radius: 6px;
         }}
         QListWidget::item:hover {{
-        background-color: {self['ColorHover']};
+            background-color: {self['ColorHover']};
+            border: none;
         }}
         QListWidget::item:selected {{
-        color: {self['TextColor']};
-        background-color: {self['ColorSelected']};
-        border-radius: 6px;
+            color: {self['TextColor']};
+            background-color: {self['ColorSelected']};
+            border: none;
+            border-radius: 6px;
         }}
         QListWidget QScrollBar:vertical {{
-        background: {self['MainColor']};
-        border-top-right-radius: 4px;
-        border-bottom-right-radius: 4px;
-        width: 12px;
-        margin: 0px;
+            background: {self['MainColor']};
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            width: 12px;
+            margin: 0px;
         }}
         QListWidget QScrollBar:horizontal {{
-        background: {self['MainColor']};
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-        height: 12px;
-        margin: 0px;
+            background: {self['MainColor']};
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+            height: 12px;
+            margin: 0px;
         }}
         QListWidget QScrollBar::handle::vertical {{
-        background-color: {self['BorderColor']};
-        margin: 2px;
-        border-radius: 4px;
-        min-height: 20px;
+            background-color: {self['BorderColor']};
+            margin: 2px;
+            border-radius: 4px;
+            min-height: 20px;
         }}
         QListWidget QScrollBar::handle::horizontal {{
-        background-color: {self['BorderColor']};
-        margin: 2px;
-        border-radius: 4px;
-        min-width: 20px;
+            background-color: {self['BorderColor']};
+            margin: 2px;
+            border-radius: 4px;
+            min-width: 20px;
         }}
         QListWidget QScrollBar::sub-page, QScrollBar::add-page {{
-        background: none;
+            background: none;
         }}
         QListWidget QScrollBar::sub-line, QScrollBar::add-line {{
-        background: none;
-        height: 0px;
-        subcontrol-position: left;
-        subcontrol-origin: margin;
+            background: none;
+            height: 0px;
+            subcontrol-position: left;
+            subcontrol-origin: margin;
         }}
         """
         self.text_edit_style_sheet = f"""
@@ -313,39 +315,39 @@ class ThemeManager:
         {self.style_sheet}
         }}
         QTextEdit QScrollBar:vertical {{
-        background: {self['MainColor']};
-        border-top-right-radius: 5px;
-        border-bottom-right-radius: 5px;
-        width: 12px;
-        margin: 0px;
+            background: {self['MainColor']};
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            width: 12px;
+            margin: 0px;
         }}
         QTextEdit QScrollBar:horizontal {{
-        background: {self['MainColor']};
-        border-bottom-left-radius: 5px;
-        border-bottom-right-radius: 5px;
-        height: 12px;
-        margin: 0px;
+            background: {self['MainColor']};
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            height: 12px;
+            margin: 0px;
         }}
         QTextEdit QScrollBar::handle::vertical {{
-        background-color: {self['BorderColor']};
-        margin: 2px;
-        border-radius: 4px;
-        min-height: 20px;
+            background-color: {self['BorderColor']};
+            margin: 2px;
+            border-radius: 4px;
+            min-height: 20px;
         }}
         QTextEdit QScrollBar::handle::horizontal {{
-        background-color: {self['BorderColor']};
-        margin: 2px;
-        border-radius: 4px;
-        min-width: 20px;
+            background-color: {self['BorderColor']};
+            margin: 2px;
+            border-radius: 4px;
+            min-width: 20px;
         }}
         QTextEdit QScrollBar::sub-page, QScrollBar::add-page {{
-        background: none;
+            background: none;
         }}
         QTextEdit QScrollBar::sub-line, QScrollBar::add-line {{
-        background: none;
-        height: 0px;
-        subcontrol-position: left;
-        subcontrol-origin: margin;
+            background: none;
+            height: 0px;
+            subcontrol-position: left;
+            subcontrol-origin: margin;
         }}
         """
         self.buttons_style_sheet = f"""
@@ -384,7 +386,8 @@ class ThemeManager:
         QSpinBox::up-button {{
             color: {self['TextColor']};
             background-color: {self['MainColor']};
-            border: 1px solid {self['BorderColor']};
+            border-left: 1px solid {self['BorderColor']};
+            border-bottom: 1px solid {self['BorderColor']};
             border-top-right-radius: 3px;
         }}
         QSpinBox::up-button::disabled {{
@@ -396,7 +399,8 @@ class ThemeManager:
         QSpinBox::down-button {{
             color: {self['TextColor']};
             background-color: {self['MainColor']};
-            border: 1px solid {self['BorderColor']};
+            border-left: 1px solid {self['BorderColor']};
+            border-top: 1px solid {self['BorderColor']};
             border-bottom-right-radius: 3px;
         }}
         QSpinBox::down-button::disabled {{
@@ -410,6 +414,7 @@ class ThemeManager:
             border-color: {self['MainColor']};
         }}
         """
+        self.double_spin_box_style_sheet = self.spin_box_style_sheet.replace('QSpinBox', 'QDoubleSpinBox')
 
     def add_custom_theme(self, theme_name, theme_data):
         self.themes[theme_name] = Theme(theme_data)

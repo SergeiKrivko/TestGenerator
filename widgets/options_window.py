@@ -76,20 +76,20 @@ class OptionsWidget(QWidget):
                 horizontal_layout = QHBoxLayout()
                 horizontal_layout.setAlignment(Qt.AlignLeft)
                 for key2, item2 in item.items():
-                    label = QLabel(str(key2), self)
+                    label = QLabel(str(key2))
                     widget, value = self.get_widget(key2, item2)
                     if item2.get('name') == OptionsWindow.NAME_LEFT:
                         h_layout = QHBoxLayout()
-                        h_layout.setAlignment(Qt.AlignLeft)
                         h_layout.addWidget(label)
                         h_layout.addWidget(widget)
                         horizontal_layout.addLayout(h_layout)
+                        h_layout.setAlignment(Qt.AlignLeft)
                     elif item2.get('name') == OptionsWindow.NAME_RIGHT:
                         h_layout = QHBoxLayout()
-                        h_layout.setAlignment(Qt.AlignLeft)
                         h_layout.addWidget(widget)
                         h_layout.addWidget(label)
                         horizontal_layout.addLayout(h_layout)
+                        h_layout.setAlignment(Qt.AlignLeft)
                     elif item2.get('name') != OptionsWindow.NAME_SKIP:
                         v_layout = QVBoxLayout()
                         v_layout.setAlignment(Qt.AlignLeft)
@@ -213,8 +213,8 @@ class OptionsWidget(QWidget):
         widget = QCheckBox()
         widget.setFixedHeight(item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
         value = item.get('initial', False)
-        widget.setChecked(value)
-        widget.clicked.connect(lambda value: self.set_dict_value(key, value))
+        widget.setChecked(bool(value))
+        widget.clicked.connect(lambda: self.set_dict_value(key, int(widget.isChecked())))
         return widget, value
 
     def combo_box(self, key, item):
@@ -237,7 +237,8 @@ class OptionsWidget(QWidget):
             widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
             value = item.get('initial', 0)
             widget.setCurrentIndex(value)
-        widget.setMaxVisibleItems(item.get('max_visible', 6))
+        if 'max_visible' in item:
+            widget.setMaxVisibleItems(item.get('max_visible', 6))
         return widget, value
 
     def file_widget(self, key, item):

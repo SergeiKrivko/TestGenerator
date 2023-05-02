@@ -3,23 +3,18 @@ import os.path
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
-    QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox
+    QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox, QWidget
 
 from other.remote_libs import ListReader, FileReader
 
 
-class LibDialog(QDialog):
-    def __init__(self, parent, name, sm):
-        super(LibDialog, self).__init__(parent)
+class LibWidget(QWidget):
+    def __init__(self, sm, tm):
+        super(LibWidget, self).__init__()
 
-        self.setWindowTitle(name)
         self.new_lib_dialog = NewLibDialog(self, "Библиотеки автозавершения кода")
         self.sm = sm
-
-        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        self.tm = tm
 
         vertical_layout = QVBoxLayout()
         main_layout = QHBoxLayout()
@@ -53,9 +48,12 @@ class LibDialog(QDialog):
         main_layout.addWidget(self.text_edit, 2)
 
         vertical_layout.addLayout(main_layout)
-        vertical_layout.addWidget(self.buttonBox)
-
         self.setLayout(vertical_layout)
+
+    def set_theme(self):
+        self.lib_list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.button_add_lib.setStyleSheet(self.tm.buttons_style_sheet)
+        self.text_edit.setStyleSheet(self.tm.text_edit_style_sheet)
 
     def save_libs(self):
         libs_list = []
@@ -65,13 +63,10 @@ class LibDialog(QDialog):
             self.sm.set_general(item.name, item.data)
         self.sm.set_general("lib", ';'.join(libs_list))
 
-    def accept(self) -> None:
-        self.save_libs()
-        super(LibDialog, self).accept()
-
-    def reject(self) -> None:
-        self.save_libs()
-        super(LibDialog, self).reject()
+    def hide(self):
+        # if not self.isHidden():
+        #     self.save_libs()
+        super(LibWidget, self).hide()
 
     def add_lib(self):
         if self.new_lib_dialog.exec():
