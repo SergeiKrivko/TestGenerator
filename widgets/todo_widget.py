@@ -21,8 +21,7 @@ class TODOWidget(QWidget):
 
         self.options_widget = OptionsWidget({
             'h_line': {
-                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.settings.get('lab', 1),
-                                'name': OptionsWidget.NAME_LEFT, 'width': 60}
+                'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60}
             }
         })
         self.options_widget.clicked.connect(self.option_changed)

@@ -25,9 +25,9 @@ class CodeWidget(QWidget):
         layout.addLayout(layout_left)
 
         self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1)},
-            'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1)},
-            'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0)},
+            'Номер лабы:': {'type': int, 'min': 1},
+            'Номер задания:': {'type': int, 'min': 1},
+            'Номер варианта:': {'type': int, 'min': -1},
             'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
         })
         self.options_widget.clicked.connect(self.option_changed)

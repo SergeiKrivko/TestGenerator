@@ -19,12 +19,9 @@ class TestsWidget(QWidget):
 
         self.options_widget = OptionsWidget({
             'h_line1': {
-                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
-                                'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1),
-                                   'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0),
-                                    'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер задания:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер варианта:': {'type': int, 'min': -1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
                 'copy': {'type': 'button', 'text': 'Копировать', 'name': OptionsWidget.NAME_SKIP}
             },
             'h_line2': {

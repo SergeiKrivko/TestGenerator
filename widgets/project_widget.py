@@ -9,10 +9,11 @@ from widgets.options_window import OptionsWidget
 
 
 class ProjectWidget(QWidget):
-    def __init__(self, sm, tm):
+    def __init__(self, sm, tm, disable_menu_func):
         super(ProjectWidget, self).__init__()
         self.sm = sm
         self.tm = tm
+        self.disable_menu_func = disable_menu_func
 
         layout = QHBoxLayout()
 
@@ -57,7 +58,8 @@ class ProjectWidget(QWidget):
         testing_checkbox_layout.addWidget(self.testing_checkbox)
         testing_checkbox_layout.addWidget(QLabel("Настройки тестирования по умолчанию"))
         self.testing_checkbox.clicked.connect(self.testing_checkbox_triggered)
-        self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
+        if self.sm.path:
+            self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
         right_layout.addLayout(testing_checkbox_layout)
 
         self.options_widget = OptionsWidget({
@@ -132,6 +134,8 @@ class ProjectWidget(QWidget):
             self.sm.set_general('projects', projects_set)
             self.sm.set_general('__project__', None)
             self.update_projects()
+            if not self.list_widget.count():
+                self.disable_menu_func(True)
 
     def new_project(self):
         path = QFileDialog.getExistingDirectory(directory=self.sm.get_general('__project__', os.getcwd()))
@@ -141,6 +145,7 @@ class ProjectWidget(QWidget):
             self.sm.set_general('projects', projects_set)
             self.sm.repair_settings()
             self.update_projects()
+            self.disable_menu_func(False)
 
     def open_project(self):
         self.opening_project = True
@@ -158,16 +163,16 @@ class ProjectWidget(QWidget):
             self.options_widget.show()
         self.options_widget.widgets['Компилятор'].setText(self.sm.get('compiler', 'gcc -std=c99 -Wall -Werror'))
         self.options_widget.widgets['Ключ -lm'].setChecked(bool(self.sm.get('-lm', True)))
-        self.options_widget.widgets['Компаратор для позитивных тестов:'].setCurrentIndex(
-            self.sm.get('pos_comparator', 0))
-        self.options_widget.widgets['Компаратор для негативных тестов:'].setCurrentIndex(
-            self.sm.get('neg_comparator', 0))
-        self.options_widget.widgets['Погрешность сравнения чисел:'].setValue(self.sm.get('epsilon', 0))
+        self.options_widget.widgets['Компаратор для позитивных тестов:'].setCurrentIndex(int(
+            self.sm.get('pos_comparator', 0)))
+        self.options_widget.widgets['Компаратор для негативных тестов:'].setCurrentIndex(int(
+            self.sm.get('neg_comparator', 0)))
+        self.options_widget.widgets['Погрешность сравнения чисел:'].setValue(int(self.sm.get('epsilon', 0)))
         self.options_widget.widgets['Подстрока для позитивных тестов'].setText(self.sm.get('pos_substring', 'Result:'))
         self.options_widget.widgets['Подстрока для негативных тестов'].setText(self.sm.get('neg_substring', 'Error:'))
         self.options_widget.widgets['Coverage'].setChecked(bool(self.sm.get('coverage', False)))
         self.options_widget.widgets['Тестирование по памяти'].setChecked(bool(self.sm.get('memory_testing', False)))
-        self.options_widget.widgets['Ограничение по времени:'].setValue(self.sm.get('time_limit', 3))
+        self.options_widget.widgets['Ограничение по времени:'].setValue(int(self.sm.get('time_limit', 3)))
         self.opening_project = False
 
     def save_settings(self):

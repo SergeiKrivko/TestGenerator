@@ -181,7 +181,7 @@ class OptionsWidget(QWidget):
         widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
                             item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
         value = item.get('initial', 0)
-        widget.setValue(value)
+        widget.setValue(int(value))
         widget.setMinimum(item.get('min', -100000000))
         widget.setMaximum(item.get('max', 100000000))
         widget.valueChanged.connect(lambda value: self.set_dict_value(key, value))
@@ -192,7 +192,7 @@ class OptionsWidget(QWidget):
         widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
                             item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
         value = item.get('initial', 0)
-        widget.setValue(value)
+        widget.setValue(float(value))
         widget.setMinimum(item.get('min', -100000000))
         widget.setMaximum(item.get('max', 100000000))
         widget.valueChanged.connect(lambda value: self.set_dict_value(key, value))
@@ -223,7 +223,7 @@ class OptionsWidget(QWidget):
             widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, (
                 value, dict() if widget.widgets[value] is None else widget.widgets[value].values)))
             value = item.get('initial', 0)
-            widget.setCurrentIndex(value)
+            widget.setCurrentIndex(int(value))
             if widget.widgets[value]:
                 value = value, widget.widgets[value].values
             else:
@@ -236,7 +236,7 @@ class OptionsWidget(QWidget):
             item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
             widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
             value = item.get('initial', 0)
-            widget.setCurrentIndex(value)
+            widget.setCurrentIndex(int(value))
         if 'max_visible' in item:
             widget.setMaxVisibleItems(item.get('max_visible', 6))
         return widget, value

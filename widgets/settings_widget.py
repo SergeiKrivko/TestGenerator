@@ -30,7 +30,7 @@ class SettingsWidget(QWidget):
 
         self.main_options_widget = OptionsWidget({
             "Символ переноса строки: ": {'type': 'combo', 'values': line_sep.values(), 'name': OptionsWidget.NAME_LEFT,
-                                         'initial': list(line_sep.keys()).index(self.sm.get('line_sep', '\n'))},
+                                         'initial': list(line_sep.keys()).index(self.sm.get_general('line_sep', '\n'))},
             "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWidget.NAME_LEFT,
                       'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)}
         }, margins=(20, 20, 20, 20))

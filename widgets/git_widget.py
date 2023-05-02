@@ -17,8 +17,7 @@ class GitWidget(QWidget):
         self.setLayout(layout)
 
         self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
-                            'name': OptionsWidget.NAME_LEFT},
+            'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT},
             'add_code': {'type': 'button', 'text': 'Добавить весь код', 'name': OptionsWidget.NAME_SKIP},
             'add_tests': {'type': 'button', 'text': 'Добавить все тесты', 'name': OptionsWidget.NAME_SKIP},
             'git_reset': {'type': 'button', 'text': 'Сбросить', 'name': OptionsWidget.NAME_SKIP},

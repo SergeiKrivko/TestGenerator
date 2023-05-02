@@ -3,6 +3,7 @@ from PyQt5.QtCore import QSettings
 
 class SettingsManager:
     def __init__(self):
+        # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
         self.q_settings = QSettings()
         self.path = self.get_general('__project__')
 

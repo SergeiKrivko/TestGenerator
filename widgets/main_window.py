@@ -35,7 +35,18 @@ class MainWindow(QMainWindow):
         self.cm = CommandManager(self.sm)
         self.tm = ThemeManager(self.sm.get_general('theme'))
 
-        self.project_widget = ProjectWidget(self.sm, self.tm)
+        self.menu_bar = MenuBar({
+            'Проект': (lambda: self.show_tab('project_widget'), None),
+            'Код': (lambda: self.show_tab('code_widget'), None),
+            'Тесты': (lambda: self.show_tab('tests_widget'), None),
+            'Тестирование': (lambda: self.show_tab('testing_widget'), None),
+            'TODO': (lambda: self.show_tab('todo_widget'), None),
+            'Git': (lambda: self.show_tab('git_widget'), None),
+            'Настройки': (lambda: self.show_tab('settings_widget'), None)
+        })
+        self.setMenuBar(self.menu_bar)
+
+        self.project_widget = ProjectWidget(self.sm, self.tm, self.menu_bar.setDisabled)
         self.project_widget.hide()
         layout.addWidget(self.project_widget)
 
@@ -70,16 +81,6 @@ class MainWindow(QMainWindow):
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide(save_settings=False)
 
-        self.menu_bar = MenuBar({
-            'Проект': (lambda: self.show_tab('project_widget'), None),
-            'Код': (lambda: self.show_tab('code_widget'), None),
-            'Тесты': (lambda: self.show_tab('tests_widget'), None),
-            'Тестирование': (lambda: self.show_tab('testing_widget'), None),
-            'TODO': (lambda: self.show_tab('todo_widget'), None),
-            'Git': (lambda: self.show_tab('git_widget'), None),
-            'Настройки': (lambda: self.show_tab('settings_widget'), None)
-        })
-        self.setMenuBar(self.menu_bar)
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
 
         self.resize(800, 600)

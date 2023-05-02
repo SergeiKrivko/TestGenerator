@@ -24,12 +24,9 @@ class TestingWidget(QWidget):
 
         self.options_widget = OptionsWidget({
             'h_line': {
-                'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
-                                'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1),
-                                   'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0),
-                                    'name': OptionsWidget.NAME_LEFT, 'width': 60}
+                'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер задания:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
+                'Номер варианта:': {'type': int, 'min': -1, 'name': OptionsWidget.NAME_LEFT, 'width': 60}
             }
         })
         self.options_widget.clicked.connect(self.option_changed)
