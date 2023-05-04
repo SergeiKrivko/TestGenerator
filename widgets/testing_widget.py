@@ -147,9 +147,9 @@ class TestingWidget(QWidget):
         self.test_count += 1
         self.open_test_info()
 
-    def add_crush_list_item(self, prog_out, exit_code, prog_errors):
-        self.tests_list.item(self.test_count).set_crushed(prog_out, exit_code, prog_errors)
-        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  CRUSHED", self.tm['TestCrushed'])
+    def add_crash_list_item(self, prog_out, exit_code, prog_errors):
+        self.tests_list.item(self.test_count).set_crashed(prog_out, exit_code, prog_errors)
+        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  CRASHED", self.tm['TestCrashed'])
         self.test_count += 1
         self.open_test_info()
 
@@ -188,7 +188,7 @@ class TestingWidget(QWidget):
                         self.sm.get('coverage', False))
 
         self.cm.looper.test_complete.connect(self.add_list_item)
-        self.cm.looper.test_crush.connect(self.add_crush_list_item)
+        self.cm.looper.test_crash.connect(self.add_crash_list_item)
         self.cm.looper.test_timeout.connect(self.add_timeout_list_item)
         self.cm.looper.end_testing.connect(self.end_testing)
         self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
@@ -369,7 +369,7 @@ class TestingListWidgetItem(QListWidgetItem):
     passed = 1
     failed = 2
     terminated = 3
-    crushed = 2
+    crashed = 2
 
     def __init__(self, tm, name, in_data, out_data, memory_testing=False):
         super(TestingListWidgetItem, self).__init__()
@@ -397,13 +397,13 @@ class TestingListWidgetItem(QListWidgetItem):
             self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
         self.setForeground(self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
 
-    def set_crushed(self, prog_out, exit_code, prog_errors):
-        self.status = TestingListWidgetItem.crushed
+    def set_crashed(self, prog_out, exit_code, prog_errors):
+        self.status = TestingListWidgetItem.crashed
         self.prog_out = prog_out
         self.exit_code = exit_code
-        self.setText(f"{self.name:6}  CRUSHED   exit: {exit_code:<5} ")
+        self.setText(f"{self.name:6}  CRASHED   exit: {exit_code:<5} ")
         self.setToolTip(prog_errors)
-        self.setForeground(self.tm['TestCrushed'])
+        self.setForeground(self.tm['TestCrashed'])
 
     def set_timeout(self):
         self.status = TestingListWidgetItem.failed

@@ -152,7 +152,7 @@ class CommandManager:
 
 class Looper(QThread):
     test_complete = pyqtSignal(bool, str, int, bool, str)
-    test_crush = pyqtSignal(str, int, str)
+    test_crash = pyqtSignal(str, int, str)
     test_timeout = pyqtSignal()
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
@@ -184,7 +184,7 @@ class Looper(QThread):
                 i += 1
                 continue
             if res.stderr:
-                self.test_crush.emit(res.stdout, res.returncode, res.stderr)
+                self.test_crash.emit(res.stdout, res.returncode, res.stderr)
                 i += 1
                 continue
             comparator_res = self.pos_comparator(
@@ -211,7 +211,7 @@ class Looper(QThread):
                 i += 1
                 continue
             if res.stderr:
-                self.test_crush.emit(res.stdout, res.returncode, res.stderr)
+                self.test_crash.emit(res.stdout, res.returncode, res.stderr)
                 i += 1
                 continue
             comparator_res = self.neg_comparator(
