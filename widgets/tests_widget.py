@@ -21,8 +21,7 @@ class TestsWidget(QWidget):
             'h_line1': {
                 'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
                 'Номер задания:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'copy': {'type': 'button', 'text': 'Копировать', 'name': OptionsWidget.NAME_SKIP}
+                'Номер варианта:': {'type': int, 'min': -1, 'name': OptionsWidget.NAME_LEFT, 'width': 60}
             },
             'h_line2': {
                 'Вход:': {'type': str, 'initial': '-', 'width': 300, 'name': OptionsWidget.NAME_LEFT},
@@ -47,6 +46,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_button_down.clicked.connect(self.move_pos_test_down)
         self.test_list_widget.neg_button_up.clicked.connect(self.move_neg_test_up)
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
+        self.test_list_widget.pos_button_copy.clicked.connect(lambda: self.copy_tests('pos'))
+        self.test_list_widget.neg_button_copy.clicked.connect(lambda: self.copy_tests('neg'))
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)
@@ -89,16 +90,6 @@ class TestsWidget(QWidget):
             self.save_tests()
             self.sm.set('var', self.options_widget["Номер варианта:"])
             self.open_tests()
-        elif key == 'copy':
-            dlg = TestCopyWindow(self.sm)
-            if dlg.exec():
-                for t, desc, in_data, out_data in dlg.copy_tests():
-                    if t:
-                        self.pos_tests.append([desc, in_data, out_data])
-                        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
-                    else:
-                        self.neg_tests.append([desc, in_data, out_data])
-                        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
 
     def update_options(self):
         self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
@@ -140,6 +131,17 @@ class TestsWidget(QWidget):
             self.test_edit_widget.set_disabled()
         else:
             self.test_list_widget.neg_test_list.setCurrentRow(ind if ind < len(self.neg_tests) else ind - 1)
+
+    def copy_tests(self, test_type='pos'):
+        dlg = TestCopyWindow(self.sm)
+        if dlg.exec():
+            for desc, in_data, out_data in dlg.copy_tests():
+                if test_type == 'pos':
+                    self.pos_tests.append([desc, in_data, out_data])
+                    self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+                else:
+                    self.neg_tests.append([desc, in_data, out_data])
+                    self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
 
     def select_pos_test(self):
         self.test_list_widget.neg_test_list.setCurrentItem(None)
@@ -414,7 +416,6 @@ class TestsWidget(QWidget):
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('copy', self.tm.buttons_style_sheet)
         self.options_widget.set_widget_style_sheet('Вход:', self.tm.style_sheet)
         self.options_widget.set_widget_style_sheet('Выход:', self.tm.style_sheet)
 
@@ -576,12 +577,12 @@ class TestCopyWindow(QDialog):
             if self.test_list[i].startswith("POS"):
                 pos_ind += 1
                 if self.check_boxes[i].isChecked():
-                    yield True, self.test_list[i][4:], \
+                    yield self.test_list[i][4:], \
                           read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_in.txt"), \
                           read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_out.txt")
             else:
                 neg_ind += 1
                 if self.check_boxes[i].isChecked():
-                    yield False, self.test_list[i][4:], \
+                    yield self.test_list[i][4:], \
                           read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_in.txt"), \
                           read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_out.txt")

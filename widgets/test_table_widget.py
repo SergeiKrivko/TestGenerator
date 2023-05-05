@@ -43,6 +43,11 @@ class TestTableWidget(QWidget):
         self.pos_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_down)
 
+        self.pos_button_copy = QPushButton()
+        self.pos_button_copy.setText("📑")
+        self.pos_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        pos_buttons_layout.addWidget(self.pos_button_copy)
+
         self.pos_test_list = QListWidget()
         pos_layout.addWidget(self.pos_test_list)
 
@@ -84,6 +89,11 @@ class TestTableWidget(QWidget):
         self.neg_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_down)
 
+        self.neg_button_copy = QPushButton()
+        self.neg_button_copy.setText("📑")
+        self.neg_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        neg_buttons_layout.addWidget(self.neg_button_copy)
+
         self.neg_test_list = QListWidget()
         neg_layout.addWidget(self.neg_test_list)
 
@@ -113,6 +123,7 @@ class TestTableWidget(QWidget):
         self.pos_delete_button.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_button_up.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_button_down.setStyleSheet(self.tm.buttons_style_sheet)
+        self.pos_button_copy.setStyleSheet(self.tm.buttons_style_sheet)
         self.pos_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
         self.neg_test_list.setStyleSheet(self.tm.list_widget_style_sheet)
         self.neg_add_button.setStyleSheet(self.tm.buttons_style_sheet)
@@ -120,3 +131,4 @@ class TestTableWidget(QWidget):
         self.neg_button_up.setStyleSheet(self.tm.buttons_style_sheet)
         self.neg_button_down.setStyleSheet(self.tm.buttons_style_sheet)
         self.neg_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.neg_button_copy.setStyleSheet(self.tm.buttons_style_sheet)

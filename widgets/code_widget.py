@@ -103,6 +103,7 @@ class CodeWidget(QWidget):
         self.open_code()
 
     def first_open(self):
+        self.test_res_widget.clear()
         self.files_widget.update_files_list()
         self.tab_widget.setCurrentIndex(0)
         for i in range(self.files_widget.files_list.count()):
@@ -141,6 +142,7 @@ class CodeWidget(QWidget):
             self.update_todo()
             self.code_edit.setDisabled(False)
             self.set_theme()
+            self.parse_gcov_file()
         except Exception:
             self.code_edit.setDisabled(True)
 
@@ -176,7 +178,24 @@ class CodeWidget(QWidget):
         self.test_count += 1
 
     def end_testing(self):
+        self.parse_gcov_file()
         self.options_widget.setDisabled(False)
+
+    def parse_gcov_file(self):
+        path = self.current_file + '.gcov'
+
+        if os.path.isfile(path):
+            file = open(path, encoding='utf-8')
+            i = 0
+            for line in file:
+                line = line.split(':')
+                if int(line[1]) > 0:
+                    i += 1
+                    if line[0].startswith('#'):
+                        line[0] = '0'
+                    print(f"{line[0].strip():3} {line[1].strip():3}")
+                    self.code_edit.setMarginLineNumbers(i, False)
+                    self.code_edit.setMarginText(i, f"{line[0].strip():3} {line[1].strip():3}", 0)
 
     def set_theme(self):
         tab_style_sheet = f"""
