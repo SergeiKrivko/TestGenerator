@@ -64,8 +64,8 @@ class LibWidget(QWidget):
         self.sm.set_general("lib", ';'.join(libs_list))
 
     def hide(self):
-        # if not self.isHidden():
-        #     self.save_libs()
+        if not self.isHidden():
+            self.save_libs()
         super(LibWidget, self).hide()
 
     def add_lib(self):

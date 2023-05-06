@@ -10,8 +10,10 @@ class SettingsManager:
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)
 
-    def get(self, key, default=None):
-        return self.q_settings.value(self.path, dict()).get(key, self.get_general(key, default))
+    def get(self, key, default=None, project=None):
+        if project is None:
+            project = self.path
+        return self.q_settings.value(project, dict()).get(key, self.get_general(key, default))
 
     def __getitem__(self, item):
         return self.get(item)
@@ -35,10 +37,12 @@ class SettingsManager:
         if key == '__project__':
             self.path = value
 
-    def set(self, key, value):
-        dct = self.q_settings.value(self.path)
+    def set(self, key, value, project=None):
+        if project is None:
+            project = self.path
+        dct = self.q_settings.value(project)
         dct[key] = value
-        self.q_settings.setValue(self.path, dct)
+        self.q_settings.setValue(project, dct)
 
     def __setitem__(self, key, value):
         self.set(key, value)
