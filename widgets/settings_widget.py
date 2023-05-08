@@ -106,6 +106,7 @@ class SettingsWidget(QWidget):
         if not self.isHidden() and save_settings:
             self.save_main_settings()
             self.save_testing_settings()
+            self.libs_widget.save_libs()
         super(SettingsWidget, self).hide()
 
     def select_tab(self, item):
