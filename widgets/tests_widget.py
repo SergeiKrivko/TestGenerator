@@ -289,10 +289,8 @@ class TestsWidget(QWidget):
         pos_count = 0
         neg_count = 0
         for file in os.listdir(f"{self.path}/func_tests/data"):
-            if file[:4] == 'pos_' and file[6:9] == '_in':
-                pos_count += 1
-            elif file[:4] == 'neg_' and file[6:9] == '_in':
-                neg_count += 1
+            pos_count += file.startswith('pos_') and file.endswith('_in.txt')
+            neg_count += file.startswith('neg_') and file.endswith('_in.txt')
         for i in range(len(self.pos_tests), pos_count):
             self.pos_tests.append(['-', '', ''])
         for i in range(len(self.neg_tests), neg_count):
