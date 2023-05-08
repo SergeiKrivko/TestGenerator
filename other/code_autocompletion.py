@@ -6,14 +6,24 @@ class CodeAutocompletionManager:
         self._sm = sm
         self.dir = directory
         self.text = ''
+
+        self._functions = []
+        self._function_definitions = []
+        self._types = []
+        self._struct_types = []
+        self._defines = []
+
         self._std_libs = dict()
         for name, data in self._get_lib():
-            self._std_libs[name] = self._parse_header_str(name, data, False)
+            self._std_libs[name] = self._parse_lib(name, data, False)
         self._custom_libs = dict()
+
+        self._current_line = 0
+        self._current_symbol = 0
 
     def _add_custom_lib(self, lib_name):
         if lib_name not in self._custom_libs:
-            self._custom_libs[lib_name] = self._parse_header_file(lib_name, f"{self.dir}/{lib_name}", True)
+            self._custom_libs[lib_name] = self._parse_lib_file(lib_name, f"{self.dir}/{lib_name}", True)
         else:
             self._custom_libs[lib_name].set_status(_Lib.ON)
 
@@ -23,31 +33,69 @@ class CodeAutocompletionManager:
         for lib in self._custom_libs.values():
             lib.set_status(_Lib.OFF)
 
-    def get(self, text: str, current_line):
-        self.text = text
+    def full_update(self, text, current_pos):
+        self._types.clear()
+        self._functions.clear()
+        self._struct_types.clear()
+        self._defines.clear()
         self._turn_libs_off()
-        for el in self._parse_main_file(text, current_line):
-            yield str(el)
+        self._current_line, self._current_symbol = current_pos
+
+        self.text = text
+        self._parse_main_file(text)
+
+    def get(self, text: str, current_pos):
+        self.text = text
+        self._current_line, self._current_symbol = current_pos
+
+        res = []
+
+        line = text.split('\n')[current_pos[0]][:current_pos[1]]
+        if line.split():
+            line = line.split()[-1]
+        line = line.replace('->', '.')
+        for func in self._function_definitions:
+            if func.start <= self._current_line <= func.stop:
+                if len(lst := line.split('.')) == 2:
+                    for st in func.struct_variables:
+                        if lst[0] == st.name:
+                            return st.type.fields, 1
+
+        for el in self._functions:
+            res.append(el)
+        for el in self._types:
+            res.append(el)
+        for el in self._defines:
+            res.append(el)
+        for el in self._struct_types:
+            res.append(el)
+        for func in self._function_definitions:
+            if func.start <= self._current_line <= func.stop:
+                for el in func.variables:
+                    res.append(el)
+                for el in func.struct_variables:
+                    res.append(el)
         for lib in self._std_libs.values():
             if lib.status == _Lib.ON:
                 for el in lib.types:
-                    yield str(el)
+                    res.append(el)
                 for el in lib.defines:
-                    yield str(el)
+                    res.append(el)
                 for el in lib.functions:
-                    yield str(el)
+                    res.append(el)
         for lib in self._custom_libs.values():
             if lib.status == _Lib.ON:
                 for el in lib.types:
-                    yield str(el)
+                    res.append(el)
                 for el in lib.defines:
-                    yield str(el)
+                    res.append(el)
                 for el in lib.functions:
-                    yield str(el)
+                    res.append(el)
         for el in words:
-            yield str(el)
+            res.append(el)
         for el in types:
-            yield str(el)
+            res.append(el)
+        return res, 0
 
     def _parse_include(self, line):
         if line.startswith('#include'):
@@ -70,12 +118,12 @@ class CodeAutocompletionManager:
         if line.startswith('typedef') and len(s := line.split()) >= 3:
             s = s[2]
             if '[' in s:
-                return _CType(s[:s.index('[')])
+                return _CType(s[:s.index('[')].rstrip(';'))
             else:
-                return _CType(s)
+                return _CType(s.rstrip(';'))
 
-    def _parse_variable(self, line):
-        for var_type in types:
+    def _parse_variable(self, line, lib_types=None):
+        for var_type in self.get_all_types(lib_types):
             if line.startswith(var_type.strip()) and ' ' in line and line.endswith(";"):
                 lst = line[line.index(' ') + 1:-1].split(',')
                 for el in lst:
@@ -86,113 +134,141 @@ class CodeAutocompletionManager:
                     else:
                         return _CVariable(el)
 
+    def _parse_struct_variable(self, line):
+        def get_all_struct_types():
+            for t in self._struct_types:
+                yield t
+            for lib in self._std_libs.values():
+                for t in lib.structs:
+                    yield t
+            for lib in self._custom_libs.values():
+                for t in lib.structs:
+                    yield t
+
+        for struct_type in get_all_struct_types():
+            if (line.startswith(str(struct_type)) and struct_type.typedef or line.startswith(
+                    f'struct {struct_type}') and not struct_type.typedef) and ' ' in line and line.endswith(";"):
+                line = line.lstrip('struct').strip()
+                lst = line[line.index(' ') + 1:-1].split(',')
+                for el in lst:
+                    el = el.strip().lstrip("*").replace('=', ' ')
+                    if ' ' in el:
+                        return _CStructVariable(el[:el.index(' ')], struct_type)
+                    else:
+                        return _CStructVariable(el, struct_type)
+
     def _is_function_header(self, line):
-        for func_type in types:
+        for func_type in self.get_all_types():
             if line.startswith(func_type) and '(' in line and line.count('(') == line.count(')') and \
                     (line.endswith(');') or line.endswith(")")):
                 header = line.replace(func_type, '', 1)
                 return header
 
-    def _parse_main_file(self, text: str, current_line):
+    def _parse_main_file(self, text: str):
         current_func = ""
+        current_struct = ""
         i = 0
-        functions = []
+        self._function_definitions.clear()
         for line in text.split(self._sm.get('line_sep', '\n')):
             try:
-                if not current_func:
+                if current_func:
+                    if line.startswith('}'):
+                        self._function_definitions[-1].stop = i
+                        current_func = ""
+                elif current_struct:
+                    if line.startswith('}'):
+                        current_struct = ""
+                    elif r := self._parse_variable(line.strip()):
+                        self._struct_types[-1].fields.append(r)
+                else:
                     if self._parse_include(line):
                         continue
-                    if r := self._parse_define(line):
-                        yield r
-                    if r := self._parse_typedef(line):
-                        yield r
+                    if line.startswith('struct ') or line.startswith('typedef struct '):
+                        name = line.lstrip('{').split()[-1].rstrip(';')
+                        for st in self._struct_types:
+                            if st.name == name:
+                                break
+                        else:
+                            current_struct = name
+                            self._struct_types.append(_CStruct(current_struct, [], line.startswith('typedef')))
+                    elif r := self._parse_define(line):
+                        self._defines.append(r)
+                    elif r := self._parse_typedef(line):
+                        self._types.append(r)
                     elif header := self._is_function_header(line):
-                        yield _CFunctionHeader(header)
+                        self._functions.append(header)
                         if not header.endswith(";"):
                             current_func = header
-                            functions.append(_CFunction(header, i, i))
-                elif line.startswith('}'):
-                    functions[-1].stop = i
-                    current_func = ""
+                            self._function_definitions.append(_CFunction(header, i, i))
             except Exception as ex:
                 print(f"{ex.__class__.__name__}: {ex}")
             i += 1
-        for func in functions:
-            if func.start < current_line < func.stop:
-                for el in self._parse_function(func):
-                    yield el
-                break
+        for func in self._function_definitions:
+            self._parse_function(func)
 
     def _parse_function(self, func):
         params = func.header[func.header.index("(") + 1:func.header.rindex(")")].split(",")
         try:
             for p in params:
                 if ' ' in p:
-                    yield _CVariable(p.split()[1].lstrip("*"))
+                    func.variables.append(_CVariable(p.split()[1].lstrip("*")))
         except:
             pass
 
         try:
             for line in self.text.split(self._sm.get('line_sep', '\n'))[func.start + 2:func.stop]:
                 line = line.strip()
+                if r := self._parse_struct_variable(line):
+                    func.struct_variables.append(r)
                 if r := self._parse_variable(line):
-                    yield r
-        except:
-            pass
-
-    def _parse_header_file(self, name, path: str, custom_lib: bool):
-        lib_type = _CustomLib if custom_lib else _StdLib
-        lib = lib_type(name, _Lib.ON)
-        try:
-            with open(path, encoding='utf-8') as header_file:
-                for line in header_file:
-                    res = self._parse_header(line)
-                    if isinstance(res, _CFunctionHeader):
-                        lib.functions.append(res)
-                    if isinstance(res, _StdLib):
-                        lib.std_libs.append(res)
-                    if isinstance(res, _CustomLib):
-                        lib.custom_libs.append(res)
-                    if isinstance(res, _CDefine):
-                        lib.defines.append(res)
-                    if isinstance(res, _CType):
-                        lib.types.append(res)
+                    func.variables.append(r)
         except Exception as ex:
-            print(f"parse_header_file \"{path}\": {ex.__class__.__name__}: {ex}")
-        return lib
+            print(f"parse_function \"{func.header}\": {ex.__class__.__name__}: {ex}")
 
-    def _parse_header_str(self, name, string: str, custom_lib: bool):
+    def _parse_lib_file(self, name, path: str, custom_lib: bool):
+        with open(path, encoding='utf-8') as file:
+            return self._parse_lib(name, file.read(), custom_lib)
+
+    def _parse_lib(self, name, string: str, custom_lib: bool):
         lib_type = _CustomLib if custom_lib else _StdLib
         lib = lib_type(name, _Lib.ON)
+        current_struct = ""
         try:
             for line in string.split('\n'):
-                res = self._parse_header(line)
-                if isinstance(res, _CFunctionHeader):
-                    lib.functions.append(res)
-                if isinstance(res, _StdLib):
-                    lib.std_libs.append(res)
-                if isinstance(res, _CustomLib):
-                    lib.custom_libs.append(res)
-                if isinstance(res, _CDefine):
-                    lib.defines.append(res)
-                if isinstance(res, _CType):
-                    lib.types.append(res)
+                line = line.strip()
+                if not self._parse_include(line):
+                    if current_struct:
+                        if line.startswith('}'):
+                            current_struct = ""
+                        elif r := self._parse_variable(line.strip(), lib.types):
+                            lib.structs[-1].fields.append(r)
+                    elif line.startswith('struct ') or line.startswith('typedef struct '):
+                        name = line.lstrip('{').split()[-1].rstrip(';')
+                        for st in self._struct_types:
+                            if st.name == name:
+                                break
+                        else:
+                            current_struct = name
+                            lib.structs.append(_CStruct(current_struct, [], line.startswith('typedef')))
+                    elif r := self._parse_define(line):
+                        lib.defines.append(r)
+                    elif r := self._parse_typedef(line):
+                        lib.types.append(r)
+                    else:
+                        for func_type in self.get_all_types(lib.types):
+                            func_type = func_type.strip()
+                            if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(
+                                    ');'):
+                                lib.functions.append(_CFunctionHeader(line.replace(func_type, '', 1)))
         except Exception as ex:
             print(f"parse_header_str \"{string[:10]}...\": {ex.__class__.__name__}: {ex}")
         return lib
 
-    def _parse_header(self, line):
-        line = line.strip()
-        if not self._parse_include(line):
-            if r := self._parse_define(line):
-                return r
-            if r := self._parse_typedef(line):
-                return r
-            else:
-                for func_type in types:
-                    func_type = func_type.strip()
-                    if line.startswith(func_type) and line.count('(') == line.count(')') and line.endswith(');'):
-                        return _CFunctionHeader(line.replace(func_type, '', 1))
+    def get_all_types(self, lib_types=None):
+        for t in types:
+            yield t
+        for t in (lib_types if lib_types is not None else self._types):
+            yield str(t)
 
     def _get_lib(self):
         lib_list = self._sm.get_general('lib')
@@ -215,6 +291,7 @@ class _Lib:
         self.custom_libs = []
         self.types = []
         self.defines = []
+        self.structs = []
         self.status = status
 
     def set_status(self, status):

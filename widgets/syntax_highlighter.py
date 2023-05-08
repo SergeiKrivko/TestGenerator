@@ -38,9 +38,9 @@ class CodeEditor(QsciScintilla):
         # Current line visible with special background color
         self.setCaretLineVisible(True)
 
-        self.lexer = QsciLexerCPP(None)
-        self.lexer.setDefaultFont(font)
-        self.setLexer(self.lexer)
+        self._lexer = QsciLexerCPP(None)
+        self._lexer.setDefaultFont(font)
+        self.setLexer(self._lexer)
 
         self.setAutoCompletionSource(QsciScintilla.AcsAPIs)
         self.setAutoCompletionThreshold(1)
@@ -66,14 +66,19 @@ class CodeEditor(QsciScintilla):
         self.current_file = ""
         self.current_row = 0
         self.am = CodeAutocompletionManager(self.sm, self.path)
-        self.cursorPositionChanged.connect(self.update_api)
+        self.textChanged.connect(self.set_text_changed)
+        self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
+        self.text_changed = False
+
+    def set_text_changed(self):
+        self.text_changed = True
 
     def set_theme(self):
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
         self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))
         for key, item in self.tm.code_colors():
-            self.lexer.setColor(item, QsciLexerCPP.__dict__[key])
-        self.lexer.setPaper(self.tm['Paper'])
+            self._lexer.setColor(item, QsciLexerCPP.__dict__[key])
+        self._lexer.setPaper(self.tm['Paper'])
         self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceForegroundColor(self.tm['BraceColor'])
@@ -117,15 +122,21 @@ class CodeEditor(QsciScintilla):
         self.current_file = file_name
         self.am.dir = path
         self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
-        self.update_api(self.getCursorPosition()[0])
+        self.update_api(self.getCursorPosition())
 
     def update_api(self, pos):
-        self.api = QsciAPIs(self.lexer)
+        row = pos[0]
+        if row != self.current_row and self.text_changed:
+            self.am.full_update(self.text(), pos)
+            self.text_changed = False
+        self._api = QsciAPIs(self._lexer)
         try:
-            for el in self.am.get(self.text(), pos):
-                self.api.add(el)
+            lst, code = self.am.get(self.text(), pos)
+            for el in lst:
+                self._api.add(str(el))
         except Exception as ex:
+            # raise ex
             print(f"main_func: {ex.__class__.__name__}: {ex}")
             pass
-        self.api.prepare()
-        self.lexer.setAPIs(self.api)
+        self._api.prepare()
+        self._lexer.setAPIs(self._api)
