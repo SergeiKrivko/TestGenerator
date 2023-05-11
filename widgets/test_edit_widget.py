@@ -17,6 +17,21 @@ class TestEditWidget(QWidget):
         self.test_name_edit.setFont(QFont("Calibri", 10))
         h_layout1.addWidget(self.test_name_edit)
 
+        h_layout2 = QHBoxLayout()
+        layout.addLayout(h_layout2)
+        h_layout2.addWidget(QLabel("Аргументы"))
+        self.cmd_args_edit = QLineEdit()
+        self.cmd_args_edit.setFont(QFont("Calibri", 10))
+        h_layout2.addWidget(self.cmd_args_edit)
+
+        h_layout2.addWidget(QLabel("Код возврата"))
+        self.exit_code_edit = QLineEdit()
+        self.exit_code_edit.setFont(QFont("Calibri", 10))
+        self.exit_code_edit.setMaximumWidth(80)
+        self.exit_code_edit_text = ""
+        self.exit_code_edit.textChanged.connect(self.exit_code_edit_triggered)
+        h_layout2.addWidget(self.exit_code_edit)
+
         h_layout = QHBoxLayout()
         layout.addLayout(h_layout)
 
@@ -42,20 +57,38 @@ class TestEditWidget(QWidget):
         self.test_out_edit.setFont(QFont("Courier", 10))
         layout2.addWidget(self.test_out_edit)
 
-    def open_test(self, description, data_in, data_out):
+    def exit_code_edit_triggered(self):
+        if not self.exit_code_edit.text().strip():
+            self.exit_code_edit.setText("")
+            self.exit_code_edit_text = ""
+        else:
+            try:
+                int(self.exit_code_edit.text().strip())
+            except ValueError:
+                self.exit_code_edit.setText(self.exit_code_edit_text)
+            else:
+                self.exit_code_edit_text = self.exit_code_edit.text()
+
+    def open_test(self, description, data_in, data_out, cmd_args="", exit_code=None):
         self.test_name_edit.setText(description)
         self.test_in_edit.setText(data_in)
         self.test_out_edit.setText(data_out)
+        self.cmd_args_edit.setText(cmd_args)
+        self.exit_code_edit.setText(exit_code if exit_code else "")
 
         self.test_in_edit.setDisabled(False)
         self.test_out_edit.setDisabled(False)
         self.test_name_edit.setDisabled(False)
+        self.cmd_args_edit.setDisabled(False)
+        self.exit_code_edit.setDisabled(False)
         self.button_generate.setDisabled(False)
 
     def set_disabled(self):
         self.test_in_edit.setDisabled(True)
         self.test_out_edit.setDisabled(True)
         self.test_name_edit.setDisabled(True)
+        self.cmd_args_edit.setDisabled(True)
+        self.exit_code_edit.setDisabled(True)
         self.button_generate.setDisabled(True)
         self.test_in_edit.setText("")
         self.test_out_edit.setText("")
@@ -65,6 +98,8 @@ class TestEditWidget(QWidget):
         self.test_name_edit.setStyleSheet(self.tm.style_sheet)
         self.test_in_edit.setStyleSheet(self.tm.text_edit_style_sheet)
         self.test_out_edit.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.cmd_args_edit.setStyleSheet(self.tm.style_sheet)
+        self.exit_code_edit.setStyleSheet(self.tm.style_sheet)
         self.button_generate.setStyleSheet(self.tm.buttons_style_sheet)
 
 

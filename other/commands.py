@@ -177,8 +177,10 @@ class Looper(QThread):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
             try:
-                res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
-                    f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"), timeout=self.time_limit)
+                res = CommandManager.cmd_command(
+                    f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/pos_{i:0>2}_args.txt')}",
+                    input=CommandManager.read_file(
+                        f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"), timeout=self.time_limit, shell=True)
             except TimeoutExpired:
                 self.test_timeout.emit()
                 i += 1
@@ -204,8 +206,10 @@ class Looper(QThread):
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             try:
-                res = CommandManager.cmd_command(f"{self.path}/app.exe", input=CommandManager.read_file(
-                    f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"), timeout=self.time_limit)
+                res = CommandManager.cmd_command(
+                    f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/neg_{i:0>2}_args.txt')}",
+                    input=CommandManager.read_file(
+                        f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"), timeout=self.time_limit, shell=True)
             except TimeoutExpired:
                 self.test_timeout.emit()
                 i += 1

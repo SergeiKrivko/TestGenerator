@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QMessageBox, QDialog, QDialogButtonBox, QScrollArea, \
-    QHBoxLayout, QCheckBox, QLabel
+    QHBoxLayout, QCheckBox, QLabel, QListWidget, QListWidgetItem
 from PyQt5.QtGui import QFont
 from widgets.options_window import OptionsWidget
 from widgets.test_table_widget import TestTableWidget
@@ -57,13 +57,12 @@ class TestsWidget(QWidget):
         self.test_edit_widget.test_name_edit.textChanged.connect(self.set_test_name)
         self.test_edit_widget.test_in_edit.textChanged.connect(self.set_test_in)
         self.test_edit_widget.test_out_edit.textChanged.connect(self.set_test_out)
+        self.test_edit_widget.cmd_args_edit.textChanged.connect(self.set_test_args)
         self.test_edit_widget.button_generate.clicked.connect(self.button_generate_test)
         layout.addWidget(self.test_edit_widget)
 
         self.setLayout(layout)
 
-        self.pos_tests = []
-        self.neg_tests = []
         self.selected_test = 'pos'
 
         self.path = ''
@@ -99,137 +98,139 @@ class TestsWidget(QWidget):
                                       self.sm.get('var', self.options_widget['Номер варианта:']))
 
     def add_pos_test(self):
-        self.pos_tests.append(['-', '', ''])
-        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+        self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', '', ''))
 
     def add_neg_test(self):
-        self.neg_tests.append(['-', '', ''])
-        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+        self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', '', ''))
 
     def delete_pos_test(self):
-        if len(self.pos_tests) == 0:
+        if self.test_list_widget.pos_test_list.count() == 0:
             return
         ind = self.test_list_widget.pos_test_list.currentRow()
         if ind == -1:
             return
-        self.pos_tests.pop(ind)
-        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
-        if len(self.pos_tests) == 0:
+        self.test_list_widget.pos_test_list.takeItem(ind)
+        if self.test_list_widget.pos_test_list.count() == 0:
             self.test_edit_widget.set_disabled()
         else:
-            self.test_list_widget.pos_test_list.setCurrentRow(ind if ind < len(self.pos_tests) else ind - 1)
+            self.test_list_widget.pos_test_list.setCurrentRow(
+                ind if ind < self.test_list_widget.pos_test_list.count() else ind - 1)
 
     def delete_neg_test(self):
-        if len(self.neg_tests) == 0:
+        if self.test_list_widget.neg_test_list.count() == 0:
             return
         ind = self.test_list_widget.neg_test_list.currentRow()
         if ind == -1:
             return
-        self.neg_tests.pop(ind)
-        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
-        if len(self.neg_tests) == 0:
+        self.test_list_widget.neg_test_list.takeItem(ind)
+        if self.test_list_widget.neg_test_list.count() == 0:
             self.test_edit_widget.set_disabled()
         else:
-            self.test_list_widget.neg_test_list.setCurrentRow(ind if ind < len(self.neg_tests) else ind - 1)
+            self.test_list_widget.neg_test_list.setCurrentRow(
+                ind if ind < self.test_list_widget.neg_test_list.count() else ind - 1)
 
     def copy_tests(self, test_type='pos'):
         dlg = TestCopyWindow(self.sm)
         if dlg.exec():
             for desc, in_data, out_data in dlg.copy_tests():
                 if test_type == 'pos':
-                    self.pos_tests.append([desc, in_data, out_data])
-                    self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+                    self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem(desc, in_data, out_data))
                 else:
-                    self.neg_tests.append([desc, in_data, out_data])
-                    self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+                    self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem(desc, in_data, out_data))
 
     def select_pos_test(self):
-        self.test_list_widget.neg_test_list.setCurrentItem(None)
         try:
-            self.test_edit_widget.open_test(*self.pos_tests[self.test_list_widget.pos_test_list.currentRow()])
-        except IndexError:
+            item = self.test_list_widget.pos_test_list.currentItem()
+            if item:
+                self.test_list_widget.neg_test_list.setCurrentItem(None)
+            self.test_edit_widget.open_test(item.desc, item.in_data, item.out_data, item.cmd_args, item.exit_code)
+        except AttributeError:
             pass
 
     def select_neg_test(self):
-        self.test_list_widget.pos_test_list.setCurrentItem(None)
         try:
-            self.test_edit_widget.open_test(*self.neg_tests[self.test_list_widget.neg_test_list.currentRow()])
-        except IndexError:
+            item = self.test_list_widget.neg_test_list.currentItem()
+            if item:
+                self.test_list_widget.pos_test_list.setCurrentItem(None)
+            self.test_edit_widget.open_test(item.desc, item.in_data, item.out_data, item.cmd_args, item.exit_code)
+        except AttributeError:
             pass
 
     def set_test_name(self, name):
         if self.test_list_widget.pos_test_list.currentItem() is not None:
-            self.pos_tests[self.test_list_widget.pos_test_list.currentRow()][0] = name
-            self.test_list_widget.pos_test_list.currentItem().setText(name)
+            self.test_list_widget.pos_test_list.currentItem().set_desc(name)
         elif self.test_list_widget.neg_test_list.currentItem() is not None:
-            self.neg_tests[self.test_list_widget.neg_test_list.currentRow()][0] = name
-            self.test_list_widget.neg_test_list.currentItem().setText(name)
+            self.test_list_widget.neg_test_list.currentItem().set_desc(name)
 
     def set_test_in(self):
         if self.test_list_widget.pos_test_list.currentItem() is not None:
-            self.pos_tests[self.test_list_widget.pos_test_list.currentRow()][1] = \
-                self.test_edit_widget.test_in_edit.toPlainText()
+            self.test_list_widget.pos_test_list.currentItem().in_data = self.test_edit_widget.test_in_edit.toPlainText()
         elif self.test_list_widget.neg_test_list.currentItem() is not None:
-            self.neg_tests[self.test_list_widget.neg_test_list.currentRow()][1] = \
-                self.test_edit_widget.test_in_edit.toPlainText()
+            self.test_list_widget.neg_test_list.currentItem().in_data = self.test_edit_widget.test_in_edit.toPlainText()
+
+    def set_test_args(self):
+        if self.test_list_widget.pos_test_list.currentItem() is not None:
+            self.test_list_widget.pos_test_list.currentItem().cmd_args = self.test_edit_widget.cmd_args_edit.text()
+        elif self.test_list_widget.neg_test_list.currentItem() is not None:
+            self.test_list_widget.neg_test_list.currentItem().cmd_args = self.test_edit_widget.cmd_args_edit.text()
 
     def set_test_out(self):
         if self.test_list_widget.pos_test_list.currentItem() is not None:
-            self.pos_tests[self.test_list_widget.pos_test_list.currentRow()][2] = \
+            self.test_list_widget.pos_test_list.currentItem().out_data = \
                 self.test_edit_widget.test_out_edit.toPlainText()
         elif self.test_list_widget.neg_test_list.currentItem() is not None:
-            self.neg_tests[self.test_list_widget.neg_test_list.currentRow()][2] = \
+            self.test_list_widget.neg_test_list.currentItem().out_data = \
                 self.test_edit_widget.test_out_edit.toPlainText()
 
     def move_pos_test_up(self):
         index = self.test_list_widget.pos_test_list.currentRow()
         if index <= 0:
             return
-        self.pos_tests[index], self.pos_tests[index - 1] = self.pos_tests[index - 1], self.pos_tests[index]
-        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+        item = self.test_list_widget.pos_test_list.takeItem(index)
+        self.test_list_widget.pos_test_list.insertItem(index - 1, item)
         self.test_list_widget.pos_test_list.setCurrentRow(index - 1)
 
     def move_pos_test_down(self):
         index = self.test_list_widget.pos_test_list.currentRow()
-        if index >= len(self.pos_tests) - 1:
+        if index >= self.test_list_widget.pos_test_list.count() - 1:
             return
-        self.pos_tests[index], self.pos_tests[index + 1] = self.pos_tests[index + 1], self.pos_tests[index]
-        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
+        item = self.test_list_widget.pos_test_list.takeItem(index)
+        self.test_list_widget.pos_test_list.insertItem(index + 1, item)
         self.test_list_widget.pos_test_list.setCurrentRow(index + 1)
 
     def move_neg_test_up(self):
         index = self.test_list_widget.neg_test_list.currentRow()
         if index <= 0:
             return
-        self.neg_tests[index], self.neg_tests[index - 1] = self.neg_tests[index - 1], self.neg_tests[index]
-        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+        item = self.test_list_widget.neg_test_list.takeItem(index)
+        self.test_list_widget.neg_test_list.insertItem(index - 1, item)
         self.test_list_widget.neg_test_list.setCurrentRow(index - 1)
 
     def move_neg_test_down(self):
         index = self.test_list_widget.neg_test_list.currentRow()
-        if index >= len(self.neg_tests) - 1:
+        if index >= self.test_list_widget.neg_test_list.count() - 1:
             return
-        self.neg_tests[index], self.neg_tests[index + 1] = self.neg_tests[index + 1], self.neg_tests[index]
-        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
+        item = self.test_list_widget.neg_test_list.takeItem(index)
+        self.test_list_widget.neg_test_list.insertItem(index + 1, item)
         self.test_list_widget.neg_test_list.setCurrentRow(index + 1)
 
     def button_generate_test(self):
         if self.test_list_widget.pos_test_list.currentItem() is not None:
             index = self.test_list_widget.pos_test_list.currentRow()
-            self.pos_tests[index][2] = ''
+            self.test_list_widget.pos_test_list.item(index).out_data = ''
             self.generate_test(index, 'pos')
             file = open(f"{self.path}/func_tests/data/pos_{index + 1:0>2}_out.txt")
-            self.pos_tests[index][2] = file.read()
+            self.test_list_widget.pos_test_list.item(index).out_data = file.read()
             file.close()
-            self.test_edit_widget.test_out_edit.setText(self.pos_tests[index][2])
+            self.test_edit_widget.test_out_edit.setText(self.test_list_widget.pos_test_list.item(index).out_data)
         elif self.test_list_widget.neg_test_list.currentItem() is not None:
             index = self.test_list_widget.neg_test_list.currentRow()
-            self.neg_tests[index][2] = ''
+            self.test_list_widget.neg_test_list.item(index).out_data = ''
             self.generate_test(index, 'neg')
             file = open(f"{self.path}/func_tests/data/neg_{index + 1:0>2}_out.txt")
-            self.neg_tests[index][2] = file.read()
+            self.test_list_widget.neg_test_list.item(index).out_data = file.read()
             file.close()
-            self.test_edit_widget.test_out_edit.setText(self.neg_tests[index][2])
+            self.test_edit_widget.test_out_edit.setText(self.test_list_widget.neg_test_list.item(index).out_data)
 
     def get_path(self, from_settings=False):
         if from_settings:
@@ -248,14 +249,12 @@ class TestsWidget(QWidget):
         except Exception as ex:
             print(f"{ex.__class__.__name__}")
         self.readme_parser()
-        self.test_list_widget.update_pos_items([item[0] for item in self.pos_tests])
-        self.test_list_widget.update_neg_items([item[0] for item in self.neg_tests])
         self.test_edit_widget.set_disabled()
         self.file_edit_time.clear()
 
     def readme_parser(self):
-        self.pos_tests.clear()
-        self.neg_tests.clear()
+        self.test_list_widget.pos_test_list.clear()
+        self.test_list_widget.neg_test_list.clear()
 
         if not os.path.isfile(f"{self.path}/func_tests/readme.md"):
             return
@@ -268,15 +267,15 @@ class TestsWidget(QWidget):
         for i in range(len(lines)):
             if "Позитивные тесты" in lines[i]:
                 for j in range(i + 1, len(lines)):
-                    if lines[j][:2] == '- ' and lines[j][4:7] == ' - ':
-                        self.pos_tests.append([lines[j][7:].strip(), '', ''])
+                    if lines[j].startswith('- ') and ' - ' in lines[j]:
+                        self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem(lines[j][7:].strip(), '', ''))
                     else:
                         break
 
             elif "Негативные тесты" in lines[i]:
                 for j in range(i + 1, len(lines)):
-                    if lines[j][:2] == '- ' and lines[j][4:7] == ' - ':
-                        self.neg_tests.append([lines[j][7:].strip(), '', ''])
+                    if lines[j].startswith('- ') and ' - ' in lines[j]:
+                        self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem(lines[j][7:].strip(), '', ''))
                     else:
                         break
 
@@ -291,29 +290,37 @@ class TestsWidget(QWidget):
         for file in os.listdir(f"{self.path}/func_tests/data"):
             pos_count += file.startswith('pos_') and file.endswith('_in.txt')
             neg_count += file.startswith('neg_') and file.endswith('_in.txt')
-        for i in range(len(self.pos_tests), pos_count):
-            self.pos_tests.append(['-', '', ''])
-        for i in range(len(self.neg_tests), neg_count):
-            self.neg_tests.append(['-', '', ''])
+        for i in range(self.test_list_widget.pos_test_list.count(), pos_count):
+            self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', '', ''))
+        for i in range(self.test_list_widget.neg_test_list.count(), neg_count):
+            self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', '', ''))
 
-        for i in range(len(self.pos_tests)):
+        for i in range(self.test_list_widget.pos_test_list.count()):
             if os.path.isfile(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_in.txt"):
                 file = open(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_in.txt")
-                self.pos_tests[i][1] = file.read()
+                self.test_list_widget.pos_test_list.item(i).in_data = file.read()
                 file.close()
                 if os.path.isfile(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_out.txt"):
                     file = open(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_out.txt")
-                    self.pos_tests[i][2] = file.read()
+                    self.test_list_widget.pos_test_list.item(i).out_data = file.read()
+                    file.close()
+                if os.path.isfile(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_args.txt"):
+                    file = open(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_args.txt")
+                    self.test_list_widget.pos_test_list.item(i).cmd_args = file.read()
                     file.close()
 
-        for i in range(len(self.neg_tests)):
+        for i in range(self.test_list_widget.neg_test_list.count()):
             if os.path.isfile(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_in.txt"):
                 file = open(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_in.txt")
-                self.neg_tests[i][1] = file.read()
+                self.test_list_widget.neg_test_list.item(i).in_data = file.read()
                 file.close()
                 if os.path.isfile(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_out.txt"):
                     file = open(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_out.txt")
-                    self.neg_tests[i][2] = file.read()
+                    self.test_list_widget.neg_test_list.item(i).out_data = file.read()
+                    file.close()
+                if os.path.isfile(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_args.txt"):
+                    file = open(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_args.txt")
+                    self.test_list_widget.neg_test_list.item(i).cmd_args = file.read()
                     file.close()
 
     def compare_edit_time(self):
@@ -331,25 +338,33 @@ class TestsWidget(QWidget):
     def save_a_test(self, index, type='pos'):
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
-        tests = self.pos_tests if type == 'pos' else self.neg_tests
+        tests = self.test_list_widget.pos_test_list if type == 'pos' else self.test_list_widget.neg_test_list
 
         file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
                        newline=self.sm.get('line_sep'))
-        file_in.write(tests[index][1])
+        file_in.write(tests.item(index).in_data)
         file_in.close()
 
         file_out = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", "w",
                         newline=self.sm.get('line_sep'))
-        file_out.write(tests[index][2])
+        file_out.write(tests.item(index).out_data)
         file_out.close()
+
+        if tests.item(index).cmd_args.strip():
+            file_out = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_args.txt", "w",
+                            newline=self.sm.get('line_sep'))
+            file_out.write(tests.item(index).cmd_args)
+            file_out.close()
+        elif os.path.isfile(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_args.txt"):
+            os.remove(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_args.txt")
 
     def generate_test(self, index, type='pos'):
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
-        tests = self.pos_tests if type == 'pos' else self.neg_tests
+        tests = self.test_list_widget.pos_test_list if type == 'pos' else self.test_list_widget.neg_test_list
         file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
                        newline=self.sm.get('line_sep'))
-        file_in.write(tests[index][1])
+        file_in.write(tests.item(index).in_data)
         file_in.close()
 
         if not self.compare_edit_time():
@@ -357,14 +372,13 @@ class TestsWidget(QWidget):
             if not self.cm.compile2(coverage=False):
                 return
 
-        res = self.cm.cmd_command([f"{self.path}/app.exe"],
-                                  input=read_file(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt"))
+        res = self.cm.cmd_command(
+            f"{self.path}/app.exe {read_file(f'{self.path}/func_tests/data/{type}_{index + 1:0>2}_args.txt', default='')}",
+            shell=True, input=read_file(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt"))
         file = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", 'w', encoding='utf-8',
                     newline=self.sm.get('line_sep'))
         file.write(res.stdout)
         file.close()
-        # os.system(f"{self.path}/app.exe < {self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt > "
-        #           f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
         if self.sm.get('clear_words', False):
             clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
@@ -372,11 +386,13 @@ class TestsWidget(QWidget):
 
     def remove_files(self):
         for file in os.listdir(f"{self.path}/func_tests/data"):
-            if file[:4] in ('pos_', 'neg_') and file[6:] in ('_in.txt', '_out.txt'):
+            if file.startswith('pos_') or file.startswith('neg_') and \
+                    file.endswith('_in.txt') or file.endswith('_out.txt') or file.endswith('_args.txt'):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
     def save_tests(self):
-        if not os.path.isfile(f"{self.path}/main.c") and not self.pos_tests and not self.neg_tests:
+        if not os.path.isfile(f"{self.path}/main.c") and not self.test_list_widget.pos_test_list.count() and \
+                not self.test_list_widget.neg_test_list.count():
             return
         try:
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
@@ -387,14 +403,14 @@ class TestsWidget(QWidget):
                          f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
                          f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
                          f"## Позитивные тесты:\n")
-            for i in range(len(self.pos_tests)):
-                readme.write(f"- {i + 1:0>2} - {self.pos_tests[i][0]}\n")
+            for i in range(self.test_list_widget.pos_test_list.count()):
+                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.pos_test_list.item(i).desc}\n")
                 self.save_a_test(i, 'pos')
 
             readme.write("\n## Негативные тесты:\n")
 
-            for i in range(len(self.neg_tests)):
-                readme.write(f"- {i + 1:0>2} - {self.neg_tests[i][0]}\n")
+            for i in range(self.test_list_widget.neg_test_list.count()):
+                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
                 self.save_a_test(i, 'neg')
 
             dct = self.sm.get('pos_comparators', dict())
@@ -428,7 +444,30 @@ class TestsWidget(QWidget):
         super(TestsWidget, self).hide()
 
 
-def read_file(path):
+class CustomListWidgetItem(QListWidgetItem):
+    def __init__(self, desc, in_data, out_data, cmd_args="", exit_code=None):
+        super(CustomListWidgetItem, self).__init__()
+        self.desc = desc
+        self.setText(desc)
+        self.in_data = in_data
+        self.out_data = out_data
+        self.cmd_args = cmd_args
+        self.exit_code = exit_code
+
+    def set_desc(self, new_desc):
+        self.desc = new_desc
+        self.setText(new_desc)
+
+
+def read_file(path, default=None):
+    if default is not None:
+        try:
+            file = open(path, encoding='utf-8')
+            res = file.read()
+            file.close()
+            return res
+        except:
+            return default
     file = open(path, encoding='utf-8')
     res = file.read()
     file.close()
