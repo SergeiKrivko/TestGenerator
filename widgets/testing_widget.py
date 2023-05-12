@@ -169,12 +169,13 @@ class TestingWidget(QWidget):
         self.cm.looper.terminate()
         self.cm.looper.wait()
         self.button.setText("Тестировать")
+        self.testing_is_terminated(None)
 
     def testing(self):
         self.options_widget.setDisabled(True)
         self.ui_disable_func(True)
         self.button.setText("Прервать тестирование")
-        self.button.setDisabled(True)
+        # self.button.setDisabled(True)
 
         self.get_path(True)
         self.old_dir = os.getcwd()
@@ -241,7 +242,8 @@ class TestingWidget(QWidget):
             os.remove(f"{self.path}/temp.txt")
         self.testing_end.emit()
 
-        QMessageBox.warning(None, "Error", errors)
+        if errors:
+            QMessageBox.warning(None, "Error", errors)
 
         for i in range(self.test_count, self.tests_list.count()):
             self.tests_list.item(i).set_terminated()

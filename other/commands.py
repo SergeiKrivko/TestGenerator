@@ -114,7 +114,7 @@ class CommandManager:
         res.sort()
         return res
 
-    def parce_todo_md(self):
+    def parse_todo_md(self):
         res = []
         try:
             file = open(f"{self.sm['path']}/TODO/lab_{self.sm['lab']:0>2}.md")

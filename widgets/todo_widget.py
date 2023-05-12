@@ -131,7 +131,7 @@ class TODOWidget(QWidget):
     def open_lab(self):
         self.list_widget.clear()
 
-        for task, description in self.cm.parce_todo_md():
+        for task, description in self.cm.parse_todo_md():
             self.list_widget.addItem(TODOItem(task, description))
 
         for path, line, description in self.cm.parse_todo_in_code():
