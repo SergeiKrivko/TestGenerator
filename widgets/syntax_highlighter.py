@@ -1,13 +1,13 @@
 from PyQt5.QtGui import QFont, QColor, QFontMetrics
-from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciAPIs
+from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciLexerPython, QsciAPIs
 from other.code_autocompletion import CodeAutocompletionManager
 
 
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, sm, tm, parent=None):
-        super(CodeEditor, self).__init__(parent)
+    def __init__(self, sm, tm, lexer: type):
+        super(CodeEditor, self).__init__(None)
 
         # Set the default font
         font = QFont()
@@ -38,7 +38,7 @@ class CodeEditor(QsciScintilla):
         # Current line visible with special background color
         self.setCaretLineVisible(True)
 
-        self._lexer = QsciLexerCPP(None)
+        self._lexer = lexer(None)
         self._lexer.setDefaultFont(font)
         self.setLexer(self._lexer)
 
@@ -74,6 +74,7 @@ class CodeEditor(QsciScintilla):
         self.text_changed = True
 
     def set_theme(self):
+        self.setStyleSheet(self.tm.scintilla_style_sheet)
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
         self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))
         for key, item in self.tm.code_colors():
@@ -82,33 +83,6 @@ class CodeEditor(QsciScintilla):
         self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceForegroundColor(self.tm['BraceColor'])
-        self.setStyleSheet(f"""
-                QsciScintilla {{
-                {self.tm.style_sheet}
-                }}
-                QsciScintilla QScrollBar:vertical {{
-                background: rgba{self.tm['Paper'].getRgb()};
-                border-top-right-radius: 5px;
-                border-bottom-right-radius: 5px;
-                width: 12px;
-                margin: 0px;
-                }}
-                QsciScintilla QScrollBar::handle::vertical {{
-                background-color: {self.tm['BorderColor']};
-                margin: 2px;
-                border-radius: 4px;
-                min-height: 20px;
-                }}
-                QsciScintilla QScrollBar::sub-page, QScrollBar::add-page {{
-                background: none;
-                }}
-                QsciScintilla QScrollBar::sub-line, QScrollBar::add-line {{
-                background: none;
-                height: 0px;
-                subcontrol-position: left;
-                subcontrol-origin: margin;
-                }}
-                """)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
@@ -123,6 +97,14 @@ class CodeEditor(QsciScintilla):
         self.am.dir = path
         self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
         self.update_api(self.getCursorPosition())
+
+    def update_api(self, pos):
+        pass
+
+
+class CCodeEditor(CodeEditor):
+    def __init__(self, sm, tm):
+        super(CCodeEditor, self).__init__(sm, tm, QsciLexerCPP)
 
     def update_api(self, pos):
         row = pos[0]
@@ -140,3 +122,16 @@ class CodeEditor(QsciScintilla):
             pass
         self._api.prepare()
         self._lexer.setAPIs(self._api)
+
+
+class PythonCodeEditor(CodeEditor):
+    def __init__(self, sm, tm, autocomplitions):
+        super(PythonCodeEditor, self).__init__(sm, tm, QsciLexerPython)
+        self.autocomplitions = autocomplitions
+
+    def update_api(self, pos):
+        api = QsciAPIs(self._lexer)
+        for el in self.autocomplitions:
+            api.add(el)
+        api.prepare()
+        self._lexer.setAPIs(api)

@@ -1,12 +1,12 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget
 
 from widgets.files_widget import FilesWidget
 from widgets.options_window import OptionsWidget
-from widgets.syntax_highlighter import CodeEditor
+from widgets.syntax_highlighter import CCodeEditor
 
 
 class CodeWidget(QWidget):
@@ -53,7 +53,7 @@ class CodeWidget(QWidget):
         self.todo_widget.doubleClicked.connect(self.jump_by_todo)
         layout_left.addWidget(self.tab_widget)
 
-        self.code_edit = CodeEditor(sm, tm)
+        self.code_edit = CCodeEditor(sm, tm)
         self.code_edit.setFont(QFont("Courier", 10))
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)

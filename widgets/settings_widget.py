@@ -32,7 +32,8 @@ class SettingsWidget(QWidget):
             "Символ переноса строки: ": {'type': 'combo', 'values': line_sep.values(), 'name': OptionsWidget.NAME_LEFT,
                                          'initial': list(line_sep.keys()).index(self.sm.get_general('line_sep', '\n'))},
             "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWidget.NAME_LEFT,
-                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)}
+                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)},
+            "Python": {'type': str, 'initial': self.sm.get_general('python', 'python3'), 'width': 250}
         }, margins=(20, 20, 20, 20))
         self.main_options_widget.clicked.connect(self.save_main_settings)
         layout.addWidget(self.main_options_widget)
@@ -73,6 +74,7 @@ class SettingsWidget(QWidget):
         self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
         self.main_options_widget.widgets['Символ переноса строки: '].setStyleSheet(self.tm.combo_box_style_sheet)
         self.main_options_widget.widgets['Тема:'].setStyleSheet(self.tm.combo_box_style_sheet)
+        self.main_options_widget.widgets['Python'].setStyleSheet(self.tm.style_sheet)
         self.testing_widget.widgets['Компилятор'].setStyleSheet(self.tm.style_sheet)
         self.testing_widget.widgets['Компаратор для позитивных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
         self.testing_widget.widgets['Компаратор для негативных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
@@ -88,6 +90,7 @@ class SettingsWidget(QWidget):
         self.sm.set_general('theme', th := list(self.tm.themes.keys())[dct['Тема:']])
         self.tm.set_theme(th)
         self.change_theme.emit()
+        self.sm.set_general('python', dct['Python'])
 
     def save_testing_settings(self):
         dct = self.testing_widget.values

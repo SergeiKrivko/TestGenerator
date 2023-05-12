@@ -257,6 +257,32 @@ class ThemeManager:
                            f"background-color: {self['MainColor']};\n" \
                            f"border: 1px solid {self['BorderColor']};\n" \
                            f"border-radius: 4px;"
+        self.scintilla_style_sheet = f"""
+            QsciScintilla {{
+                {self.style_sheet}
+            }}
+            QsciScintilla QScrollBar:vertical {{
+                background: rgba{self['Paper'].getRgb()};
+                border-top-right-radius: 5px;
+                border-bottom-right-radius: 5px;
+                width: 12px;
+                margin: 0px;
+            }}
+            QsciScintilla QScrollBar::handle::vertical {{
+                background-color: {self['BorderColor']};
+                margin: 2px;
+                border-radius: 4px;
+                min-height: 20px;
+            }}
+            QsciScintilla QScrollBar::sub-page, QScrollBar::add-page {{
+                background: none;
+            }}
+            QsciScintilla QScrollBar::sub-line, QScrollBar::add-line {{
+                background: none;
+                height: 0px;
+                subcontrol-position: left;
+                subcontrol-origin: margin;
+            }}"""
         self.list_widget_style_sheet = f"""
         QListWidget {{
             {self.style_sheet}

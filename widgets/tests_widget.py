@@ -1,7 +1,8 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QMessageBox, QDialog, QDialogButtonBox, QScrollArea, \
-    QHBoxLayout, QCheckBox, QLabel, QListWidget, QListWidgetItem
-from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QDialog, QDialogButtonBox, QScrollArea, \
+    QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
+
+from widgets.generator_window import GeneratorWindow
 from widgets.options_window import OptionsWidget
 from widgets.test_table_widget import TestTableWidget
 from widgets.test_edit_widget import TestEditWidget
@@ -31,9 +32,8 @@ class TestsWidget(QWidget):
         self.options_widget.clicked.connect(self.option_changed)
         layout.addWidget(self.options_widget)
 
-        self.code_widget = QTextEdit()
-        self.code_widget.setFont(QFont("Courier", 10))
-        self.code_widget.setReadOnly(True)
+        self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
+        self.generator_window.hide()
 
         self.test_list_widget = TestTableWidget(self.tm)
         self.test_list_widget.setMinimumWidth(400)
@@ -48,6 +48,7 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
         self.test_list_widget.pos_button_copy.clicked.connect(lambda: self.copy_tests('pos'))
         self.test_list_widget.neg_button_copy.clicked.connect(lambda: self.copy_tests('neg'))
+        self.test_list_widget.pos_button_generate.clicked.connect(lambda: self.generator_window.show())
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)
@@ -432,6 +433,7 @@ class TestsWidget(QWidget):
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Вход:', self.tm.style_sheet)
         self.options_widget.set_widget_style_sheet('Выход:', self.tm.style_sheet)
+        self.generator_window.set_theme()
 
     def show(self):
         self.update_options()
