@@ -300,6 +300,7 @@ class TestsWidget(QWidget):
         except Exception as ex:
             print(f"{ex.__class__.__name__}")
 
+        self.remove_temp_files()
         self.files_links.clear()
         self.temp_file_index = 0
 
@@ -457,26 +458,28 @@ class TestsWidget(QWidget):
         if item.in_file != in_name:
             if in_name in self.files_links:
                 other_item = self.files_links[in_name]
-                os.rename(other_item.in_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                other_item.in_file = f
-                self.temp_file_index += 1
-
+                if os.path.isfile(other_item.in_file):
+                    os.rename(other_item.in_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
+                    other_item.in_file = f
+                    self.temp_file_index += 1
             os.rename(item.in_file, in_name)
 
         if item.out_file != out_name:
             if out_name in self.files_links:
                 other_item = self.files_links[out_name]
-                os.rename(other_item.out_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                other_item.out_file = f
-                self.temp_file_index += 1
+                if os.path.isfile(other_item.out_file):
+                    os.rename(other_item.out_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
+                    other_item.out_file = f
+                    self.temp_file_index += 1
             os.rename(item.out_file, out_name)
 
         if item.args_file and item.args_file != args_name:
             if args_name in self.files_links:
                 other_item = self.files_links[args_name]
-                os.rename(other_item.args_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                other_item.args_file = f
-                self.temp_file_index += 1
+                if os.path.isfile(other_item.args_file):
+                    os.rename(other_item.args_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
+                    other_item.args_file = f
+                    self.temp_file_index += 1
             os.rename(item.args_file, args_name)
 
     def generate_test(self, index, type='pos'):
