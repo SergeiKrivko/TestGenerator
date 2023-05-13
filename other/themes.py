@@ -2,7 +2,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
 
 basic_theme = {
-    'CodeColors':
+    'QsciLexerCPP':
         {
             'Identifier': Qt.black,
             'PreProcessor': Qt.darkYellow,
@@ -13,7 +13,27 @@ basic_theme = {
             'Number': Qt.blue,
             'Operator': Qt.black,
             'DoubleQuotedString': QColor(255, 50, 120),
-            'SingleQuotedString': QColor(255, 50, 120)
+            'SingleQuotedString': QColor(255, 50, 120),
+        },
+    'QsciLexerPython':
+        {
+            'Identifier': Qt.black,
+            'Comment': Qt.darkGreen,
+            'CommentBlock': Qt.darkGreen,
+            'Keyword': Qt.darkBlue,
+            'Number': Qt.blue,
+            'Operator': Qt.black,
+            'ClassName': Qt.darkBlue,
+            'Decorator': Qt.blue,
+            'FunctionMethodName': Qt.darkBlue,
+            'DoubleQuotedString': QColor(255, 50, 120),
+            'SingleQuotedString': QColor(255, 50, 120),
+            'DoubleQuotedFString': QColor(255, 50, 120),
+            'SingleQuotedFString': QColor(255, 50, 120),
+            'TripleDoubleQuotedString': QColor(255, 50, 120),
+            'TripleSingleQuotedString': QColor(255, 50, 120),
+            'TripleDoubleQuotedFString': QColor(255, 50, 120),
+            'TripleSingleQuotedFString': QColor(255, 50, 120),
         },
     'Paper': QColor(Qt.white),
     'CaretLineBackgroundColor': QColor('#E5F3FF'),
@@ -46,12 +66,12 @@ class Theme:
     def __getitem__(self, item):
         return self.get(item)
 
-    def code_colors(self):
-        if 'CodeColors' in self.theme_data:
-            for key, item in basic_theme['CodeColors'].items():
-                yield key, self.theme_data['CodeColors'].get(key, item)
+    def code_colors(self, lexer):
+        if lexer in self.theme_data:
+            for key, item in basic_theme[lexer].items():
+                yield key, self.theme_data[lexer].get(key, item)
         else:
-            return basic_theme['CodeColors'].items()
+            return basic_theme[lexer].items()
 
 
 class ThemeManager:
@@ -62,7 +82,7 @@ class ThemeManager:
             ThemeManager.BASIC_THEME: Theme(basic_theme),
             'darcula':
                 Theme({
-                    'CodeColors':
+                    'QsciLexerCPP':
                         {
                             'Identifier': QColor('#DFDFDF'),
                             'PreProcessor': QColor('#BBB529'),
@@ -74,6 +94,26 @@ class ThemeManager:
                             'Operator': QColor('#DFDFDF'),
                             'DoubleQuotedString': QColor('#5F864C'),
                             'SingleQuotedString': QColor('#5F864C')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#DFDFDF'),
+                            'Comment': QColor('#74797B'),
+                            'CommentBlock': QColor('#74797B'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#DFDFDF'),
+                            'ClassName': QColor('#F5BA56'),
+                            'Decorator': QColor('#DEDB22'),
+                            'FunctionMethodName': QColor('#F5BA56'),
+                            'DoubleQuotedString': QColor('#5F864C'),
+                            'SingleQuotedString': QColor('#5F864C'),
+                            'DoubleQuotedFString': QColor('#5F864C'),
+                            'SingleQuotedFString': QColor('#5F864C'),
+                            'TripleDoubleQuotedString': QColor('#5F864C'),
+                            'TripleSingleQuotedString': QColor('#5F864C'),
+                            'TripleDoubleQuotedFString': QColor('#5F864C'),
+                            'TripleSingleQuotedFString': QColor('#5F864C'),
                         },
                     'Paper': QColor('#2B2B2B'),
                     'CaretLineBackgroundColor': QColor('#323232'),
@@ -96,7 +136,7 @@ class ThemeManager:
                 }),
             'ocean':
                 Theme({
-                    'CodeColors':
+                    'QsciLexerCPP':
                         {
                             'Identifier': QColor('#274D66'),
                             'PreProcessor': QColor('#8A3199'),
@@ -108,6 +148,26 @@ class ThemeManager:
                             'Operator': QColor('#304070'),
                             'DoubleQuotedString': QColor('#DE435C'),
                             'SingleQuotedString': QColor('#5F864C')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#274D66'),
+                            'Comment': QColor('#1F2A40'),
+                            'CommentBlock': QColor('#1F2A40'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#304070'),
+                            'ClassName': QColor('#E673D8'),
+                            'Decorator': QColor('#E673D8'),
+                            'FunctionMethodName': QColor('#E673D8'),
+                            'DoubleQuotedString': QColor('#DE435C'),
+                            'SingleQuotedString': QColor('#DE435C'),
+                            'DoubleQuotedFString': QColor('#DE435C'),
+                            'SingleQuotedFString': QColor('#DE435C'),
+                            'TripleDoubleQuotedString': QColor('#DE435C'),
+                            'TripleSingleQuotedString': QColor('#DE435C'),
+                            'TripleDoubleQuotedFString': QColor('#DE435C'),
+                            'TripleSingleQuotedFString': QColor('#DE435C'),
                         },
                     'Paper': QColor('#E7F6F2'),
                     'CaretLineBackgroundColor': QColor('#C1EDF5'),
@@ -130,18 +190,38 @@ class ThemeManager:
                 }),
             'fresh':
                 Theme({
-                    'CodeColors':
+                    'QsciLexerCPP':
                         {
-                            'Identifier': QColor('#274D66'),
-                            'PreProcessor': QColor('#8A3199'),
+                            'Identifier': QColor('#0F9C18'),
+                            'PreProcessor': QColor('#1FBA8B'),
+                            'Comment': QColor('#26470B'),
+                            'CommentLine': QColor('#26470B'),
+                            'CommentDoc': QColor('#26470B'),
+                            'Keyword': QColor('#782622'),
+                            'Number': QColor('#A9C718'),
+                            'Operator': QColor('#0F9C18'),
+                            'DoubleQuotedString': QColor('#784315'),
+                            'SingleQuotedString': QColor('#784315')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#0F9C18'),
                             'Comment': QColor('#1F2A40'),
-                            'CommentLine': QColor('#1F2A40'),
-                            'CommentDoc': QColor('#1F2A40'),
-                            'Keyword': QColor('#CC7832'),
-                            'Number': QColor('#5191A6'),
-                            'Operator': QColor('#304070'),
-                            'DoubleQuotedString': QColor('#DE435C'),
-                            'SingleQuotedString': QColor('#5F864C')
+                            'CommentBlock': QColor('#26470B'),
+                            'Keyword': QColor('#782622'),
+                            'Number': QColor('#A9C718'),
+                            'Operator': QColor('#0F9C18'),
+                            'ClassName': QColor('#1FBA8B'),
+                            'Decorator': QColor('#1FBA8B'),
+                            'FunctionMethodName': QColor('#1FBA8B'),
+                            'DoubleQuotedString': QColor('#784315'),
+                            'SingleQuotedString': QColor('#784315'),
+                            'DoubleQuotedFString': QColor('#784315'),
+                            'SingleQuotedFString': QColor('#784315'),
+                            'TripleDoubleQuotedString': QColor('#784315'),
+                            'TripleSingleQuotedString': QColor('#784315'),
+                            'TripleDoubleQuotedFString': QColor('#784315'),
+                            'TripleSingleQuotedFString': QColor('#784315'),
                         },
                     'Paper': QColor('#D2D79F'),
                     'CaretLineBackgroundColor': QColor('#BAD78C'),
@@ -164,18 +244,38 @@ class ThemeManager:
                 }),
             'neon':
                 Theme({
-                    'CodeColors':
+                    'QsciLexerCPP':
                         {
-                            'Identifier': QColor('#274D66'),
-                            'PreProcessor': QColor('#8A3199'),
-                            'Comment': QColor('#1F2A40'),
-                            'CommentLine': QColor('#1F2A40'),
-                            'CommentDoc': QColor('#1F2A40'),
-                            'Keyword': QColor('#CC7832'),
-                            'Number': QColor('#5191A6'),
-                            'Operator': QColor('#304070'),
-                            'DoubleQuotedString': QColor('#DE435C'),
-                            'SingleQuotedString': QColor('#5F864C')
+                            'Identifier': QColor('#E031DD'),
+                            'PreProcessor': QColor('#5C67E0'),
+                            'Comment': QColor('#E0691A'),
+                            'CommentLine': QColor('#E0691A'),
+                            'CommentDoc': QColor('#E0691A'),
+                            'Keyword': QColor('#24AED4'),
+                            'Number': QColor('#72961B'),
+                            'Operator': QColor('#E031DD'),
+                            'DoubleQuotedString': QColor('#E0282B'),
+                            'SingleQuotedString': QColor('#E0282B')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#E031DD'),
+                            'Comment': QColor('#E0691A'),
+                            'CommentBlock': QColor('#E0691A'),
+                            'Keyword': QColor('#24AED4'),
+                            'Number': QColor('#72961B'),
+                            'Operator': QColor('#E031DD'),
+                            'ClassName': QColor('#5C67E0'),
+                            'Decorator': QColor('#5C67E0'),
+                            'FunctionMethodName': QColor('#5C67E0'),
+                            'DoubleQuotedString': QColor('#E0282B'),
+                            'SingleQuotedString': QColor('#E0282B'),
+                            'DoubleQuotedFString': QColor('#E0282B'),
+                            'SingleQuotedFString': QColor('#E0282B'),
+                            'TripleDoubleQuotedString': QColor('#E0282B'),
+                            'TripleSingleQuotedString': QColor('#E0282B'),
+                            'TripleDoubleQuotedFString': QColor('#E0282B'),
+                            'TripleSingleQuotedFString': QColor('#E0282B'),
                         },
                     'Paper': QColor('#F9FFD0'),
                     'CaretLineBackgroundColor': QColor('#EEC1F0'),
@@ -198,7 +298,7 @@ class ThemeManager:
                 }),
             'coffee':
                 Theme({
-                    'CodeColors':
+                    'QsciLexerCPP':
                         {
                             'Identifier': QColor('#5C3D2E'),
                             'PreProcessor': QColor('#4B6587'),
@@ -209,6 +309,26 @@ class ThemeManager:
                             'Operator': QColor('#5C3D2E'),
                             'DoubleQuotedString': QColor('#911F27'),
                             'SingleQuotedString': QColor('#911F27')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#5C3D2E'),
+                            'Comment': QColor('#4F0E0E'),
+                            'CommentBlock': QColor('#4F0E0E'),
+                            'Keyword': QColor('#FF8303'),
+                            'Number': QColor('#38470B'),
+                            'Operator': QColor('#5C3D2E'),
+                            'ClassName': QColor('#4B6587'),
+                            'Decorator': QColor('#4B6587'),
+                            'FunctionMethodName': QColor('#4B6587'),
+                            'DoubleQuotedString': QColor('#911F27'),
+                            'SingleQuotedString': QColor('#911F27'),
+                            'DoubleQuotedFString': QColor('#911F27'),
+                            'SingleQuotedFString': QColor('#911F27'),
+                            'TripleDoubleQuotedString': QColor('#911F27'),
+                            'TripleSingleQuotedString': QColor('#911F27'),
+                            'TripleDoubleQuotedFString': QColor('#911F27'),
+                            'TripleSingleQuotedFString': QColor('#911F27'),
                         },
                     'Paper': QColor('#FFDCC5'),
                     'CaretLineBackgroundColor': QColor('#F2CEB1'),
@@ -229,6 +349,113 @@ class ThemeManager:
                     'TxtFile': QColor('#2065D4'),
                     'MdFile': QColor('#1BBDD4')
                 }),
+            'fire':
+                Theme({
+                    'QsciLexerCPP':
+                        {
+                            'Identifier': QColor('#5C3D2E'),
+                            'PreProcessor': QColor('#4B6587'),
+                            'CommentLine': QColor('#4F0E0E'),
+                            'CommentDoc': QColor('#4F0E0E'),
+                            'Keyword': QColor('#FF8303'),
+                            'Number': QColor('#38470B'),
+                            'Operator': QColor('#5C3D2E'),
+                            'DoubleQuotedString': QColor('#911F27'),
+                            'SingleQuotedString': QColor('#911F27')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#5C3D2E'),
+                            'Comment': QColor('#4F0E0E'),
+                            'CommentBlock': QColor('#4F0E0E'),
+                            'Keyword': QColor('#FF8303'),
+                            'Number': QColor('#38470B'),
+                            'Operator': QColor('#5C3D2E'),
+                            'ClassName': QColor('#4B6587'),
+                            'Decorator': QColor('#4B6587'),
+                            'FunctionMethodName': QColor('#4B6587'),
+                            'DoubleQuotedString': QColor('#911F27'),
+                            'SingleQuotedString': QColor('#911F27'),
+                            'DoubleQuotedFString': QColor('#911F27'),
+                            'SingleQuotedFString': QColor('#911F27'),
+                            'TripleDoubleQuotedString': QColor('#911F27'),
+                            'TripleSingleQuotedString': QColor('#911F27'),
+                            'TripleDoubleQuotedFString': QColor('#911F27'),
+                            'TripleSingleQuotedFString': QColor('#911F27'),
+                        },
+                    'Paper': QColor('#B23925'),
+                    'CaretLineBackgroundColor': QColor('#B24E26'),
+                    'BraceColor': QColor('#FC8817'),
+                    'MainColor': '#B22222',
+                    'BgColor': '#7C0A02',
+                    'BorderColor': '#E25822',
+                    'TextColor': '#F1BC31',
+                    'ColorSelected': '#CF0E04',
+                    'ColorHover': '#DB4016',
+                    'TestPassed': QColor('#2496C9'),
+                    'TestFailed': QColor('#ED8029'),
+                    'TestInProgress': QColor('#B8BD65'),
+                    'TestCrashed': QColor('470707'),
+                    'MainC': QColor('#F7F410'),
+                    'CFile': QColor('#F7A524'),
+                    'HFile': QColor('#E562E6'),
+                    'TxtFile': QColor('#4262E5'),
+                    'MdFile': QColor('#33B7E5')
+                }),
+            'night':
+                Theme({
+                    'QsciLexerCPP':
+                        {
+                            'Identifier': QColor('#DFDFDF'),
+                            'PreProcessor': QColor('#BBB529'),
+                            'Comment': QColor('#74797B'),
+                            'CommentLine': QColor('#74797B'),
+                            'CommentDoc': QColor('#74797B'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#DFDFDF'),
+                            'DoubleQuotedString': QColor('#5F864C'),
+                            'SingleQuotedString': QColor('#5F864C')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#DFDFDF'),
+                            'Comment': QColor('#74797B'),
+                            'CommentBlock': QColor('#74797B'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#DFDFDF'),
+                            'ClassName': QColor('#F5BA56'),
+                            'Decorator': QColor('#DEDB22'),
+                            'FunctionMethodName': QColor('#F5BA56'),
+                            'DoubleQuotedString': QColor('#5F864C'),
+                            'SingleQuotedString': QColor('#5F864C'),
+                            'DoubleQuotedFString': QColor('#5F864C'),
+                            'SingleQuotedFString': QColor('#5F864C'),
+                            'TripleDoubleQuotedString': QColor('#5F864C'),
+                            'TripleSingleQuotedString': QColor('#5F864C'),
+                            'TripleDoubleQuotedFString': QColor('#5F864C'),
+                            'TripleSingleQuotedFString': QColor('#5F864C'),
+                        },
+                    'Paper': QColor('#62077A'),
+                    'CaretLineBackgroundColor': QColor('#78088F'),
+                    'BraceColor': QColor('#F0DA4A'),
+                    'MainColor': '#6A0A8A',
+                    'BgColor': '#2D033B',
+                    'BorderColor': '#C147E9',
+                    'TextColor': '#E8ABF0',
+                    'ColorSelected': '#AA0CB3',
+                    'ColorHover': '#8D0DB8',
+                    'TestPassed': QColor('#62DB26'),
+                    'TestFailed': QColor('#E54E13'),
+                    'TestInProgress': QColor('#DEABDC'),
+                    'TestCrashed': QColor('#5F097D'),
+                    'MainC': QColor('#CE62F0'),
+                    'CFile': QColor('#686DF0'),
+                    'HFile': QColor('#4CF09C'),
+                    'TxtFile': QColor('#D2F056'),
+                    'MdFile': QColor('#F0AC5C')
+                }),
         }
 
         self.theme_name = ''
@@ -243,8 +470,8 @@ class ThemeManager:
     def get(self, item):
         return self.theme.get(item)
 
-    def code_colors(self):
-        return self.theme.code_colors()
+    def code_colors(self, lexer):
+        return self.theme.code_colors(lexer)
 
     def set_theme(self, theme_name):
         self.theme_name = theme_name

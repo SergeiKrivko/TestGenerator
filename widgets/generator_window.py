@@ -1,7 +1,8 @@
 import os
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMainWindow, QDialog, QListWidget, QLineEdit
+from PyQt5.QtCore import Qt, pyqtSignal, QThread
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMainWindow, QDialog, QListWidget, \
+    QLineEdit, QMessageBox
 
 from widgets.menu_bar import MenuBar
 from widgets.syntax_highlighter import PythonCodeEditor
@@ -11,7 +12,9 @@ SCRIPTS_DIR = 'scripts'
 
 
 class GeneratorWindow(QMainWindow):
-    def __init__(self, sm, cm, tm, test_type='pos'):
+    complete = pyqtSignal(list)
+
+    def __init__(self, sm, cm, tm):
         super(GeneratorWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
         self.resize(600, 400)
@@ -19,7 +22,7 @@ class GeneratorWindow(QMainWindow):
         self.sm = sm
         self.cm = cm
         self.tm = tm
-        self.test_type = test_type
+        self.test_type = 'pos'
 
         central_widget = QWidget()
         main_layout = QVBoxLayout()
@@ -40,6 +43,7 @@ class GeneratorWindow(QMainWindow):
 
         self.set_autocompletion()
 
+        self.tests_list = []
         self.dialog = None
 
     def set_theme(self):
@@ -83,21 +87,44 @@ class GeneratorWindow(QMainWindow):
                                           "write_in(test_num, data, mode='w', **kwargs)",
                                           "write_out(test_num, data, mode='w', **kwargs)",
                                           "write_args(test_num, data, mode='w', **kwargs)",
-                                          "test_count"]
+                                          "test_count",
+                                          "set_desc(test_num, desc)",
+                                          "add_test(in_data='', out_data='', args='', desc='-', index=None)"]
 
     def run_code(self):
         file = open('temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
         file.write(self.previous_code())
         file.write(self.code_edit.text())
+        file.write(self.end_code())
         file.close()
-        res = self.cm.cmd_command([self.sm.get_general('python'), 'temp.py'])
-        print(res.stdout)
-        print(res.stderr)
+
+        self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), 'temp.py'])
+        self.looper.complete.connect(self.run_complete)
+        self.looper.run()
+        self.setDisabled(True)
+
+    def run_complete(self, res):
+        self.setDisabled(False)
+        if res.stdout:
+            QMessageBox.information(None, 'STDOUT', res.stdout)
+        if res.stderr:
+            QMessageBox.information(None, 'STDERR', res.stderr)
+        if os.path.isfile('temp.txt'):
+            file = open(f"temp.txt", encoding='utf-8')
+            self.complete.emit(list(map(str.strip, file.readlines())))
+            file.close()
+            os.remove('temp.txt')
         if os.path.isfile('temp.py'):
             os.remove('temp.py')
+        if res.returncode == 0:
+            self.hide()
 
     def previous_code(self):
         return f"""
+__tests_list__ = {str(self.tests_list)}
+test_count = {len(self.tests_list)}
+        
+        
 def open_in_file(test_num, mode='w', **kwargs):
     return open(f"{self.sm.lab_path()}/func_tests/data/{self.test_type}_{{test_num:0>2}}_in.txt", mode, **kwargs)
 
@@ -126,11 +153,36 @@ def write_args(test_num, data, mode='w', **kwargs):
     file = open_args_file(test_num, mode=mode, **kwargs)
     file.write(str(data))
     file.close()
+    
+    
+def set_desc(test_num, desc):
+    while len(__tests_list__) <= test_num:
+        __tests_list__.append('')
+    __tests_list__[test_num] = desc
+    
 
-
-test_count = 0
+def add_test(in_data='', out_data='', args='', desc='-', index=None):
+    if index is None:
+        index = len(__tests_list__)
+    write_in(index, in_data)
+    write_out(index, out_data)
+    if args:
+        write_args(index, args)
+    set_desc(index, desc)
 
 """
+
+    def end_code(self):
+        return f"""
+file = open('temp.txt', 'w', encoding='utf-8')
+for el in __tests_list__:
+    file.write(str(el) + '\\n')
+file.close()
+"""
+
+    def show(self) -> None:
+        self.setDisabled(False)
+        super(GeneratorWindow, self).show()
 
 
 class FileDialog(QDialog):

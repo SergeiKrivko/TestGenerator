@@ -34,6 +34,7 @@ class TestsWidget(QWidget):
 
         self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
         self.generator_window.hide()
+        self.generator_window.complete.connect(print)
 
         self.test_list_widget = TestTableWidget(self.tm)
         self.test_list_widget.setMinimumWidth(400)
@@ -48,7 +49,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
         self.test_list_widget.pos_button_copy.clicked.connect(lambda: self.copy_tests('pos'))
         self.test_list_widget.neg_button_copy.clicked.connect(lambda: self.copy_tests('neg'))
-        self.test_list_widget.pos_button_generate.clicked.connect(lambda: self.generator_window.show())
+        self.test_list_widget.pos_button_generate.clicked.connect(self.open_pos_generator_window)
+        self.test_list_widget.neg_button_generate.clicked.connect(self.open_neg_generator_window)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)
@@ -97,6 +99,18 @@ class TestsWidget(QWidget):
                                       self.sm.get('task', self.options_widget['Номер задания:']))
         self.options_widget.set_value('Номер варианта:',
                                       self.sm.get('var', self.options_widget['Номер варианта:']))
+
+    def open_pos_generator_window(self):
+        self.generator_window.test_type = 'pos'
+        self.generator_window.tests_list = [self.test_list_widget.pos_test_list.item(i).desc for i in
+                                            range(self.test_list_widget.pos_test_list.count())]
+        self.generator_window.show()
+
+    def open_neg_generator_window(self):
+        self.generator_window.test_type = 'neg'
+        self.generator_window.tests_list = [self.test_list_widget.neg_test_list.item(i).desc for i in
+                                            range(self.test_list_widget.neg_test_list.count())]
+        self.generator_window.show()
 
     def add_pos_test(self):
         self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', '', ''))

@@ -18,6 +18,9 @@ class CommandManager:
         else:
             return run(args, capture_output=True, text=True, **kwargs)
 
+    def cmd_command_looper(self, args, **kwargs):
+        return Looper(lambda: self.cmd_command(args, **kwargs))
+
     def update_path(self):
         self.path = self.sm.lab_path()
 
@@ -79,8 +82,8 @@ class CommandManager:
 
     def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
-        self.looper = Looper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing, coverage,
-                             time_limit=self.sm.get('time_limit'))
+        self.looper = TestingLooper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing, coverage,
+                                    time_limit=self.sm.get('time_limit'))
         self.looper.start()
 
     def test_count(self):
@@ -151,6 +154,19 @@ class CommandManager:
 
 
 class Looper(QThread):
+    complete = pyqtSignal(object)
+
+    def __init__(self, func):
+        super(Looper, self).__init__()
+        self.func = func
+        self.res = None
+
+    def run(self) -> None:
+        self.res = self.func()
+        self.complete.emit(self.res)
+
+
+class TestingLooper(QThread):
     test_complete = pyqtSignal(bool, str, int, bool, str)
     test_crash = pyqtSignal(str, int, str)
     test_timeout = pyqtSignal()
@@ -159,7 +175,7 @@ class Looper(QThread):
 
     def __init__(self, compiler, path, pos_comparator, neg_comparator, memory_testing=False, coverage=False,
                  time_limit=10):
-        super(Looper, self).__init__()
+        super(TestingLooper, self).__init__()
         self.time_limit = time_limit
         self.compiler = compiler
         self.memory_testing = memory_testing
@@ -243,4 +259,4 @@ class Looper(QThread):
         for file in os.listdir(self.path):
             if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
                 os.remove(f"{self.path}/{file}")
-        super(Looper, self).terminate()
+        super(TestingLooper, self).terminate()

@@ -77,12 +77,14 @@ class CodeEditor(QsciScintilla):
         self.setStyleSheet(self.tm.scintilla_style_sheet)
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
         self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))
-        for key, item in self.tm.code_colors():
-            self._lexer.setColor(item, QsciLexerCPP.__dict__[key])
+        for key, item in self.tm.code_colors(self._lexer.__class__.__name__):
+            self._lexer.setColor(item, self._lexer.__class__.__dict__[key])
         self._lexer.setPaper(self.tm['Paper'])
         self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceForegroundColor(self.tm['BraceColor'])
+        self.setUnmatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
+        self.setUnmatchedBraceForegroundColor(self.tm['BraceColor'])
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
