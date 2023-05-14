@@ -34,7 +34,7 @@ class TestsWidget(QWidget):
 
         self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
         self.generator_window.hide()
-        self.generator_window.complete.connect(print)
+        self.generator_window.complete.connect(self.write_readme_after_generation)
 
         self.test_list_widget = TestTableWidget(self.tm)
         self.test_list_widget.setMinimumWidth(400)
@@ -103,18 +103,22 @@ class TestsWidget(QWidget):
                                       self.sm.get('var', self.options_widget['Номер варианта:']))
 
     def open_pos_generator_window(self):
+        self.save_tests()
         self.generator_window.test_type = 'pos'
         self.generator_window.tests_list = [self.test_list_widget.pos_test_list.item(i).desc for i in
                                             range(self.test_list_widget.pos_test_list.count())]
         self.generator_window.show()
 
     def open_neg_generator_window(self):
+        self.save_tests()
         self.generator_window.test_type = 'neg'
         self.generator_window.tests_list = [self.test_list_widget.neg_test_list.item(i).desc for i in
                                             range(self.test_list_widget.neg_test_list.count())]
         self.generator_window.show()
 
     def add_pos_test(self):
+        if not os.path.isdir(f"{self.path}/func_tests/data"):
+            os.makedirs(f"{self.path}/func_tests/data")
         temp1 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
         open(temp1, 'x').close()
         self.temp_file_index += 1
@@ -124,6 +128,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', temp1, temp2))
 
     def add_neg_test(self):
+        if not os.path.isdir(f"{self.path}/func_tests/data"):
+            os.makedirs(f"{self.path}/func_tests/data")
         temp1 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
         open(temp1, 'x').close()
         self.temp_file_index += 1
@@ -228,7 +234,7 @@ class TestsWidget(QWidget):
     def set_test_out(self):
         data = self.test_edit_widget.test_out_edit.toPlainText()
         item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
-        if item and data:
+        if item:
             if not item.out_file:
                 item.out_file = item.in_file.replace('in', 'out')
             self.write_file(item.out_file, data)
@@ -292,6 +298,10 @@ class TestsWidget(QWidget):
 
     def open_tests(self):
         self.get_path()
+        self.test_list_widget.pos_test_list.clear()
+        self.test_list_widget.neg_test_list.clear()
+        if not os.path.isdir(f"{self.path}/func_tests/data"):
+            return
         try:
             self.test_list_widget.pos_comparator_widget.setCurrentIndex(self.sm.get('pos_comparators', dict()).get(
                 (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1) + 1)
@@ -383,7 +393,6 @@ class TestsWidget(QWidget):
                     lst.pop(0)
                 else:
                     item.in_file = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-                    print(item.in_file)
                     open(item.in_file, 'x').close()
                     self.temp_file_index += 1
                     item.out_file = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
@@ -508,24 +517,45 @@ class TestsWidget(QWidget):
 
         self.cm.clear_coverage_files()
 
-    def remove_files(self):
-        for file in os.listdir(f"{self.path}/func_tests/data"):
-            if file.startswith('pos_') or file.startswith('neg_') and \
-                    file.endswith('_in.txt') or file.endswith('_out.txt') or file.endswith('_args.txt'):
-                os.remove(f"{self.path}/func_tests/data/{file}")
-
     def remove_temp_files(self):
         for file in os.listdir(f"{self.path}/func_tests/data"):
             if file.startswith('temp'):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
+    def write_readme_after_generation(self, lst, type='pos'):
+        readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+        readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
+                     f"{self.sm.get('task'):0>2}\n\n"
+                     f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
+                     f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
+                     f"## Позитивные тесты:\n")
+        if type == 'pos':
+            for i in range(1, len(lst) + 1):
+                readme.write(f"- {i + 1:0>2} - {lst[i - 1]}\n")
+        else:
+            for i in range(self.test_list_widget.pos_test_list.count()):
+                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.pos_test_list.item(i).desc}\n")
+
+        readme.write("\n## Негативные тесты:\n")
+
+        if type == 'neg':
+            for i in range(1, len(lst) + 1):
+                readme.write(f"- {i + 1:0>2} - {lst[i - 1]}\n")
+        else:
+            for i in range(self.test_list_widget.neg_test_list.count()):
+                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
+
+        readme.close()
+
+        self.open_tests()
+
     def save_tests(self):
         if not os.path.isfile(f"{self.path}/main.c") and not self.test_list_widget.pos_test_list.count() and \
-                not self.test_list_widget.neg_test_list.count():
+                not self.test_list_widget.neg_test_list.count() and \
+                not os.path.isfile(f"{self.path}/func_tests/readme.md"):
             return
         try:
             os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
-            # self.remove_files()
             readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
             readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
                          f"{self.sm.get('task'):0>2}\n\n"
@@ -553,7 +583,6 @@ class TestsWidget(QWidget):
 
             self.remove_temp_files()
         except Exception as ex:
-            raise ex
             QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
 
     def write_file(self, path, data=''):
@@ -572,13 +601,16 @@ class TestsWidget(QWidget):
         self.generator_window.set_theme()
 
     def show(self):
-        self.update_options()
-        self.open_tests()
+        if self.isHidden():
+            self.update_options()
+            self.open_tests()
         super(TestsWidget, self).show()
 
     def hide(self) -> None:
         if not self.isHidden():
             self.save_tests()
+            self.test_list_widget.pos_test_list.clear()
+            self.test_list_widget.neg_test_list.clear()
         super(TestsWidget, self).hide()
 
 

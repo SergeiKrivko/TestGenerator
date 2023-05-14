@@ -209,7 +209,7 @@ class CodeWidget(QWidget):
             border-top-left-radius: 5px;
             border-top-right-radius: 5px;
             border: 1px solid {self.tm['BorderColor']};
-            win-width: 20ex;
+            width: 16ex;
             padding: 4px;
             }}
         QTabBar::tab:hover {{

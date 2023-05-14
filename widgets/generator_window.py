@@ -12,7 +12,7 @@ SCRIPTS_DIR = 'scripts'
 
 
 class GeneratorWindow(QMainWindow):
-    complete = pyqtSignal(list)
+    complete = pyqtSignal(list, str)
 
     def __init__(self, sm, cm, tm):
         super(GeneratorWindow, self).__init__()
@@ -92,6 +92,7 @@ class GeneratorWindow(QMainWindow):
                                           "add_test(in_data='', out_data='', args='', desc='-', index=None)"]
 
     def run_code(self):
+        os.makedirs(f"{self.sm.lab_path()}/func_tests/data", exist_ok=True)
         file = open('temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
         file.write(self.previous_code())
         file.write(self.code_edit.text())
@@ -111,7 +112,7 @@ class GeneratorWindow(QMainWindow):
             QMessageBox.information(None, 'STDERR', res.stderr)
         if os.path.isfile('temp.txt'):
             file = open(f"temp.txt", encoding='utf-8')
-            self.complete.emit(list(map(str.strip, file.readlines())))
+            self.complete.emit(list(map(str.strip, file.readlines())), self.test_type)
             file.close()
             os.remove('temp.txt')
         if os.path.isfile('temp.py'):
@@ -156,14 +157,14 @@ def write_args(test_num, data, mode='w', **kwargs):
     
     
 def set_desc(test_num, desc):
-    while len(__tests_list__) <= test_num:
+    while len(__tests_list__) < test_num:
         __tests_list__.append('')
-    __tests_list__[test_num] = desc
+    __tests_list__[test_num - 1] = desc
     
 
 def add_test(in_data='', out_data='', args='', desc='-', index=None):
     if index is None:
-        index = len(__tests_list__)
+        index = len(__tests_list__) + 1
     write_in(index, in_data)
     write_out(index, out_data)
     if args:
