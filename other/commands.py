@@ -1,6 +1,8 @@
 import os
 from subprocess import run, TimeoutExpired
 import subprocess
+from time import sleep
+
 from PyQt5.QtCore import QThread, pyqtSignal
 
 
@@ -256,6 +258,7 @@ class TestingLooper(QThread):
         self.end_testing.emit()
 
     def terminate(self) -> None:
+        sleep(0.1)
         for file in os.listdir(self.path):
             if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
                 os.remove(f"{self.path}/{file}")

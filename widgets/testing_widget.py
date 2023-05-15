@@ -185,14 +185,6 @@ class TestingWidget(QWidget):
             self.get_path(True)
         self.tests_list.clear()
         self.current_task = self.sm['lab'], self.sm['task'], self.sm['var']
-        self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
-                        self.sm.get('coverage', False))
-
-        self.cm.looper.test_complete.connect(self.add_list_item)
-        self.cm.looper.test_crash.connect(self.add_crash_list_item)
-        self.cm.looper.test_timeout.connect(self.add_timeout_list_item)
-        self.cm.looper.end_testing.connect(self.end_testing)
-        self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
 
         lst = []
 
@@ -213,6 +205,15 @@ class TestingWidget(QWidget):
                 self.sm.get('memory_testing', False)))
             lst.append(f"neg{i}")
             i += 1
+
+        self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
+                        self.sm.get('coverage', False))
+
+        self.cm.looper.test_complete.connect(self.add_list_item)
+        self.cm.looper.test_crash.connect(self.add_crash_list_item)
+        self.cm.looper.test_timeout.connect(self.add_timeout_list_item)
+        self.cm.looper.end_testing.connect(self.end_testing)
+        self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
 
         self.test_count = 0
         self.testing_start.emit(lst)

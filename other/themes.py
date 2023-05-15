@@ -456,6 +456,60 @@ class ThemeManager:
                     'TxtFile': QColor('#D2F056'),
                     'MdFile': QColor('#F0AC5C')
                 }),
+            'theme1':
+                Theme({
+                    'QsciLexerCPP':
+                        {
+                            'Identifier': QColor('#274D66'),
+                            'PreProcessor': QColor('#8A3199'),
+                            'Comment': QColor('#1F2A40'),
+                            'CommentLine': QColor('#1F2A40'),
+                            'CommentDoc': QColor('#1F2A40'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#304070'),
+                            'DoubleQuotedString': QColor('#DE435C'),
+                            'SingleQuotedString': QColor('#5F864C')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#274D66'),
+                            'Comment': QColor('#1F2A40'),
+                            'CommentBlock': QColor('#1F2A40'),
+                            'Keyword': QColor('#CC7832'),
+                            'Number': QColor('#5191A6'),
+                            'Operator': QColor('#304070'),
+                            'ClassName': QColor('#E673D8'),
+                            'Decorator': QColor('#E673D8'),
+                            'FunctionMethodName': QColor('#E673D8'),
+                            'DoubleQuotedString': QColor('#DE435C'),
+                            'SingleQuotedString': QColor('#DE435C'),
+                            'DoubleQuotedFString': QColor('#DE435C'),
+                            'SingleQuotedFString': QColor('#DE435C'),
+                            'TripleDoubleQuotedString': QColor('#DE435C'),
+                            'TripleSingleQuotedString': QColor('#DE435C'),
+                            'TripleDoubleQuotedFString': QColor('#DE435C'),
+                            'TripleSingleQuotedFString': QColor('#DE435C'),
+                        },
+                    'Paper': QColor('#E7F6F2'),
+                    'CaretLineBackgroundColor': QColor('#C1EDF5'),
+                    'BraceColor': QColor('#EB6BD3'),
+                    'MainColor': '#FFDEB4',
+                    'BgColor': '#FDF7C3',
+                    'BorderColor': '#FFB4B4',
+                    'TextColor': '#7071F2',
+                    'ColorSelected': '#AFB2FF',
+                    'ColorHover': '#D4D2FF',
+                    'TestPassed': QColor('#449C38'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrashed': QColor('#A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'MdFile': QColor('#1BBDD4')
+                }),
         }
 
         self.theme_name = ''
@@ -543,15 +597,23 @@ class ThemeManager:
         }}
         QListWidget QScrollBar::handle::vertical {{
             background-color: {self['BorderColor']};
+            margin: 2px 2px 2px 6px;
+            border-radius: 2px;
+            min-height: 20px;
+        }}
+        QListWidget QScrollBar::handle::vertical:hover {{
             margin: 2px;
             border-radius: 4px;
-            min-height: 20px;
         }}
         QListWidget QScrollBar::handle::horizontal {{
             background-color: {self['BorderColor']};
+            margin: 6px 2px 2px 2px;
+            border-radius: 2px;
+            min-width: 20px;
+        }}
+        QListWidget QScrollBar::handle::horizontal:hover {{
             margin: 2px;
             border-radius: 4px;
-            min-width: 20px;
         }}
         QListWidget QScrollBar::sub-page, QScrollBar::add-page {{
             background: none;
@@ -581,17 +643,25 @@ class ThemeManager:
             height: 12px;
             margin: 0px;
         }}
-        QTextEdit QScrollBar::handle::vertical {{
-            background-color: {self['BorderColor']};
-            margin: 2px;
-            border-radius: 4px;
-            min-height: 20px;
-        }}
         QTextEdit QScrollBar::handle::horizontal {{
             background-color: {self['BorderColor']};
+            margin: 6px 2px 2px 2px;
+            border-radius: 2px;
+            min-width: 20px;
+        }}
+        QTextEdit QScrollBar::handle::horizontal:hover {{
             margin: 2px;
             border-radius: 4px;
-            min-width: 20px;
+        }}
+        QTextEdit QScrollBar::handle::vertical {{
+            background-color: {self['BorderColor']};
+            margin: 2px 2px 2px 6px;
+            border-radius: 2px;
+            min-height: 20px;
+        }}
+        QTextEdit QScrollBar::handle::vertical:hover {{
+            margin: 2px;
+            border-radius: 4px;
         }}
         QTextEdit QScrollBar::sub-page, QScrollBar::add-page {{
             background: none;
