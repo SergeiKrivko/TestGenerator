@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QMessageBox
@@ -174,8 +174,7 @@ class TestingWidget(QWidget):
     def testing(self):
         self.options_widget.setDisabled(True)
         self.ui_disable_func(True)
-        self.button.setText("Прервать тестирование")
-        # self.button.setDisabled(True)
+        self.button.setText("Прервать")
 
         self.get_path(True)
         self.old_dir = os.getcwd()

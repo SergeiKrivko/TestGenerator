@@ -57,10 +57,10 @@ class TestsWidget(QWidget):
 
         self.test_edit_widget = TestEditWidget(self.tm)
         self.test_edit_widget.setMinimumHeight(300)
-        self.test_edit_widget.test_name_edit.textChanged.connect(self.set_test_name)
+        self.test_edit_widget.test_name_edit.textEdited.connect(self.set_test_name)
         self.test_edit_widget.test_in_edit.textChanged.connect(self.set_test_in)
         self.test_edit_widget.test_out_edit.textChanged.connect(self.set_test_out)
-        self.test_edit_widget.cmd_args_edit.textChanged.connect(self.set_test_args)
+        self.test_edit_widget.cmd_args_edit.textEdited.connect(self.set_test_args)
         self.test_edit_widget.button_generate.clicked.connect(self.button_generate_test)
         layout.addWidget(self.test_edit_widget)
 
@@ -73,6 +73,8 @@ class TestsWidget(QWidget):
         self.file_edit_time = dict()
         self.files_links = dict()
         self.temp_file_index = 0
+        self.data_changed = False
+        self.readme_changed = False
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -117,6 +119,8 @@ class TestsWidget(QWidget):
         self.generator_window.show()
 
     def add_pos_test(self):
+        self.readme_changed = True
+        self.data_changed = True
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             os.makedirs(f"{self.path}/func_tests/data")
         temp1 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
@@ -128,6 +132,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', temp1, temp2))
 
     def add_neg_test(self):
+        self.readme_changed = True
+        self.data_changed = True
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             os.makedirs(f"{self.path}/func_tests/data")
         temp1 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
@@ -139,6 +145,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', temp1, temp2))
 
     def delete_pos_test(self):
+        self.readme_changed = True
+        self.data_changed = True
         if self.test_list_widget.pos_test_list.count() == 0:
             return
         ind = self.test_list_widget.pos_test_list.currentRow()
@@ -158,6 +166,8 @@ class TestsWidget(QWidget):
                 ind if ind < self.test_list_widget.pos_test_list.count() else ind - 1)
 
     def delete_neg_test(self):
+        self.readme_changed = True
+        self.data_changed = True
         if self.test_list_widget.neg_test_list.count() == 0:
             return
         ind = self.test_list_widget.neg_test_list.currentRow()
@@ -208,6 +218,7 @@ class TestsWidget(QWidget):
             pass
 
     def set_test_name(self, name):
+        self.readme_changed = True
         if self.test_list_widget.pos_test_list.currentItem() is not None:
             self.test_list_widget.pos_test_list.currentItem().set_desc(name)
         elif self.test_list_widget.neg_test_list.currentItem() is not None:
@@ -240,6 +251,8 @@ class TestsWidget(QWidget):
             self.write_file(item.out_file, data)
 
     def move_pos_test_up(self):
+        self.readme_changed = True
+        self.data_changed = True
         index = self.test_list_widget.pos_test_list.currentRow()
         if index <= 0:
             return
@@ -248,6 +261,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_test_list.setCurrentRow(index - 1)
 
     def move_pos_test_down(self):
+        self.readme_changed = True
+        self.data_changed = True
         index = self.test_list_widget.pos_test_list.currentRow()
         if index >= self.test_list_widget.pos_test_list.count() - 1:
             return
@@ -256,6 +271,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_test_list.setCurrentRow(index + 1)
 
     def move_neg_test_up(self):
+        self.readme_changed = True
+        self.data_changed = True
         index = self.test_list_widget.neg_test_list.currentRow()
         if index <= 0:
             return
@@ -264,6 +281,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_test_list.setCurrentRow(index - 1)
 
     def move_neg_test_down(self):
+        self.readme_changed = True
+        self.data_changed = True
         index = self.test_list_widget.neg_test_list.currentRow()
         if index >= self.test_list_widget.neg_test_list.count() - 1:
             return
@@ -272,6 +291,7 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_test_list.setCurrentRow(index + 1)
 
     def button_generate_test(self):
+        self.data_changed = True
         if self.test_list_widget.pos_test_list.currentItem() is not None:
             index = self.test_list_widget.pos_test_list.currentRow()
             self.test_list_widget.pos_test_list.item(index).out_data = ''
@@ -315,7 +335,9 @@ class TestsWidget(QWidget):
         self.temp_file_index = 0
 
         self.readme_parser()
+        self.readme_changed = False
         self.load_data_files()
+        self.data_changed = False
         self.test_edit_widget.set_disabled()
         self.file_edit_time.clear()
 
@@ -335,14 +357,16 @@ class TestsWidget(QWidget):
             if "Позитивные тесты" in lines[i]:
                 for j in range(i + 1, len(lines)):
                     if lines[j].startswith('- ') and ' - ' in lines[j]:
-                        self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem(lines[j][7:].strip(), '', ''))
+                        self.test_list_widget.pos_test_list.addItem(
+                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', ''))
                     else:
                         break
 
             elif "Негативные тесты" in lines[i]:
                 for j in range(i + 1, len(lines)):
                     if lines[j].startswith('- ') and ' - ' in lines[j]:
-                        self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem(lines[j][7:].strip(), '', ''))
+                        self.test_list_widget.neg_test_list.addItem(
+                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', ''))
                     else:
                         break
 
@@ -492,6 +516,7 @@ class TestsWidget(QWidget):
             os.rename(item.args_file, args_name)
 
     def generate_test(self, index, type='pos'):
+        self.data_changed = True
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
         tests = self.test_list_widget.pos_test_list if type == 'pos' else self.test_list_widget.neg_test_list
@@ -523,6 +548,8 @@ class TestsWidget(QWidget):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
     def write_readme_after_generation(self, lst, type='pos'):
+        self.readme_changed = True
+        self.data_changed = True
         readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
         readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
                      f"{self.sm.get('task'):0>2}\n\n"
@@ -555,33 +582,41 @@ class TestsWidget(QWidget):
                 not os.path.isfile(f"{self.path}/func_tests/readme.md"):
             return
         try:
-            os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
-            readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
-            readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
-                         f"{self.sm.get('task'):0>2}\n\n"
-                         f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
-                         f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
-                         f"## Позитивные тесты:\n")
-            for i in range(self.test_list_widget.pos_test_list.count()):
-                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.pos_test_list.item(i).desc}\n")
-                self.save_a_test(i, 'pos')
+            print(self.readme_changed, self.data_changed)
+            if self.readme_changed:
+                os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
+                readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+                readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
+                             f"{self.sm.get('task'):0>2}\n\n"
+                             f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
+                             f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
+                             f"## Позитивные тесты:\n")
+                for i in range(self.test_list_widget.pos_test_list.count()):
+                    readme.write(f"- {i + 1:0>2} - {self.test_list_widget.pos_test_list.item(i).desc}\n")
+                    self.save_a_test(i, 'pos')
 
-            readme.write("\n## Негативные тесты:\n")
+                readme.write("\n## Негативные тесты:\n")
 
-            for i in range(self.test_list_widget.neg_test_list.count()):
-                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
-                self.save_a_test(i, 'neg')
+                for i in range(self.test_list_widget.neg_test_list.count()):
+                    readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
+                    self.save_a_test(i, 'neg')
 
-            dct = self.sm.get('pos_comparators', dict())
-            dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
-                self.test_list_widget.pos_comparator_widget.currentIndex() - 1
-            self.sm.set('pos_comparators', dct)
-            dct = self.sm.get('neg_comparators', dict())
-            dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
-                self.test_list_widget.neg_comparator_widget.currentIndex() - 1
-            self.sm.set('neg_comparators', dct)
+                dct = self.sm.get('pos_comparators', dict())
+                dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
+                    self.test_list_widget.pos_comparator_widget.currentIndex() - 1
+                self.sm.set('pos_comparators', dct)
+                dct = self.sm.get('neg_comparators', dict())
+                dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
+                    self.test_list_widget.neg_comparator_widget.currentIndex() - 1
+                self.sm.set('neg_comparators', dct)
 
-            self.remove_temp_files()
+            if self.data_changed:
+                for i in range(self.test_list_widget.pos_test_list.count()):
+                    self.save_a_test(i, 'pos')
+                for i in range(self.test_list_widget.neg_test_list.count()):
+                    self.save_a_test(i, 'neg')
+                self.remove_temp_files()
+
         except Exception as ex:
             QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
 

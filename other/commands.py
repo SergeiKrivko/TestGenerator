@@ -219,6 +219,7 @@ class TestingLooper(QThread):
 
             self.test_complete.emit(not res.returncode and comparator_res,
                                     res.stdout, res.returncode, not valgrind_out, valgrind_out)
+            sleep(0.1)
             i += 1
 
         i = 1
@@ -248,6 +249,7 @@ class TestingLooper(QThread):
 
             self.test_complete.emit(res.returncode and comparator_res,
                                     res.stdout, res.returncode, not valgrind_out, valgrind_out)
+            sleep(0.1)
             i += 1
 
         if os.path.isfile("temp_null.txt"):

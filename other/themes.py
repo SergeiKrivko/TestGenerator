@@ -551,9 +551,13 @@ class ThemeManager:
             }}
             QsciScintilla QScrollBar::handle::vertical {{
                 background-color: {self['BorderColor']};
+                margin: 2px 2px 2px 6px;
+                border-radius: 2px;
+                min-height: 20px;
+            }}
+            QsciScintilla QScrollBar::handle::vertical:hover {{
                 margin: 2px;
                 border-radius: 4px;
-                min-height: 20px;
             }}
             QsciScintilla QScrollBar::sub-page, QScrollBar::add-page {{
                 background: none;
