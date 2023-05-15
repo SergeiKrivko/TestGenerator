@@ -312,8 +312,11 @@ def comparator1(str1, str2, eps=0):
         except Exception:
             pass
 
+    if len(lst1) != len(lst2):
+        return False
+
     for a, b in zip(lst1, lst2):
-        if abs(a - b) > eps:
+        if abs(a - b) > float(eps):
             return False
     return True
 

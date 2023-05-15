@@ -89,7 +89,8 @@ class GeneratorWindow(QMainWindow):
                                           "write_args(test_num, data, mode='w', **kwargs)",
                                           "test_count",
                                           "set_desc(test_num, desc)",
-                                          "add_test(in_data='', out_data='', args='', desc='-', index=None)"]
+                                          "add_test(in_data='', out_data='', args='', desc='-', index=None)",
+                                          "path"]
 
     def run_code(self):
         os.makedirs(f"{self.sm.lab_path()}/func_tests/data", exist_ok=True)
@@ -125,6 +126,7 @@ class GeneratorWindow(QMainWindow):
         return f"""
 __tests_list__ = {str(self.tests_list)}
 test_count = {len(self.tests_list)}
+path = "{self.sm.lab_path()}"
         
         
 def open_in_file(test_num, mode='w', **kwargs):
