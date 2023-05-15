@@ -99,13 +99,14 @@ class GeneratorWindow(QMainWindow):
         file.write(self.end_code())
         file.close()
 
+        self.menu_bar.setDisabled(True)
+
         self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), 'temp.py'])
         self.looper.complete.connect(self.run_complete)
         self.looper.run()
-        self.setDisabled(True)
 
     def run_complete(self, res):
-        self.setDisabled(False)
+        self.menu_bar.setDisabled(False)
         if res.stdout:
             QMessageBox.information(None, 'STDOUT', res.stdout)
         if res.stderr:
