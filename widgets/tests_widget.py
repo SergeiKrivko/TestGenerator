@@ -519,11 +519,10 @@ class TestsWidget(QWidget):
         self.data_changed = True
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
-        tests = self.test_list_widget.pos_test_list if type == 'pos' else self.test_list_widget.neg_test_list
-        file_in = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt", "w",
-                       newline=self.sm.get('line_sep'))
-        file_in.write(tests.item(index).in_data)
-        file_in.close()
+        item = self.test_list_widget.pos_test_list.currentItem() if type == 'pos' else \
+            self.test_list_widget.neg_test_list.currentItem()
+        if not item:
+            return
 
         if not self.compare_edit_time():
             self.update_edit_time()
@@ -531,14 +530,11 @@ class TestsWidget(QWidget):
                 return
 
         res = self.cm.cmd_command(
-            f"{self.path}/app.exe {read_file(f'{self.path}/func_tests/data/{type}_{index + 1:0>2}_args.txt', default='')}",
-            shell=True, input=read_file(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt"))
-        file = open(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt", 'w', encoding='utf-8',
-                    newline=self.sm.get('line_sep'))
-        file.write(res.stdout)
-        file.close()
-        if self.sm.get('clear_words', False):
-            clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
+            f"{self.path}/app.exe {read_file(item.args_file, '') if 'args_file' in item.__dict__ else ''}",
+            shell=True, input=read_file(item.in_file))
+        self.write_file(item.out_file, res.stdout)
+        # if self.sm.get('clear_words', False):
+        #     clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
         self.cm.clear_coverage_files()
 
@@ -582,7 +578,6 @@ class TestsWidget(QWidget):
                 not os.path.isfile(f"{self.path}/func_tests/readme.md"):
             return
         try:
-            print(self.readme_changed, self.data_changed)
             if self.readme_changed:
                 os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
                 readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
