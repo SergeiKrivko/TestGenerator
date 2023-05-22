@@ -600,15 +600,6 @@ class TestsWidget(QWidget):
                     readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
                     self.save_a_test(i, 'neg')
 
-                dct = self.sm.get('pos_comparators', dict())
-                dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
-                    self.test_list_widget.pos_comparator_widget.currentIndex() - 1
-                self.sm.set('pos_comparators', dct)
-                dct = self.sm.get('neg_comparators', dict())
-                dct[(self.sm.get('lab'), self.sm.get('task'), self.sm.get('var'))] = \
-                    self.test_list_widget.neg_comparator_widget.currentIndex() - 1
-                self.sm.set('neg_comparators', dct)
-
             if self.data_changed:
                 for i in range(self.test_list_widget.pos_test_list.count()):
                     self.save_a_test(i, 'pos')

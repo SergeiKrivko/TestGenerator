@@ -1,9 +1,9 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton, QMessageBox
+    QPushButton, QMessageBox, QProgressBar
 from widgets.options_window import OptionsWidget
 
 
@@ -32,18 +32,46 @@ class TestingWidget(QWidget):
         self.options_widget.clicked.connect(self.option_changed)
         layout.addWidget(self.options_widget)
 
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setAlignment(Qt.AlignLeft)
+
         self.button = QPushButton('Тестировать')
-        layout.addWidget(self.button)
+        top_layout.addWidget(self.button)
         self.button.clicked.connect(self.button_pressed)
         self.button.setFixedSize(180, 26)
+
+        self.progress_bar = QProgressBar()
+        self.progress_bar.hide()
+        self.progress_bar.setFixedWidth(200)
+        top_layout.addWidget(self.progress_bar)
+
+        self.coverage_bar = QLabel()
+        self.coverage_bar.setAlignment(Qt.AlignCenter)
+        self.coverage_bar.hide()
+        self.coverage_bar.setFixedWidth(200)
+        top_layout.addWidget(self.coverage_bar)
+
+        self.pos_result_bar = QLabel()
+        self.pos_result_bar.hide()
+        self.pos_result_bar.setFixedWidth(125)
+        self.pos_result_bar.setAlignment(Qt.AlignCenter)
+        top_layout.addWidget(self.pos_result_bar)
+
+        self.neg_result_bar = QLabel()
+        self.neg_result_bar.hide()
+        self.neg_result_bar.setFixedWidth(125)
+        self.neg_result_bar.setAlignment(Qt.AlignCenter)
+        top_layout.addWidget(self.neg_result_bar)
+
+        layout.addLayout(top_layout)
 
         layout2 = QHBoxLayout()
         layout.addLayout(layout2)
 
         l = QVBoxLayout()
         layout2.addLayout(l)
-        self.coverage_label = QLabel()
-        l.addWidget(self.coverage_label)
+        l.addWidget(QLabel("Список тестов"))
         self.tests_list = QListWidget()
         self.tests_list.itemSelectionChanged.connect(self.open_test_info)
         l.addWidget(self.tests_list)
@@ -120,6 +148,11 @@ class TestingWidget(QWidget):
         self.get_path()
         task = self.sm['lab'], self.sm['task'], self.sm['var']
         if task != self.current_task:
+            self.coverage_bar.hide()
+            self.progress_bar.hide()
+            self.pos_result_bar.hide()
+            self.neg_result_bar.hide()
+
             self.in_data.setText("")
             self.out_data.setText("")
             self.prog_out.setText("")
@@ -141,23 +174,40 @@ class TestingWidget(QWidget):
                                          self.options_widget['Номер варианта:'])
 
     def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
+        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], res)
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  {'PASSED' if res else 'FAILED'}",
                            self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
         self.test_count += 1
         self.open_test_info()
 
     def add_crash_list_item(self, prog_out, exit_code, prog_errors):
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.tests_list.item(self.test_count).set_crashed(prog_out, exit_code, prog_errors)
+        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], False)
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  CRASHED", self.tm['TestCrashed'])
         self.test_count += 1
         self.open_test_info()
 
     def add_timeout_list_item(self):
         self.tests_list.item(self.test_count).set_timeout()
+        self.progress_bar.setValue(self.progress_bar.value() + 1)
+        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], False)
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  TIMEOUT", self.tm['TestFailed'])
         self.test_count += 1
         self.open_test_info()
+        
+    def modify_testing_res(self, test_type='pos', res=True):
+        widget = self.pos_result_bar if test_type == 'pos' else self.neg_result_bar
+        if not res:
+            widget.setStyleSheet(f"color: {self.tm['TestFailed'].name()};")
+        else:
+            lst = widget.text().split()
+            lst2 = lst[1].split('/')
+            widget.setText(f"{lst[0]} {int(lst2[0]) + 1}/{lst2[1]}")
+            if int(lst2[0]) + 1 == int(lst2[1]):
+                widget.setStyleSheet(f"color: {self.tm['TestPassed'].name()};")
 
     def button_pressed(self, *args):
         if self.button.text() == "Тестировать":
@@ -175,6 +225,11 @@ class TestingWidget(QWidget):
         self.options_widget.setDisabled(True)
         self.ui_disable_func(True)
         self.button.setText("Прервать")
+
+        self.coverage_bar.hide()
+        self.progress_bar.show()
+        self.pos_result_bar.show()
+        self.neg_result_bar.show()
 
         self.get_path(True)
         self.old_dir = os.getcwd()
@@ -196,6 +251,9 @@ class TestingWidget(QWidget):
             lst.append(f"pos{i}")
             i += 1
 
+        self.pos_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
+        self.pos_result_bar.setText(f"POS: 0/{i - 1}")
+
         i = 1
         while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
             self.tests_list.addItem(TestingListWidgetItem(
@@ -204,6 +262,13 @@ class TestingWidget(QWidget):
                 self.sm.get('memory_testing', False)))
             lst.append(f"neg{i}")
             i += 1
+
+        self.neg_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
+        self.neg_result_bar.setText(f"NEG: 0/{i - 1}")
+
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(len(lst))
+        self.progress_bar.setValue(0)
 
         self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
                         self.sm.get('coverage', False))
@@ -223,12 +288,15 @@ class TestingWidget(QWidget):
         self.button.setText("Тестировать")
         self.button.setDisabled(False)
 
+        self.progress_bar.hide()
+        self.coverage_bar.show()
+
         if os.path.isfile(f"{self.path}/temp.txt"):
             os.remove(f"{self.path}/temp.txt")
         self.testing_end.emit()
 
         if self.sm.get('coverage', False):
-            self.coverage_label.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
+            self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         os.chdir(self.old_dir)
 
@@ -237,6 +305,12 @@ class TestingWidget(QWidget):
         self.ui_disable_func(False)
         self.button.setText("Тестировать")
         self.button.setDisabled(False)
+
+        self.progress_bar.hide()
+        self.coverage_bar.show()
+
+        if self.sm.get('coverage', False):
+            self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         if os.path.isfile(f"{self.path}/temp.txt"):
             os.remove(f"{self.path}/temp.txt")
