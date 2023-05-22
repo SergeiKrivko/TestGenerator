@@ -97,16 +97,20 @@ class CodeAutocompletionManager:
             res.append(el)
         return res, 0
 
-    def _parse_include(self, line):
+    def _parse_include(self, line, custom_lib=None):
         if line.startswith('#include'):
             for lib in self._std_libs.values():
                 if line == f"#include <{lib.name}>":
                     lib.set_status(_Lib.ON)
+                    if custom_lib:
+                        custom_lib.std_libs.append(lib)
                     return True
             else:
                 if line.startswith("#include \"") and line.endswith("\""):
                     f = line.split()[1].strip('\"')
                     self._add_custom_lib(f)
+                    if custom_lib:
+                        custom_lib.custom_libs.append(self._custom_libs[f])
                     return True
         return False
 
@@ -236,7 +240,7 @@ class CodeAutocompletionManager:
         try:
             for line in string.split('\n'):
                 line = line.strip()
-                if not self._parse_include(line):
+                if not self._parse_include(line, lib):
                     if current_struct:
                         if line.startswith('}'):
                             current_struct = ""
