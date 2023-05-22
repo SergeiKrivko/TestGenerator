@@ -123,26 +123,20 @@ class TestsWidget(QWidget):
         self.data_changed = True
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             os.makedirs(f"{self.path}/func_tests/data")
-        temp1 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-        open(temp1, 'x').close()
-        self.temp_file_index += 1
-        temp2 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-        open(temp2, 'x').close()
-        self.temp_file_index += 1
-        self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', temp1, temp2))
+        item = CustomListWidgetItem('-')
+        item.in_file = self.create_temp_file(item)
+        item.out_file = self.create_temp_file(item)
+        self.test_list_widget.pos_test_list.addItem(item)
 
     def add_neg_test(self):
         self.readme_changed = True
         self.data_changed = True
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             os.makedirs(f"{self.path}/func_tests/data")
-        temp1 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-        open(temp1, 'x').close()
-        self.temp_file_index += 1
-        temp2 = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-        open(temp2, 'x').close()
-        self.temp_file_index += 1
-        self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', temp1, temp2))
+        item = CustomListWidgetItem('-')
+        item.in_file = self.create_temp_file(item)
+        item.out_file = self.create_temp_file(item)
+        self.test_list_widget.neg_test_list.addItem(item)
 
     def delete_pos_test(self):
         self.readme_changed = True
@@ -189,11 +183,23 @@ class TestsWidget(QWidget):
     def copy_tests(self, test_type='pos'):
         dlg = TestCopyWindow(self.sm)
         if dlg.exec():
-            for desc, in_data, out_data in dlg.copy_tests():
+            for desc, in_data, out_data, args_data in dlg.copy_tests():
+                item = CustomListWidgetItem(desc)
+
+                item.in_file = self.create_temp_file(item)
+                self.write_file(item.in_file, in_data)
+
+                item.out_file = self.create_temp_file(item)
+                self.write_file(item.out_file, out_data)
+
+                if args_data:
+                    item.args_file = self.create_temp_file(item)
+                    self.write_file(item.args_file, args_data)
+
                 if test_type == 'pos':
-                    self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem(desc, in_data, out_data))
+                    self.test_list_widget.pos_test_list.addItem(item)
                 else:
-                    self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem(desc, in_data, out_data))
+                    self.test_list_widget.neg_test_list.addItem(item)
 
     def select_pos_test(self):
         try:
@@ -293,21 +299,9 @@ class TestsWidget(QWidget):
     def button_generate_test(self):
         self.data_changed = True
         if self.test_list_widget.pos_test_list.currentItem() is not None:
-            index = self.test_list_widget.pos_test_list.currentRow()
-            self.test_list_widget.pos_test_list.item(index).out_data = ''
-            self.generate_test(index, 'pos')
-            file = open(f"{self.path}/func_tests/data/pos_{index + 1:0>2}_out.txt")
-            self.test_list_widget.pos_test_list.item(index).out_data = file.read()
-            file.close()
-            self.test_edit_widget.test_out_edit.setText(self.test_list_widget.pos_test_list.item(index).out_data)
+            self.generate_test('pos')
         elif self.test_list_widget.neg_test_list.currentItem() is not None:
-            index = self.test_list_widget.neg_test_list.currentRow()
-            self.test_list_widget.neg_test_list.item(index).out_data = ''
-            self.generate_test(index, 'neg')
-            file = open(f"{self.path}/func_tests/data/neg_{index + 1:0>2}_out.txt")
-            self.test_list_widget.neg_test_list.item(index).out_data = file.read()
-            file.close()
-            self.test_edit_widget.test_out_edit.setText(self.test_list_widget.neg_test_list.item(index).out_data)
+            self.generate_test('neg')
 
     def get_path(self, from_settings=False):
         if from_settings:
@@ -401,7 +395,7 @@ class TestsWidget(QWidget):
 
         lst.sort()
         for _ in range(count - self.test_list_widget.pos_test_list.count()):
-            self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', '', ''))
+            self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-'))
         for i in range(self.test_list_widget.pos_test_list.count()):
             item = self.test_list_widget.pos_test_list.item(i)
             if not item.in_file:
@@ -416,12 +410,8 @@ class TestsWidget(QWidget):
                         self.files_links[f] = item
                     lst.pop(0)
                 else:
-                    item.in_file = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-                    open(item.in_file, 'x').close()
-                    self.temp_file_index += 1
-                    item.out_file = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-                    open(item.out_file, 'x').close()
-                    self.temp_file_index += 1
+                    item.in_file = self.create_temp_file(item)
+                    item.out_file = self.create_temp_file(item)
 
         lst, count = [], 0
 
@@ -444,7 +434,7 @@ class TestsWidget(QWidget):
 
         lst.sort()
         for _ in range(count - self.test_list_widget.neg_test_list.count()):
-            self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', '', ''))
+            self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-'))
         for i in range(self.test_list_widget.neg_test_list.count()):
             item = self.test_list_widget.neg_test_list.item(i)
             if not item.in_file:
@@ -459,12 +449,8 @@ class TestsWidget(QWidget):
                         self.files_links[f] = item
                     lst.pop(0)
                 else:
-                    item.in_file = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-                    open(item.in_file, 'x').close()
-                    self.temp_file_index += 1
-                    item.out_file = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-                    open(item.out_file, 'x').close()
-                    self.temp_file_index += 1
+                    item.in_file = self.create_temp_file(item)
+                    item.out_file = self.create_temp_file(item)
 
     def compare_edit_time(self):
         for file in os.listdir(self.path):
@@ -492,30 +478,27 @@ class TestsWidget(QWidget):
             if in_name in self.files_links:
                 other_item = self.files_links[in_name]
                 if os.path.isfile(other_item.in_file):
-                    os.rename(other_item.in_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                    other_item.in_file = f
+                    self.rename_in_file(other_item, f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
                     self.temp_file_index += 1
-            os.rename(item.in_file, in_name)
+            self.rename_in_file(item, in_name)
 
         if item.out_file != out_name:
             if out_name in self.files_links:
                 other_item = self.files_links[out_name]
                 if os.path.isfile(other_item.out_file):
-                    os.rename(other_item.out_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                    other_item.out_file = f
+                    self.rename_out_file(other_item, f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
                     self.temp_file_index += 1
-            os.rename(item.out_file, out_name)
+            self.rename_out_file(item, out_name)
 
         if item.args_file and item.args_file != args_name:
             if args_name in self.files_links:
                 other_item = self.files_links[args_name]
                 if os.path.isfile(other_item.args_file):
-                    os.rename(other_item.args_file, f := f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                    other_item.args_file = f
+                    self.rename_args_file(other_item, f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
                     self.temp_file_index += 1
-            os.rename(item.args_file, args_name)
+            self.rename_args_file(item, args_name)
 
-    def generate_test(self, index, type='pos'):
+    def generate_test(self, type='pos'):
         self.data_changed = True
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
@@ -615,6 +598,27 @@ class TestsWidget(QWidget):
         file.write(data)
         file.close()
 
+    def rename_in_file(self, item, path):
+        self.files_links.pop(item.in_file)
+        self.files_links[path] = item
+        item.rename_in_file(path)
+
+    def rename_out_file(self, item, path):
+        self.files_links.pop(item.out_file)
+        self.files_links[path] = item
+        item.rename_out_file(path)
+
+    def rename_args_file(self, item, path):
+        self.files_links.pop(item.args_file)
+        self.files_links[path] = item
+        item.rename_args_file(path)
+
+    def create_temp_file(self, item):
+        open(path := f"{self.path}/func_tests/data/temp_{self.temp_file_index}", 'x').close()
+        self.temp_file_index += 1
+        self.files_links[path] = item
+        return path
+
     def set_theme(self):
         self.test_list_widget.set_theme()
         self.test_edit_widget.set_theme()
@@ -640,7 +644,7 @@ class TestsWidget(QWidget):
 
 
 class CustomListWidgetItem(QListWidgetItem):
-    def __init__(self, desc, in_file, out_file, args_file="", exit_code=None):
+    def __init__(self, desc, in_file="", out_file="", args_file="", exit_code=None):
         super(CustomListWidgetItem, self).__init__()
         self.desc = desc
         self.setText(desc)
@@ -648,6 +652,18 @@ class CustomListWidgetItem(QListWidgetItem):
         self.out_file = out_file
         self.args_file = args_file
         self.exit_code = exit_code
+
+    def rename_in_file(self, path):
+        os.rename(self.in_file, path)
+        self.in_file = path
+
+    def rename_out_file(self, path):
+        os.rename(self.out_file, path)
+        self.out_file = path
+
+    def rename_args_file(self, path):
+        os.rename(self.args_file, path)
+        self.args_file = path
 
     def set_desc(self, new_desc):
         self.desc = new_desc
@@ -811,10 +827,12 @@ class TestCopyWindow(QDialog):
                 if self.check_boxes[i].isChecked():
                     yield self.test_list[i][4:], \
                           read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_in.txt"), \
-                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_out.txt")
+                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_out.txt"), \
+                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_args.txt", default='')
             else:
                 neg_ind += 1
                 if self.check_boxes[i].isChecked():
                     yield self.test_list[i][4:], \
                           read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_in.txt"), \
-                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_out.txt")
+                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_out.txt"), \
+                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_args.txt", default='')
