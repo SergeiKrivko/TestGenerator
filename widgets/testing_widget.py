@@ -43,24 +43,24 @@ class TestingWidget(QWidget):
 
         self.progress_bar = QProgressBar()
         self.progress_bar.hide()
-        self.progress_bar.setFixedWidth(200)
+        self.progress_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.progress_bar)
 
         self.coverage_bar = QLabel()
         self.coverage_bar.setAlignment(Qt.AlignCenter)
         self.coverage_bar.hide()
-        self.coverage_bar.setFixedWidth(200)
+        self.coverage_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.coverage_bar)
 
         self.pos_result_bar = QLabel()
         self.pos_result_bar.hide()
-        self.pos_result_bar.setFixedWidth(125)
+        self.pos_result_bar.setFixedSize(125, 26)
         self.pos_result_bar.setAlignment(Qt.AlignCenter)
         top_layout.addWidget(self.pos_result_bar)
 
         self.neg_result_bar = QLabel()
         self.neg_result_bar.hide()
-        self.neg_result_bar.setFixedWidth(125)
+        self.neg_result_bar.setFixedSize(125, 26)
         self.neg_result_bar.setAlignment(Qt.AlignCenter)
         top_layout.addWidget(self.neg_result_bar)
 
@@ -114,6 +114,7 @@ class TestingWidget(QWidget):
         self.prog_out.setStyleSheet(self.tm.text_edit_style_sheet)
         self.in_data.setStyleSheet(self.tm.text_edit_style_sheet)
         self.out_data.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.progress_bar.setStyleSheet(self.tm.progress_bar_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)

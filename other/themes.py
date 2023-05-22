@@ -742,6 +742,18 @@ class ThemeManager:
         }}
         """
         self.double_spin_box_style_sheet = self.spin_box_style_sheet.replace('QSpinBox', 'QDoubleSpinBox')
+        self.progress_bar_style_sheet = f"""
+QProgressBar {{
+color: {self['TextColor']};
+background-color: {self['BgColor']};
+border: 1px solid {self['BorderColor']};
+border-radius: 4px;
+text-align: center;
+}}
+QProgressBar::chunk {{
+background-color: {self['MainColor']};
+}}
+"""
 
     def add_custom_theme(self, theme_name, theme_data):
         self.themes[theme_name] = Theme(theme_data)
