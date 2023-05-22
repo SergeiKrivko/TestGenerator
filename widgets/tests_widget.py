@@ -36,7 +36,7 @@ class TestsWidget(QWidget):
         self.generator_window.hide()
         self.generator_window.complete.connect(self.write_readme_after_generation)
 
-        self.test_list_widget = TestTableWidget(self.tm)
+        self.test_list_widget = TestTableWidget(self.tm, self.sm)
         self.test_list_widget.setMinimumWidth(400)
         self.test_list_widget.setMinimumHeight(150)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
@@ -324,11 +324,11 @@ class TestsWidget(QWidget):
             return
         try:
             self.test_list_widget.pos_comparator_widget.setCurrentIndex(self.sm.get('pos_comparators', dict()).get(
-                (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1) + 1)
+                f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1) + 1)
             self.test_list_widget.neg_comparator_widget.setCurrentIndex(self.sm.get('neg_comparators', dict()).get(
-                (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1) + 1)
+                f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1) + 1)
         except Exception as ex:
-            print(f"{ex.__class__.__name__}")
+            print(f"{ex.__class__.__name__}: {ex}")
 
         self.remove_temp_files()
         self.files_links.clear()
@@ -519,6 +519,9 @@ class TestsWidget(QWidget):
         self.data_changed = True
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
+        old_dir = os.getcwd()
+        os.chdir(self.path)
+
         item = self.test_list_widget.pos_test_list.currentItem() if type == 'pos' else \
             self.test_list_widget.neg_test_list.currentItem()
         if not item:
@@ -537,6 +540,7 @@ class TestsWidget(QWidget):
         #     clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
         self.cm.clear_coverage_files()
+        os.chdir(old_dir)
 
     def remove_temp_files(self):
         for file in os.listdir(f"{self.path}/func_tests/data"):

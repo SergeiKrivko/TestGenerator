@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QSettings
+from json import dumps, loads
 
 
 class SettingsManager:
@@ -6,14 +7,18 @@ class SettingsManager:
         # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
         self.q_settings = QSettings()
         self.path = self.get_general('__project__')
+        s = self.get_general(self.path)
+        self.dct = loads(s if isinstance(s, str) else '{}')
 
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)
 
     def get(self, key, default=None, project=None):
         if project is None:
-            project = self.path
-        return self.q_settings.value(project, dict()).get(key, self.get_general(key, default))
+            dct = self.dct
+        else:
+            dct = loads(self.get_general(project, '{}'))
+        return dct.get(key, self.get_general(key, default))
 
     def __getitem__(self, item):
         return self.get(item)
@@ -35,14 +40,19 @@ class SettingsManager:
     def set_general(self, key, value):
         self.q_settings.setValue(key, value)
         if key == '__project__':
+            self.store()
             self.path = value
+            s = self.get_general(self.path)
+            self.dct = loads(s if isinstance(s, str) else '{}')
 
     def set(self, key, value, project=None):
+        print(key, value)
         if project is None:
-            project = self.path
-        dct = self.q_settings.value(project)
-        dct[key] = value
-        self.q_settings.setValue(project, dct)
+            self.dct[key] = value
+        else:
+            dct = loads(self.get_general(project, '{}'))
+            dct[key] = value
+            self.q_settings.setValue(project, dumps(dct))
 
     def __setitem__(self, key, value):
         self.set(key, value)
@@ -50,7 +60,7 @@ class SettingsManager:
     def repair_settings(self):
         if self.path:
             if self.q_settings.value(self.path) is None:
-                self.q_settings.setValue(self.path, dict())
+                self.q_settings.setValue(self.path, '{}')
 
             if not isinstance(self.get('lab'), int):
                 self.set('lab', 1)
@@ -80,28 +90,26 @@ class SettingsManager:
                     self.set_general('coverage', 0)
                 if not isinstance(self.get_general('time_limit'), (float, int)):
                     self.set_general('time_limit', 10)
-                dlg = self.get_general(self.path)
-                if 'compiler' in dlg:
-                    dlg.pop('compiler')
-                if '-lm' in dlg:
-                    dlg.pop('-lm')
-                if 'pos_comparator' in dlg:
-                    dlg.pop('pos_comparator')
-                if 'neg_comparator' in dlg:
-                    dlg.pop('neg_comparator')
-                if 'pos_substring' in dlg:
-                    dlg.pop('pos_substring')
-                if 'neg_substring' in dlg:
-                    dlg.pop('neg_substring')
-                if 'epsilon' in dlg:
-                    dlg.pop('epsilon')
-                if 'memory_testing' in dlg:
-                    dlg.pop('memory_testing')
-                if 'coverage' in dlg:
-                    dlg.pop('coverage')
-                if 'time_limit' in dlg:
-                    dlg.pop('time_limit')
-                self.set_general(self.path, dlg)
+                if 'compiler' in self.dct:
+                    self.dct.pop('compiler')
+                if '-lm' in self.dct:
+                    self.dct.pop('-lm')
+                if 'pos_comparator' in self.dct:
+                    self.dct.pop('pos_comparator')
+                if 'neg_comparator' in self.dct:
+                    self.dct.pop('neg_comparator')
+                if 'pos_substring' in self.dct:
+                    self.dct.pop('pos_substring')
+                if 'neg_substring' in self.dct:
+                    self.dct.pop('neg_substring')
+                if 'epsilon' in self.dct:
+                    self.dct.pop('epsilon')
+                if 'memory_testing' in self.dct:
+                    self.dct.pop('memory_testing')
+                if 'coverage' in self.dct:
+                    self.dct.pop('coverage')
+                if 'time_limit' in self.dct:
+                    self.dct.pop('time_limit')
             else:
                 if not isinstance(self.get('compiler'), str):
                     self.set('compiler', self.get_general('compiler', 'gcc -std=c99 -Wall -Werror'))
@@ -123,3 +131,6 @@ class SettingsManager:
                     self.set('coverage', self.get_general('coverage', 0))
                 if not isinstance(self.get('time_limit'), (float, int)):
                     self.set('time_limit', self.get_general('time_limit', 10))
+                    
+    def store(self):
+        self.q_settings.setValue(self.path, dumps(self.dct))

@@ -147,4 +147,5 @@ class MainWindow(QMainWindow):
         self.testing_widget.hide()
         self.git_widget.hide()
         self.settings_widget.hide()
+        self.sm.store()
         super(MainWindow, self).close()

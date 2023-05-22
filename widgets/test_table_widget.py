@@ -1,5 +1,3 @@
-import os.path
-
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel, \
     QComboBox
 
@@ -7,12 +5,13 @@ BUTTONS_MAX_WIDTH = 30
 
 
 class TestTableWidget(QWidget):
-    def __init__(self, tm):
+    def __init__(self, tm, sm):
         super(TestTableWidget, self).__init__()
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self.tm = tm
+        self.sm = sm
 
         # Positive tests
 
@@ -62,6 +61,7 @@ class TestTableWidget(QWidget):
         self.pos_comparator_widget.addItems(['По умолчанию', 'Числа', 'Числа как текст', 'Текст после подстроки',
                                              'Слова после подстроки', 'Текст', 'Слова'])
         self.pos_comparator_widget.setMaximumWidth(200)
+        self.pos_comparator_widget.currentIndexChanged.connect(self.save_pos_comparator)
         pos_comparator_layout.addWidget(self.pos_comparator_widget)
         pos_layout.addLayout(pos_comparator_layout)
 
@@ -114,6 +114,7 @@ class TestTableWidget(QWidget):
             ['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки',
              'Слова после подстроки', 'Текст', 'Слова'])
         self.neg_comparator_widget.setMaximumWidth(200)
+        self.neg_comparator_widget.currentIndexChanged.connect(self.save_neg_comparator)
         neg_comparator_layout.addWidget(self.neg_comparator_widget)
         neg_layout.addLayout(neg_comparator_layout)
 
@@ -126,6 +127,22 @@ class TestTableWidget(QWidget):
         self.neg_test_list.clear()
         for i in range(len(item_list)):
             self.neg_test_list.addItem(QListWidgetItem(item_list[i]))
+
+    def save_pos_comparator(self):
+        dct = self.sm.get('pos_comparators')
+        if not isinstance(dct, dict):
+            dct = dict()
+            self.sm.set('pos_comparators', dct)
+        dct[f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}"] = \
+            self.pos_comparator_widget.currentIndex() - 1
+
+    def save_neg_comparator(self):
+        dct = self.sm.get('neg_comparators')
+        if not isinstance(dct, dict):
+            dct = dict()
+            self.sm.set('neg_comparators', dct)
+        dct[f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}"] = \
+            self.neg_comparator_widget.currentIndex() - 1
 
     def set_theme(self):
         self.pos_test_list.setStyleSheet(self.tm.list_widget_style_sheet)

@@ -254,7 +254,7 @@ class TestingWidget(QWidget):
 
     def pos_comparator(self, str1, str2):
         comparator = self.sm.get('pos_comparators', dict()).get(
-            (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1)
+            f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
         if comparator == -1:
             comparator = self.sm.get('pos_comparator', 0)
         if comparator == 0:
@@ -272,7 +272,7 @@ class TestingWidget(QWidget):
 
     def neg_comparator(self, str1, str2):
         comparator = self.sm.get('neg_comparators', dict()).get(
-            (self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')), -1)
+            f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
         if comparator == -1:
             comparator = self.sm.get('neg_comparator', 0)
         if comparator == 0:
