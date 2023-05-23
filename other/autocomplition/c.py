@@ -15,12 +15,15 @@ class CodeAutocompletionManager:
         self._defines = []
 
         self._std_libs = dict()
-        for name, data in self._get_lib():
-            self._std_libs[name] = self._parse_lib(name, data, False)
+        self.update_libs()
         self._custom_libs = dict()
 
         self._current_line = 0
         self._current_symbol = 0
+
+    def update_libs(self):
+        for name, data in self._get_lib():
+            self._std_libs[name] = self._parse_lib(name, data, False)
 
     def _add_custom_lib(self, lib_name):
         if lib_name not in self._custom_libs:

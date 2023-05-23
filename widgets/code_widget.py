@@ -231,8 +231,10 @@ class CodeWidget(QWidget):
         self.options_widget.set_widget_style_sheet('Тестировать', self.tm.buttons_style_sheet)
 
     def show(self) -> None:
-        self.update_options()
-        self.first_open()
+        if self.isHidden():
+            self.update_options()
+            self.first_open()
+            self.code_edit.am.update_libs()
         super(CodeWidget, self).show()
 
     def hide(self):

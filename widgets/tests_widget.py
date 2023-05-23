@@ -246,10 +246,7 @@ class TestsWidget(QWidget):
                 item.args_file = ''
             elif data:
                 if not item.args_file:
-                    if 'temp' in item.in_file:
-                        item.args_file = self.create_temp_file(item)
-                    else:
-                        item.args_file = item.in_file.replace('in', 'args')
+                    item.args_file = self.create_temp_file(item)
                 self.write_file(item.args_file, data)
 
     def set_test_out(self):
@@ -257,7 +254,7 @@ class TestsWidget(QWidget):
         item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
         if item:
             if not item.out_file:
-                item.out_file = item.in_file.replace('in', 'out')
+                item.out_file = self.create_temp_file(item)
             self.write_file(item.out_file, data)
 
     def move_pos_test_up(self):
@@ -482,24 +479,21 @@ class TestsWidget(QWidget):
             if in_name in self.files_links:
                 other_item = self.files_links[in_name]
                 if os.path.isfile(other_item.in_file):
-                    self.rename_in_file(other_item, f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                    self.temp_file_index += 1
+                    self.rename_in_file(other_item, self.create_temp_file(other_item))
             self.rename_in_file(item, in_name)
 
         if item.out_file != out_name:
             if out_name in self.files_links:
                 other_item = self.files_links[out_name]
                 if os.path.isfile(other_item.out_file):
-                    self.rename_out_file(other_item, f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                    self.temp_file_index += 1
+                    self.rename_out_file(other_item, self.create_temp_file(other_item))
             self.rename_out_file(item, out_name)
 
         if item.args_file and item.args_file != args_name:
             if args_name in self.files_links:
                 other_item = self.files_links[args_name]
                 if os.path.isfile(other_item.args_file):
-                    self.rename_args_file(other_item, f"{self.path}/func_tests/data/temp_{self.temp_file_index}")
-                    self.temp_file_index += 1
+                    self.rename_args_file(other_item, self.create_temp_file(other_item))
             self.rename_args_file(item, args_name)
 
     def generate_test(self, type='pos'):
