@@ -246,7 +246,10 @@ class TestsWidget(QWidget):
                 item.args_file = ''
             elif data:
                 if not item.args_file:
-                    item.args_file = item.in_file.replace('in', 'args')
+                    if 'temp' in item.in_file:
+                        item.args_file = self.create_temp_file(item)
+                    else:
+                        item.args_file = item.in_file.replace('in', 'args')
                 self.write_file(item.args_file, data)
 
     def set_test_out(self):
