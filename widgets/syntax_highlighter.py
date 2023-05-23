@@ -101,6 +101,10 @@ class CodeEditor(QsciScintilla):
         self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
         self.update_api(self.getCursorPosition())
 
+    def set_text(self, text):
+        self.setText(text)
+        self.update_api(self.getCursorPosition())
+
     def update_api(self, pos):
         pass
 

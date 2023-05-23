@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QSettings
 from json import dumps, loads
-# import appdata
+from appdata import appdata
+import appdirs
 
 
 class SettingsManager:
@@ -10,6 +11,8 @@ class SettingsManager:
         self.path = self.get_general('__project__')
         s = self.get_general(self.path)
         self.dct = loads(s if isinstance(s, str) else '{}')
+
+        self.scripts_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko")
 
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)

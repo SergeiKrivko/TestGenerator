@@ -9,9 +9,6 @@ from widgets.message_box import MessageBox
 from widgets.syntax_highlighter import PythonCodeEditor
 
 
-SCRIPTS_DIR = 'scripts'
-
-
 class GeneratorWindow(QMainWindow):
     complete = pyqtSignal(list, str)
 
@@ -46,6 +43,7 @@ class GeneratorWindow(QMainWindow):
 
         self.tests_list = []
         self.dialog = None
+        self.scripts_dir = f"{self.sm.scripts_dir}/scripts"
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
@@ -60,22 +58,21 @@ class GeneratorWindow(QMainWindow):
         self.code_edit.set_theme()
 
     def open_code(self):
-        MessageBox(MessageBox.Information, "Title", "message", self.tm)
-        self.dialog = FileDialog(self.tm, 'open')
+        self.dialog = FileDialog(self.tm, 'open', self.scripts_dir)
         if self.dialog.exec():
             try:
-                self.code_edit.open_file(SCRIPTS_DIR, self.dialog.list_widget.currentItem().text())
+                self.code_edit.open_file(self.scripts_dir, self.dialog.list_widget.currentItem().text())
             except:
                 pass
 
     def save_code(self):
-        self.dialog = FileDialog(self.tm, 'save')
+        self.dialog = FileDialog(self.tm, 'save', self.scripts_dir)
         if self.dialog.exec():
             try:
                 name = self.dialog.line_edit.text()
                 if not name.endswith('.py'):
                     name += '.py'
-                file = open(f"{SCRIPTS_DIR}/{name}", 'w', encoding='utf-8',
+                file = open(f"{self.scripts_dir}/{name}", 'w', encoding='utf-8',
                             newline=self.sm.get_general('line_sep', '\n'))
                 file.write(self.code_edit.text())
                 file.close()
@@ -192,17 +189,17 @@ file.close()
 
 
 class FileDialog(QDialog):
-    def __init__(self, tm, mode='open'):
+    def __init__(self, tm, mode='open', scripts_dir=''):
         super(FileDialog, self).__init__()
         self.mode = mode
         self.tm = tm
 
-        os.makedirs(SCRIPTS_DIR, exist_ok=True)
+        os.makedirs(scripts_dir, exist_ok=True)
 
         main_layout = QVBoxLayout()
 
         self.list_widget = QListWidget()
-        self.list_widget.addItems(filter(lambda s: s.endswith('.py'), os.listdir(SCRIPTS_DIR)))
+        self.list_widget.addItems(filter(lambda s: s.endswith('.py'), os.listdir(scripts_dir)))
 
         if self.mode == 'save':
             self.line_edit = QLineEdit()

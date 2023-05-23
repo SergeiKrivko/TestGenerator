@@ -31,6 +31,8 @@ class LibWidget(QWidget):
         libs = sm.get_general("lib")
         if isinstance(libs, str):
             for lib_info in libs.split(';'):
+                if ':' not in lib_info:
+                    continue
                 lib_name, lib_type = lib_info.split(':')
                 lib_type = int(lib_type)
                 lib_data = sm.get_general(lib_name)

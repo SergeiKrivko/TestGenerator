@@ -278,6 +278,8 @@ class CodeAutocompletionManager:
         lib_list = self._sm.get_general('lib')
         if isinstance(lib_list, str):
             for lib_info in lib_list.split(';'):
+                if ':' not in lib_info:
+                    continue
                 lib_name, _ = lib_info.split(':')
                 lib_data = self._sm.get_general(lib_name)
                 if lib_data:
