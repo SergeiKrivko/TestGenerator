@@ -4,10 +4,6 @@ from PyQt5.QtWidgets import QApplication
 from widgets.main_window import MainWindow
 
 
-def except_hook(cls, exception, traceback):
-    sys.__excepthook__(cls, exception, traceback)
-
-
 def main():
     app = QApplication(sys.argv)
     app.setOrganizationName("SergeiKrivko")
@@ -16,7 +12,6 @@ def main():
     window = MainWindow()
     window.show()
     window.set_theme()
-    sys.excepthook = except_hook
     sys.exit(app.exec_())
 
 

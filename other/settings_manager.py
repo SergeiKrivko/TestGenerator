@@ -1,5 +1,6 @@
 from PyQt5.QtCore import QSettings
 from json import dumps, loads
+# import appdata
 
 
 class SettingsManager:
@@ -46,7 +47,6 @@ class SettingsManager:
             self.dct = loads(s if isinstance(s, str) else '{}')
 
     def set(self, key, value, project=None):
-        print(key, value)
         if project is None:
             self.dct[key] = value
         else:

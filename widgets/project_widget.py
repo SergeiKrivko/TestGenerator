@@ -3,8 +3,9 @@ import os
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QMessageBox, QCheckBox
+    QDialog, QLabel, QLineEdit, QCheckBox
 
+from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
 
 
@@ -111,8 +112,8 @@ class ProjectWidget(QWidget):
         if self.dialog.exec():
             new_path = f"{os.path.split(self.sm.path)[0]}/{self.dialog.line_edit.text()}"
             if os.path.isdir(new_path):
-                QMessageBox.warning(None, "Переименование проекта",
-                                    f"Папка {new_path} уже существует. Переименование невозможно")
+                MessageBox(MessageBox.Warning, "Переименование проекта",
+                           f"Папка {new_path} уже существует. Переименование невозможно", self.tm)
             else:
                 os.rename(self.sm.path, new_path)
                 projects_set = self.sm.get_general('projects', set())

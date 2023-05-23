@@ -1,8 +1,9 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QMessageBox, QDialog, QDialogButtonBox, QScrollArea, \
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
 
 from widgets.generator_window import GeneratorWindow
+from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
 from widgets.test_table_widget import TestTableWidget
 from widgets.test_edit_widget import TestEditWidget
@@ -591,7 +592,7 @@ class TestsWidget(QWidget):
                 self.remove_temp_files()
 
         except Exception as ex:
-            QMessageBox.warning(self, 'Error', f"{ex.__class__.__name__}: {ex}")
+            MessageBox(MessageBox.Warning, 'Error', f"{ex.__class__.__name__}: {ex}", self.tm)
 
     def write_file(self, path, data=''):
         file = open(path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep'))

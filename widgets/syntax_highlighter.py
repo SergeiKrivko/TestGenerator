@@ -1,6 +1,6 @@
 from PyQt5.QtGui import QFont, QColor, QFontMetrics
 from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciLexerPython, QsciAPIs
-from other.code_autocompletion import CodeAutocompletionManager
+from other.autocomplition.c import CodeAutocompletionManager
 
 
 class CodeEditor(QsciScintilla):

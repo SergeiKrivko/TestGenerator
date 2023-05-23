@@ -3,7 +3,9 @@ import os
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton, QMessageBox, QProgressBar
+    QPushButton, QProgressBar
+
+from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
 
 
@@ -177,7 +179,7 @@ class TestingWidget(QWidget):
     def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
-        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], res)
+        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], res and memory_res)
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  {'PASSED' if res else 'FAILED'}",
                            self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
         self.test_count += 1
@@ -318,7 +320,7 @@ class TestingWidget(QWidget):
         self.testing_end.emit()
 
         if errors:
-            QMessageBox.warning(None, "Error", errors)
+            MessageBox(MessageBox.Warning, "Error", errors, self.tm)
 
         for i in range(self.test_count, self.tests_list.count()):
             self.tests_list.item(i).set_terminated()

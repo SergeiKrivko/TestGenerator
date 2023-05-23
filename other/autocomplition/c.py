@@ -1,4 +1,4 @@
-from other.lib import words, types
+from other.autocomplition.c_lib import words, types
 
 
 class CodeAutocompletionManager:

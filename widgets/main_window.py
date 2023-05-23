@@ -1,17 +1,15 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 
 from other.themes import ThemeManager
 from widgets.code_widget import CodeWidget
 from widgets.project_widget import ProjectWidget
 from widgets.settings_widget import SettingsWidget
 from widgets.testing_widget import TestingWidget
-from widgets.options_window import OptionsWindow
 from widgets.tests_widget import TestsWidget
 from widgets.git_widget import GitWidget
 from widgets.menu_bar import MenuBar
 from other.commands import CommandManager
 from widgets.todo_widget import TODOWidget
-from widgets.lib_dialog import LibWidget
 from other.settings_manager import SettingsManager
 import os
 

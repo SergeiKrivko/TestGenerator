@@ -2,9 +2,10 @@ import os
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMainWindow, QDialog, QListWidget, \
-    QLineEdit, QMessageBox
+    QLineEdit
 
 from widgets.menu_bar import MenuBar
+from widgets.message_box import MessageBox
 from widgets.syntax_highlighter import PythonCodeEditor
 
 
@@ -59,6 +60,7 @@ class GeneratorWindow(QMainWindow):
         self.code_edit.set_theme()
 
     def open_code(self):
+        MessageBox(MessageBox.Information, "Title", "message", self.tm)
         self.dialog = FileDialog(self.tm, 'open')
         if self.dialog.exec():
             try:
@@ -109,9 +111,9 @@ class GeneratorWindow(QMainWindow):
     def run_complete(self, res):
         self.menu_bar.setDisabled(False)
         if res.stdout:
-            QMessageBox.information(None, 'STDOUT', res.stdout)
+            MessageBox(MessageBox.Information, 'STDOUT', res.stdout, self.tm)
         if res.stderr:
-            QMessageBox.information(None, 'STDERR', res.stderr)
+            MessageBox(MessageBox.Information, 'STDERR', res.stderr, self.tm)
         if os.path.isfile('temp.txt'):
             file = open(f"temp.txt", encoding='utf-8')
             self.complete.emit(list(map(str.strip, file.readlines())), self.test_type)
