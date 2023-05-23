@@ -43,7 +43,7 @@ class GeneratorWindow(QMainWindow):
 
         self.tests_list = []
         self.dialog = None
-        self.scripts_dir = f"{self.sm.scripts_dir}/scripts"
+        self.scripts_dir = f"{self.sm.app_data_dir}/scripts"
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)

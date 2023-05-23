@@ -1,4 +1,5 @@
 from other.autocomplition.c_lib import words, types
+import os
 
 
 class CodeAutocompletionManager:
@@ -275,15 +276,10 @@ class CodeAutocompletionManager:
             yield str(t)
 
     def _get_lib(self):
-        lib_list = self._sm.get_general('lib')
-        if isinstance(lib_list, str):
-            for lib_info in lib_list.split(';'):
-                if ':' not in lib_info:
-                    continue
-                lib_name, _ = lib_info.split(':')
-                lib_data = self._sm.get_general(lib_name)
-                if lib_data:
-                    yield lib_name, lib_data
+        global_libs_dir = f"{self._sm.app_data_dir}/global_libs"
+        for el in os.listdir(global_libs_dir):
+            with open(f"{global_libs_dir}/{el}") as f:
+                yield el, f.read()
 
 
 class _Lib:

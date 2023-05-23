@@ -28,15 +28,16 @@ class LibWidget(QWidget):
         lib_layout.addWidget(self.button_add_lib)
 
         self.lib_list_widget = QListWidget()
-        libs = sm.get_general("lib")
-        if isinstance(libs, str):
-            for lib_info in libs.split(';'):
-                if ':' not in lib_info:
-                    continue
-                lib_name, lib_type = lib_info.split(':')
-                lib_type = int(lib_type)
-                lib_data = sm.get_general(lib_name)
-                self.lib_list_widget.addItem(CustomLib(lib_name, lib_type, lib_data if lib_data else ""))
+        self.global_libs_dir = f"{self.sm.app_data_dir}/global_libs"
+        self.local_libs_dir = f"{self.sm.app_data_dir}/custom_libs"
+
+        os.makedirs(self.global_libs_dir, exist_ok=True)
+        os.makedirs(self.local_libs_dir, exist_ok=True)
+
+        for el in os.listdir(self.global_libs_dir):
+            self.lib_list_widget.addItem(CustomLib(el, CustomLib.GLOBAL, f"{self.global_libs_dir}/{el}"))
+        for el in os.listdir(self.local_libs_dir):
+            self.lib_list_widget.addItem(CustomLib(el, CustomLib.LOCAL, f"{self.local_libs_dir}/{el}"))
         self.lib_list_widget.currentRowChanged.connect(self.open_lib)
         self.lib_list_widget.doubleClicked.connect(self.open_lib_dialog)
 
@@ -57,23 +58,12 @@ class LibWidget(QWidget):
         self.button_add_lib.setStyleSheet(self.tm.buttons_style_sheet)
         self.text_edit.setStyleSheet(self.tm.text_edit_style_sheet)
 
-    def save_libs(self):
-        libs_list = []
-        for i in range(self.lib_list_widget.count()):
-            item = self.lib_list_widget.item(i)
-            libs_list.append(f"{item.name}:{item.lib_type}")
-            self.sm.set_general(item.name, item.data)
-        self.sm.set_general("lib", ';'.join(libs_list))
-
-    def hide(self):
-        if not self.isHidden():
-            self.save_libs()
-        super(LibWidget, self).hide()
-
     def add_lib(self):
         if self.new_lib_dialog.exec():
             if self.new_lib_dialog.mode_combo_box.currentIndex() == CustomLib.LOCAL:
-                self.lib_list_widget.addItem(CustomLib(self.new_lib_dialog.local_line_edit.text(), CustomLib.LOCAL))
+                self.lib_list_widget.addItem(CustomLib(
+                    self.new_lib_dialog.local_line_edit.text(), CustomLib.LOCAL,
+                    f"{self.global_libs_dir}/{self.new_lib_dialog.local_line_edit.text()}"))
             elif self.new_lib_dialog.mode_combo_box.currentIndex() == CustomLib.GLOBAL:
                 lib_name = self.new_lib_dialog.global_list_widget.currentItem().text()
                 for i in range(self.lib_list_widget.count()):
@@ -83,37 +73,36 @@ class LibWidget(QWidget):
                         if dlg.exec():
                             self.remote_file_reader = FileReader(
                                 self.new_lib_dialog.global_list_widget.currentItem().text())
-                            self.remote_file_reader.complete.connect(lambda: self.after_file_reading(
-                                self.lib_list_widget.item(i)))
+                            self.remote_file_reader.complete.connect(lambda s: self.after_file_reading(
+                                s, self.lib_list_widget.item(i)))
                             self.remote_file_reader.start()
                             self.remote_file_reader.error.connect(lambda: QMessageBox.warning(
                                 self, "Ошибка", "Не удалось загрузить библиотеку. Проверьте подключение к интернету"))
                         break
                 else:
-                    self.lib_list_widget.addItem(
-                        item := CustomLib(lib_name,
-                                          CustomLib.GLOBAL))
+                    self.lib_list_widget.addItem(item := CustomLib(
+                        lib_name, CustomLib.GLOBAL,
+                        f"{self.global_libs_dir}/{lib_name}"))
                     self.remote_file_reader = FileReader(self.new_lib_dialog.global_list_widget.currentItem().text())
-                    self.remote_file_reader.complete.connect(lambda: self.after_file_reading(item))
+                    self.remote_file_reader.complete.connect(lambda s: self.after_file_reading(s, item))
                     self.remote_file_reader.error.connect(lambda: QMessageBox.warning(
                         self, "Ошибка", "Не удалось загрузить библиотеку. Проверьте подключение к интернету"))
                     self.remote_file_reader.start()
 
-    def after_file_reading(self, item):
-        with open('temp', encoding='utf-8') as file:
-            item.data = file.read()
-            self.open_lib()
-        if os.path.isfile('temp'):
-            os.remove('temp')
+    def after_file_reading(self, s, item):
+        with open(item.file, 'w', encoding='utf-8') as f:
+            f.write(s)
 
     def modify_lib(self):
         item = self.lib_list_widget.currentItem()
-        if item:
-            item.data = self.text_edit.toPlainText()
+        if isinstance(item, CustomLib):
+            with open(item.file, 'w', encoding='utf-8') as f:
+                f.write(self.text_edit.toPlainText())
 
     def open_lib(self):
-        if self.lib_list_widget.currentItem():
-            self.text_edit.setText(self.lib_list_widget.currentItem().data)
+        if item := self.lib_list_widget.currentItem():
+            with open(item.file, encoding='utf-8') as f:
+                self.text_edit.setText(f.read())
 
     def open_lib_dialog(self):
         item = self.lib_list_widget.currentItem()
@@ -253,11 +242,11 @@ class CustomLib(QListWidgetItem):
     GLOBAL = 0
     LOCAL = 1
 
-    def __init__(self, name: str, lib_type, data=None):
+    def __init__(self, name: str, lib_type, file=None):
         super(CustomLib, self).__init__(name)
         self.name = name
         self.lib_type = lib_type
-        self.data = data if data else ""
+        self.file = file
         if self.lib_type == CustomLib.GLOBAL:
             self.setForeground(Qt.blue)
         elif self.lib_type == CustomLib.LOCAL:

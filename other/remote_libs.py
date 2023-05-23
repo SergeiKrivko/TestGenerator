@@ -10,14 +10,14 @@ def get_files_list():
     return []
 
 
-def download_file(name, save_as='temp'):
+def download_file(name):
     url = f"https://firebasestorage.googleapis.com/v0/b/testgenerator-bf37c.appspot.com/o/" \
           f"{quote(f'lib/{name}', safe='')}?alt=media"
     resp = requests.get(url, stream=True)
     if resp.status_code == 200:
-        with open(save_as, 'wb') as f:
-            for chunk in resp:
-                f.write(chunk)
+        return b''.join(resp).decode('utf-8')
+    else:
+        return ''
     
 
 class ListReader(QThread):
@@ -33,17 +33,16 @@ class ListReader(QThread):
 
 
 class FileReader(QThread):
-    complete = pyqtSignal()
+    complete = pyqtSignal(str)
     error = pyqtSignal(Exception)
     
-    def __init__(self, file_name, save_as='temp'):
+    def __init__(self, file_name):
         super(FileReader, self).__init__()
         self.file_name = file_name
-        self.save_as = save_as
 
     def run(self) -> None:
         try:
-            download_file(self.file_name, self.save_as)
-            self.complete.emit()
-        except Exception:
-            pass
+            res = download_file(self.file_name)
+            self.complete.emit(res)
+        except Exception as ex:
+            self.error.emit(ex)
