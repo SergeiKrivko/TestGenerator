@@ -277,9 +277,10 @@ class CodeAutocompletionManager:
 
     def _get_lib(self):
         global_libs_dir = f"{self._sm.app_data_dir}/global_libs"
-        for el in os.listdir(global_libs_dir):
-            with open(f"{global_libs_dir}/{el}") as f:
-                yield el, f.read()
+        if os.path.isdir(global_libs_dir):
+            for el in os.listdir(global_libs_dir):
+                with open(f"{global_libs_dir}/{el}") as f:
+                    yield el, f.read()
 
 
 class _Lib:
