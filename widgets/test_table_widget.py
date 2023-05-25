@@ -12,6 +12,7 @@ class TestTableWidget(QWidget):
         self.setLayout(layout)
         self.tm = tm
         self.sm = sm
+        self.labels = []
 
         # Positive tests
 
@@ -20,7 +21,8 @@ class TestTableWidget(QWidget):
 
         pos_buttons_layout = QHBoxLayout()
         pos_layout.addLayout(pos_buttons_layout)
-        pos_buttons_layout.addWidget(QLabel("Позитивные тесты"))
+        pos_buttons_layout.addWidget(label := QLabel("Позитивные тесты"))
+        self.labels.append(label)
 
         self.pos_add_button = QPushButton()
         self.pos_add_button.setText("+")
@@ -56,7 +58,8 @@ class TestTableWidget(QWidget):
         pos_layout.addWidget(self.pos_test_list)
 
         pos_comparator_layout = QHBoxLayout()
-        pos_comparator_layout.addWidget(QLabel('Компаратор:'))
+        pos_comparator_layout.addWidget(label := QLabel('Компаратор:'))
+        self.labels.append(label)
         self.pos_comparator_widget = QComboBox()
         self.pos_comparator_widget.addItems(['По умолчанию', 'Числа', 'Числа как текст', 'Текст после подстроки',
                                              'Слова после подстроки', 'Текст', 'Слова'])
@@ -72,7 +75,8 @@ class TestTableWidget(QWidget):
 
         neg_buttons_layout = QHBoxLayout()
         neg_layout.addLayout(neg_buttons_layout)
-        neg_buttons_layout.addWidget(QLabel("Негативные тесты"))
+        neg_buttons_layout.addWidget(label := QLabel("Негативные тесты"))
+        self.labels.append(label)
 
         self.neg_add_button = QPushButton()
         self.neg_add_button.setText("+")
@@ -108,7 +112,8 @@ class TestTableWidget(QWidget):
         neg_layout.addWidget(self.neg_test_list)
 
         neg_comparator_layout = QHBoxLayout()
-        neg_comparator_layout.addWidget(QLabel('Компаратор:'))
+        neg_comparator_layout.addWidget(label := QLabel('Компаратор:'))
+        self.labels.append(label)
         self.neg_comparator_widget = QComboBox()
         self.neg_comparator_widget.addItems(
             ['По умолчанию', 'Нет', 'Числа', 'Числа как текст', 'Текст после подстроки',
@@ -117,16 +122,6 @@ class TestTableWidget(QWidget):
         self.neg_comparator_widget.currentIndexChanged.connect(self.save_neg_comparator)
         neg_comparator_layout.addWidget(self.neg_comparator_widget)
         neg_layout.addLayout(neg_comparator_layout)
-
-    def update_pos_items(self, item_list):
-        self.pos_test_list.clear()
-        for i in range(len(item_list)):
-            self.pos_test_list.addItem(QListWidgetItem(item_list[i]))
-
-    def update_neg_items(self, item_list):
-        self.neg_test_list.clear()
-        for i in range(len(item_list)):
-            self.neg_test_list.addItem(QListWidgetItem(item_list[i]))
 
     def save_pos_comparator(self):
         dct = self.sm.get('pos_comparators')
@@ -145,19 +140,16 @@ class TestTableWidget(QWidget):
             self.neg_comparator_widget.currentIndex() - 1
 
     def set_theme(self):
-        self.pos_test_list.setStyleSheet(self.tm.list_widget_style_sheet)
-        self.pos_add_button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.pos_delete_button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.pos_button_up.setStyleSheet(self.tm.buttons_style_sheet)
-        self.pos_button_down.setStyleSheet(self.tm.buttons_style_sheet)
-        self.pos_button_copy.setStyleSheet(self.tm.buttons_style_sheet)
-        self.pos_button_generate.setStyleSheet(self.tm.buttons_style_sheet)
+        self.tm.set_theme_to_list_widget(self.pos_test_list)
+        self.tm.set_theme_to_list_widget(self.neg_test_list)
+        for button in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
+                       self.pos_button_copy, self.pos_button_generate, self.neg_add_button, self.neg_delete_button,
+                       self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_generate]:
+            button.setStyleSheet(self.tm.buttons_style_sheet)
+            button.setFont(self.tm.font_small)
         self.pos_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.neg_test_list.setStyleSheet(self.tm.list_widget_style_sheet)
-        self.neg_add_button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.neg_delete_button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.neg_button_up.setStyleSheet(self.tm.buttons_style_sheet)
-        self.neg_button_down.setStyleSheet(self.tm.buttons_style_sheet)
+        self.pos_comparator_widget.setFont(self.tm.font_small)
         self.neg_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.neg_button_copy.setStyleSheet(self.tm.buttons_style_sheet)
-        self.neg_button_generate.setStyleSheet(self.tm.buttons_style_sheet)
+        self.neg_comparator_widget.setFont(self.tm.font_small)
+        for label in self.labels:
+            label.setFont(self.tm.font_small)

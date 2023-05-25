@@ -34,7 +34,8 @@ class GitWidget(QWidget):
         layout.addWidget(self.files_list_widget)
 
     def set_theme(self):
-        self.files_list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.tm.set_theme_to_list_widget(self.files_list_widget)
+        self.options_widget.setFont(self.tm.font_small)
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('add_code', self.tm.buttons_style_sheet)
         self.options_widget.set_widget_style_sheet('add_tests', self.tm.buttons_style_sheet)
@@ -142,7 +143,9 @@ class GitWidget(QWidget):
             git_status = res.stdout
 
             for line in git_status:
-                self.files_list_widget.addItem(QListWidgetItem(line.rstrip()))
+                item = QListWidgetItem(line.rstrip())
+                item.setFont(self.tm.font_small)
+                self.files_list_widget.addItem(item)
             os.chdir(old_dir)
         except Exception:
             pass

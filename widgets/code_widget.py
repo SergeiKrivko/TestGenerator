@@ -1,7 +1,6 @@
 import os
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget
 
 from widgets.files_widget import FilesWidget
@@ -54,7 +53,6 @@ class CodeWidget(QWidget):
         layout_left.addWidget(self.tab_widget)
 
         self.code_edit = CCodeEditor(sm, tm)
-        self.code_edit.setFont(QFont("Courier", 10))
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)
         layout.addWidget(self.code_edit)
@@ -115,7 +113,7 @@ class CodeWidget(QWidget):
     def update_todo(self):
         self.todo_widget.clear()
         for path, line, text in self.cm.parse_todo_in_code(current_task=True):
-            self.todo_widget.addItem(CodeTODOItem(path, line, text))
+            self.todo_widget.addItem(CodeTODOItem(path, line, text, self.tm))
 
     def jump_by_todo(self):
         item = self.todo_widget.currentItem()
@@ -169,7 +167,7 @@ class CodeWidget(QWidget):
         for test in lst:
             item = QListWidgetItem(test)
             item.setForeground(self.tm['TestInProgress'])
-            item.setFont(QFont("Courier", 10))
+            item.setFont(self.tm.code_font)
             self.test_res_widget.addItem(item)
 
     def add_test(self, text, color):
@@ -209,7 +207,7 @@ class CodeWidget(QWidget):
             border-top-left-radius: 5px;
             border-top-right-radius: 5px;
             border: 1px solid {self.tm['BorderColor']};
-            width: 16ex;
+            width: 50px;
             padding: 4px;
             }}
         QTabBar::tab:hover {{
@@ -220,15 +218,17 @@ class CodeWidget(QWidget):
         }}
         """
 
-        self.test_res_widget.setStyleSheet(self.tm.list_widget_style_sheet)
-        self.todo_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.tm.set_theme_to_list_widget(self.test_res_widget)
+        self.tm.set_theme_to_list_widget(self.todo_widget)
         self.tab_widget.setStyleSheet(tab_style_sheet)
+        self.tab_widget.setFont(self.tm.font_small)
         self.code_edit.set_theme()
         self.files_widget.set_theme()
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Тестировать', self.tm.buttons_style_sheet)
+        self.options_widget.setFont(self.tm.font_small)
 
     def show(self) -> None:
         if self.isHidden():
@@ -242,7 +242,7 @@ class CodeWidget(QWidget):
 
 
 class CodeTODOItem(QListWidgetItem):
-    def __init__(self, path, line, description):
+    def __init__(self, path, line, description, tm):
         super(CodeTODOItem, self).__init__()
         self.path = os.path.basename(path)
         self.description = description

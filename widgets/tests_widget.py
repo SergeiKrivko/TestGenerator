@@ -124,7 +124,7 @@ class TestsWidget(QWidget):
         self.data_changed = True
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             os.makedirs(f"{self.path}/func_tests/data")
-        item = CustomListWidgetItem('-')
+        item = CustomListWidgetItem('-', tm=self.tm)
         item.in_file = self.create_temp_file(item)
         item.out_file = self.create_temp_file(item)
         self.test_list_widget.pos_test_list.addItem(item)
@@ -134,7 +134,7 @@ class TestsWidget(QWidget):
         self.data_changed = True
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             os.makedirs(f"{self.path}/func_tests/data")
-        item = CustomListWidgetItem('-')
+        item = CustomListWidgetItem('-', tm=self.tm)
         item.in_file = self.create_temp_file(item)
         item.out_file = self.create_temp_file(item)
         self.test_list_widget.neg_test_list.addItem(item)
@@ -182,10 +182,10 @@ class TestsWidget(QWidget):
                 ind if ind < self.test_list_widget.neg_test_list.count() else ind - 1)
 
     def copy_tests(self, test_type='pos'):
-        dlg = TestCopyWindow(self.sm)
+        dlg = TestCopyWindow(self.sm, self.tm)
         if dlg.exec():
             for desc, in_data, out_data, args_data in dlg.copy_tests():
-                item = CustomListWidgetItem(desc)
+                item = CustomListWidgetItem(desc, tm=self.tm)
 
                 item.in_file = self.create_temp_file(item)
                 self.write_file(item.in_file, in_data)
@@ -353,7 +353,7 @@ class TestsWidget(QWidget):
                 for j in range(i + 1, len(lines)):
                     if lines[j].startswith('- ') and ' - ' in lines[j]:
                         self.test_list_widget.pos_test_list.addItem(
-                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', ''))
+                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', '', tm=self.tm))
                     else:
                         break
 
@@ -361,7 +361,7 @@ class TestsWidget(QWidget):
                 for j in range(i + 1, len(lines)):
                     if lines[j].startswith('- ') and ' - ' in lines[j]:
                         self.test_list_widget.neg_test_list.addItem(
-                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', ''))
+                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', '', tm=self.tm))
                     else:
                         break
 
@@ -396,7 +396,7 @@ class TestsWidget(QWidget):
 
         lst.sort()
         for _ in range(count - self.test_list_widget.pos_test_list.count()):
-            self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-'))
+            self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', tm=self.tm))
         for i in range(self.test_list_widget.pos_test_list.count()):
             item = self.test_list_widget.pos_test_list.item(i)
             if not item.in_file:
@@ -435,7 +435,7 @@ class TestsWidget(QWidget):
 
         lst.sort()
         for _ in range(count - self.test_list_widget.neg_test_list.count()):
-            self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-'))
+            self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', tm=self.tm))
         for i in range(self.test_list_widget.neg_test_list.count()):
             item = self.test_list_widget.neg_test_list.item(i)
             if not item.in_file:
@@ -625,6 +625,7 @@ class TestsWidget(QWidget):
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Вход:', self.tm.style_sheet)
         self.options_widget.set_widget_style_sheet('Выход:', self.tm.style_sheet)
+        self.options_widget.setFont(self.tm.font_small)
         self.generator_window.set_theme()
 
     def show(self):
@@ -642,7 +643,7 @@ class TestsWidget(QWidget):
 
 
 class CustomListWidgetItem(QListWidgetItem):
-    def __init__(self, desc, in_file="", out_file="", args_file="", exit_code=None):
+    def __init__(self, desc, in_file="", out_file="", args_file="", exit_code=None, tm=None):
         super(CustomListWidgetItem, self).__init__()
         self.desc = desc
         self.setText(desc)
@@ -650,6 +651,8 @@ class CustomListWidgetItem(QListWidgetItem):
         self.out_file = out_file
         self.args_file = args_file
         self.exit_code = exit_code
+
+        self.setFont(tm.font_small)
 
     def rename_in_file(self, path):
         os.rename(self.in_file, path)
@@ -704,9 +707,10 @@ def clear_words(path):
 
 
 class TestCopyWindow(QDialog):
-    def __init__(self, settings):
+    def __init__(self, settings, tm):
         super().__init__()
         self.sm = settings
+        self.tm = tm
 
         self.setWindowTitle("Копировать тесты")
 
@@ -715,6 +719,10 @@ class TestCopyWindow(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -729,17 +737,23 @@ class TestCopyWindow(QDialog):
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60}
             }
         })
+        self.options_widget.widgets['Номер лабы:'].setStyleSheet(self.tm.spin_box_style_sheet)
+        self.options_widget.widgets['Номер задания:'].setStyleSheet(self.tm.spin_box_style_sheet)
+        self.options_widget.widgets['Номер варианта:'].setStyleSheet(self.tm.spin_box_style_sheet)
+        self.options_widget.setFont(self.tm.font_small)
         self.layout.addWidget(self.options_widget)
         self.options_widget.clicked.connect(self.options_changed)
 
         self.scroll_area = QScrollArea()
         self.widget = QWidget()
+        self.widget.setStyleSheet(f"background-color: {self.tm['MainColor']};")
         self.scroll_layout = QVBoxLayout()
         self.scroll_layout.setAlignment(Qt.AlignTop)
         self.widget.setLayout(self.scroll_layout)
         self.scroll_area.setWidget(self.widget)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFixedSize(480, 320)
+        self.scroll_area.setStyleSheet(self.tm.scroll_area_style_sheet)
         self.layout.addWidget(self.scroll_area)
 
         self.layout.addWidget(self.buttonBox)
@@ -808,7 +822,8 @@ class TestCopyWindow(QDialog):
             check_box = QCheckBox()
             self.check_boxes.append(check_box)
             layout.addWidget(check_box)
-            layout.addWidget(QLabel(el))
+            layout.addWidget(label := QLabel(el))
+            label.setFont(self.tm.font_small)
             widget.setLayout(layout)
             self.scroll_layout.addWidget(widget)
 

@@ -65,6 +65,7 @@ class OptionsWidget(QWidget):
         self.dct = dct
         self.values = dict()
         self.widgets = dict()
+        self.labels = dict()
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -77,6 +78,7 @@ class OptionsWidget(QWidget):
                 horizontal_layout.setAlignment(Qt.AlignLeft)
                 for key2, item2 in item.items():
                     label = QLabel(str(key2))
+                    self.labels[key2] = label
                     widget, value = self.get_widget(key2, item2)
                     if item2.get('name') == OptionsWindow.NAME_LEFT:
                         h_layout = QHBoxLayout()
@@ -105,6 +107,7 @@ class OptionsWidget(QWidget):
                 continue
 
             label = QLabel(str(key), self)
+            self.labels[key] = label
             widget, value = self.get_widget(key, item)
             if item.get('name') == OptionsWindow.NAME_LEFT:
                 h_layout = QHBoxLayout()
@@ -155,6 +158,12 @@ class OptionsWidget(QWidget):
             self.widgets[item].setChecked(value)
         elif isinstance(self.widgets[item], QComboBox):
             self.widgets[item].setCurrentIndex(value)
+
+    def setFont(self, a0) -> None:
+        for widget in self.widgets.values():
+            widget.setFont(a0)
+        for widget in self.labels.values():
+            widget.setFont(a0)
 
     def get_widget(self, key, item):
         if item['type'] == int or item['type'] == 'int':

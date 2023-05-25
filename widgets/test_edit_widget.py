@@ -1,4 +1,3 @@
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 
 
@@ -9,24 +8,25 @@ class TestEditWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self.tm = tm
+        self.labels = []
 
         h_layout1 = QHBoxLayout()
         layout.addLayout(h_layout1)
-        h_layout1.addWidget(QLabel("Описание теста"))
+        h_layout1.addWidget(label := QLabel("Описание теста"))
+        self.labels.append(label)
         self.test_name_edit = QLineEdit()
-        self.test_name_edit.setFont(QFont("Calibri", 10))
         h_layout1.addWidget(self.test_name_edit)
 
         h_layout2 = QHBoxLayout()
         layout.addLayout(h_layout2)
-        h_layout2.addWidget(QLabel("Аргументы"))
+        h_layout2.addWidget(label := QLabel("Аргументы"))
+        self.labels.append(label)
         self.cmd_args_edit = QLineEdit()
-        self.cmd_args_edit.setFont(QFont("Calibri", 10))
         h_layout2.addWidget(self.cmd_args_edit)
 
-        h_layout2.addWidget(QLabel("Код возврата"))
+        h_layout2.addWidget(label := QLabel("Код возврата"))
+        self.labels.append(label)
         self.exit_code_edit = QLineEdit()
-        self.exit_code_edit.setFont(QFont("Calibri", 10))
         self.exit_code_edit.setMaximumWidth(80)
         self.exit_code_edit_text = ""
         self.exit_code_edit.textChanged.connect(self.exit_code_edit_triggered)
@@ -38,23 +38,23 @@ class TestEditWidget(QWidget):
         layout1 = QVBoxLayout()
         h_layout.addLayout(layout1, 1)
         label = QLabel("Входные данные")
+        self.labels.append(label)
         label.setFixedHeight(20)
         layout1.addWidget(label)
         self.test_in_edit = QTextEdit()
-        self.test_in_edit.setFont(QFont("Courier", 10))
         layout1.addWidget(self.test_in_edit)
 
         layout2 = QVBoxLayout()
         h_layout.addLayout(layout2, 1)
         layout_h2 = QHBoxLayout()
         layout2.addLayout(layout_h2)
-        layout_h2.addWidget(QLabel("Выходные данные"))
+        layout_h2.addWidget(label := QLabel("Выходные данные"))
+        self.labels.append(label)
         self.button_generate = QPushButton()
         self.button_generate.setText("Сгенерировать")
         self.button_generate.setFixedHeight(20)
         layout_h2.addWidget(self.button_generate)
         self.test_out_edit = QTextEdit()
-        self.test_out_edit.setFont(QFont("Courier", 10))
         layout2.addWidget(self.test_out_edit)
 
     def exit_code_edit_triggered(self):
@@ -96,10 +96,18 @@ class TestEditWidget(QWidget):
 
     def set_theme(self):
         self.test_name_edit.setStyleSheet(self.tm.style_sheet)
+        self.test_name_edit.setFont(self.tm.font_small)
         self.test_in_edit.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.test_in_edit.setFont(self.tm.code_font)
         self.test_out_edit.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.test_out_edit.setFont(self.tm.code_font)
         self.cmd_args_edit.setStyleSheet(self.tm.style_sheet)
+        self.cmd_args_edit.setFont(self.tm.code_font)
         self.exit_code_edit.setStyleSheet(self.tm.style_sheet)
+        self.exit_code_edit.setFont(self.tm.font_small)
         self.button_generate.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_generate.setFont(self.tm.font_small)
+        for label in self.labels:
+            label.setFont(self.tm.font_small)
 
 

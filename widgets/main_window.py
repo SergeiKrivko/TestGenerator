@@ -99,6 +99,7 @@ class MainWindow(QMainWindow):
         self.todo_widget.set_theme()
         self.git_widget.set_theme()
         self.settings_widget.set_theme()
+        self.menu_bar.setFont(self.tm.font_small)
         self.menu_bar.setStyleSheet(f"""
         QMenuBar {{
         color: {self.tm['TextColor']};

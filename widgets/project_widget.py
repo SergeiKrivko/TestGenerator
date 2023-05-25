@@ -1,7 +1,6 @@
 import os
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
     QDialog, QLabel, QLineEdit, QCheckBox
 
@@ -19,19 +18,15 @@ class ProjectWidget(QWidget):
         layout = QHBoxLayout()
 
         left_layout = QVBoxLayout()
-        big_font = QFont("Calibri", 16)
-        medium_font = QFont("Calibri", 12)
 
         self.button_new_project = QPushButton("Новый проект")
         self.button_new_project.setFixedSize(200, 50)
         self.button_new_project.clicked.connect(self.new_project)
-        self.button_new_project.setFont(big_font)
         left_layout.addWidget(self.button_new_project)
 
         self.list_widget = QListWidget()
         self.list_widget.setFixedWidth(200)
         self.list_widget.currentRowChanged.connect(self.open_project)
-        self.list_widget.setFont(medium_font)
         left_layout.addWidget(self.list_widget)
 
         buttons_layout = QHBoxLayout()
@@ -57,7 +52,8 @@ class ProjectWidget(QWidget):
         testing_checkbox_layout.setAlignment(Qt.AlignLeft)
         self.testing_checkbox = QCheckBox()
         testing_checkbox_layout.addWidget(self.testing_checkbox)
-        testing_checkbox_layout.addWidget(QLabel("Настройки тестирования по умолчанию"))
+        self.label = QLabel("Настройки тестирования по умолчанию")
+        testing_checkbox_layout.addWidget(self.label)
         self.testing_checkbox.clicked.connect(self.testing_checkbox_triggered)
         if self.sm.path:
             self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
@@ -196,9 +192,15 @@ class ProjectWidget(QWidget):
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
         self.button_new_project.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_new_project.setFont(self.tm.font_big)
         self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
         self.button_delete_project.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete_project.setFont(self.tm.font_small)
         self.button_rename_project.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_rename_project.setFont(self.tm.font_small)
+        self.options_widget.setFont(self.tm.font_small)
+        self.label.setFont(self.tm.font_small)
         self.options_widget.widgets['Компилятор'].setStyleSheet(self.tm.style_sheet)
         self.options_widget.widgets['Компаратор для позитивных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
         self.options_widget.widgets['Компаратор для негативных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)

@@ -20,6 +20,7 @@ class TestingWidget(QWidget):
         self.sm = sm
         self.cm = cm
         self.tm = tm
+        self.labels = []
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -49,18 +50,21 @@ class TestingWidget(QWidget):
         top_layout.addWidget(self.progress_bar)
 
         self.coverage_bar = QLabel()
+        self.labels.append(self.coverage_bar)
         self.coverage_bar.setAlignment(Qt.AlignCenter)
         self.coverage_bar.hide()
         self.coverage_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.coverage_bar)
 
         self.pos_result_bar = QLabel()
+        self.labels.append(self.pos_result_bar)
         self.pos_result_bar.hide()
         self.pos_result_bar.setFixedSize(125, 26)
         self.pos_result_bar.setAlignment(Qt.AlignCenter)
         top_layout.addWidget(self.pos_result_bar)
 
         self.neg_result_bar = QLabel()
+        self.labels.append(self.neg_result_bar)
         self.neg_result_bar.hide()
         self.neg_result_bar.setFixedSize(125, 26)
         self.neg_result_bar.setAlignment(Qt.AlignCenter)
@@ -73,14 +77,16 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout2.addLayout(l)
-        l.addWidget(QLabel("Список тестов"))
+        l.addWidget(label := QLabel("Список тестов"))
+        self.labels.append(label)
         self.tests_list = QListWidget()
         self.tests_list.itemSelectionChanged.connect(self.open_test_info)
         l.addWidget(self.tests_list)
 
         l = QVBoxLayout()
         layout2.addLayout(l)
-        l.addWidget(QLabel("Вывод программы"))
+        l.addWidget(label := QLabel("Вывод программы"))
+        self.labels.append(label)
         self.prog_out = QTextEdit()
         self.prog_out.setReadOnly(True)
         self.prog_out.setFont(QFont("Courier", 10))
@@ -91,7 +97,8 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout3.addLayout(l)
-        l.addWidget(QLabel("Входные данные"))
+        l.addWidget(label := QLabel("Входные данные"))
+        self.labels.append(label)
         self.in_data = QTextEdit()
         self.in_data.setReadOnly(True)
         self.in_data.setFont(QFont("Courier", 10))
@@ -99,7 +106,8 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout3.addLayout(l)
-        l.addWidget(QLabel("Эталонный вывод"))
+        l.addWidget(label := QLabel("Эталонный вывод"))
+        self.labels.append(label)
         self.out_data = QTextEdit()
         self.out_data.setReadOnly(True)
         self.out_data.setFont(QFont("Courier", 10))
@@ -112,14 +120,22 @@ class TestingWidget(QWidget):
 
     def set_theme(self):
         self.button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.tests_list.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.button.setFont(self.tm.font_small)
+        self.tm.set_theme_to_list_widget(self.tests_list)
         self.prog_out.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.prog_out.setFont(self.tm.font_small)
         self.in_data.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.in_data.setFont(self.tm.font_small)
         self.out_data.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.out_data.setFont(self.tm.font_small)
         self.progress_bar.setStyleSheet(self.tm.progress_bar_style_sheet)
+        self.progress_bar.setFont(self.tm.font_small)
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
+        self.options_widget.setFont(self.tm.font_small)
+        for label in self.labels:
+            label.setFont(self.tm.font_small)
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -464,7 +480,7 @@ class TestingListWidgetItem(QListWidgetItem):
         self.status = TestingListWidgetItem.in_progress
         self.prog_out = ''
         self.exit_code = 0
-        self.setFont(QFont("Courier", 10))
+        self.setFont(self.tm.code_font)
         self.memory_testing = memory_testing
 
     def set_completed(self, res, prog_out, exit_code, memory_res, valgrind_out):

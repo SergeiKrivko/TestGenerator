@@ -67,6 +67,7 @@ class FilesWidget(QWidget):
                         item.setForeground(self.tm['TxtFile'])
                     elif file.endswith(".md"):
                         item.setForeground(self.tm['MdFile'])
+                    item.setFont(self.tm.font_small)
                     self.files_list.addItem(item)
 
     def open_file(self):
@@ -120,8 +121,10 @@ class FilesWidget(QWidget):
 
     def set_theme(self):
         self.button_add_file.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_add_file.setFont(self.tm.font_small)
         self.button_delete_file.setStyleSheet(self.tm.buttons_style_sheet)
-        self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.button_delete_file.setFont(self.tm.font_small)
+        self.tm.set_theme_to_list_widget(self.files_list)
 
 
 class DeleteFileDialog(QDialog):
@@ -131,7 +134,9 @@ class DeleteFileDialog(QDialog):
         self.setWindowTitle("Удаление файла")
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(QLabel(message))
+        label = QLabel(message)
+        label.setFont(tm.font_small)
+        self.layout.addWidget(label)
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
@@ -152,7 +157,9 @@ class DeleteFileDialog(QDialog):
 
         self.setStyleSheet(tm.bg_style_sheet)
         self.button_ok.setStyleSheet(tm.buttons_style_sheet)
+        self.button_ok.setFont(tm.font_small)
         self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
+        self.button_cancel.setFont(tm.font_small)
 
 
 class RenameFileDialog(QDialog):
@@ -162,7 +169,9 @@ class RenameFileDialog(QDialog):
         self.setWindowTitle("Переименование файла" if name else "Создание файла")
 
         self.layout = QVBoxLayout()
-        self.layout.addWidget(QLabel("Введите новое имя файла:" if name else "Введите имя файла:"))
+        label = QLabel("Введите новое имя файла:" if name else "Введите имя файла:")
+        label.setFont(tm.font_small)
+        self.layout.addWidget(label)
 
         self.line_edit = QLineEdit()
         self.line_edit.setText(name)
@@ -188,7 +197,10 @@ class RenameFileDialog(QDialog):
 
         self.setStyleSheet(tm.bg_style_sheet)
         self.button_ok.setStyleSheet(tm.buttons_style_sheet)
+        self.button_ok.setFont(tm.font_small)
         self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
+        self.button_cancel.setFont(tm.font_small)
         self.line_edit.setStyleSheet(tm.style_sheet)
+        self.line_edit.setFont(tm.font_small)
 
         self.resize(280, 50)

@@ -9,19 +9,16 @@ class CodeEditor(QsciScintilla):
     def __init__(self, sm, tm, lexer: type):
         super(CodeEditor, self).__init__(None)
 
-        # Set the default font
-        font = QFont()
-        font.setFamily('Courier')
-        font.setFixedPitch(True)
-        font.setPointSize(10)
-        self.setFont(font)
-        self.setMarginsFont(font)
         self.sm = sm
         self.tm = tm
 
+        # Set the default font
+        self.setFont(self.tm.code_font_std)
+        self.setMarginsFont(self.tm.code_font_std)
+
         # Margin 0 is used for line numbers
-        fontmetrics = QFontMetrics(font)
-        self.setMarginsFont(font)
+        fontmetrics = QFontMetrics(self.tm.code_font_std)
+        self.setMarginsFont(self.tm.code_font_std)
         self.setMarginWidth(0, fontmetrics.width("00000") + 6)
         self.setMarginLineNumbers(0, True)
 
@@ -39,7 +36,7 @@ class CodeEditor(QsciScintilla):
         self.setCaretLineVisible(True)
 
         self._lexer = lexer(None)
-        self._lexer.setDefaultFont(font)
+        self._lexer.setDefaultFont(self.tm.code_font_std)
         self.setLexer(self._lexer)
 
         self.setAutoCompletionSource(QsciScintilla.AcsAPIs)
@@ -75,6 +72,14 @@ class CodeEditor(QsciScintilla):
 
     def set_theme(self):
         self.setStyleSheet(self.tm.scintilla_style_sheet)
+
+        self.setFont(self.tm.code_font_std)
+        self.setMarginsFont(self.tm.code_font_std)
+        fontmetrics = QFontMetrics(self.tm.code_font_std)
+        self.setMarginsFont(self.tm.code_font_std)
+        self._lexer.setDefaultFont(self.tm.code_font_std)
+        self.setMarginWidth(0, fontmetrics.width("00000") + 6)
+
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
         self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))
         self.setMarginsForegroundColor(QColor(self.tm['TextColor']))

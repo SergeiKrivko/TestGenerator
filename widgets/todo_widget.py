@@ -33,7 +33,7 @@ class TODOWidget(QWidget):
 
         self.button_add = QPushButton("Добавить")
         self.button_add.setFixedHeight(25)
-        self.button_add.clicked.connect(lambda: self.list_widget.addItem(TODOItem(0, '')))
+        self.button_add.clicked.connect(lambda: self.list_widget.addItem(TODOItem(0, '', self.tm)))
         buttons_layout.addWidget(self.button_add)
 
         self.button_addc = QPushButton("Добавить в код")
@@ -52,10 +52,15 @@ class TODOWidget(QWidget):
 
     def set_theme(self):
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
+        self.options_widget.setFont(self.tm.font_small)
         self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.list_widget.setFont(self.tm.font_small)
         self.button_add.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_add.setFont(self.tm.font_small)
         self.button_addc.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_addc.setFont(self.tm.font_small)
         self.button_delete.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete.setFont(self.tm.font_small)
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -75,7 +80,7 @@ class TODOWidget(QWidget):
             self.jump_to_code()
 
     def add_todo_to_code(self):
-        dlg = AddTODODialogWindow(self.settings.path, self.settings['lab'])
+        dlg = AddTODODialogWindow(self.settings.path, self.settings['lab'], self.tm)
         if dlg.exec():
             file = open(f"{self.settings.path}/{dlg.task_combo_box.currentText()}/"
                         f"{dlg.file_combo_box.currentText()}", 'a', encoding='utf-8')
@@ -132,10 +137,10 @@ class TODOWidget(QWidget):
         self.list_widget.clear()
 
         for task, description in self.cm.parse_todo_md():
-            self.list_widget.addItem(TODOItem(task, description))
+            self.list_widget.addItem(TODOItem(task, description, self.tm))
 
         for path, line, description in self.cm.parse_todo_in_code():
-            self.list_widget.addItem(CodeTODOItem(path, line, description))
+            self.list_widget.addItem(CodeTODOItem(path, line, description, self.tm))
 
         self.list_widget.sortItems()
 
@@ -160,12 +165,13 @@ class TODOWidget(QWidget):
 
 
 class TODOItem(QListWidgetItem):
-    def __init__(self, task, description):
+    def __init__(self, task, description, tm):
         super(TODOItem, self).__init__()
         self.task = task
         self.description = description
         self.setText(f"{'Задание ' + str(task) if task else 'Общее':35}\t{description}")
         self.setForeground(Qt.blue)
+        self.setFont(tm.font_small)
 
     def set_description(self, description):
         self.description = description
@@ -177,17 +183,18 @@ class TODOItem(QListWidgetItem):
 
 
 class CodeTODOItem(QListWidgetItem):
-    def __init__(self, path, line, description):
+    def __init__(self, path, line, description, tm):
         super(CodeTODOItem, self).__init__()
         self.path = path
         self.description = description
         self.line = line
         self.setText(f"{self.path + '  ' + str(line):30}\t{self.description}")
         self.setForeground(Qt.darkYellow)
+        self.setFont(tm.font_small)
 
 
 class AddTODODialogWindow(QDialog):
-    def __init__(self, path, lab):
+    def __init__(self, path, lab, tm):
         super().__init__()
         self.path = path
 
@@ -198,6 +205,12 @@ class AddTODODialogWindow(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setFont(tm.font_small)
+        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFont(tm.font_small)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -207,6 +220,8 @@ class AddTODODialogWindow(QDialog):
         h_layout.addWidget(QLabel("Задание"))
 
         self.task_combo_box = QComboBox()
+        self.task_combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.task_combo_box.setFont(tm.font_small)
         h_layout.addWidget(self.task_combo_box)
         self.task_combo_box.setFixedSize(125, 25)
         self.task_combo_box.addItems(sorted(filter(lambda p: p.startswith(f"lab_{lab:0>2}_"), os.listdir(path))))
@@ -214,12 +229,16 @@ class AddTODODialogWindow(QDialog):
 
         h_layout.addWidget(QLabel("Файл"))
         self.file_combo_box = QComboBox()
+        self.file_combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.file_combo_box.setFont(tm.font_small)
         h_layout.addWidget(self.file_combo_box)
         self.file_combo_box.setFixedSize(125, 25)
         self.file_combo_box.addItems(sorted(filter(lambda p: p.endswith(".c") or p.endswith(".h"), os.listdir(
             f"{self.path}/{self.task_combo_box.currentText()}"))))
 
         self.line_edit = QLineEdit()
+        self.line_edit.setStyleSheet(tm.style_sheet)
+        self.line_edit.setFont(tm.font_small)
         self.line_edit.setFixedSize(400, 25)
         self.layout.addWidget(self.line_edit)
 

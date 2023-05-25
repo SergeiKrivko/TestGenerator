@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 
 basic_theme = {
@@ -52,7 +52,9 @@ basic_theme = {
     'CFile': QColor('#F82525'),
     'HFile': QColor('#99922C'),
     'TxtFile': QColor('#2065D4'),
-    'MdFile': QColor('#1BBDD4')
+    'MdFile': QColor('#1BBDD4'),
+    'FontFamily': "Calibri",
+    'CodeFontFamily': "Courier",
 }
 
 
@@ -527,11 +529,21 @@ class ThemeManager:
     def code_colors(self, lexer):
         return self.theme.code_colors(lexer)
 
+    def set_theme_to_list_widget(self, widget, font=None):
+        widget.setStyleSheet(self.list_widget_style_sheet)
+        for i in range(widget.count()):
+            widget.item(i).setFont(font if font else self.font_small)
+
     def set_theme(self, theme_name):
         self.theme_name = theme_name
         if theme_name not in self.themes:
             self.theme_name = ThemeManager.BASIC_THEME
         self.theme = self.themes.get(theme_name, self.themes[ThemeManager.BASIC_THEME])
+        self.font_small = QFont(self.get('FontFamily'), 11)
+        self.font_medium = QFont(self.get('FontFamily'), 14)
+        self.font_big = QFont(self.get('FontFamily'), 18)
+        self.code_font_std = QFont(self.get('CodeFontFamily'), 10)
+        self.code_font = QFont(self.get('CodeFontFamily'), 11)
         self.bg_style_sheet = f"color: {self['TextColor']};\n" \
                               f"background-color: {self['BgColor']};"
         self.style_sheet = f"color: {self['TextColor']};\n" \
@@ -629,6 +641,54 @@ class ThemeManager:
             subcontrol-origin: margin;
         }}
         """
+        self.scroll_area_style_sheet = f"""
+QScrollArea {{
+    {self.style_sheet}
+}}
+QScrollArea QScrollBar:vertical {{
+    background: {self['MainColor']};
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    width: 12px;
+    margin: 0px;
+}}
+QScrollArea QScrollBar:horizontal {{
+    background: {self['MainColor']};
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    height: 12px;
+    margin: 0px;
+}}
+QScrollArea QScrollBar::handle::vertical {{
+    background-color: {self['BorderColor']};
+    margin: 2px 2px 2px 6px;
+    border-radius: 2px;
+    min-height: 20px;
+}}
+QScrollArea QScrollBar::handle::vertical:hover {{
+    margin: 2px;
+    border-radius: 4px;
+}}
+QScrollArea QScrollBar::handle::horizontal {{
+    background-color: {self['BorderColor']};
+    margin: 6px 2px 2px 2px;
+    border-radius: 2px;
+    min-width: 20px;
+}}
+QScrollArea QScrollBar::handle::horizontal:hover {{
+    margin: 2px;
+    border-radius: 4px;
+}}
+QScrollArea QScrollBar::sub-page, QScrollBar::add-page {{
+    background: none;
+}}
+QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
+    background: none;
+    height: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}}
+"""
         self.text_edit_style_sheet = f"""
         QTextEdit {{
         {self.style_sheet}

@@ -1,5 +1,4 @@
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget
 
 from widgets.lib_dialog import LibWidget
@@ -17,13 +16,10 @@ class SettingsWidget(QWidget):
         self.sm = sm
         self.tm = tm
 
-        big_font = QFont("Calibri", 16)
-
         layout = QHBoxLayout()
 
         self.list_widget = QListWidget()
         self.list_widget.addItems(['Основные', 'Тестирование', 'Библиотеки'])
-        self.list_widget.setFont(big_font)
         self.list_widget.setFixedWidth(175)
         self.list_widget.currentItemChanged.connect(self.select_tab)
         layout.addWidget(self.list_widget)
@@ -72,6 +68,9 @@ class SettingsWidget(QWidget):
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
         self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
+        self.main_options_widget.setFont(self.tm.font_small)
+        self.testing_widget.setFont(self.tm.font_small)
         self.main_options_widget.widgets['Символ переноса строки: '].setStyleSheet(self.tm.combo_box_style_sheet)
         self.main_options_widget.widgets['Тема:'].setStyleSheet(self.tm.combo_box_style_sheet)
         self.main_options_widget.widgets['Python'].setStyleSheet(self.tm.style_sheet)

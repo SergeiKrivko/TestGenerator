@@ -55,6 +55,7 @@ class GeneratorWindow(QMainWindow):
         QMenuBar::item::selected {{
             background-color: {self.tm['MainColor']};
         }}""")
+        self.menu_bar.setFont(self.tm.font_small)
         self.code_edit.set_theme()
 
     def open_code(self):
