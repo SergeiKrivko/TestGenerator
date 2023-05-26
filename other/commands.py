@@ -122,17 +122,17 @@ class CommandManager:
     def parse_todo_md(self):
         res = []
         try:
-            file = open(f"{self.sm['path']}/TODO/lab_{self.sm['lab']:0>2}.md")
-            task = -1
-            for line in file:
-                if line.startswith('## Общее'):
-                    task = 0
-                elif line.startswith('## Задание'):
-                    task = int(line.split()[2])
-                elif line.startswith('- '):
-                    res.append((task, line[1:].strip()))
-                res.sort()
-        except Exception:
+            with open(f"{self.sm.data_path}/TODO/lab_{self.sm['lab']:0>2}.md", encoding='utf-8') as file:
+                task = -1
+                for line in file:
+                    if line.startswith('## Общее'):
+                        task = 0
+                    elif line.startswith('## Задание'):
+                        task = int(line.split()[2])
+                    elif line.startswith('- '):
+                        res.append((task, line[1:].strip()))
+                    res.sort()
+        except FileNotFoundError:
             pass
         return res
 

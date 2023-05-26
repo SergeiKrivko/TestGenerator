@@ -85,7 +85,6 @@ class MainWindow(QMainWindow):
 
         if not os.path.isdir(self.sm.get_general('__project__', '')) or not self.project_widget.list_widget.count():
             self.show_tab('project_widget')
-            self.menu_bar.setDisabled(True)
         else:
             self.show_tab('project_widget')
 

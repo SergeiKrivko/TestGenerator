@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
@@ -55,7 +56,7 @@ class ProjectWidget(QWidget):
         self.label = QLabel("Настройки тестирования по умолчанию")
         testing_checkbox_layout.addWidget(self.label)
         self.testing_checkbox.clicked.connect(self.testing_checkbox_triggered)
-        if self.sm.path:
+        if self.sm.data_path:
             self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
         right_layout.addLayout(testing_checkbox_layout)
 
@@ -96,51 +97,41 @@ class ProjectWidget(QWidget):
 
     def update_projects(self):
         self.list_widget.clear()
-        for pr in self.sm.get_general('projects', set()):
+        for pr in self.sm.projects.keys():
             item = ProjectListWidgetItem(pr)
+            item.setFont(self.tm.font_medium)
             self.list_widget.addItem(item)
-            if self.sm.path == pr:
+            if self.sm.project == pr:
                 self.list_widget.setCurrentItem(item)
         self.list_widget.sortItems()
 
     def rename_project(self):
-        self.dialog = RenameProjectDialog(self.sm.path, self.tm)
+        self.dialog = RenameProjectDialog(self.sm.data_path, self.tm)
         if self.dialog.exec():
-            new_path = f"{os.path.split(self.sm.path)[0]}/{self.dialog.line_edit.text()}"
-            if os.path.isdir(new_path):
+            new_name = self.dialog.line_edit.text()
+            if new_name in self.sm.projects:
                 MessageBox(MessageBox.Warning, "Переименование проекта",
-                           f"Папка {new_path} уже существует. Переименование невозможно", self.tm)
+                           f"Проект {new_name} уже существует. Переименование невозможно", self.tm)
             else:
-                os.rename(self.sm.path, new_path)
-                projects_set = self.sm.get_general('projects', set())
-                projects_set.remove(self.sm.path)
-                projects_set.add(new_path)
-                self.sm.set_general(new_path, self.sm.get_general(self.sm.path, dict()))
-                self.sm.remove(self.sm.path)
-                self.sm.set_general('projects', projects_set)
-                self.sm.set_general('__project__', new_path)
+                os.rename(self.sm.data_path, f"{os.path.split(self.sm.data_path)[0]}/{new_name}")
+                self.sm.projects[new_name] = self.sm.projects[self.sm.project]
+                self.sm.projects.pop(self.sm.project)
+                self.sm.project = new_name
                 self.sm.repair_settings()
                 self.update_projects()
 
     def delete_project(self):
-        self.dialog = DeleteProjectDialog(self.sm.path, self.tm)
+        self.dialog = DeleteProjectDialog(self.sm.data_path, self.tm)
         if self.dialog.exec():
-            projects_set = self.sm.get_general('projects', set())
-            projects_set.remove(self.sm.path)
-            self.sm.remove(self.sm.path)
-            self.sm.set_general('projects', projects_set)
-            self.sm.set_general('__project__', None)
+            shutil.rmtree(self.sm.data_path)
+            self.sm.projects.pop(self.sm.project)
             self.update_projects()
-            if not self.list_widget.count():
-                self.disable_menu_func(True)
+            self.disable_menu_func(True)
 
     def new_project(self):
-        path = QFileDialog.getExistingDirectory(directory=self.sm.get_general('__project__', os.getcwd()))
+        path = QFileDialog.getExistingDirectory(directory=self.sm.path)
         if path:
-            projects_set = self.sm.get_general('projects', set())
-            projects_set.add(path)
-            self.sm.set_general('projects', projects_set)
-            self.sm.repair_settings()
+            self.sm.projects[os.path.basename(path)] = path
             self.update_projects()
             self.disable_menu_func(False)
 
@@ -149,9 +140,9 @@ class ProjectWidget(QWidget):
         if self.list_widget.currentItem() is None:
             self.options_widget.setDisabled(True)
             return
-        path = self.list_widget.currentItem().path
+        project = self.list_widget.currentItem().text()
         self.options_widget.setDisabled(False)
-        self.sm.set_general('__project__', path)
+        self.sm.set_project(project)
         self.sm.repair_settings()
         self.testing_checkbox.setChecked(flag := self.sm.get('default_testing_settings', True))
         if flag:
@@ -171,12 +162,12 @@ class ProjectWidget(QWidget):
         self.options_widget.widgets['Тестирование по памяти'].setChecked(bool(self.sm.get('memory_testing', False)))
         self.options_widget.widgets['Ограничение по времени:'].setValue(int(self.sm.get('time_limit', 3)))
         self.opening_project = False
+        self.disable_menu_func(False)
 
     def save_settings(self):
         if self.opening_project:
             return
         if not self.testing_checkbox.isChecked():
-            print(f'save project {self.sm.path} settings')
             dct = self.options_widget.values
             self.sm.set('compiler', dct['Компилятор'])
             self.sm.set('-lm', dct['Ключ -lm'])

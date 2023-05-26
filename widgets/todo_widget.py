@@ -82,7 +82,7 @@ class TODOWidget(QWidget):
     def add_todo_to_code(self):
         dlg = AddTODODialogWindow(self.settings.path, self.settings['lab'], self.tm)
         if dlg.exec():
-            file = open(f"{self.settings.path}/{dlg.task_combo_box.currentText()}/"
+            file = open(f"{self.settings.data_path}/{dlg.task_combo_box.currentText()}/"
                         f"{dlg.file_combo_box.currentText()}", 'a', encoding='utf-8')
             file.write(f"// TODO: {dlg.line_edit.text()}\n")
             file.close()
@@ -114,8 +114,8 @@ class TODOWidget(QWidget):
 
                 self.list_widget.sortItems()
 
-                os.makedirs(f"{self.settings.path}/TODO", exist_ok=True)
-                file = open(f"{self.settings.path}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8',
+                os.makedirs(f"{self.settings.data_path}/TODO", exist_ok=True)
+                file = open(f"{self.settings.data_path}/TODO/lab_{self.settings['lab']:0>2}.md", 'w', encoding='utf-8',
                             newline=self.settings['line_sep'])
                 file.write(f"# Лабораторная работа №{self.settings['lab']}: список задач\n\n")
 
@@ -130,8 +130,8 @@ class TODOWidget(QWidget):
                 file.close()
                 break
         else:
-            if os.path.isfile(f"{self.settings.path}/TODO/lab_{self.settings['lab']:0>2}.md"):
-                os.remove(f"{self.settings.path}/TODO/lab_{self.settings['lab']:0>2}.md")
+            if os.path.isfile(f"{self.settings.data_path}/TODO/lab_{self.settings['lab']:0>2}.md"):
+                os.remove(f"{self.settings.data_path}/TODO/lab_{self.settings['lab']:0>2}.md")
 
     def open_lab(self):
         self.list_widget.clear()

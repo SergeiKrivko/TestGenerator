@@ -1,5 +1,6 @@
+import os
 from PyQt5.QtCore import QSettings
-from json import dumps, loads
+from json import dumps, loads, JSONDecodeError
 import appdirs
 
 
@@ -7,18 +8,21 @@ class SettingsManager:
     def __init__(self):
         # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
         self.q_settings = QSettings()
-        self.path = self.get_general('__project__')
-        s = self.get_general(self.path)
-        self.dct = loads(s if isinstance(s, str) else '{}')
-
         self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko")
+
+        self.project = ''
+        self.projects = dict()
+        self.path = ''
+        self.data_path = ''
+        self.project_settings = dict()
+        self.set_project(self.get_general('project'))
 
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)
 
     def get(self, key, default=None, project=None):
         if project is None:
-            dct = self.dct
+            dct = self.project_settings
         else:
             dct = loads(self.get_general(project, '{}'))
         return dct.get(key, self.get_general(key, default))
@@ -28,6 +32,29 @@ class SettingsManager:
 
     def remove(self, key):
         self.q_settings.remove(key)
+
+    def set_project(self, project):
+        self.store()
+        self.project = project
+        print(f"open {self.project}")
+        try:
+            s = self.get_general('projects')
+            self.projects = loads(s)
+        except JSONDecodeError:
+            self.projects = dict()
+        except TypeError:
+            self.projects = dict()
+
+        self.path = self.projects.get(self.project)
+
+        self.data_path = f"{self.app_data_dir}/projects/{self.project}"
+        try:
+            with open(f"{self.data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                self.project_settings = loads(f.read())
+        except FileNotFoundError:
+            self.project_settings = dict()
+        except JSONDecodeError:
+            self.project_settings = dict()
 
     def lab_path(self, lab=None, task=None, var=None):
         if lab is None:
@@ -42,15 +69,10 @@ class SettingsManager:
 
     def set_general(self, key, value):
         self.q_settings.setValue(key, value)
-        if key == '__project__':
-            self.store()
-            self.path = value
-            s = self.get_general(self.path)
-            self.dct = loads(s if isinstance(s, str) else '{}')
 
     def set(self, key, value, project=None):
         if project is None:
-            self.dct[key] = value
+            self.project_settings[key] = value
         else:
             dct = loads(self.get_general(project, '{}'))
             dct[key] = value
@@ -60,9 +82,9 @@ class SettingsManager:
         self.set(key, value)
 
     def repair_settings(self):
-        if self.path:
-            if self.q_settings.value(self.path) is None:
-                self.q_settings.setValue(self.path, '{}')
+        if self.data_path:
+            # if self.q_settings.value(self.data_path) is None:
+            #     self.q_settings.setValue(self.data_path, '{}')
 
             if not isinstance(self.get('lab'), int):
                 self.set('lab', 1)
@@ -92,26 +114,26 @@ class SettingsManager:
                     self.set_general('coverage', 0)
                 if not isinstance(self.get_general('time_limit'), (float, int)):
                     self.set_general('time_limit', 10)
-                if 'compiler' in self.dct:
-                    self.dct.pop('compiler')
-                if '-lm' in self.dct:
-                    self.dct.pop('-lm')
-                if 'pos_comparator' in self.dct:
-                    self.dct.pop('pos_comparator')
-                if 'neg_comparator' in self.dct:
-                    self.dct.pop('neg_comparator')
-                if 'pos_substring' in self.dct:
-                    self.dct.pop('pos_substring')
-                if 'neg_substring' in self.dct:
-                    self.dct.pop('neg_substring')
-                if 'epsilon' in self.dct:
-                    self.dct.pop('epsilon')
-                if 'memory_testing' in self.dct:
-                    self.dct.pop('memory_testing')
-                if 'coverage' in self.dct:
-                    self.dct.pop('coverage')
-                if 'time_limit' in self.dct:
-                    self.dct.pop('time_limit')
+                if 'compiler' in self.project_settings:
+                    self.project_settings.pop('compiler')
+                if '-lm' in self.project_settings:
+                    self.project_settings.pop('-lm')
+                if 'pos_comparator' in self.project_settings:
+                    self.project_settings.pop('pos_comparator')
+                if 'neg_comparator' in self.project_settings:
+                    self.project_settings.pop('neg_comparator')
+                if 'pos_substring' in self.project_settings:
+                    self.project_settings.pop('pos_substring')
+                if 'neg_substring' in self.project_settings:
+                    self.project_settings.pop('neg_substring')
+                if 'epsilon' in self.project_settings:
+                    self.project_settings.pop('epsilon')
+                if 'memory_testing' in self.project_settings:
+                    self.project_settings.pop('memory_testing')
+                if 'coverage' in self.project_settings:
+                    self.project_settings.pop('coverage')
+                if 'time_limit' in self.project_settings:
+                    self.project_settings.pop('time_limit')
             else:
                 if not isinstance(self.get('compiler'), str):
                     self.set('compiler', self.get_general('compiler', 'gcc -std=c99 -Wall -Werror'))
@@ -135,4 +157,11 @@ class SettingsManager:
                     self.set('time_limit', self.get_general('time_limit', 10))
                     
     def store(self):
-        self.q_settings.setValue(self.path, dumps(self.dct))
+        print(f"store {self.project}    {self.projects}")
+        if self.project and self.data_path:
+            os.makedirs(self.data_path, exist_ok=True)
+            with open(f"{self.data_path}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
+                f.write(dumps(self.project_settings))
+            self.set_general('projects', dumps(self.projects))
+            self.set_general('project', self.project)
+
