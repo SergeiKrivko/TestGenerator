@@ -51,17 +51,18 @@ class StructFormat:
 
 
 FORMATS = {
-    'c': StructFormat('c', 1, str, 'char'),
+    'x': StructFormat('x', 1, None, 'pad byte'),
+    's': StructFormat('s', 1, str, 'char'),
     'b': StructFormat('b', 1, int, 'byte'),
     'B': StructFormat('B', 1, int, 'unsigned byte'),
-    's': StructFormat('s', 2, int, 'short'),
-    'S': StructFormat('S', 2, int, 'unsigned short'),
+    'h': StructFormat('h', 2, int, 'short'),
+    'H': StructFormat('H', 2, int, 'unsigned short'),
     'i': StructFormat('i', 4, int, 'int'),
     'I': StructFormat('I', 4, int, 'unsigned int'),
     'q': StructFormat('q', 8, int, 'long'),
     'Q': StructFormat('Q', 8, int, 'unsigned long'),
     'f': StructFormat('f', 4, float, 'float'),
-    'F': StructFormat('F', 4, float, 'unsigned float')
+    'd': StructFormat('d', 4, float, 'double')
 }
 
 
@@ -70,15 +71,16 @@ def convert_line(line: str):
     numbers = []
     i = 1
     for count, literal in parse_mask(lst[0]):
+        if literal == 'x':
+            continue
         if i == len(lst):
             raise IndexError(f"Expected more values then {i}")
-        if literal == 'c':
+        if literal == 's':
             byte_str = lst[i].encode('utf-8')
             if len(byte_str) >= count:
-                byte_str = byte_str[:count]
-            byte_str += b'0' * (count - len(byte_str))
-            for c in byte_str:
-                numbers.append(c.to_bytes(1, 'big'))
+                byte_str = byte_str[:count - 1]
+            byte_str += b'\0' * (count - len(byte_str))
+            numbers.append(byte_str)
             i += 1
         else:
             for j in range(count):
