@@ -56,7 +56,7 @@ class SettingsManager:
         except JSONDecodeError:
             self.project_settings = dict()
 
-    def lab_path(self, lab=None, task=None, var=None):
+    def lab_path(self, lab=None, task=None, var=None, appdata=False):
         if lab is None:
             lab = self.get('lab')
         if task is None:
@@ -64,8 +64,8 @@ class SettingsManager:
         if var is None:
             var = self.get('var')
         if var == -1:
-            return f"{self.path}/lab_{lab:0>2}_{task:0>2}"
-        return f"{self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
+            return f"{self.data_path if appdata else self.path}/lab_{lab:0>2}_{task:0>2}"
+        return f"{self.data_path if appdata else self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
 
     def set_general(self, key, value):
         self.q_settings.setValue(key, value)

@@ -289,7 +289,7 @@ class TestingWidget(QWidget):
         self.progress_bar.setMaximum(len(lst))
         self.progress_bar.setValue(0)
 
-        if command := read_file(f"{self.sm.data_path}/func_tests/preprocessor.txt", ''):
+        if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt", ''):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(lambda: self.start_testing(lst))
             self.looper.start()
@@ -320,7 +320,7 @@ class TestingWidget(QWidget):
         if self.sm.get('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
-        if command := read_file(f"{self.sm.data_path}/func_tests/postprocessor.txt", ''):
+        if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt", ''):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(self.enable_ui)
             self.looper.start()
@@ -344,7 +344,7 @@ class TestingWidget(QWidget):
 
         self.cm.clear_coverage_files()
 
-        if command := read_file(f"{self.sm.data_path}/func_tests/postprocessor.txt", ''):
+        if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt", ''):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(self.enable_ui)
             self.looper.start()

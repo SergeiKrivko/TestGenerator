@@ -372,9 +372,9 @@ class TestsWidget(QWidget):
                 self.options_widget.set_value("Выход:", lines[i + 1].strip())
 
     def load_data_files(self):
-        path = f"{self.sm.data_path}/func_tests/preprocessor.txt"
+        path = f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt"
         self.test_edit_widget.preprocessor_line.setText(read_file(path, ''))
-        path = f"{self.sm.data_path}/func_tests/postprocessor.txt"
+        path = f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt"
         self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
 
         if not os.path.isdir(f"{self.path}/func_tests/data"):
@@ -593,16 +593,16 @@ class TestsWidget(QWidget):
                     self.save_a_test(i, 'neg')
                 self.remove_temp_files()
 
-            os.makedirs(f"{self.sm.data_path}/func_tests", exist_ok=True)
+            os.makedirs(f"{self.sm.lab_path(appdata=True)}/func_tests", exist_ok=True)
             text = self.test_edit_widget.preprocessor_line.text()
-            path = f"{self.sm.data_path}/func_tests/preprocessor.txt"
+            path = f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt"
             if text:
                 self.write_file(path, text)
             elif os.path.isfile(path):
                 os.remove(path)
 
             text = self.test_edit_widget.postprocessor_line.text()
-            path = f"{self.sm.data_path}/func_tests/postprocessor.txt"
+            path = f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt"
             if text:
                 self.write_file(path, text)
             elif os.path.isfile(path):
