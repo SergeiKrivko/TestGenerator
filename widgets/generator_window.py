@@ -94,7 +94,7 @@ class GeneratorWindow(QMainWindow):
 
     def run_code(self):
         os.makedirs(f"{self.sm.lab_path()}/func_tests/data", exist_ok=True)
-        file = open('temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
+        file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
         file.write(self.previous_code())
         file.write(self.code_edit.text())
         file.write(self.end_code())
@@ -102,7 +102,7 @@ class GeneratorWindow(QMainWindow):
 
         self.menu_bar.setDisabled(True)
 
-        self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), 'temp.py'])
+        self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), f'{self.sm.app_data_dir}/temp.py'])
         self.looper.complete.connect(self.run_complete)
         self.looper.run()
 
@@ -112,13 +112,13 @@ class GeneratorWindow(QMainWindow):
             MessageBox(MessageBox.Information, 'STDOUT', res.stdout, self.tm)
         if res.stderr:
             MessageBox(MessageBox.Information, 'STDERR', res.stderr, self.tm)
-        if os.path.isfile('temp.txt'):
-            file = open(f"temp.txt", encoding='utf-8')
+        if os.path.isfile(f'{self.sm.app_data_dir}/temp.txt'):
+            file = open(f"{self.sm.app_data_dir}/temp.txt", encoding='utf-8')
             self.complete.emit(list(map(str.strip, file.readlines())), self.test_type)
             file.close()
-            os.remove('temp.txt')
-        if os.path.isfile('temp.py'):
-            os.remove('temp.py')
+            os.remove(f'{self.sm.app_data_dir}/temp.txt')
+        if os.path.isfile(f'{self.sm.app_data_dir}/temp.py'):
+            os.remove(f'{self.sm.app_data_dir}/temp.py')
         if res.returncode == 0:
             self.hide()
 
@@ -178,7 +178,7 @@ def add_test(in_data='', out_data='', args='', desc='-', index=None):
 
     def end_code(self):
         return f"""
-file = open('temp.txt', 'w', encoding='utf-8')
+file = open('{self.sm.app_data_dir}/temp.txt', 'w', encoding='utf-8')
 for el in __tests_list__:
     file.write(str(el) + '\\n')
 file.close()

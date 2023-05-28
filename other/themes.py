@@ -512,6 +512,59 @@ class ThemeManager:
                 'TxtFile': QColor('#2065D4'),
                 'MdFile': QColor('#1BBDD4')
             }),
+            'flamingo': Theme({
+                'QsciLexerCPP':
+                    {
+                        'Identifier': QColor('#3B2C3B'),
+                        'PreProcessor': QColor('#3B9629'),
+                        'Comment': QColor('#A19F26'),
+                        'CommentLine': QColor('#A19F26'),
+                        'CommentDoc': QColor('#A19F26'),
+                        'Keyword': QColor('#CB45F0'),
+                        'Number': QColor('#2D62F2'),
+                        'Operator': QColor('#3B2C3B'),
+                        'DoubleQuotedString': QColor('#C2451A'),
+                        'SingleQuotedString': QColor('#C2451A')
+                    },
+                'QsciLexerPython':
+                    {
+                        'Identifier': QColor('#3B2C3B'),
+                        'Comment': QColor('#A19F26'),
+                        'CommentBlock': QColor('#A19F26'),
+                        'Keyword': QColor('#CB45F0'),
+                        'Number': QColor('#2D62F2'),
+                        'Operator': QColor('#3B2C3B'),
+                        'ClassName': QColor('#3B9629'),
+                        'Decorator': QColor('#3B9629'),
+                        'FunctionMethodName': QColor('#3B9629'),
+                        'DoubleQuotedString': QColor('#C2451A'),
+                        'SingleQuotedString': QColor('#C2451A'),
+                        'DoubleQuotedFString': QColor('#C2451A'),
+                        'SingleQuotedFString': QColor('#C2451A'),
+                        'TripleDoubleQuotedString': QColor('#C2451A'),
+                        'TripleSingleQuotedString': QColor('#C2451A'),
+                        'TripleDoubleQuotedFString': QColor('#C2451A'),
+                        'TripleSingleQuotedFString': QColor('#C2451A'),
+                    },
+                'Paper': QColor('#F7DDF4'),
+                'CaretLineBackgroundColor': QColor('#F5BFF7'),
+                'BraceColor': QColor('#CB45F0'),
+                'MainColor': '#F2B5F1',
+                'BgColor': '#F5D7FF',
+                'BorderColor': '#93699E',
+                'TextColor': '#2F1233',
+                'ColorSelected': '#D6A0D5',
+                'ColorHover': '#E6ACE5',
+                'TestPassed': QColor('#2D9124'),
+                'TestFailed': QColor('#F82525'),
+                'TestInProgress': QColor('#9D70A0'),
+                'TestCrashed': QColor('A01010'),
+                'MainC': QColor('#1933E3'),
+                'CFile': QColor('#2D62F2'),
+                'HFile': QColor('#3B9629'),
+                'TxtFile': QColor('#2065D4'),
+                'MdFile': QColor('#1BBDD4')
+            }),
         }
 
         self.theme_name = ''

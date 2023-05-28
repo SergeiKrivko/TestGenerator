@@ -1,3 +1,4 @@
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
 
 
@@ -31,6 +32,19 @@ class TestEditWidget(QWidget):
         self.exit_code_edit_text = ""
         self.exit_code_edit.textChanged.connect(self.exit_code_edit_triggered)
         h_layout2.addWidget(self.exit_code_edit)
+
+        h_layout3 = QHBoxLayout()
+        layout.addLayout(h_layout3)
+
+        h_layout3.addWidget(label := QLabel("Препроцессор:"))
+        self.labels.append(label)
+        self.preprocessor_line = QLineEdit()
+        h_layout3.addWidget(self.preprocessor_line)
+
+        h_layout3.addWidget(label := QLabel("Постпроцессор:"))
+        self.labels.append(label)
+        self.postprocessor_line = QLineEdit()
+        h_layout3.addWidget(self.postprocessor_line)
 
         h_layout = QHBoxLayout()
         layout.addLayout(h_layout)
@@ -105,9 +119,124 @@ class TestEditWidget(QWidget):
         self.cmd_args_edit.setFont(self.tm.code_font)
         self.exit_code_edit.setStyleSheet(self.tm.style_sheet)
         self.exit_code_edit.setFont(self.tm.font_small)
+        self.preprocessor_line.setStyleSheet(self.tm.style_sheet)
+        self.preprocessor_line.setFont(self.tm.code_font)
+        self.postprocessor_line.setStyleSheet(self.tm.style_sheet)
+        self.postprocessor_line.setFont(self.tm.code_font)
         self.button_generate.setStyleSheet(self.tm.buttons_style_sheet)
         self.button_generate.setFont(self.tm.font_small)
         for label in self.labels:
             label.setFont(self.tm.font_small)
 
+
+class InEditWidget(QWidget):
+    def __init__(self, tm):
+        super(InEditWidget, self).__init__()
+        self._tm = tm
+
+        self._layout = QVBoxLayout()
+
+        self._tab_layout = QHBoxLayout()
+        self._tab_layout.setContentsMargins(0, 0, 0, 0)
+        self._tab_layout.setAlignment(Qt.AlignLeft)
+        self._tab_layout.setSpacing(0)
+
+        self._stdin_tab = Tab(self._tm, "STDIN", True)
+        self._stdin_tab.clicked.connect(self.select_tab)
+        self._tab_layout.addWidget(self._stdin_tab)
+
+        self.plus_button = QPushButton("+")
+        self.plus_button.setFixedSize(16, 16)
+        self.plus_button.clicked.connect(self.add_tab)
+        self._tab_layout.addWidget(self.plus_button)
+
+        self._layout.addLayout(self._tab_layout)
+
+        self.stdin_text_edit = QTextEdit()
+        self._layout.addWidget(self.stdin_text_edit)
+        self.setLayout(self._layout)
+
+        self._tabs = {'STDIN': self._stdin_tab}
+        self._widgets = {'STDIN': self.stdin_text_edit}
+        
+    def add_tab(self):
+        name = 'new_tab'
+        tab = Tab(self._tm, name)
+        self._tabs[name] = tab
+        self._tab_layout.addWidget(tab)
+        tab.clicked.connect(self.select_tab)
+        
+        text_edit = QTextEdit()
+        self._layout.addWidget(text_edit)
+        self._widgets[name] = text_edit
+        
+    def select_tab(self, name):
+        for widget in self._widgets.values():
+            widget.hide()
+        for widget in self._tabs.values():
+            widget.set_selected(False)
+        self._widgets[name].show()
+        self._tabs[name].set_selected(True)
+
+    def delete_tab(self, name):
+        self._tab_layout.removeWidget(self._tabs[name])
+        self._tabs.pop(name)
+
+        self._layout.removeWidget(self._widgets[name])
+        self._widgets.pop(name)
+
+    def set_theme(self):
+        self.plus_button.setStyleSheet(self._tm.buttons_style_sheet)
+        for tab in self._tabs.values():
+            tab.set_theme()
+        for widget in self._widgets.values():
+            widget.setStyleSheet(self._tm.text_edit_style_sheet)
+
+
+class Tab(QWidget):
+    clicked = pyqtSignal(str)
+    close = pyqtSignal(str)
+
+    def __init__(self, tm, text: str, closable=False):
+        super(Tab, self).__init__()
+        self._tm = tm
+        self._closable = closable
+        self._text = text
+        self._selected = False
+        self.setFixedHeight(20)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self._label = QLabel(text)
+        layout.addWidget(self._label)
+
+        if self._closable:
+            self._button = QPushButton("✕")
+            self._button.setFixedSize(12, 12)
+            layout.addWidget(self._button)
+
+        self.setLayout(layout)
+        self.set_theme()
+
+        self._button.clicked.connect(lambda: self.close.emit(self._text))
+
+    def set_theme(self):
+        self.setStyleSheet(f"""
+background-color: {self._tm['ColorSelected' if self._selected else 'MainColor']};
+border: 1px solid {self._tm['BorderColor']};
+border-top-left-radius: 6;
+border-top-right-radius: 6;
+""")
+        if self._closable:
+            self._button.setStyleSheet(self._tm.buttons_style_sheet)
+        
+    def set_selected(self, selected):
+        self._selected = selected
+        self.set_theme()
+
+    def mousePressEvent(self, a0) -> None:
+        if a0.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self._text)
 

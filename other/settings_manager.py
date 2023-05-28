@@ -8,7 +8,7 @@ class SettingsManager:
     def __init__(self):
         # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
         self.q_settings = QSettings()
-        self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko")
+        self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko").replace('\\', '/')
 
         self.project = ''
         self.projects = dict()

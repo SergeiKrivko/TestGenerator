@@ -164,6 +164,7 @@ class Looper(QThread):
         self.res = None
 
     def run(self) -> None:
+        print(os.getcwd())
         self.res = self.func()
         self.complete.emit(self.res)
 

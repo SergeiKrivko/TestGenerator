@@ -289,6 +289,14 @@ class TestingWidget(QWidget):
         self.progress_bar.setMaximum(len(lst))
         self.progress_bar.setValue(0)
 
+        if command := read_file(f"{self.sm.data_path}/func_tests/preprocessor.txt", ''):
+            self.looper = self.cm.cmd_command_looper(command, shell=True)
+            self.looper.finished.connect(lambda: self.start_testing(lst))
+            self.looper.start()
+        else:
+            self.start_testing(lst)
+
+    def start_testing(self, lst):
         self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
                         self.sm.get('coverage', False))
 
@@ -302,11 +310,6 @@ class TestingWidget(QWidget):
         self.testing_start.emit(lst)
 
     def end_testing(self):
-        self.options_widget.setDisabled(False)
-        self.ui_disable_func(False)
-        self.button.setText("Тестировать")
-        self.button.setDisabled(False)
-
         self.progress_bar.hide()
         self.coverage_bar.show()
 
@@ -317,14 +320,12 @@ class TestingWidget(QWidget):
         if self.sm.get('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
-        os.chdir(self.old_dir)
+        if command := read_file(f"{self.sm.data_path}/func_tests/postprocessor.txt", ''):
+            self.looper = self.cm.cmd_command_looper(command, shell=True)
+            self.looper.finished.connect(self.enable_ui)
+            self.looper.start()
 
     def testing_is_terminated(self, errors):
-        self.options_widget.setDisabled(False)
-        self.ui_disable_func(False)
-        self.button.setText("Тестировать")
-        self.button.setDisabled(False)
-
         self.progress_bar.hide()
         self.coverage_bar.show()
 
@@ -343,6 +344,16 @@ class TestingWidget(QWidget):
 
         self.cm.clear_coverage_files()
 
+        if command := read_file(f"{self.sm.data_path}/func_tests/postprocessor.txt", ''):
+            self.looper = self.cm.cmd_command_looper(command, shell=True)
+            self.looper.finished.connect(self.enable_ui)
+            self.looper.start()
+
+    def enable_ui(self):
+        self.options_widget.setDisabled(False)
+        self.ui_disable_func(False)
+        self.button.setText("Тестировать")
+        self.button.setDisabled(False)
         os.chdir(self.old_dir)
 
     def pos_comparator(self, str1, str2):
@@ -455,7 +466,15 @@ def comparator6(str1, str2):
     return str1.split() == str2.split()
 
 
-def read_file(path):
+def read_file(path, default=None):
+    if default is not None:
+        try:
+            file = open(path, encoding='utf-8')
+            res = file.read()
+            file.close()
+            return res
+        except:
+            return default
     file = open(path, encoding='utf-8')
     res = file.read()
     file.close()
