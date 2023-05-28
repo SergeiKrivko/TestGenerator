@@ -1,4 +1,5 @@
 import os
+from json import loads
 from subprocess import run, TimeoutExpired
 import subprocess
 from time import sleep
@@ -26,7 +27,7 @@ class CommandManager:
     def update_path(self):
         self.path = self.sm.lab_path()
 
-    def compile2(self, coverage=False):
+    def compile(self, coverage=False):
         self.update_path()
         old_dir = os.getcwd()
         os.chdir(self.path)
@@ -84,8 +85,10 @@ class CommandManager:
 
     def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
-        self.looper = TestingLooper(self.compile2, self.path, pos_comparator, neg_comparator, memory_testing, coverage,
-                                    time_limit=self.sm.get('time_limit'))
+        self.looper = TestingLooper(
+            self.compile, self.path, pos_comparator, neg_comparator,
+            loads(self.read_file(f"{self.sm.lab_path(appdata=True)}/exit_codes.txt", '{}')),
+            memory_testing, coverage, time_limit=self.sm.get('time_limit'))
         self.looper.start()
 
     def test_count(self):
@@ -99,14 +102,14 @@ class CommandManager:
         return count
 
     @staticmethod
-    def read_file(path):
+    def read_file(path, default=''):
         try:
             file = open(path, encoding='utf-8')
             res = file.read()
             file.close()
             return res
         except Exception:
-            return ''
+            return default
 
     def list_of_tasks(self):
         res = []
@@ -176,7 +179,7 @@ class TestingLooper(QThread):
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, compiler, path, pos_comparator, neg_comparator, memory_testing=False, coverage=False,
+    def __init__(self, compiler, path, pos_comparator, neg_comparator, exit_codes, memory_testing=False, coverage=False,
                  time_limit=10):
         super(TestingLooper, self).__init__()
         self.time_limit = time_limit
@@ -186,6 +189,7 @@ class TestingLooper(QThread):
         self.pos_comparator = pos_comparator
         self.neg_comparator = neg_comparator
         self.coverage = coverage
+        self.exit_codes = exit_codes
 
     def run(self):
         code, errors = self.compiler(coverage=self.coverage)
@@ -218,7 +222,8 @@ class TestingLooper(QThread):
             else:
                 valgrind_out = ""
 
-            self.test_complete.emit(not res.returncode and comparator_res,
+            expected_code = self.exit_codes.get(f"pos{i}", 0)
+            self.test_complete.emit(res.returncode == expected_code and comparator_res,
                                     res.stdout, res.returncode, not valgrind_out, valgrind_out)
             sleep(0.1)
             i += 1
@@ -248,8 +253,9 @@ class TestingLooper(QThread):
             else:
                 valgrind_out = ""
 
-            self.test_complete.emit(res.returncode and comparator_res,
-                                    res.stdout, res.returncode, not valgrind_out, valgrind_out)
+            expected_code = self.exit_codes.get(f"neg{i}")
+            self.test_complete.emit((res.returncode if expected_code is None else res.returncode == expected_code) and
+                                    comparator_res, res.stdout, res.returncode, not valgrind_out, valgrind_out)
             sleep(0.1)
             i += 1
 

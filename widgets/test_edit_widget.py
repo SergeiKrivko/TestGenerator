@@ -88,7 +88,7 @@ class TestEditWidget(QWidget):
         self.test_in_edit.setText(data_in)
         self.test_out_edit.setText(data_out)
         self.cmd_args_edit.setText(cmd_args)
-        self.exit_code_edit.setText(exit_code if exit_code else "")
+        self.exit_code_edit.setText(str(exit_code) if exit_code else "")
 
         self.test_in_edit.setDisabled(False)
         self.test_out_edit.setDisabled(False)

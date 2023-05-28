@@ -1,3 +1,5 @@
+import json
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
@@ -62,6 +64,7 @@ class TestsWidget(QWidget):
         self.test_edit_widget.test_in_edit.textChanged.connect(self.set_test_in)
         self.test_edit_widget.test_out_edit.textChanged.connect(self.set_test_out)
         self.test_edit_widget.cmd_args_edit.textEdited.connect(self.set_test_args)
+        self.test_edit_widget.exit_code_edit.textEdited.connect(self.set_test_exit_code)
         self.test_edit_widget.button_generate.clicked.connect(self.button_generate_test)
         layout.addWidget(self.test_edit_widget)
 
@@ -209,7 +212,7 @@ class TestsWidget(QWidget):
                 self.test_list_widget.neg_test_list.setCurrentItem(None)
             self.test_edit_widget.open_test(
                 item.desc, read_file(item.in_file, default=''), read_file(item.out_file, default=''),
-                read_file(item.args_file, default=''), item.exit_code)
+                read_file(item.args_file, default=''), str(item.exit_code) if item.exit_code is not None else '')
         except AttributeError:
             pass
 
@@ -256,6 +259,13 @@ class TestsWidget(QWidget):
             if not item.out_file:
                 item.out_file = self.create_temp_file(item)
             self.write_file(item.out_file, data)
+
+    def set_test_exit_code(self):
+        code = self.test_edit_widget.exit_code_edit.text()
+        item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
+        if item:
+            item.exit_code = int(code) if code else None
+        self.data_changed = True
 
     def move_pos_test_up(self):
         self.readme_changed = True
@@ -377,6 +387,8 @@ class TestsWidget(QWidget):
         path = f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt"
         self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
 
+        exit_codes = json.loads(read_file(f"{self.sm.lab_path(appdata=True)}/exit_codes.txt", '{}'))
+
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             return
 
@@ -404,6 +416,7 @@ class TestsWidget(QWidget):
             self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', tm=self.tm))
         for i in range(self.test_list_widget.pos_test_list.count()):
             item = self.test_list_widget.pos_test_list.item(i)
+            item.exit_code = exit_codes.get(f"pos{i + 1}")
             if not item.in_file:
                 if len(lst):
                     item.in_file = f"{self.path}/func_tests/data/pos_{lst[0]:0>2}_in.txt"
@@ -443,6 +456,7 @@ class TestsWidget(QWidget):
             self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', tm=self.tm))
         for i in range(self.test_list_widget.neg_test_list.count()):
             item = self.test_list_widget.neg_test_list.item(i)
+            item.exit_code = exit_codes.get(f"neg{i + 1}")
             if not item.in_file:
                 if len(lst):
                     item.in_file = f"{self.path}/func_tests/data/neg_{lst[0]:0>2}_in.txt"
@@ -515,7 +529,7 @@ class TestsWidget(QWidget):
 
         if not self.compare_edit_time():
             self.update_edit_time()
-            if not self.cm.compile2(coverage=False):
+            if not self.cm.compile(coverage=False):
                 return
 
         res = self.cm.cmd_command(
@@ -587,10 +601,17 @@ class TestsWidget(QWidget):
                     self.save_a_test(i, 'neg')
 
             if self.data_changed:
+                exit_codes = dict()
                 for i in range(self.test_list_widget.pos_test_list.count()):
                     self.save_a_test(i, 'pos')
+                    if code := self.test_list_widget.pos_test_list.item(i).exit_code:
+                        exit_codes[f"pos{i + 1}"] = code
                 for i in range(self.test_list_widget.neg_test_list.count()):
                     self.save_a_test(i, 'neg')
+                    if code := self.test_list_widget.neg_test_list.item(i).exit_code:
+                        exit_codes[f"neg{i + 1}"] = code
+                os.makedirs(self.sm.lab_path(appdata=True), exist_ok=True)
+                self.write_file(f"{self.sm.lab_path(appdata=True)}/exit_codes.txt", json.dumps(exit_codes))
                 self.remove_temp_files()
 
             os.makedirs(f"{self.sm.lab_path(appdata=True)}/func_tests", exist_ok=True)
