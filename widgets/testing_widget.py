@@ -324,6 +324,8 @@ class TestingWidget(QWidget):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(self.enable_ui)
             self.looper.start()
+        else:
+            self.enable_ui()
 
     def testing_is_terminated(self, errors):
         self.progress_bar.hide()
@@ -348,6 +350,8 @@ class TestingWidget(QWidget):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(self.enable_ui)
             self.looper.start()
+        else:
+            self.enable_ui()
 
     def enable_ui(self):
         self.options_widget.setDisabled(False)
