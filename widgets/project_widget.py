@@ -84,6 +84,7 @@ class ProjectWidget(QWidget):
         self.opening_project = False
         self.dialog = None
 
+        self.disable_menu_func(True)
         self.update_projects()
         self.open_project()
 

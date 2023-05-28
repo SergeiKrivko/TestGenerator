@@ -484,21 +484,21 @@ class TestsWidget(QWidget):
             if in_name in self.files_links:
                 other_item = self.files_links[in_name]
                 if os.path.isfile(other_item.in_file):
-                    self.rename_in_file(other_item, self.create_temp_file(other_item))
+                    self.rename_in_file(other_item, self.create_temp_file(other_item, create_file=False))
             self.rename_in_file(item, in_name)
 
         if item.out_file != out_name:
             if out_name in self.files_links:
                 other_item = self.files_links[out_name]
                 if os.path.isfile(other_item.out_file):
-                    self.rename_out_file(other_item, self.create_temp_file(other_item))
+                    self.rename_out_file(other_item, self.create_temp_file(other_item, create_file=False))
             self.rename_out_file(item, out_name)
 
         if item.args_file and item.args_file != args_name:
             if args_name in self.files_links:
                 other_item = self.files_links[args_name]
                 if os.path.isfile(other_item.args_file):
-                    self.rename_args_file(other_item, self.create_temp_file(other_item))
+                    self.rename_args_file(other_item, self.create_temp_file(other_item, create_file=False))
             self.rename_args_file(item, args_name)
 
     def generate_test(self, type='pos'):
@@ -631,8 +631,10 @@ class TestsWidget(QWidget):
         self.files_links[path] = item
         item.rename_args_file(path)
 
-    def create_temp_file(self, item):
-        open(path := f"{self.path}/func_tests/data/temp_{self.temp_file_index}", 'w').close()
+    def create_temp_file(self, item, create_file=True):
+        path = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
+        if create_file:
+            open(path, 'x').close()
         self.temp_file_index += 1
         self.files_links[path] = item
         return path

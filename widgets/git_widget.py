@@ -49,7 +49,7 @@ class GitWidget(QWidget):
             self.sm['lab'] = self.options_widget["Номер лабы:"]
             old_dir = os.getcwd()
             os.chdir(self.sm.path)
-            res = self.cm.cmd_command(['git', 'reset'])
+            self.cm.cmd_command(['git', 'reset'])
             os.chdir(old_dir)
             self.update_files_list()
         elif key == 'add_code':
@@ -142,7 +142,7 @@ class GitWidget(QWidget):
 
             git_status = res.stdout
 
-            for line in git_status:
+            for line in git_status.split('\n'):
                 item = QListWidgetItem(line.rstrip())
                 item.setFont(self.tm.font_small)
                 self.files_list_widget.addItem(item)
