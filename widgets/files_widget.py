@@ -47,6 +47,8 @@ class FilesWidget(QWidget):
 
     def update_files_list(self):
         self.files_list.clear()
+        if not os.path.isdir(self.current_path):
+            return
 
         items = []
         if self.current_path != self.path:
