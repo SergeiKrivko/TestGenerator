@@ -9,6 +9,7 @@ from widgets.message_box import MessageBox
 
 class FilesWidget(QWidget):
     renameFile = pyqtSignal(str)
+    openFile = pyqtSignal(str)
     ignore_files = [".exe", ".o", "temp.txt"]
 
     def __init__(self, sm, tm):
@@ -21,6 +22,7 @@ class FilesWidget(QWidget):
         files_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(files_layout)
         self.path = ''
+        self.current_path = ''
 
         buttons_layout = QHBoxLayout()
         files_layout.addLayout(buttons_layout)
@@ -36,7 +38,7 @@ class FilesWidget(QWidget):
         self.files_list = QListWidget()
         files_layout.addWidget(self.files_list)
 
-        self.files_list.currentRowChanged.connect(self.open_file)
+        self.files_list.currentItemChanged.connect(self.open_file)
         self.button_add_file.clicked.connect(self.create_file)
         self.button_delete_file.clicked.connect(self.delete_file)
         self.files_list.doubleClicked.connect(self.rename_file)
@@ -44,63 +46,51 @@ class FilesWidget(QWidget):
         self.dialog = None
 
     def update_files_list(self):
-        self.get_path()
         self.files_list.clear()
 
-        if not os.path.isdir(self.path):
-            return
+        items = []
+        if self.current_path != self.path:
+            items.append(FileListWidgetItem('..', self.tm))
 
-        for file in os.listdir(self.path):
+        for file in os.listdir(self.current_path):
             for el in FilesWidget.ignore_files:
                 if file.endswith(el):
                     break
             else:
-                if '.' in file:
-                    item = QListWidgetItem(file)
-                    if file.endswith("main.c"):
-                        item.setForeground(self.tm['MainC'])
-                    elif file.endswith(".c"):
-                        item.setForeground(self.tm['CFile'])
-                    elif file.endswith(".h"):
-                        item.setForeground(self.tm['HFile'])
-                    elif file.endswith(".txt"):
-                        item.setForeground(self.tm['TxtFile'])
-                    elif file.endswith(".md"):
-                        item.setForeground(self.tm['MdFile'])
-                    item.setFont(self.tm.font_small)
-                    self.files_list.addItem(item)
+                items.append(FileListWidgetItem(f"{self.current_path}/{file}", self.tm))
 
-    def open_file(self):
-        pass
-        # if self.files_list.currentRow() != -1:
-        #     self.file_name.setText(self.files_list.currentItem().text())
+        items.sort(key=lambda it: it.priority)
+        for item in items:
+            self.files_list.addItem(item)
 
     def rename_file(self):
         if self.files_list.currentItem() is None:
             return
-        self.dialog = RenameFileDialog(self.files_list.currentItem().text(), self.tm)
+        self.dialog = RenameFileDialog(self.files_list.currentItem().name, self.tm)
         if self.dialog.exec():
-            if not os.path.isfile(f"{self.path}/{self.dialog.line_edit.text()}"):
-                os.rename(f"{self.path}/{self.files_list.currentItem().text()}",
-                          f"{self.path}/{self.dialog.line_edit.text()}")
+            if not os.path.isfile(f"{self.current_path}/{self.dialog.line_edit.text()}"):
+                os.rename(self.files_list.currentItem().path,
+                          f"{self.current_path}/{self.dialog.line_edit.text()}")
                 self.update_files_list()
                 self.renameFile.emit(self.dialog.line_edit.text())
             else:
                 MessageBox(MessageBox.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
 
-    def get_path(self):
+    def open_task(self):
         self.path = self.sm.lab_path()
+        self.current_path = self.path
+        self.update_files_list()
 
     def create_file(self, *args):
-        self.dialog = RenameFileDialog('main.c' if not os.path.isfile(f"{self.path}/main.c") else '', self.tm)
+        self.dialog = RenameFileDialog(
+            'main.c' if self.path == self.current_path and not os.path.isfile(f"{self.path}/main.c") else '', self.tm)
         if self.dialog.exec():
-            self.get_path()
-            os.makedirs(self.path, exist_ok=True)
+            os.makedirs(self.current_path, exist_ok=True)
             if not self.dialog.line_edit.text():
                 MessageBox(MessageBox.Warning, "Ошибка", "Невозможно создать файл: имя файла не задано", self.tm)
                 return
             try:
-                open(f"{self.path}/{self.dialog.line_edit.text()}", 'x').close()
+                open(f"{self.current_path}/{self.dialog.line_edit.text()}", 'x').close()
             except FileExistsError:
                 MessageBox(MessageBox.Warning, "Ошибка",
                            "Невозможно создать файл: файл с таким именем уже существует", self.tm)
@@ -114,17 +104,86 @@ class FilesWidget(QWidget):
     def delete_file(self, *args):
         if self.files_list.currentRow() == -1:
             return
-        dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().text()}?", self.tm)
+        dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().name}?", self.tm)
         if dlg.exec():
-            os.remove(f"{self.path}/{self.files_list.currentItem().text()}")
+            os.remove(self.files_list.currentItem().path)
             self.update_files_list()
+
+    def open_file(self):
+        item = self.files_list.currentItem()
+        if isinstance(item, FileListWidgetItem):
+            if item.file_type == 'dir':
+                if item.name == '..':
+                    self.current_path = os.path.split(self.current_path)[0]
+                else:
+                    self.current_path = f"{self.current_path}/{item.name}"
+                self.update_files_list()
+            else:
+                self.openFile.emit(item.path)
 
     def set_theme(self):
         self.button_add_file.setStyleSheet(self.tm.buttons_style_sheet)
         self.button_add_file.setFont(self.tm.font_small)
         self.button_delete_file.setStyleSheet(self.tm.buttons_style_sheet)
         self.button_delete_file.setFont(self.tm.font_small)
-        self.tm.set_theme_to_list_widget(self.files_list)
+        self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
+        for i in range(self.files_list.count()):
+            self.files_list.item(i).set_theme()
+
+
+class FileListWidgetItem(QListWidgetItem):
+    def __init__(self, path, tm):
+        super(FileListWidgetItem, self).__init__()
+        self.path = path
+
+        self.tm = tm
+
+        if path == '..':
+            self.name = '..'
+            self.setText('▲ ..')
+            self.file_type = 'dir'
+            self.priority = 0
+        else:
+            self.name = os.path.basename(path)
+            if os.path.isdir(self.path):
+                self.setText(f"▼ {self.name}")
+                self.file_type = 'dir'
+                self.priority = 1
+            elif self.path.endswith("main.c"):
+                self.setText(f"◆ {self.name}")
+                self.file_type = 'main'
+                self.priority = 2
+            elif self.path.endswith(".c"):
+                self.setText(f"◆ {self.name}")
+                self.file_type = 'code'
+                self.priority = 3
+            elif self.path.endswith(".h"):
+                self.setText(f"◆ {self.name}")
+                self.file_type = 'header'
+                self.priority = 3
+            elif self.path.endswith(".txt") or self.path.endswith('.md'):
+                self.setText(f"● {self.name}")
+                self.file_type = 'text'
+                self.priority = 4
+            else:
+                self.setText(f"?   {self.name}")
+                self.file_type = 'unknown'
+                self.priority = 5
+
+        self.set_theme()
+
+    def set_theme(self):
+        if self.file_type == 'dir':
+            self.setForeground(self.tm['Directory'])
+        elif self.file_type == 'main':
+            self.setForeground(self.tm['MainC'])
+        elif self.file_type == 'code':
+            self.setForeground(self.tm['CFile'])
+        elif self.file_type == 'header':
+            self.setForeground(self.tm['HFile'])
+        elif self.file_type == 'text':
+            self.setForeground(self.tm['TxtFile'])
+        self.setFont(self.tm.font_small)
 
 
 class DeleteFileDialog(QDialog):

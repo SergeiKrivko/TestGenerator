@@ -38,7 +38,7 @@ class CodeWidget(QWidget):
         self.files_widget = FilesWidget(self.sm, self.tm)
         self.files_widget.setMaximumWidth(200)
 
-        self.files_widget.files_list.currentRowChanged.connect(self.open_code)
+        self.files_widget.openFile.connect(self.open_code)
         self.files_widget.renameFile.connect(self.rename_file)
 
         self.todo_widget = QListWidget()
@@ -98,16 +98,14 @@ class CodeWidget(QWidget):
 
     def rename_file(self, name):
         self.current_file = name
-        self.open_code()
 
     def first_open(self):
         self.test_res_widget.clear()
-        self.files_widget.update_files_list()
+        self.files_widget.open_task()
         self.tab_widget.setCurrentIndex(0)
         for i in range(self.files_widget.files_list.count()):
             if self.files_widget.files_list.item(i) == 'main.c':
                 self.files_widget.files_list.setCurrentRow(i)
-                self.open_code()
                 return
 
     def update_todo(self):
@@ -124,19 +122,18 @@ class CodeWidget(QWidget):
                 break
         self.tab_widget.setCurrentIndex(2)
 
-    def open_code(self):
+    def open_code(self, path):
         self.tab_widget.setCurrentIndex(0)
         self.get_path()
         self.code_edit.setText("")
         try:
-            index = self.files_widget.files_list.currentRow()
-            if index == -1:
+            if not os.path.isfile(path):
                 self.code_edit.setDisabled(True)
                 return
 
-            self.current_file = f"{self.path}/{self.files_widget.files_list.currentItem().text()}"
+            self.current_file = path
             self.file_update_time = os.path.getmtime(self.current_file)
-            self.code_edit.open_file(self.path, self.files_widget.files_list.currentItem().text())
+            self.code_edit.open_file(*os.path.split(self.current_file))
             self.update_todo()
             self.code_edit.setDisabled(False)
             self.set_theme()
@@ -156,7 +153,6 @@ class CodeWidget(QWidget):
     def check_if_code_changed(self):
         if os.path.isfile(self.current_file) and self.file_update_time != os.path.getmtime(self.current_file):
             pos = self.code_edit.getCursorPosition()
-            self.open_code()
             self.code_edit.setCursorPosition(*pos)
 
     def testing_start(self, lst):

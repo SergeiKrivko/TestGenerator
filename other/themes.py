@@ -52,7 +52,7 @@ basic_theme = {
     'CFile': QColor('#F82525'),
     'HFile': QColor('#99922C'),
     'TxtFile': QColor('#2065D4'),
-    'MdFile': QColor('#1BBDD4'),
+    'Directory': QColor('#2F7519'),
     'FontFamily': "Calibri",
     'CodeFontFamily': "Courier",
 }
@@ -131,10 +131,10 @@ class ThemeManager:
                     'TestInProgress': QColor('#A0A0A0'),
                     'TestCrashed': QColor('#A01010'),
                     'MainC': QColor('#0735C2'),
-                    'CFile': QColor('#F716E8'),
+                    'CFile': QColor('#F790F7'),
                     'HFile': QColor('#BBB529'),
                     'TxtFile': QColor('#D6D6D6'),
-                    'MdFile': QColor('#95D68C')
+                    'Directory': QColor('#95D68C')
                 }),
             'ocean':
                 Theme({
@@ -188,7 +188,7 @@ class ThemeManager:
                     'CFile': QColor('#F82525'),
                     'HFile': QColor('#99922C'),
                     'TxtFile': QColor('#2065D4'),
-                    'MdFile': QColor('#1BBDD4')
+                    'Directory': QColor('#1BBDD4')
                 }),
             'fresh':
                 Theme({
@@ -510,7 +510,7 @@ class ThemeManager:
                 'CFile': QColor('#F82525'),
                 'HFile': QColor('#9C783C'),
                 'TxtFile': QColor('#2065D4'),
-                'MdFile': QColor('#1BBDD4')
+                'Directory': QColor('#2E8217')
             }),
             'flamingo': Theme({
                 'QsciLexerCPP':
@@ -563,7 +563,7 @@ class ThemeManager:
                 'CFile': QColor('#2D62F2'),
                 'HFile': QColor('#3B9629'),
                 'TxtFile': QColor('#2065D4'),
-                'MdFile': QColor('#1BBDD4')
+                'Directory': QColor('#F74A15')
             }),
         }
 
