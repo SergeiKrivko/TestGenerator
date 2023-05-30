@@ -68,15 +68,22 @@ class FilesWidget(QWidget):
     def rename_file(self):
         if self.files_list.currentItem() is None:
             return
-        self.dialog = RenameFileDialog(self.files_list.currentItem().name, self.tm)
-        if self.dialog.exec():
-            if not os.path.isfile(f"{self.current_path}/{self.dialog.line_edit.text()}"):
-                os.rename(self.files_list.currentItem().path,
-                          f"{self.current_path}/{self.dialog.line_edit.text()}")
-                self.update_files_list()
-                self.renameFile.emit(self.dialog.line_edit.text())
+        if (item := self.files_list.currentItem()).file_type == 'dir':
+            if item.name == '..':
+                self.current_path = os.path.split(self.current_path)[0]
             else:
-                MessageBox(MessageBox.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
+                self.current_path = f"{self.current_path}/{item.name}"
+            self.update_files_list()
+        else:
+            self.dialog = RenameFileDialog(item.name, self.tm)
+            if self.dialog.exec():
+                if not os.path.isfile(f"{self.current_path}/{self.dialog.line_edit.text()}"):
+                    os.rename(self.files_list.currentItem().path,
+                              f"{self.current_path}/{self.dialog.line_edit.text()}")
+                    self.update_files_list()
+                    self.renameFile.emit(self.dialog.line_edit.text())
+                else:
+                    MessageBox(MessageBox.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
 
     def open_task(self):
         self.path = self.sm.lab_path()
@@ -115,11 +122,7 @@ class FilesWidget(QWidget):
         item = self.files_list.currentItem()
         if isinstance(item, FileListWidgetItem):
             if item.file_type == 'dir':
-                if item.name == '..':
-                    self.current_path = os.path.split(self.current_path)[0]
-                else:
-                    self.current_path = f"{self.current_path}/{item.name}"
-                self.update_files_list()
+                pass
             else:
                 self.openFile.emit(item.path)
 

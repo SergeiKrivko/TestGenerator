@@ -288,6 +288,8 @@ class TestingWidget(QWidget):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(len(lst))
         self.progress_bar.setValue(0)
+        
+        self.testing_start.emit(lst)
 
         if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt", ''):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
@@ -307,7 +309,6 @@ class TestingWidget(QWidget):
         self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
 
         self.test_count = 0
-        self.testing_start.emit(lst)
 
     def end_testing(self):
         self.progress_bar.hide()

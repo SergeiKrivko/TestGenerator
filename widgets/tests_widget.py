@@ -529,7 +529,9 @@ class TestsWidget(QWidget):
 
         if not self.compare_edit_time():
             self.update_edit_time()
-            if not self.cm.compile(coverage=False):
+            res, stderr = self.cm.compile(coverage=False)
+            if not res:
+                MessageBox(MessageBox.Warning, "Ошибка компиляции", stderr, self.tm)
                 return
 
         res = self.cm.cmd_command(
