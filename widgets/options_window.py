@@ -222,8 +222,9 @@ class OptionsWidget(QWidget):
         widget = QCheckBox()
         widget.setFixedHeight(item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
         value = item.get('initial', False)
-        widget.setChecked(bool(value))
-        widget.clicked.connect(lambda: self.set_dict_value(key, int(widget.isChecked())))
+        widget.setChecked(value)
+        widget.stateChanged.connect(lambda: self.set_dict_value(key, widget.isChecked()))
+        self.values[key] = value
         return widget, value
 
     def combo_box(self, key, item):

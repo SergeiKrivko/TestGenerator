@@ -36,7 +36,6 @@ class SettingsManager:
     def set_project(self, project):
         self.store()
         self.project = project
-        print(f"open {self.project}")
         try:
             s = self.get_general('projects')
             self.projects = loads(s)
@@ -73,7 +72,7 @@ class SettingsManager:
     def set(self, key, value, project=None):
         if project is None:
             self.project_settings[key] = value
-        else:
+        else:       # TODO: изменить на файлы в АппДате
             dct = loads(self.get_general(project, '{}'))
             dct[key] = value
             self.q_settings.setValue(project, dumps(dct))
@@ -157,7 +156,6 @@ class SettingsManager:
                     self.set('time_limit', self.get_general('time_limit', 10))
                     
     def store(self):
-        print(f"store {self.project}    {self.projects}")
         if self.project and self.data_path:
             os.makedirs(self.data_path, exist_ok=True)
             with open(f"{self.data_path}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:

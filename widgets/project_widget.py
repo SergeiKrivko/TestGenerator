@@ -86,7 +86,6 @@ class ProjectWidget(QWidget):
 
         self.disable_menu_func(True)
         self.update_projects()
-        self.open_project()
 
     def testing_checkbox_triggered(self, value):
         self.sm.set('default_testing_settings', value)
@@ -136,12 +135,14 @@ class ProjectWidget(QWidget):
             self.update_projects()
             self.disable_menu_func(False)
 
-    def open_project(self):
-        self.opening_project = True
+    def open_project(self, forced=False):
         if self.list_widget.currentItem() is None:
             self.options_widget.setDisabled(True)
             return
         project = self.list_widget.currentItem().text()
+        if project == self.sm.project and not forced:
+            return
+        self.opening_project = True
         self.options_widget.setDisabled(False)
         self.sm.set_project(project)
         self.sm.repair_settings()
@@ -202,7 +203,8 @@ class ProjectWidget(QWidget):
         self.options_widget.widgets['Ограничение по времени:'].setStyleSheet(self.tm.double_spin_box_style_sheet)
 
     def show(self) -> None:
-        self.open_project()
+        if self.isHidden():
+            self.open_project()
         super(ProjectWidget, self).show()
 
 

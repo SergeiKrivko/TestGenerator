@@ -94,11 +94,11 @@ class SettingsWidget(QWidget):
     def save_testing_settings(self):
         dct = self.testing_widget.values
         self.sm.set_general('compiler', dct['Компилятор'])
-        self.sm.set_general('-lm', dct['Ключ -lm'])
+        self.sm.set_general('-lm', int(dct['Ключ -lm']))
         self.sm.set_general('pos_comparator', dct['Компаратор для позитивных тестов:'])
         self.sm.set_general('neg_comparator', dct['Компаратор для негативных тестов:'])
-        self.sm.set_general('memory_testing', dct['Тестирование по памяти'])
-        self.sm.set_general('coverage', dct['Coverage'])
+        self.sm.set_general('memory_testing', int(dct['Тестирование по памяти']))
+        self.sm.set_general('coverage', int(dct['Coverage']))
         self.sm.set_general('epsilon', dct['Погрешность сравнения чисел:'])
         self.sm.set_general('pos_substring', dct['Подстрока для позитивных тестов'])
         self.sm.set_general('neg_substring', dct['Подстрока для негативных тестов'])

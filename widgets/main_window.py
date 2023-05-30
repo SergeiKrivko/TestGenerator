@@ -83,10 +83,11 @@ class MainWindow(QMainWindow):
 
         self.resize(800, 600)
 
-        if not os.path.isdir(self.sm.get_general('__project__', '')) or not self.project_widget.list_widget.count():
+        if not os.path.isdir(self.sm.project) or not self.project_widget.list_widget.count():
             self.show_tab('project_widget')
         else:
             self.show_tab('project_widget')
+        # self.project_widget.open_project(forced=True)
 
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
