@@ -868,5 +868,27 @@ background-color: {self['MainColor']};
 }}
 """
 
+        self.tab_widget_style_sheet = f"""
+QTabWidget::pane {{
+    color: {self['BgColor']};
+    }}
+QTabBar::tab {{
+    color: {self['TextColor']};
+    background-color: {self['MainColor']};
+    border-bottom-color: {self['TextColor']};
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border: 1px solid {self['BorderColor']};
+    width: 50px;
+    padding: 4px;
+    }}
+QTabBar::tab:hover {{
+background-color: {self['ColorHover']};
+}}
+QTabBar::tab:selected {{
+background-color: {self['ColorSelected']};
+}}
+"""
+
     def add_custom_theme(self, theme_name, theme_data):
         self.themes[theme_name] = Theme(theme_data)

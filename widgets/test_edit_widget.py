@@ -1,8 +1,11 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QComboBox, \
+    QDialog, QDialogButtonBox
 
 
 class TestEditWidget(QWidget):
+    test_edited = pyqtSignal()
+
     def __init__(self, tm):
         super(TestEditWidget, self).__init__()
         layout = QVBoxLayout()
@@ -51,10 +54,25 @@ class TestEditWidget(QWidget):
 
         layout1 = QVBoxLayout()
         h_layout.addLayout(layout1, 1)
-        label = QLabel("Входные данные")
+        layout_h1 = QHBoxLayout()
+        layout1.addLayout(layout_h1)
+        layout_h1.addWidget(label := QLabel("Входные данные"))
         self.labels.append(label)
-        label.setFixedHeight(20)
-        layout1.addWidget(label)
+
+        self.in_combo_box = QComboBox()
+        self.in_combo_box.addItems(['STDIN'])
+        self.in_combo_box.setFixedHeight(20)
+        layout_h1.addWidget(self.in_combo_box)
+
+        self.button_add_in = QPushButton("+")
+        self.button_add_in.setFixedSize(20, 20)
+        layout_h1.addWidget(self.button_add_in)
+
+        self.button_delete_in = QPushButton("✕")
+        self.button_delete_in.setFixedSize(20, 20)
+        layout_h1.addWidget(self.button_delete_in)
+
+        layout1.addLayout(layout_h1)
         self.test_in_edit = QTextEdit()
         layout1.addWidget(self.test_in_edit)
 
@@ -64,12 +82,36 @@ class TestEditWidget(QWidget):
         layout2.addLayout(layout_h2)
         layout_h2.addWidget(label := QLabel("Выходные данные"))
         self.labels.append(label)
-        self.button_generate = QPushButton()
-        self.button_generate.setText("Сгенерировать")
-        self.button_generate.setFixedHeight(20)
-        layout_h2.addWidget(self.button_generate)
+
+        self.out_combo_box = QComboBox()
+        self.out_combo_box.addItems(['STDOUT'])
+        self.out_combo_box.setFixedHeight(20)
+        layout_h2.addWidget(self.out_combo_box)
+
+        self.button_add_out = QPushButton("+")
+        self.button_add_out.setFixedSize(20, 20)
+        layout_h2.addWidget(self.button_add_out)
+
+        self.button_delete_out = QPushButton("✕")
+        self.button_delete_out.setFixedSize(20, 20)
+        layout_h2.addWidget(self.button_delete_out)
+
         self.test_out_edit = QTextEdit()
         layout2.addWidget(self.test_out_edit)
+
+        self.data = dict()
+        self.test_name_edit.textEdited.connect(self.set_test_name)
+        self.test_in_edit.textChanged.connect(self.set_test_in)
+        self.test_out_edit.textChanged.connect(self.set_test_out)
+        self.cmd_args_edit.textEdited.connect(self.set_test_args)
+        self.exit_code_edit.textEdited.connect(self.set_test_exit)
+        self.in_combo_box.currentIndexChanged.connect(self.select_in_file)
+        self.button_add_in.clicked.connect(self.add_in_file)
+        self.button_delete_in.clicked.connect(self.delete_in)
+        self.out_combo_box.currentIndexChanged.connect(self.select_out_file)
+        self.button_add_out.clicked.connect(self.add_out_file)
+        self.button_delete_out.clicked.connect(self.delete_out)
+        self.in_files = []
 
     def exit_code_edit_triggered(self):
         if not self.exit_code_edit.text().strip():
@@ -83,19 +125,42 @@ class TestEditWidget(QWidget):
             else:
                 self.exit_code_edit_text = self.exit_code_edit.text()
 
-    def open_test(self, description, data_in, data_out, cmd_args="", exit_code=None):
-        self.test_name_edit.setText(description)
-        self.test_in_edit.setText(data_in)
-        self.test_out_edit.setText(data_out)
-        self.cmd_args_edit.setText(cmd_args)
-        self.exit_code_edit.setText(str(exit_code) if exit_code else "")
+    def open_test(self, data: dict):
+        self.data = data
+        self.in_files.clear()
+        self.test_name_edit.setText(data.get('desc', '-'))
+        self.cmd_args_edit.setText(data.get('args', ''))
+        self.exit_code_edit.setText(str(data.get('exit', '')))
+        self.in_combo_box.clear()
+        self.in_combo_box.addItems(['STDIN'])
+        if not isinstance(data.get('in_files'), list):
+            data['in_files'] = []
+        for i, el in enumerate(data['in_files']):
+            self.in_combo_box.addItems([s := f"in_file_{i + 1}.{el['type']}"])
+            self.in_files.append(s)
+
+        self.out_combo_box.clear()
+        self.out_combo_box.addItems(['STDOUT'])
+        if not isinstance(data.get('out_files'), list):
+            data['out_files'] = []
+        for i, el in enumerate(data['out_files']):
+            self.out_combo_box.addItems([f"out_file_{i + 1}.{el['type']}"])
+
+        if not isinstance(data.get('check_files'), dict):
+            data['check_files'] = dict()
+        for i, el in data['check_files'].items():
+            self.out_combo_box.addItems([f"check_file_{i}.{el['type']}"])
+
+        self.test_in_edit.setText(data.get('in', ''))
+        self.test_out_edit.setText(data.get('out', ''))
 
         self.test_in_edit.setDisabled(False)
         self.test_out_edit.setDisabled(False)
         self.test_name_edit.setDisabled(False)
         self.cmd_args_edit.setDisabled(False)
         self.exit_code_edit.setDisabled(False)
-        self.button_generate.setDisabled(False)
+        self.in_combo_box.setDisabled(False)
+        self.out_combo_box.setDisabled(False)
 
     def set_disabled(self):
         self.test_in_edit.setDisabled(True)
@@ -103,10 +168,18 @@ class TestEditWidget(QWidget):
         self.test_name_edit.setDisabled(True)
         self.cmd_args_edit.setDisabled(True)
         self.exit_code_edit.setDisabled(True)
-        self.button_generate.setDisabled(True)
+        self.in_combo_box.setDisabled(True)
+        self.button_add_in.setDisabled(True)
+        self.button_delete_in.setDisabled(True)
+        self.out_combo_box.setDisabled(True)
+        self.button_add_out.setDisabled(True)
+        self.button_delete_out.setDisabled(True)
         self.test_in_edit.setText("")
         self.test_out_edit.setText("")
         self.test_name_edit.setText("")
+        self.preprocessor_line.setText("")
+        self.postprocessor_line.setText("")
+        self.exit_code_edit.setText("")
 
     def set_theme(self):
         self.test_name_edit.setStyleSheet(self.tm.style_sheet)
@@ -123,120 +196,215 @@ class TestEditWidget(QWidget):
         self.preprocessor_line.setFont(self.tm.code_font)
         self.postprocessor_line.setStyleSheet(self.tm.style_sheet)
         self.postprocessor_line.setFont(self.tm.code_font)
-        self.button_generate.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_generate.setFont(self.tm.font_small)
+        self.in_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.in_combo_box.setFont(self.tm.font_small)
+        self.button_add_in.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_add_in.setFont(self.tm.font_small)
+        self.button_delete_in.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete_in.setFont(self.tm.font_small)
+        self.out_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.out_combo_box.setFont(self.tm.font_small)
+        self.button_add_out.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_add_out.setFont(self.tm.font_small)
+        self.button_delete_out.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete_out.setFont(self.tm.font_small)
         for label in self.labels:
             label.setFont(self.tm.font_small)
 
+    def set_test_name(self, name):
+        self.data['desc'] = name
 
-class InEditWidget(QWidget):
+    def select_in_file(self):
+        index = self.in_combo_box.currentIndex()
+        self.button_add_in.setDisabled(False)
+        if index < 0:
+            pass
+        elif index == 0:
+            self.button_delete_in.setDisabled(True)
+            self.test_in_edit.setText(self.data['in'])
+        else:
+            self.button_delete_in.setDisabled(False)
+            self.test_in_edit.setText(self.data['in_files'][index - 1]['text'])
+
+    def select_out_file(self):
+        index = self.out_combo_box.currentIndex()
+        self.button_add_out.setDisabled(False)
+        self.button_delete_out.setDisabled(False)
+        if index < 0:
+            pass
+        elif index == 0:
+            self.button_delete_out.setDisabled(True)
+            self.test_out_edit.setText(self.data['out'])
+        elif self.out_combo_box.currentText().startswith('check'):
+            index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
+            self.test_out_edit.setText(self.data['check_files'][index]['text'])
+        else:
+            index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
+            self.test_out_edit.setText(self.data['out_files'][index - 1]['text'])
+
+    def set_test_in(self):
+        index = self.in_combo_box.currentIndex()
+        if index == 0:
+            self.data['in'] = self.test_in_edit.toPlainText()
+        else:
+            self.data['in_files'][index - 1]['text'] = self.test_in_edit.toPlainText()
+
+    def set_test_out(self):
+        index = self.out_combo_box.currentIndex()
+        if index < 0:
+            pass
+        elif index == 0:
+            self.data['out'] = self.test_out_edit.toPlainText()
+        elif self.out_combo_box.currentText().startswith('check'):
+            index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
+            self.data['check_files'][index]['text'] = self.test_out_edit.toPlainText()
+        else:
+            index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
+            self.data['out_files'][index - 1]['text'] = self.test_out_edit.toPlainText()
+
+    def delete_in(self):
+        index = self.in_combo_box.currentIndex()
+        if index <= 0:
+            pass
+        else:
+            self.data['in_files'].pop(index - 1)
+            self.open_test(self.data)
+
+    def delete_out(self):
+        index = self.out_combo_box.currentIndex()
+        if index <= 0:
+            return
+        elif self.out_combo_box.currentText().startswith('check'):
+            index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
+            self.data['check_files'].pop(index)
+        else:
+            index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
+            self.data['out_files'].pop(index - 1)
+        self.open_test(self.data)
+
+    def set_test_args(self, data):
+        self.data['args'] = data
+
+    def set_test_exit(self, code):
+        self.data['exit'] = code
+
+    def add_in_file(self):
+        dialog = NewInFileDialog(self.tm)
+        if dialog.exec():
+            file_type = 'txt' if dialog.combo_box.currentIndex() == 0 else 'bin'
+            self.data['in_files'].append({'type': file_type, 'text': ''})
+            self.in_combo_box.addItems([s := f"in_file_{self.in_combo_box.count()}.{file_type}"])
+            self.in_files.append(s)
+            self.in_combo_box.setCurrentIndex(self.in_combo_box.count() - 1)
+
+    def add_out_file(self):
+        dialog = NewOutFileDialog(self.tm, self.in_files)
+        if dialog.exec():
+            if dialog.combo_box.currentIndex() == 0:
+                file_type = 'txt' if dialog.type_combo_box.currentIndex() == 0 else 'bin'
+                self.data['out_files'].append({'type': file_type, 'text': ''})
+                self.out_combo_box.addItems([f"out_file_{self.out_combo_box.count()}.{file_type}"])
+                self.out_combo_box.setCurrentIndex(self.out_combo_box.count() - 1)
+            else:
+                index = dialog.file_combo_box.currentIndex()
+                self.data['check_files'][str(index + 1)] = {'type': self.data['in_files'][index]['type'],
+                                                            'text': self.data['in_files'][index]['text']}
+                self.out_combo_box.addItems([dialog.file_combo_box.currentText().replace('in', 'check', 1)])
+                self.out_combo_box.setCurrentIndex(self.out_combo_box.count() - 1)
+
+
+class NewInFileDialog(QDialog):
     def __init__(self, tm):
-        super(InEditWidget, self).__init__()
-        self._tm = tm
+        super(NewInFileDialog, self).__init__()
+        self.tm = tm
 
-        self._layout = QVBoxLayout()
+        self.setWindowTitle("Копировать тесты")
 
-        self._tab_layout = QHBoxLayout()
-        self._tab_layout.setContentsMargins(0, 0, 0, 0)
-        self._tab_layout.setAlignment(Qt.AlignLeft)
-        self._tab_layout.setSpacing(0)
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
 
-        self._stdin_tab = Tab(self._tm, "STDIN", True)
-        self._stdin_tab.clicked.connect(self.select_tab)
-        self._tab_layout.addWidget(self._stdin_tab)
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
-        self.plus_button = QPushButton("+")
-        self.plus_button.setFixedSize(16, 16)
-        self.plus_button.clicked.connect(self.add_tab)
-        self._tab_layout.addWidget(self.plus_button)
+        layout = QVBoxLayout()
 
-        self._layout.addLayout(self._tab_layout)
+        label = QLabel("Тип файла:")
+        label.setFont(self.tm.font_small)
+        layout.addWidget(label)
 
-        self.stdin_text_edit = QTextEdit()
-        self._layout.addWidget(self.stdin_text_edit)
-        self.setLayout(self._layout)
+        self.combo_box = QComboBox()
+        self.combo_box.addItems(['Текстовый', 'Бинарный'])
+        self.combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.combo_box.setFont(tm.font_small)
 
-        self._tabs = {'STDIN': self._stdin_tab}
-        self._widgets = {'STDIN': self.stdin_text_edit}
-        
-    def add_tab(self):
-        name = 'new_tab'
-        tab = Tab(self._tm, name)
-        self._tabs[name] = tab
-        self._tab_layout.addWidget(tab)
-        tab.clicked.connect(self.select_tab)
-        
-        text_edit = QTextEdit()
-        self._layout.addWidget(text_edit)
-        self._widgets[name] = text_edit
-        
-    def select_tab(self, name):
-        for widget in self._widgets.values():
-            widget.hide()
-        for widget in self._tabs.values():
-            widget.set_selected(False)
-        self._widgets[name].show()
-        self._tabs[name].set_selected(True)
-
-    def delete_tab(self, name):
-        self._tab_layout.removeWidget(self._tabs[name])
-        self._tabs.pop(name)
-
-        self._layout.removeWidget(self._widgets[name])
-        self._widgets.pop(name)
-
-    def set_theme(self):
-        self.plus_button.setStyleSheet(self._tm.buttons_style_sheet)
-        for tab in self._tabs.values():
-            tab.set_theme()
-        for widget in self._widgets.values():
-            widget.setStyleSheet(self._tm.text_edit_style_sheet)
-
-
-class Tab(QWidget):
-    clicked = pyqtSignal(str)
-    close = pyqtSignal(str)
-
-    def __init__(self, tm, text: str, closable=False):
-        super(Tab, self).__init__()
-        self._tm = tm
-        self._closable = closable
-        self._text = text
-        self._selected = False
-        self.setFixedHeight(20)
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self._label = QLabel(text)
-        layout.addWidget(self._label)
-
-        if self._closable:
-            self._button = QPushButton("✕")
-            self._button.setFixedSize(12, 12)
-            layout.addWidget(self._button)
-
+        layout.addWidget(self.combo_box)
+        layout.addWidget(self.buttonBox)
         self.setLayout(layout)
-        self.set_theme()
 
-        self._button.clicked.connect(lambda: self.close.emit(self._text))
 
-    def set_theme(self):
-        self.setStyleSheet(f"""
-background-color: {self._tm['ColorSelected' if self._selected else 'MainColor']};
-border: 1px solid {self._tm['BorderColor']};
-border-top-left-radius: 6;
-border-top-right-radius: 6;
-""")
-        if self._closable:
-            self._button.setStyleSheet(self._tm.buttons_style_sheet)
-        
-    def set_selected(self, selected):
-        self._selected = selected
-        self.set_theme()
+class NewOutFileDialog(QDialog):
+    def __init__(self, tm, files: list):
+        super(NewOutFileDialog, self).__init__()
+        self.tm = tm
 
-    def mousePressEvent(self, a0) -> None:
-        if a0.button() == Qt.MouseButton.LeftButton:
-            self.clicked.emit(self._text)
+        self.setWindowTitle("Копировать тесты")
 
+        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+
+        layout = QVBoxLayout()
+
+        self.combo_box = QComboBox()
+        self.combo_box.addItems(['Выходной файл', 'Проверка состояния входного файла'])
+        self.combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.combo_box.setFont(tm.font_small)
+        self.combo_box.currentIndexChanged.connect(self.combo_box_triggered)
+        layout.addWidget(self.combo_box)
+
+        self.type_label = QLabel("Тип файла:")
+        self.type_label.setFont(self.tm.font_small)
+        layout.addWidget(self.type_label)
+
+        self.type_combo_box = QComboBox()
+        self.type_combo_box.addItems(['Текстовый', 'Бинарный'])
+        self.type_combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.type_combo_box.setFont(tm.font_small)
+        layout.addWidget(self.type_combo_box)
+
+        self.file_label = QLabel("Проверяемый файл:")
+        self.file_label.setFont(self.tm.font_small)
+        layout.addWidget(self.file_label)
+        self.file_label.hide()
+
+        self.file_combo_box = QComboBox()
+        self.file_combo_box.addItems(files)
+        self.file_combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.file_combo_box.setFont(tm.font_small)
+        layout.addWidget(self.file_combo_box)
+        self.file_combo_box.hide()
+
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)
+
+    def combo_box_triggered(self):
+        if self.combo_box.currentIndex() == 0:
+            self.file_combo_box.hide()
+            self.file_label.hide()
+            self.type_combo_box.show()
+            self.type_label.show()
+        else:
+            self.type_combo_box.hide()
+            self.type_label.hide()
+            self.file_combo_box.show()
+            self.file_label.show()

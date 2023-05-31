@@ -87,7 +87,7 @@ class MainWindow(QMainWindow):
             self.show_tab('project_widget')
         else:
             self.show_tab('project_widget')
-        # self.project_widget.open_project(forced=True)
+        self.project_widget.open_project(forced=True)
 
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)

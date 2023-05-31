@@ -192,31 +192,9 @@ class CodeWidget(QWidget):
                     self.code_edit.setMarginText(i, f"{line[0].strip():3} {line[1].strip():3}", 0)
 
     def set_theme(self):
-        tab_style_sheet = f"""
-        QTabWidget::pane {{
-            color: {self.tm['BgColor']};
-            }}
-        QTabBar::tab {{
-            color: {self.tm['TextColor']};
-            background-color: {self.tm['MainColor']};
-            border-bottom-color: {self.tm['TextColor']};
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            border: 1px solid {self.tm['BorderColor']};
-            width: 50px;
-            padding: 4px;
-            }}
-        QTabBar::tab:hover {{
-        background-color: {self.tm['ColorHover']};
-        }}
-        QTabBar::tab:selected {{
-        background-color: {self.tm['ColorSelected']};
-        }}
-        """
-
         self.tm.set_theme_to_list_widget(self.test_res_widget)
         self.tm.set_theme_to_list_widget(self.todo_widget)
-        self.tab_widget.setStyleSheet(tab_style_sheet)
+        self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet)
         self.tab_widget.setFont(self.tm.font_small)
         self.code_edit.set_theme()
         self.files_widget.set_theme()

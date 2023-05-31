@@ -3,7 +3,7 @@ import shutil
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QCheckBox
+    QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget
 
 from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
@@ -45,9 +45,29 @@ class ProjectWidget(QWidget):
         left_layout.addLayout(buttons_layout)
         layout.addLayout(left_layout)
 
-        right_layout = QVBoxLayout()
-        right_layout.setAlignment(Qt.AlignTop)
-        right_layout.setContentsMargins(20, 20, 20, 20)
+        self.tab_widget = QTabWidget()
+
+        self.struct_settings_widget = OptionsWidget({
+            'Структура проекта': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'width': 200,
+                                  'values': ['Лаба - задание - вариант', 'Лаба - вариант', 'Лаба', 'Без структуры']},
+            'Название папки с лабой': {'type': str, 'width': 250, 'name': OptionsWidget.NAME_RIGHT,
+                                       'initial': self.sm.get('dir_format', '')},
+            'Описание тестов': {'type': str, 'initial': self.sm.get('readme', 'func_tests/readme.md'),
+                                'width': 250, 'name': OptionsWidget.NAME_RIGHT},
+            'Входные данные для позитивных тестов': {
+                'type': str, 'width': 250, 'initial': self.sm.get('pos_in', ''),
+                'name': OptionsWidget.NAME_RIGHT},
+            'Входные данные для негативных тестов': {
+                'type': str, 'width': 250, 'initial': self.sm.get('pos_in', ''),
+                'name': OptionsWidget.NAME_RIGHT},
+        }, margins=(25, 25, 25, 25))
+        self.tab_widget.addTab(self.struct_settings_widget, 'Структура проекта')
+
+        widget = QWidget()
+        testing_settings_layout = QVBoxLayout()
+        widget.setLayout(testing_settings_layout)
+        testing_settings_layout.setAlignment(Qt.AlignTop)
+        testing_settings_layout.setContentsMargins(20, 20, 20, 20)
 
         testing_checkbox_layout = QHBoxLayout()
         testing_checkbox_layout.setAlignment(Qt.AlignLeft)
@@ -58,9 +78,9 @@ class ProjectWidget(QWidget):
         self.testing_checkbox.clicked.connect(self.testing_checkbox_triggered)
         if self.sm.data_path:
             self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
-        right_layout.addLayout(testing_checkbox_layout)
+        testing_settings_layout.addLayout(testing_checkbox_layout)
 
-        self.options_widget = OptionsWidget({
+        self.testing_settings_widget = OptionsWidget({
             "Компилятор": {'type': str, 'width': 400},
             "Ключ -lm": {'type': bool, 'name': OptionsWidget.NAME_RIGHT},
             "Компаратор для позитивных тестов:": {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'values': [
@@ -74,11 +94,13 @@ class ProjectWidget(QWidget):
             "Тестирование по памяти": {'type': bool, 'name': OptionsWidget.NAME_RIGHT},
             "Ограничение по времени:": {'type': float, 'min': 0.01, 'max': 600, 'name': OptionsWidget.NAME_LEFT},
         }, margins=(5, 5, 5, 5))
-        self.options_widget.setDisabled(True)
-        self.options_widget.clicked.connect(self.save_settings)
-        right_layout.addWidget(self.options_widget)
+        self.testing_settings_widget.setDisabled(True)
+        self.testing_settings_widget.clicked.connect(self.save_settings)
+        testing_settings_layout.addWidget(self.testing_settings_widget)
 
-        layout.addLayout(right_layout)
+        self.tab_widget.addTab(widget, 'Тестирование')
+
+        layout.addWidget(self.tab_widget)
         self.setLayout(layout)
 
         self.opening_project = False
@@ -91,9 +113,9 @@ class ProjectWidget(QWidget):
         self.sm.set('default_testing_settings', value)
         self.sm.repair_settings()
         if value:
-            self.options_widget.hide()
+            self.testing_settings_widget.hide()
         else:
-            self.options_widget.show()
+            self.testing_settings_widget.show()
 
     def update_projects(self):
         self.list_widget.clear()
@@ -137,32 +159,48 @@ class ProjectWidget(QWidget):
 
     def open_project(self, forced=False):
         if self.list_widget.currentItem() is None:
-            self.options_widget.setDisabled(True)
+            self.testing_settings_widget.setDisabled(True)
             return
         project = self.list_widget.currentItem().text()
         if project == self.sm.project and not forced:
             return
         self.opening_project = True
-        self.options_widget.setDisabled(False)
+        self.testing_settings_widget.setDisabled(False)
         self.sm.set_project(project)
         self.sm.repair_settings()
         self.testing_checkbox.setChecked(flag := self.sm.get('default_testing_settings', True))
         if flag:
-            self.options_widget.hide()
+            self.testing_settings_widget.hide()
         else:
-            self.options_widget.show()
-        self.options_widget.widgets['Компилятор'].setText(self.sm.get('compiler', 'gcc -std=c99 -Wall -Werror'))
-        self.options_widget.widgets['Ключ -lm'].setChecked(bool(self.sm.get('-lm', True)))
-        self.options_widget.widgets['Компаратор для позитивных тестов:'].setCurrentIndex(int(
+            self.testing_settings_widget.show()
+
+        self.struct_settings_widget.widgets['Структура проекта'].setCurrentIndex(self.sm.get(
+            'struct', 0))
+        self.struct_settings_widget.widgets['Название папки с лабой'].setText(self.sm.get(
+            'dir_format', 'lab_{lab:0>2}_{task:0>2}_{var:0>2}'))
+        self.struct_settings_widget.widgets['Описание тестов'].setText(self.sm.get(
+            'readme', 'func_tests/readme.md'))
+        self.struct_settings_widget.widgets['Входные данные для позитивных тестов'].setText(self.sm.get(
+            'pos_in', 'func_tests/data/pos_{:0>2}_in.txt'))
+        self.struct_settings_widget.widgets['Входные данные для негативных тестов'].setText(self.sm.get(
+            'neg_in', 'func_tests/data/neg_{:0>2}_in.txt'))
+
+        self.testing_settings_widget.widgets['Компилятор'].setText(
+            self.sm.get('compiler', 'gcc -std=c99 -Wall -Werror'))
+        self.testing_settings_widget.widgets['Ключ -lm'].setChecked(bool(self.sm.get('-lm', True)))
+        self.testing_settings_widget.widgets['Компаратор для позитивных тестов:'].setCurrentIndex(int(
             self.sm.get('pos_comparator', 0)))
-        self.options_widget.widgets['Компаратор для негативных тестов:'].setCurrentIndex(int(
+        self.testing_settings_widget.widgets['Компаратор для негативных тестов:'].setCurrentIndex(int(
             self.sm.get('neg_comparator', 0)))
-        self.options_widget.widgets['Погрешность сравнения чисел:'].setValue(int(self.sm.get('epsilon', 0)))
-        self.options_widget.widgets['Подстрока для позитивных тестов'].setText(self.sm.get('pos_substring', 'Result:'))
-        self.options_widget.widgets['Подстрока для негативных тестов'].setText(self.sm.get('neg_substring', 'Error:'))
-        self.options_widget.widgets['Coverage'].setChecked(bool(self.sm.get('coverage', False)))
-        self.options_widget.widgets['Тестирование по памяти'].setChecked(bool(self.sm.get('memory_testing', False)))
-        self.options_widget.widgets['Ограничение по времени:'].setValue(int(self.sm.get('time_limit', 3)))
+        self.testing_settings_widget.widgets['Погрешность сравнения чисел:'].setValue(int(self.sm.get('epsilon', 0)))
+        self.testing_settings_widget.widgets['Подстрока для позитивных тестов'].setText(
+            self.sm.get('pos_substring', 'Result:'))
+        self.testing_settings_widget.widgets['Подстрока для негативных тестов'].setText(
+            self.sm.get('neg_substring', 'Error:'))
+        self.testing_settings_widget.widgets['Coverage'].setChecked(bool(self.sm.get('coverage', False)))
+        self.testing_settings_widget.widgets['Тестирование по памяти'].setChecked(
+            bool(self.sm.get('memory_testing', False)))
+        self.testing_settings_widget.widgets['Ограничение по времени:'].setValue(int(self.sm.get('time_limit', 3)))
         self.opening_project = False
         self.disable_menu_func(False)
 
@@ -170,7 +208,14 @@ class ProjectWidget(QWidget):
         if self.opening_project:
             return
         if not self.testing_checkbox.isChecked():
-            dct = self.options_widget.values
+            dct = self.testing_settings_widget.values
+
+            self.sm.set('struct', dct['Структура проекта'])
+            self.sm.set('dir_format', dct['Название папки с лабой'])
+            self.sm.set('readme', dct['Описание тестов'])
+            self.sm.set('pos_in', dct['Входные данные для позитивных тестов'])
+            self.sm.set('neg_in', dct['Входные данные для негативных тестов'])
+
             self.sm.set('compiler', dct['Компилятор'])
             self.sm.set('-lm', dct['Ключ -lm'])
             self.sm.set('pos_comparator', dct['Компаратор для позитивных тестов:'])
@@ -192,15 +237,34 @@ class ProjectWidget(QWidget):
         self.button_delete_project.setFont(self.tm.font_small)
         self.button_rename_project.setStyleSheet(self.tm.buttons_style_sheet)
         self.button_rename_project.setFont(self.tm.font_small)
-        self.options_widget.setFont(self.tm.font_small)
+
+        self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet.replace('width: 50px', 'width: 120px'))
+        self.tab_widget.setFont(self.tm.font_small)
+
+        self.struct_settings_widget.setFont(self.tm.font_small)
+        self.struct_settings_widget.widgets['Структура проекта'].setStyleSheet(self.tm.combo_box_style_sheet)
+        self.struct_settings_widget.widgets['Название папки с лабой'].setStyleSheet(self.tm.style_sheet)
+        self.struct_settings_widget.widgets['Описание тестов'].setStyleSheet(self.tm.style_sheet)
+        self.struct_settings_widget.widgets['Входные данные для позитивных тестов'].setStyleSheet(self.tm.style_sheet)
+        self.struct_settings_widget.widgets['Входные данные для негативных тестов'].setStyleSheet(self.tm.style_sheet)
+        for label in self.struct_settings_widget.labels.values():
+            label.setFont(self.tm.font_small)
+
+        self.testing_settings_widget.setFont(self.tm.font_small)
         self.label.setFont(self.tm.font_small)
-        self.options_widget.widgets['Компилятор'].setStyleSheet(self.tm.style_sheet)
-        self.options_widget.widgets['Компаратор для позитивных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.options_widget.widgets['Компаратор для негативных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.options_widget.widgets['Погрешность сравнения чисел:'].setStyleSheet(self.tm.double_spin_box_style_sheet)
-        self.options_widget.widgets['Подстрока для позитивных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.options_widget.widgets['Подстрока для негативных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.options_widget.widgets['Ограничение по времени:'].setStyleSheet(self.tm.double_spin_box_style_sheet)
+        self.testing_settings_widget.widgets['Компилятор'].setStyleSheet(self.tm.style_sheet)
+        self.testing_settings_widget.widgets['Компаратор для позитивных тестов:'].setStyleSheet(
+            self.tm.combo_box_style_sheet)
+        self.testing_settings_widget.widgets['Компаратор для негативных тестов:'].setStyleSheet(
+            self.tm.combo_box_style_sheet)
+        self.testing_settings_widget.widgets['Погрешность сравнения чисел:'].setStyleSheet(
+            self.tm.double_spin_box_style_sheet)
+        self.testing_settings_widget.widgets['Подстрока для позитивных тестов'].setStyleSheet(self.tm.style_sheet)
+        self.testing_settings_widget.widgets['Подстрока для негативных тестов'].setStyleSheet(self.tm.style_sheet)
+        self.testing_settings_widget.widgets['Ограничение по времени:'].setStyleSheet(
+            self.tm.double_spin_box_style_sheet)
+        for label in self.testing_settings_widget.labels.values():
+            label.setFont(self.tm.font_small)
 
     def show(self) -> None:
         if self.isHidden():

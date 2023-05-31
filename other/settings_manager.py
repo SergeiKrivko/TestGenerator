@@ -66,6 +66,15 @@ class SettingsManager:
             return f"{self.data_path if appdata else self.path}/lab_{lab:0>2}_{task:0>2}"
         return f"{self.data_path if appdata else self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
 
+    def data_lab_path(self, lab=None, task=None, var=None):
+        if lab is None:
+            lab = self.get('lab')
+        if task is None:
+            task = self.get('task')
+        if var is None:
+            var = self.get('var')
+        return f"{self.data_path}/{lab}/{task}/{var}"
+
     def set_general(self, key, value):
         self.q_settings.setValue(key, value)
 

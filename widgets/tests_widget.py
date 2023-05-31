@@ -1,4 +1,5 @@
 import json
+import os
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
@@ -9,7 +10,7 @@ from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
 from widgets.test_table_widget import TestTableWidget
 from widgets.test_edit_widget import TestEditWidget
-import os
+from other.macros_converter import MacrosConverter
 
 
 class TestsWidget(QWidget):
@@ -37,7 +38,7 @@ class TestsWidget(QWidget):
 
         self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
         self.generator_window.hide()
-        self.generator_window.complete.connect(self.write_readme_after_generation)
+        # self.generator_window.complete.connect(self.write_readme_after_generation)
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm)
         self.test_list_widget.setMinimumWidth(400)
@@ -60,12 +61,8 @@ class TestsWidget(QWidget):
 
         self.test_edit_widget = TestEditWidget(self.tm)
         self.test_edit_widget.setMinimumHeight(300)
-        self.test_edit_widget.test_name_edit.textEdited.connect(self.set_test_name)
-        self.test_edit_widget.test_in_edit.textChanged.connect(self.set_test_in)
-        self.test_edit_widget.test_out_edit.textChanged.connect(self.set_test_out)
-        self.test_edit_widget.cmd_args_edit.textEdited.connect(self.set_test_args)
-        self.test_edit_widget.exit_code_edit.textEdited.connect(self.set_test_exit_code)
-        self.test_edit_widget.button_generate.clicked.connect(self.button_generate_test)
+        self.test_edit_widget.test_edited.connect(self.set_tests_changed)
+        # self.test_edit_widget.button_generate.clicked.connect(self.generate_test)
         layout.addWidget(self.test_edit_widget)
 
         self.setLayout(layout)
@@ -73,12 +70,12 @@ class TestsWidget(QWidget):
         self.selected_test = 'pos'
 
         self.path = ''
+        self.data_dir = ''
+        self.current_test = None
+        self.loopers = dict()
         self.file_compiled = False
-        self.file_edit_time = dict()
-        self.files_links = dict()
         self.temp_file_index = 0
-        self.data_changed = False
-        self.readme_changed = False
+        self.tests_changed = False
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):
@@ -123,40 +120,26 @@ class TestsWidget(QWidget):
         self.generator_window.show()
 
     def add_pos_test(self):
-        self.readme_changed = True
-        self.data_changed = True
-        if not os.path.isdir(f"{self.path}/func_tests/data"):
-            os.makedirs(f"{self.path}/func_tests/data")
-        item = CustomListWidgetItem('-', tm=self.tm)
-        item.in_file = self.create_temp_file(item)
-        item.out_file = self.create_temp_file(item)
-        self.test_list_widget.pos_test_list.addItem(item)
+        self.tests_changed = True
+        if not os.path.isdir(f"{self.data_dir}/pos"):
+            os.makedirs(f"{self.data_dir}/pos")
+        self.test_list_widget.pos_test_list.addItem(Test(self.create_temp_file(), self.tm))
 
     def add_neg_test(self):
-        self.readme_changed = True
-        self.data_changed = True
-        if not os.path.isdir(f"{self.path}/func_tests/data"):
-            os.makedirs(f"{self.path}/func_tests/data")
-        item = CustomListWidgetItem('-', tm=self.tm)
-        item.in_file = self.create_temp_file(item)
-        item.out_file = self.create_temp_file(item)
-        self.test_list_widget.neg_test_list.addItem(item)
+        self.tests_changed = True
+        if not os.path.isdir(f"{self.data_dir}/neg"):
+            os.makedirs(f"{self.data_dir}/neg")
+        self.test_list_widget.neg_test_list.addItem(Test(self.create_temp_file(), self.tm))
 
     def delete_pos_test(self):
-        self.readme_changed = True
-        self.data_changed = True
+        self.tests_changed = True
         if self.test_list_widget.pos_test_list.count() == 0:
             return
         ind = self.test_list_widget.pos_test_list.currentRow()
         if ind == -1:
             return
         item = self.test_list_widget.pos_test_list.takeItem(ind)
-        if os.path.isfile(item.in_file):
-            os.remove(item.in_file)
-        if os.path.isfile(item.out_file):
-            os.remove(item.out_file)
-        if os.path.isfile(item.args_file):
-            os.remove(item.args_file)
+        item.remove_file()
         if self.test_list_widget.pos_test_list.count() == 0:
             self.test_edit_widget.set_disabled()
         else:
@@ -164,20 +147,14 @@ class TestsWidget(QWidget):
                 ind if ind < self.test_list_widget.pos_test_list.count() else ind - 1)
 
     def delete_neg_test(self):
-        self.readme_changed = True
-        self.data_changed = True
+        self.tests_changed = True
         if self.test_list_widget.neg_test_list.count() == 0:
             return
         ind = self.test_list_widget.neg_test_list.currentRow()
         if ind == -1:
             return
         item = self.test_list_widget.neg_test_list.takeItem(ind)
-        if os.path.isfile(item.in_file):
-            os.remove(item.in_file)
-        if os.path.isfile(item.out_file):
-            os.remove(item.out_file)
-        if os.path.isfile(item.args_file):
-            os.remove(item.args_file)
+        item.remove_file()
         if self.test_list_widget.neg_test_list.count() == 0:
             self.test_edit_widget.set_disabled()
         else:
@@ -187,89 +164,43 @@ class TestsWidget(QWidget):
     def copy_tests(self, test_type='pos'):
         dlg = TestCopyWindow(self.sm, self.tm)
         if dlg.exec():
-            for desc, in_data, out_data, args_data in dlg.copy_tests():
-                item = CustomListWidgetItem(desc, tm=self.tm)
+            for dct in dlg.copy_tests():
+                item = Test(self.create_temp_file(), tm=self.tm)
 
-                item.in_file = self.create_temp_file(item)
-                self.write_file(item.in_file, in_data)
-
-                item.out_file = self.create_temp_file(item)
-                self.write_file(item.out_file, out_data)
-
-                if args_data:
-                    item.args_file = self.create_temp_file(item)
-                    self.write_file(item.args_file, args_data)
+                item.dict = dct
+                item['desc'] = dct.get('desc', '-')
+                item.store()
 
                 if test_type == 'pos':
                     self.test_list_widget.pos_test_list.addItem(item)
                 else:
                     self.test_list_widget.neg_test_list.addItem(item)
 
+    def set_tests_changed(self):
+        self.tests_changed = True
+
     def select_pos_test(self):
-        try:
-            item = self.test_list_widget.pos_test_list.currentItem()
-            if item:
-                self.test_list_widget.neg_test_list.setCurrentItem(None)
-            self.test_edit_widget.open_test(
-                item.desc, read_file(item.in_file, default=''), read_file(item.out_file, default=''),
-                read_file(item.args_file, default=''), str(item.exit_code) if item.exit_code is not None else '')
-        except AttributeError:
-            pass
+        item = self.test_list_widget.pos_test_list.currentItem()
+        if self.current_test:
+            self.current_test.store()
+        if isinstance(item, Test):
+            self.test_list_widget.neg_test_list.setCurrentItem(None)
+            item.load()
+            self.current_test = item
+            self.test_edit_widget.open_test(item.dict)
 
     def select_neg_test(self):
-        try:
-            item = self.test_list_widget.neg_test_list.currentItem()
-            if item:
-                self.test_list_widget.pos_test_list.setCurrentItem(None)
-            self.test_edit_widget.open_test(
-                item.desc, read_file(item.in_file, default=''), read_file(item.out_file, default=''),
-                read_file(item.args_file, default=''), item.exit_code)
-        except AttributeError:
-            pass
-
-    def set_test_name(self, name):
-        self.readme_changed = True
-        if self.test_list_widget.pos_test_list.currentItem() is not None:
-            self.test_list_widget.pos_test_list.currentItem().set_desc(name)
-        elif self.test_list_widget.neg_test_list.currentItem() is not None:
-            self.test_list_widget.neg_test_list.currentItem().set_desc(name)
-
-    def set_test_in(self):
-        data = self.test_edit_widget.test_in_edit.toPlainText()
-        item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
-        if item:
-            self.write_file(item.in_file, data)
-
-    def set_test_args(self):
-        data = self.test_edit_widget.cmd_args_edit.text()
-        item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
-        if item:
-            if not data and item.args_file:
-                os.remove(item.args_file)
-                item.args_file = ''
-            elif data:
-                if not item.args_file:
-                    item.args_file = self.create_temp_file(item)
-                self.write_file(item.args_file, data)
-
-    def set_test_out(self):
-        data = self.test_edit_widget.test_out_edit.toPlainText()
-        item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
-        if item:
-            if not item.out_file:
-                item.out_file = self.create_temp_file(item)
-            self.write_file(item.out_file, data)
-
-    def set_test_exit_code(self):
-        code = self.test_edit_widget.exit_code_edit.text()
-        item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
-        if item:
-            item.exit_code = int(code) if code else None
-        self.data_changed = True
+        item = self.test_list_widget.neg_test_list.currentItem()
+        if self.current_test:
+            self.current_test.store()
+        if isinstance(item, Test):
+            self.test_list_widget.pos_test_list.setCurrentItem(None)
+            item.load()
+            self.current_test = item
+            self.test_edit_widget.open_test(item.dict)
 
     def move_pos_test_up(self):
-        self.readme_changed = True
-        self.data_changed = True
+        self.tests_changed = True
         index = self.test_list_widget.pos_test_list.currentRow()
         if index <= 0:
             return
@@ -278,8 +209,7 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_test_list.setCurrentRow(index - 1)
 
     def move_pos_test_down(self):
-        self.readme_changed = True
-        self.data_changed = True
+        self.tests_changed = True
         index = self.test_list_widget.pos_test_list.currentRow()
         if index >= self.test_list_widget.pos_test_list.count() - 1:
             return
@@ -288,8 +218,7 @@ class TestsWidget(QWidget):
         self.test_list_widget.pos_test_list.setCurrentRow(index + 1)
 
     def move_neg_test_up(self):
-        self.readme_changed = True
-        self.data_changed = True
+        self.tests_changed = True
         index = self.test_list_widget.neg_test_list.currentRow()
         if index <= 0:
             return
@@ -298,21 +227,13 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_test_list.setCurrentRow(index - 1)
 
     def move_neg_test_down(self):
-        self.readme_changed = True
-        self.data_changed = True
+        self.tests_changed = True
         index = self.test_list_widget.neg_test_list.currentRow()
         if index >= self.test_list_widget.neg_test_list.count() - 1:
             return
         item = self.test_list_widget.neg_test_list.takeItem(index)
         self.test_list_widget.neg_test_list.insertItem(index + 1, item)
         self.test_list_widget.neg_test_list.setCurrentRow(index + 1)
-
-    def button_generate_test(self):
-        self.data_changed = True
-        if self.test_list_widget.pos_test_list.currentItem() is not None:
-            self.generate_test('pos')
-        elif self.test_list_widget.neg_test_list.currentItem() is not None:
-            self.generate_test('neg')
 
     def get_path(self, from_settings=False):
         if from_settings:
@@ -325,8 +246,6 @@ class TestsWidget(QWidget):
         self.get_path()
         self.test_list_widget.pos_test_list.clear()
         self.test_list_widget.neg_test_list.clear()
-        if not os.path.isdir(f"{self.path}/func_tests/data"):
-            return
         try:
             self.test_list_widget.pos_comparator_widget.setCurrentIndex(self.sm.get('pos_comparators', dict()).get(
                 f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1) + 1)
@@ -335,16 +254,38 @@ class TestsWidget(QWidget):
         except Exception as ex:
             print(f"{ex.__class__.__name__}: {ex}")
 
+        path = f"{self.sm.data_lab_path()}/func_tests/preprocessor.txt"
+        self.test_edit_widget.preprocessor_line.setText(read_file(path, ''))
+        path = f"{self.sm.data_lab_path()}/func_tests/postprocessor.txt"
+        self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
+
+        self.data_dir = f"{self.sm.data_lab_path()}/func_tests"
+        if not os.path.isdir(self.data_dir):
+            self.open_tests_from_readme()
+        else:
+            if os.path.isdir(f"{self.data_dir}/pos"):
+                lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/pos")))
+                lst.sort(key=lambda s: int(s.rstrip('.json')))
+                for el in lst:
+                    self.test_list_widget.pos_test_list.addItem(Test(f"{self.data_dir}/pos/{el}", self.tm))
+
+            if os.path.isdir(f"{self.data_dir}/neg"):
+                lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/neg")))
+                lst.sort(key=lambda s: int(s.rstrip('.json')))
+                for el in lst:
+                    self.test_list_widget.neg_test_list.addItem(Test(f"{self.data_dir}/neg/{el}", self.tm))
+
+    def open_tests_from_readme(self):
+        if not os.path.isdir(f"{self.path}/func_tests/data"):
+            return
+
         self.remove_temp_files()
-        self.files_links.clear()
         self.temp_file_index = 0
 
         self.readme_parser()
-        self.readme_changed = False
         self.load_data_files()
-        self.data_changed = False
+        self.tests_changed = True
         self.test_edit_widget.set_disabled()
-        self.file_edit_time.clear()
 
     def readme_parser(self):
         self.test_list_widget.pos_test_list.clear()
@@ -358,20 +299,29 @@ class TestsWidget(QWidget):
         self.options_widget.set_value("Вход:", "-")
         self.options_widget.set_value("Выход:", "-")
 
+        os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
+        os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
+
         for i in range(len(lines)):
             if "Позитивные тесты" in lines[i]:
                 for j in range(i + 1, len(lines)):
                     if lines[j].startswith('- ') and ' - ' in lines[j]:
-                        self.test_list_widget.pos_test_list.addItem(
-                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', '', tm=self.tm))
+                        item = Test(self.create_temp_file(), self.tm)
+                        item.load()
+                        item['desc'] = lines[j][lines[j].index(' - ') + 3:].strip()
+                        item.store()
+                        self.test_list_widget.pos_test_list.addItem(item)
                     else:
                         break
 
             elif "Негативные тесты" in lines[i]:
                 for j in range(i + 1, len(lines)):
                     if lines[j].startswith('- ') and ' - ' in lines[j]:
-                        self.test_list_widget.neg_test_list.addItem(
-                            CustomListWidgetItem(lines[j][lines[j].index(' - ') + 3:].strip(), '', '', tm=self.tm))
+                        item = Test(self.create_temp_file(), self.tm)
+                        item.load()
+                        item['desc'] = lines[j][lines[j].index(' - ') + 3:].strip()
+                        item.store()
+                        self.test_list_widget.neg_test_list.addItem(item)
                     else:
                         break
 
@@ -382,162 +332,58 @@ class TestsWidget(QWidget):
                 self.options_widget.set_value("Выход:", lines[i + 1].strip())
 
     def load_data_files(self):
-        path = f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt"
-        self.test_edit_widget.preprocessor_line.setText(read_file(path, ''))
-        path = f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt"
-        self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
-
-        exit_codes = json.loads(read_file(f"{self.sm.lab_path(appdata=True)}/exit_codes.txt", '{}'))
+        def get_files(test_type='pos'):
+            list_widget = self.test_list_widget.pos_test_list if test_type == 'pos' else \
+                self.test_list_widget.neg_test_list
+            j = 0
+            for j in range(list_widget.count()):
+                yield j
+            j += 1
+            while os.path.isfile(f"{self.path}/func_tests/data/{test_type}_{j:0>2}_in.txt"):
+                list_widget.addItem(Test(self.create_temp_file(), self.tm))
+                yield j
+                j += 1
 
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             return
 
-        lst, count = [], 0
-
-        for file in os.listdir(f"{self.path}/func_tests/data"):
-            if file.startswith('pos_') and file.endswith('_in.txt') and file.lstrip('pos_').rstrip('_in.txt').isdigit():
-                index = int(file.lstrip('pos_').rstrip('_in.txt'))
-                count += 1
-                item = self.test_list_widget.pos_test_list.item(index - 1)
-                if index <= self.test_list_widget.pos_test_list.count():
-                    item.in_file = f"{self.path}/func_tests/data/{file}"
-                    self.files_links[item.in_file] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/{file.replace('in', 'out')}"):
-                        item.out_file = f
-                        self.files_links[f] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/{file.replace('in', 'args')}"):
-                        item.args_file = f
-                        self.files_links[f] = item
-                else:
-                    lst.append(index)
-
-        lst.sort()
-        for _ in range(count - self.test_list_widget.pos_test_list.count()):
-            self.test_list_widget.pos_test_list.addItem(CustomListWidgetItem('-', tm=self.tm))
-        for i in range(self.test_list_widget.pos_test_list.count()):
+        for i in get_files('pos'):
             item = self.test_list_widget.pos_test_list.item(i)
-            item.exit_code = exit_codes.get(f"pos{i + 1}")
-            if not item.in_file:
-                if len(lst):
-                    item.in_file = f"{self.path}/func_tests/data/pos_{lst[0]:0>2}_in.txt"
-                    self.files_links[item.in_file] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/pos_{lst[0]:0>2}_out.txt"):
-                        item.out_file = f
-                        self.files_links[f] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/pos_{lst[0]:0>2}_args.txt"):
-                        item.args_file = f
-                        self.files_links[f] = item
-                    lst.pop(0)
-                else:
-                    item.in_file = self.create_temp_file(item)
-                    item.out_file = self.create_temp_file(item)
+            item.load()
+            item['in'] = read_file(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_in.txt", '')
+            item['out'] = read_file(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_out.txt", '')
+            item['args'] = read_file(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_args.txt", '')
+            item.store()
 
-        lst, count = [], 0
-
-        for file in os.listdir(f"{self.path}/func_tests/data"):
-            if file.startswith('neg_') and file.endswith('_in.txt') and file.lstrip('neg_').rstrip('_in.txt').isdigit():
-                index = int(file.lstrip('neg_').rstrip('_in.txt'))
-                count += 1
-                item = self.test_list_widget.neg_test_list.item(index - 1)
-                if index <= self.test_list_widget.neg_test_list.count():
-                    item.in_file = f"{self.path}/func_tests/data/{file}"
-                    self.files_links[item.in_file] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/{file.replace('in', 'out')}"):
-                        item.out_file = f
-                        self.files_links[f] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/{file.replace('in', 'args')}"):
-                        item.args_file = f
-                        self.files_links[f] = item
-                else:
-                    lst.append(index)
-
-        lst.sort()
-        for _ in range(count - self.test_list_widget.neg_test_list.count()):
-            self.test_list_widget.neg_test_list.addItem(CustomListWidgetItem('-', tm=self.tm))
-        for i in range(self.test_list_widget.neg_test_list.count()):
+        for i in get_files('neg'):
             item = self.test_list_widget.neg_test_list.item(i)
-            item.exit_code = exit_codes.get(f"neg{i + 1}")
-            if not item.in_file:
-                if len(lst):
-                    item.in_file = f"{self.path}/func_tests/data/neg_{lst[0]:0>2}_in.txt"
-                    self.files_links[item.in_file] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/neg_{lst[0]:0>2}_out.txt"):
-                        item.out_file = f
-                        self.files_links[f] = item
-                    if os.path.isfile(f := f"{self.path}/func_tests/data/neg_{lst[0]:0>2}_args.txt"):
-                        item.args_file = f
-                        self.files_links[f] = item
-                    lst.pop(0)
-                else:
-                    item.in_file = self.create_temp_file(item)
-                    item.out_file = self.create_temp_file(item)
+            item.load()
+            item['in'] = read_file(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_in.txt", '')
+            item['out'] = read_file(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_out.txt", '')
+            item['args'] = read_file(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_args.txt", '')
+            item.store()
 
-    def compare_edit_time(self):
-        for file in os.listdir(self.path):
-            if ('.c' in file or '.h' in file) and \
-                    self.file_edit_time.get(file, 0) != os.path.getmtime(f"{self.path}/{file}"):
-                return False
-        return True
-
-    def update_edit_time(self):
-        for file in os.listdir(self.path):
-            if '.c' in file or '.h' in file:
-                self.file_edit_time[file] = os.path.getmtime(f"{self.path}/{file}")
-
-    def save_a_test(self, index, type='pos'):
-        os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
-
-        item = self.test_list_widget.pos_test_list.item(index) if type == 'pos' else \
-            self.test_list_widget.neg_test_list.item(index)
-
-        in_name = f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_in.txt"
-        out_name = f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt"
-        args_name = f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_args.txt"
-
-        if item.in_file != in_name:
-            if in_name in self.files_links:
-                other_item = self.files_links[in_name]
-                if os.path.isfile(other_item.in_file):
-                    self.rename_in_file(other_item, self.create_temp_file(other_item, create_file=False))
-            self.rename_in_file(item, in_name)
-
-        if item.out_file != out_name:
-            if out_name in self.files_links:
-                other_item = self.files_links[out_name]
-                if os.path.isfile(other_item.out_file):
-                    self.rename_out_file(other_item, self.create_temp_file(other_item, create_file=False))
-            self.rename_out_file(item, out_name)
-
-        if item.args_file and item.args_file != args_name:
-            if args_name in self.files_links:
-                other_item = self.files_links[args_name]
-                if os.path.isfile(other_item.args_file):
-                    self.rename_args_file(other_item, self.create_temp_file(other_item, create_file=False))
-            self.rename_args_file(item, args_name)
-
-    def generate_test(self, type='pos'):
+    def generate_test(self):
         self.data_changed = True
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
         old_dir = os.getcwd()
         os.chdir(self.path)
 
-        item = self.test_list_widget.pos_test_list.currentItem() if type == 'pos' else \
-            self.test_list_widget.neg_test_list.currentItem()
+        item = self.test_list_widget.pos_test_list.currentItem() or self.test_list_widget.neg_test_list.currentItem()
         if not item:
             return
 
-        if not self.compare_edit_time():
-            self.update_edit_time()
-            res, stderr = self.cm.compile(coverage=False)
-            if not res:
-                MessageBox(MessageBox.Warning, "Ошибка компиляции", stderr, self.tm)
-                return
+        res, stderr = self.cm.compile(coverage=False)
+        if not res:
+            MessageBox(MessageBox.Warning, "Ошибка компиляции", stderr, self.tm)
+            return
 
         res = self.cm.cmd_command(
             f"{self.path}/app.exe {read_file(item.args_file, '') if 'args_file' in item.__dict__ else ''}",
             shell=True, input=read_file(item.in_file))
-        self.write_file(item.out_file, res.stdout)
+        item['out'] = res.stdout
+
         # if self.sm.get('clear_words', False):
         #     clear_words(f"{self.path}/func_tests/data/{type}_{index + 1:0>2}_out.txt")
 
@@ -549,117 +395,54 @@ class TestsWidget(QWidget):
             if file.startswith('temp'):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
-    def write_readme_after_generation(self, lst, type='pos'):
-        self.readme_changed = True
-        self.data_changed = True
+    def save_tests(self):
+        if not self.test_list_widget.pos_test_list.count() and not self.test_list_widget.neg_test_list.count() or \
+                not self.tests_changed:
+            return
+        item = self.test_list_widget.pos_test_list.currentItem() or \
+               self.test_list_widget.neg_test_list.currentItem()
+        if item:
+            item.store()
+
+        os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
+        os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
+
+        os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
         readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
         readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
                      f"{self.sm.get('task'):0>2}\n\n"
                      f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
-                     f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
-                     f"## Позитивные тесты:\n")
-        if type == 'pos':
-            for i in range(1, len(lst) + 1):
-                readme.write(f"- {i + 1:0>2} - {lst[i - 1]}\n")
-        else:
-            for i in range(self.test_list_widget.pos_test_list.count()):
-                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.pos_test_list.item(i).desc}\n")
+                     f"## Выходные данные\n{self.options_widget['Выход:']}\n")
 
-        readme.write("\n## Негативные тесты:\n")
+        for i in range(self.test_list_widget.pos_test_list.count()):
+            item = self.test_list_widget.pos_test_list.item(i)
+            if not item.path.endswith(f"{i}.json"):
+                item.rename_file(f"{self.data_dir}/pos/{i}.json")
 
-        if type == 'neg':
-            for i in range(1, len(lst) + 1):
-                readme.write(f"- {i + 1:0>2} - {lst[i - 1]}\n")
-        else:
-            for i in range(self.test_list_widget.neg_test_list.count()):
-                readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
+        for i in range(self.test_list_widget.neg_test_list.count()):
+            item = self.test_list_widget.neg_test_list.item(i)
+            if not item.path.endswith(f"{i}.json"):
+                item.rename_file(f"{self.data_dir}/neg/{i}.json")
 
-        readme.close()
-
-        self.open_tests()
-
-    def save_tests(self):
-        if not os.path.isfile(f"{self.path}/main.c") and not self.test_list_widget.pos_test_list.count() and \
-                not self.test_list_widget.neg_test_list.count() and \
-                not os.path.isfile(f"{self.path}/func_tests/readme.md"):
-            return
-        try:
-            if self.readme_changed:
-                os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
-                readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
-                readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
-                             f"{self.sm.get('task'):0>2}\n\n"
-                             f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
-                             f"## Выходные данные\n{self.options_widget['Выход:']}\n\n"
-                             f"## Позитивные тесты:\n")
-                for i in range(self.test_list_widget.pos_test_list.count()):
-                    readme.write(f"- {i + 1:0>2} - {self.test_list_widget.pos_test_list.item(i).desc}\n")
-                    self.save_a_test(i, 'pos')
-
-                readme.write("\n## Негативные тесты:\n")
-
-                for i in range(self.test_list_widget.neg_test_list.count()):
-                    readme.write(f"- {i + 1:0>2} - {self.test_list_widget.neg_test_list.item(i).desc}\n")
-                    self.save_a_test(i, 'neg')
-
-            if self.data_changed:
-                exit_codes = dict()
-                for i in range(self.test_list_widget.pos_test_list.count()):
-                    self.save_a_test(i, 'pos')
-                    if code := self.test_list_widget.pos_test_list.item(i).exit_code:
-                        exit_codes[f"pos{i + 1}"] = code
-                for i in range(self.test_list_widget.neg_test_list.count()):
-                    self.save_a_test(i, 'neg')
-                    if code := self.test_list_widget.neg_test_list.item(i).exit_code:
-                        exit_codes[f"neg{i + 1}"] = code
-                os.makedirs(self.sm.lab_path(appdata=True), exist_ok=True)
-                self.write_file(f"{self.sm.lab_path(appdata=True)}/exit_codes.txt", json.dumps(exit_codes))
-                self.remove_temp_files()
-
-            os.makedirs(f"{self.sm.lab_path(appdata=True)}/func_tests", exist_ok=True)
-            text = self.test_edit_widget.preprocessor_line.text()
-            path = f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt"
-            if text:
-                self.write_file(path, text)
-            elif os.path.isfile(path):
-                os.remove(path)
-
-            text = self.test_edit_widget.postprocessor_line.text()
-            path = f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt"
-            if text:
-                self.write_file(path, text)
-            elif os.path.isfile(path):
-                os.remove(path)
-
-        except Exception as ex:
-            MessageBox(MessageBox.Warning, 'Error', f"{ex.__class__.__name__}: {ex}", self.tm)
+        looper = MacrosConverter(self.data_dir, f"{self.sm.lab_path()}", {
+            'pos_in': 'func_tests/data/pos_{:0>2}_in.txt',
+            'pos_out': 'func_tests/data/pos_{:0>2}_out.txt',
+            'pos_args': 'func_tests/data/pos_{:0>2}_args.txt',
+            'neg_in': 'func_tests/data/neg_{:0>2}_in.txt',
+            'neg_out': 'func_tests/data/neg_{:0>2}_out.txt',
+            'neg_args': 'func_tests/data/neg_{:0>2}_args.txt'
+        }, self.sm, readme)
+        self.loopers[self.sm.lab_path()] = looper
+        looper.start()
 
     def write_file(self, path, data=''):
         file = open(path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep'))
         file.write(data)
         file.close()
 
-    def rename_in_file(self, item, path):
-        self.files_links.pop(item.in_file)
-        self.files_links[path] = item
-        item.rename_in_file(path)
-
-    def rename_out_file(self, item, path):
-        self.files_links.pop(item.out_file)
-        self.files_links[path] = item
-        item.rename_out_file(path)
-
-    def rename_args_file(self, item, path):
-        self.files_links.pop(item.args_file)
-        self.files_links[path] = item
-        item.rename_args_file(path)
-
-    def create_temp_file(self, item, create_file=True):
-        path = f"{self.path}/func_tests/data/temp_{self.temp_file_index}"
-        if create_file:
-            open(path, 'x').close()
+    def create_temp_file(self):
+        path = f"{self.data_dir}/temp_{self.temp_file_index}"
         self.temp_file_index += 1
-        self.files_links[path] = item
         return path
 
     def set_theme(self):
@@ -687,33 +470,69 @@ class TestsWidget(QWidget):
         super(TestsWidget, self).hide()
 
 
-class CustomListWidgetItem(QListWidgetItem):
-    def __init__(self, desc, in_file="", out_file="", args_file="", exit_code=None, tm=None):
-        super(CustomListWidgetItem, self).__init__()
-        self.desc = desc
-        self.setText(desc)
-        self.in_file = in_file
-        self.out_file = out_file
-        self.args_file = args_file
-        self.exit_code = exit_code
+class Test(QListWidgetItem):
+    files_links = dict()
+
+    def __init__(self, file, tm):
+        super(Test, self).__init__()
+        self.path = file
+        Test.files_links[self.path] = self
+
+        self.load()
+        self.setText(self.get('desc', '-'))
+        self.dict = None
 
         self.setFont(tm.font_small)
 
-    def rename_in_file(self, path):
-        os.rename(self.in_file, path)
-        self.in_file = path
+    def load(self):
+        try:
+            with open(self.path, 'r', encoding='utf-8') as f:
+                self.dict = json.loads(f.read())
+        except FileNotFoundError:
+            self.dict = {'desc': '-', 'in': '', 'out': '', 'args': ''}
+        except json.JSONDecodeError:
+            self.dict = {'desc': '-', 'in': '', 'out': '', 'args': ''}
 
-    def rename_out_file(self, path):
-        os.rename(self.out_file, path)
-        self.out_file = path
+    def store(self):
+        if self.dict is None:
+            return
+        with open(self.path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(self.dict))
+        self.dict = None
 
-    def rename_args_file(self, path):
-        os.rename(self.args_file, path)
-        self.args_file = path
+    def get(self, key, default):
+        return self.dict.get(key, default)
 
-    def set_desc(self, new_desc):
-        self.desc = new_desc
-        self.setText(new_desc)
+    def rename_file(self, new_name):
+        Test.files_links.pop(self.path)
+        if new_name in Test.files_links:
+            other_test = Test.files_links[new_name]
+            old_name = self.path
+            other_test.rename_file(f"{os.path.split(other_test.path)[0]}/temp")
+            os.rename(self.path, new_name)
+            other_test.rename_file(old_name)
+        else:
+            os.rename(self.path, new_name)
+        self.path = new_name
+        Test.files_links[new_name] = self
+
+    def remove_file(self):
+        try:
+            os.remove(self.path)
+            Test.files_links.pop(self.path)
+        except FileNotFoundError:
+            pass
+
+    def update_name(self):
+        self.setText(self.dict.get('desc', ''))
+
+    def __getitem__(self, item):
+        return self.dict[item]
+
+    def __setitem__(self, key, value):
+        if key == 'desc':
+            self.setText(value)
+        self.dict[key] = value
 
 
 def read_file(path, default=None):
@@ -808,7 +627,7 @@ class TestCopyWindow(QDialog):
         self.check_boxes = []
 
         self.get_path()
-        self.parse_readme_md()
+        self.open_task()
         self.update_list()
 
     def options_changed(self, key):
@@ -825,38 +644,44 @@ class TestCopyWindow(QDialog):
         self.clear_scroll_area()
         self.check_boxes.clear()
         self.get_path()
-        self.parse_readme_md()
+        self.open_task()
         self.update_list()
 
     def get_path(self, from_settings=False):
         if from_settings:
             self.path = self.sm.lab_path()
+            self.data_dir = self.sm.data_lab_path() + '/func_tests'
         else:
             self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
                                          self.options_widget['Номер варианта:'])
+            self.data_dir = self.sm.data_lab_path(self.options_widget['Номер лабы:'],
+                                                  self.options_widget['Номер задания:'],
+                                                  self.options_widget['Номер варианта:']) + '/func_tests'
 
-    def parse_readme_md(self):
+    def open_task(self):
         self.test_list.clear()
-        if not os.path.isfile(f"{self.path}/func_tests/readme.md"):
-            return
-        file = open(f"{self.path}/func_tests/readme.md", encoding='utf-8')
-        lines = file.readlines()
-        file.close()
+        print(f"{self.data_dir}/pos")
+        if os.path.isdir(f"{self.data_dir}/pos"):
+            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/pos")))
+            lst.sort(key=lambda s: int(s.rstrip('.json')))
+            for i, el in enumerate(lst):
+                with open(f"{self.data_dir}/pos/{el}", encoding='utf-8') as f:
+                    try:
+                        desc = json.loads(f.read()).get('desc', '-')
+                    except json.JSONDecodeError:
+                        desc = '-'
+                    self.test_list.append(f"POS {i}\t{desc}")
 
-        for i in range(len(lines)):
-            if "Позитивные тесты" in lines[i]:
-                for j in range(i + 1, len(lines)):
-                    if lines[j][:2] == '- ' and lines[j][4:7] == ' - ':
-                        self.test_list.append("POS\t" + lines[j][7:].strip())
-                    else:
-                        break
-
-            elif "Негативные тесты" in lines[i]:
-                for j in range(i + 1, len(lines)):
-                    if lines[j][:2] == '- ' and lines[j][4:7] == ' - ':
-                        self.test_list.append("NEG\t" + lines[j][7:].strip())
-                    else:
-                        break
+        if os.path.isdir(f"{self.data_dir}/neg"):
+            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/neg")))
+            lst.sort(key=lambda s: int(s.rstrip('.json')))
+            for i, el in enumerate(lst):
+                with open(f"{self.data_dir}/neg/{el}", encoding='utf-8') as f:
+                    try:
+                        desc = json.loads(f.read()).get('desc', '-')
+                    except json.JSONDecodeError:
+                        desc = '-'
+                    self.test_list.append(f"neg {i}\t{desc}")
 
     def update_list(self):
         for el in self.test_list:
@@ -883,14 +708,17 @@ class TestCopyWindow(QDialog):
             if self.test_list[i].startswith("POS"):
                 pos_ind += 1
                 if self.check_boxes[i].isChecked():
-                    yield self.test_list[i][4:], \
-                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_in.txt"), \
-                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_out.txt"), \
-                          read_file(f"{self.path}/func_tests/data/pos_{pos_ind:0>2}_args.txt", default='')
+                    with open(f"{self.data_dir}/pos/{self.test_list[i].split()[1]}.json",
+                              encoding='utf-8') as f:
+                        try:
+                            yield json.loads(f.read())
+                        except json.JSONDecodeError:
+                            yield dict()
+
             else:
                 neg_ind += 1
-                if self.check_boxes[i].isChecked():
-                    yield self.test_list[i][4:], \
-                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_in.txt"), \
-                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_out.txt"), \
-                          read_file(f"{self.path}/func_tests/data/neg_{neg_ind:0>2}_args.txt", default='')
+                with open(f"{self.data_dir}/neg/{self.test_list[i].split()[1]}.json", encoding='utf-8') as f:
+                    try:
+                        yield json.loads(f.read())
+                    except json.JSONDecodeError:
+                        yield dict()

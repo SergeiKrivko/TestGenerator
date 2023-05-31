@@ -1,3 +1,4 @@
+import json
 import os
 
 from PyQt5.QtCore import pyqtSignal, Qt
@@ -259,44 +260,54 @@ class TestingWidget(QWidget):
         self.tests_list.clear()
         self.current_task = self.sm['lab'], self.sm['task'], self.sm['var']
 
-        lst = []
+        tests_list = []
+        data_dir = f"{self.sm.data_lab_path()}/func_tests"
 
-        i = 1
-        while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            self.tests_list.addItem(TestingListWidgetItem(
-                self.tm, f"pos{i}", read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"),
-                read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"),
-                self.sm.get('memory_testing', False)))
-            lst.append(f"pos{i}")
-            i += 1
+        if os.path.isdir(f"{data_dir}/pos"):
+            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{data_dir}/pos")))
+            lst.sort(key=lambda s: int(s.rstrip('.json')))
+            for i, el in enumerate(lst):
+                try:
+                    dct = json.loads(read_file(f"{data_dir}/pos/{el}"))
+                    self.tests_list.addItem(TestingListWidgetItem(
+                        self.tm, f"pos{i + 1}", dct.get('in', ''), dct.get('out', ''),
+                        self.sm.get('memory_testing', False)))
+                    tests_list.append(f'pos{i+1}')
+                except json.JSONDecodeError:
+                    pass
 
         self.pos_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
-        self.pos_result_bar.setText(f"POS: 0/{i - 1}")
+        self.pos_result_bar.setText(f"POS: 0/{len(tests_list)}")
+        pos_count = len(tests_list)
 
-        i = 1
-        while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            self.tests_list.addItem(TestingListWidgetItem(
-                self.tm, f"neg{i}", read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"),
-                read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"),
-                self.sm.get('memory_testing', False)))
-            lst.append(f"neg{i}")
-            i += 1
+        if os.path.isdir(f"{data_dir}/neg"):
+            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{data_dir}/neg")))
+            lst.sort(key=lambda s: int(s.rstrip('.json')))
+            for i, el in enumerate(lst):
+                try:
+                    dct = json.loads(read_file(f"{data_dir}/neg/{el}"))
+                    self.tests_list.addItem(TestingListWidgetItem(
+                        self.tm, f"neg{i + 1}", dct.get('in', ''), dct.get('out', ''),
+                        self.sm.get('memory_testing', False)))
+                    tests_list.append(f'neg{i+1}')
+                except json.JSONDecodeError:
+                    pass
 
         self.neg_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
-        self.neg_result_bar.setText(f"NEG: 0/{i - 1}")
+        self.neg_result_bar.setText(f"NEG: 0/{len(tests_list) - pos_count}")
 
         self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(len(lst))
+        self.progress_bar.setMaximum(len(tests_list))
         self.progress_bar.setValue(0)
         
-        self.testing_start.emit(lst)
+        self.testing_start.emit(tests_list)
 
         if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt", ''):
             self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(lambda: self.start_testing(lst))
+            self.looper.finished.connect(lambda: self.start_testing(tests_list))
             self.looper.start()
         else:
-            self.start_testing(lst)
+            self.start_testing(tests_list)
 
     def start_testing(self, lst):
         self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),

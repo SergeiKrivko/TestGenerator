@@ -1,5 +1,5 @@
 import os
-from json import loads
+from json import loads, JSONDecodeError
 from subprocess import run, TimeoutExpired
 import subprocess
 from time import sleep
@@ -86,8 +86,7 @@ class CommandManager:
     def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
         self.looper = TestingLooper(
-            self.compile, self.path, pos_comparator, neg_comparator,
-            loads(self.read_file(f"{self.sm.lab_path(appdata=True)}/exit_codes.txt", '{}')),
+            self.compile, self.sm.lab_path(), f"{self.sm.data_lab_path()}/func_tests", pos_comparator, neg_comparator,
             memory_testing, coverage, time_limit=self.sm.get('time_limit'))
         self.looper.start()
 
@@ -179,17 +178,17 @@ class TestingLooper(QThread):
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, compiler, path, pos_comparator, neg_comparator, exit_codes, memory_testing=False, coverage=False,
+    def __init__(self, compiler, path, data_path, pos_comparator, neg_comparator, memory_testing=False, coverage=False,
                  time_limit=10):
         super(TestingLooper, self).__init__()
         self.time_limit = time_limit
         self.compiler = compiler
         self.memory_testing = memory_testing
         self.path = path
+        self.data_path = data_path
         self.pos_comparator = pos_comparator
         self.neg_comparator = neg_comparator
         self.coverage = coverage
-        self.exit_codes = exit_codes
 
     def run(self):
         code, errors = self.compiler(coverage=self.coverage)
@@ -197,72 +196,72 @@ class TestingLooper(QThread):
             self.testing_terminate.emit(errors)
             return
 
-        i = 1
-        while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
-            try:
-                res = CommandManager.cmd_command(
-                    f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/pos_{i:0>2}_args.txt')}",
-                    input=CommandManager.read_file(
-                        f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"), timeout=self.time_limit, shell=True)
-            except TimeoutExpired:
-                self.test_timeout.emit()
-                i += 1
-                continue
-            if res.stderr:
-                self.test_crash.emit(res.stdout, res.returncode, res.stderr)
-                i += 1
-                continue
-            comparator_res = self.pos_comparator(
-                CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_out.txt"), res.stdout)
+        if os.path.isdir(f"{self.data_path}/pos"):
+            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_path}/pos")))
+            lst.sort(key=lambda s: int(s.rstrip('.json')))
+            for i, el in enumerate(lst):
+                try:
+                    dct = loads(CommandManager.read_file(f"{self.data_path}/pos/{el}"))
+                    try:
+                        res = CommandManager.cmd_command(
+                            f"{self.path}/app.exe {dct.get('args', '')}", input=dct.get('in', ''),
+                            timeout=self.time_limit, shell=True)
+                    except TimeoutExpired:
+                        self.test_timeout.emit()
+                        continue
+                    if res.stderr:
+                        self.test_crash.emit(res.stdout, res.returncode, res.stderr)
+                        continue
+                    comparator_res = self.pos_comparator(dct.get('out', ''), res.stdout)
 
-            if self.memory_testing:
-                valgrind_out = CommandManager.cmd_command(
-                    ["valgrind", "-q", "./app.exe"],
-                    input=CommandManager.read_file(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt")).stderr
-            else:
-                valgrind_out = ""
+                    if self.memory_testing:
+                        valgrind_out = CommandManager.cmd_command(
+                            ["valgrind", "-q", "./app.exe", dct.get('args', '')], input=dct.get('in', '')).stderr
+                    else:
+                        valgrind_out = ""
 
-            expected_code = self.exit_codes.get(f"pos{i}", 0)
-            self.test_complete.emit(res.returncode == expected_code and comparator_res,
-                                    res.stdout, res.returncode, not valgrind_out, valgrind_out)
-            sleep(0.1)
-            i += 1
+                    expected_code = dct.get('exit', '')
+                    expected_code = int(expected_code) if expected_code else 0
+                    self.test_complete.emit(res.returncode == expected_code and comparator_res,
+                                            res.stdout, res.returncode, not valgrind_out, valgrind_out)
+                    sleep(0.1)
+                    i += 1
+                except JSONDecodeError:
+                    pass
 
-        i = 1
-        while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
-            try:
-                res = CommandManager.cmd_command(
-                    f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/neg_{i:0>2}_args.txt')}",
-                    input=CommandManager.read_file(
-                        f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"), timeout=self.time_limit, shell=True)
-            except TimeoutExpired:
-                self.test_timeout.emit()
-                i += 1
-                continue
-            if res.stderr:
-                self.test_crash.emit(res.stdout, res.returncode, res.stderr)
-                i += 1
-                continue
-            comparator_res = self.neg_comparator(
-                CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_out.txt"), res.stdout)
+        if os.path.isdir(f"{self.data_path}/neg"):
+            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_path}/neg")))
+            lst.sort(key=lambda s: int(s.rstrip('.json')))
+            for i, el in enumerate(lst):
+                try:
+                    dct = loads(CommandManager.read_file(f"{self.data_path}/neg/{el}"))
+                    try:
+                        res = CommandManager.cmd_command(
+                            f"{self.path}/app.exe {dct.get('args', '')}", input=dct.get('in', ''),
+                            timeout=self.time_limit, shell=True)
+                    except TimeoutExpired:
+                        self.test_timeout.emit()
+                        continue
+                    if res.stderr:
+                        self.test_crash.emit(res.stdout, res.returncode, res.stderr)
+                        continue
+                    comparator_res = self.neg_comparator(dct.get('out', ''), res.stdout)
 
-            if self.memory_testing:
-                valgrind_out = CommandManager.cmd_command(
-                    ["valgrind", "-q", "./app.exe"],
-                    input=CommandManager.read_file(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt")).stderr
-            else:
-                valgrind_out = ""
+                    if self.memory_testing:
+                        valgrind_out = CommandManager.cmd_command(
+                            ["valgrind", "-q", "./app.exe", dct.get('args', '')], input=dct.get('in', '')).stderr
+                    else:
+                        valgrind_out = ""
 
-            expected_code = self.exit_codes.get(f"neg{i}")
-            self.test_complete.emit((res.returncode if expected_code is None else res.returncode == expected_code) and
-                                    comparator_res, res.stdout, res.returncode, not valgrind_out, valgrind_out)
-            sleep(0.1)
-            i += 1
-
-        if os.path.isfile("temp_null.txt"):
-            os.remove("temp_null.txt")
-        if os.path.isfile("temp_errors.txt"):
-            os.remove("temp_errors.txt")
+                    expected_code = dct.get('exit', None)
+                    expected_code = int(expected_code) if expected_code else None
+                    self.test_complete.emit(
+                        (res.returncode if expected_code is None else res.returncode == expected_code) and
+                        comparator_res, res.stdout, res.returncode, not valgrind_out, valgrind_out)
+                    sleep(0.1)
+                    i += 1
+                except JSONDecodeError:
+                    pass
 
         self.end_testing.emit()
 
