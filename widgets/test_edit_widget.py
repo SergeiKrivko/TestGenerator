@@ -213,6 +213,7 @@ class TestEditWidget(QWidget):
 
     def set_test_name(self, name):
         self.data['desc'] = name
+        self.test_edited.emit()
 
     def select_in_file(self):
         index = self.in_combo_box.currentIndex()
@@ -248,6 +249,7 @@ class TestEditWidget(QWidget):
             self.data['in'] = self.test_in_edit.toPlainText()
         else:
             self.data['in_files'][index - 1]['text'] = self.test_in_edit.toPlainText()
+        self.test_edited.emit()
 
     def set_test_out(self):
         index = self.out_combo_box.currentIndex()
@@ -261,6 +263,7 @@ class TestEditWidget(QWidget):
         else:
             index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
             self.data['out_files'][index - 1]['text'] = self.test_out_edit.toPlainText()
+        self.test_edited.emit()
 
     def delete_in(self):
         index = self.in_combo_box.currentIndex()
@@ -269,6 +272,7 @@ class TestEditWidget(QWidget):
         else:
             self.data['in_files'].pop(index - 1)
             self.open_test(self.data)
+        self.test_edited.emit()
 
     def delete_out(self):
         index = self.out_combo_box.currentIndex()
@@ -281,12 +285,15 @@ class TestEditWidget(QWidget):
             index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
             self.data['out_files'].pop(index - 1)
         self.open_test(self.data)
+        self.test_edited.emit()
 
     def set_test_args(self, data):
         self.data['args'] = data
+        self.test_edited.emit()
 
     def set_test_exit(self, code):
         self.data['exit'] = code
+        self.test_edited.emit()
 
     def add_in_file(self):
         dialog = NewInFileDialog(self.tm)
@@ -296,6 +303,7 @@ class TestEditWidget(QWidget):
             self.in_combo_box.addItems([s := f"in_file_{self.in_combo_box.count()}.{file_type}"])
             self.in_files.append(s)
             self.in_combo_box.setCurrentIndex(self.in_combo_box.count() - 1)
+        self.test_edited.emit()
 
     def add_out_file(self):
         dialog = NewOutFileDialog(self.tm, self.in_files)
@@ -311,6 +319,7 @@ class TestEditWidget(QWidget):
                                                             'text': self.data['in_files'][index]['text']}
                 self.out_combo_box.addItems([dialog.file_combo_box.currentText().replace('in', 'check', 1)])
                 self.out_combo_box.setCurrentIndex(self.out_combo_box.count() - 1)
+        self.test_edited.emit()
 
 
 class NewInFileDialog(QDialog):

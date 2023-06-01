@@ -10,7 +10,7 @@ from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
 from widgets.test_table_widget import TestTableWidget
 from widgets.test_edit_widget import TestEditWidget
-from other.macros_converter import MacrosConverter
+from other.macros_converter import MacrosConverter, background_process_manager
 
 
 class TestsWidget(QWidget):
@@ -339,7 +339,7 @@ class TestsWidget(QWidget):
             for j in range(list_widget.count()):
                 yield j
             j += 1
-            while os.path.isfile(f"{self.path}/func_tests/data/{test_type}_{j:0>2}_in.txt"):
+            while os.path.isfile(f"{self.path}/func_tests/data/{test_type}_{j + 1:0>2}_in.txt"):
                 list_widget.addItem(Test(self.create_temp_file(), self.tm))
                 yield j
                 j += 1
@@ -424,13 +424,23 @@ class TestsWidget(QWidget):
             if not item.path.endswith(f"{i}.json"):
                 item.rename_file(f"{self.data_dir}/neg/{i}.json")
 
+        if self.data_dir in background_process_manager.dict:
+            background_process_manager.dict[self.data_dir].close()
+
         looper = MacrosConverter(self.data_dir, f"{self.sm.lab_path()}", {
             'pos_in': 'func_tests/data/pos_{:0>2}_in.txt',
             'pos_out': 'func_tests/data/pos_{:0>2}_out.txt',
             'pos_args': 'func_tests/data/pos_{:0>2}_args.txt',
             'neg_in': 'func_tests/data/neg_{:0>2}_in.txt',
             'neg_out': 'func_tests/data/neg_{:0>2}_out.txt',
-            'neg_args': 'func_tests/data/neg_{:0>2}_args.txt'
+            'neg_args': 'func_tests/data/neg_{:0>2}_args.txt',
+
+            'pos_in_files': 'func_tests/data_files/pos_{:0>2}_in{}',
+            'pos_out_files': 'func_tests/data_files/pos_{:0>2}_out{}',
+            'pos_check_files': 'func_tests/data_files/pos_{:0>2}_check{}',
+            'neg_in_files': 'func_tests/data_files/neg_{:0>2}_in{}',
+            'neg_out_files': 'func_tests/data_files/neg_{:0>2}_out{}',
+            'neg_check_files': 'func_tests/data_files/neg_{:0>2}_check{}',
         }, self.sm, readme)
         self.loopers[self.sm.lab_path()] = looper
         looper.start()

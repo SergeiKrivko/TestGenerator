@@ -3,7 +3,8 @@ import shutil
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget
+    QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget, QGridLayout
+import py7zr
 
 from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
@@ -30,7 +31,9 @@ class ProjectWidget(QWidget):
         self.list_widget.currentRowChanged.connect(self.open_project)
         left_layout.addWidget(self.list_widget)
 
-        buttons_layout = QHBoxLayout()
+        buttons_layout = QGridLayout()
+        buttons_layout.setColumnMinimumWidth(0, 90)
+        buttons_layout.setColumnMinimumWidth(1, 90)
 
         self.button_rename_project = QPushButton("Переименовать")
         self.button_rename_project.setFixedHeight(24)
@@ -41,6 +44,16 @@ class ProjectWidget(QWidget):
         self.button_delete_project.setFixedHeight(24)
         self.button_delete_project.clicked.connect(self.delete_project)
         buttons_layout.addWidget(self.button_delete_project)
+
+        self.button_to_zip = QPushButton("В zip")
+        self.button_to_zip.setFixedHeight(24)
+        self.button_to_zip.clicked.connect(self.project_to_zip)
+        buttons_layout.addWidget(self.button_to_zip)
+
+        self.button_from_zip = QPushButton("Из zip")
+        self.button_from_zip.setFixedHeight(24)
+        self.button_from_zip.clicked.connect(self.project_from_zip)
+        buttons_layout.addWidget(self.button_from_zip)
 
         left_layout.addLayout(buttons_layout)
         layout.addLayout(left_layout)
@@ -98,9 +111,9 @@ class ProjectWidget(QWidget):
         self.testing_settings_widget.clicked.connect(self.save_settings)
         testing_settings_layout.addWidget(self.testing_settings_widget)
 
-        self.tab_widget.addTab(widget, 'Тестирование')
+        # self.tab_widget.addTab(widget, 'Тестирование')
 
-        layout.addWidget(self.tab_widget)
+        layout.addWidget(widget)
         self.setLayout(layout)
 
         self.opening_project = False
@@ -204,18 +217,64 @@ class ProjectWidget(QWidget):
         self.opening_project = False
         self.disable_menu_func(False)
 
+    def project_to_zip(self):
+        path, _ = QFileDialog.getSaveFileName(None, "Выберите путь", self.sm.path + '.7z', '7z (*.7z)')
+        if not path:
+            return
+        if not path.endswith('.7z'):
+            path += '.7z'
+
+        with py7zr.SevenZipFile(path, mode='w') as archive:
+            archive.writeall(self.sm.path, arcname='main')
+            archive.writeall(self.sm.data_path, arcname='data')
+
+    def project_from_zip(self, path=''):
+        if not os.path.isfile(path):
+            path, _ = QFileDialog.getOpenFileName(
+                None, "Выберите проект для распаковки",
+                self.sm.get_general('zip_path', self.sm.path if self.sm.path else os.getcwd()), '7z (*.7z)')
+        if not path or not os.path.isfile(path):
+            return
+        self.sm.set_general('zip_path', os.path.split(path)[0])
+        dialog = ProjectFromZipDialog(os.path.basename(path).rstrip('.7z'),
+                                      os.path.split(self.sm.path if self.sm.path else os.getcwd())[0], self.tm)
+        if dialog.exec():
+            if dialog.line_edit.text() in self.sm.projects:
+                MessageBox(MessageBox.Warning, 'Распаковка проекта',
+                           f"Проект {dialog.line_edit.text()} уже существует. "
+                           f"Невозможно создать новый проект с таким же именем.", self.tm)
+            elif dialog.path_edit.text() in self.sm.projects:
+                MessageBox(MessageBox.Warning, 'Распаковка проекта',
+                           f"Директория {dialog.path_edit.text()} не существует. Невозможно создать проект.", self.tm)
+            else:
+                with py7zr.SevenZipFile(path, mode='r') as archive:
+                    archive.extractall(f"{self.sm.app_data_dir}/temp")
+
+                main_path = f"{dialog.path_edit.text()}/{dialog.line_edit.text()}"
+                data_path = f"{self.sm.app_data_dir}/projects/{dialog.line_edit.text()}"
+
+                if os.path.isdir(main_path):
+                    shutil.rmtree(main_path)
+                if os.path.isdir(data_path):
+                    shutil.rmtree(data_path)
+                shutil.copytree(f"{self.sm.app_data_dir}/temp/main", main_path)
+                shutil.copytree(f"{self.sm.app_data_dir}/temp/data", data_path)
+                shutil.rmtree(f"{self.sm.app_data_dir}/temp")
+                self.sm.projects[dialog.line_edit.text()] = main_path
+                self.sm.set_project(dialog.line_edit.text())
+                self.update_projects()
     def save_settings(self):
         if self.opening_project:
             return
         if not self.testing_checkbox.isChecked():
-            dct = self.testing_settings_widget.values
-
+            dct = self.struct_settings_widget.values
             self.sm.set('struct', dct['Структура проекта'])
             self.sm.set('dir_format', dct['Название папки с лабой'])
             self.sm.set('readme', dct['Описание тестов'])
             self.sm.set('pos_in', dct['Входные данные для позитивных тестов'])
             self.sm.set('neg_in', dct['Входные данные для негативных тестов'])
 
+            dct = self.testing_settings_widget.values
             self.sm.set('compiler', dct['Компилятор'])
             self.sm.set('-lm', dct['Ключ -lm'])
             self.sm.set('pos_comparator', dct['Компаратор для позитивных тестов:'])
@@ -237,6 +296,10 @@ class ProjectWidget(QWidget):
         self.button_delete_project.setFont(self.tm.font_small)
         self.button_rename_project.setStyleSheet(self.tm.buttons_style_sheet)
         self.button_rename_project.setFont(self.tm.font_small)
+        self.button_to_zip.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_to_zip.setFont(self.tm.font_small)
+        self.button_from_zip.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_from_zip.setFont(self.tm.font_small)
 
         self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet.replace('width: 50px', 'width: 120px'))
         self.tab_widget.setFont(self.tm.font_small)
@@ -349,3 +412,70 @@ class DeleteProjectDialog(QDialog):
         self.setStyleSheet(tm.bg_style_sheet)
         self.button_yes.setStyleSheet(tm.buttons_style_sheet)
         self.button_no.setStyleSheet(tm.buttons_style_sheet)
+
+
+class ProjectFromZipDialog(QDialog):
+    def __init__(self, name: str, directory: str, tm):
+        super().__init__()
+
+        self.setWindowTitle("Распаковка проекта")
+
+        self.layout = QVBoxLayout()
+
+        label = QLabel("Выберите директорию:")
+        label.setFont(tm.font_small)
+        self.layout.addWidget(label)
+
+        h_layout = QHBoxLayout()
+        self.path_edit = QLineEdit()
+        self.path_edit.setText(directory)
+        self.path_edit.setStyleSheet(tm.style_sheet)
+        h_layout.addWidget(self.path_edit)
+        self.path_button = QPushButton("Обзор")
+        self.path_button.setStyleSheet(tm.buttons_style_sheet)
+        self.path_button.setFixedSize(50, 20)
+        self.path_button.clicked.connect(self.get_dir)
+        h_layout.addWidget(self.path_button)
+        self.layout.addLayout(h_layout)
+
+        label = QLabel("Введите имя проекта:")
+        label.setFont(tm.font_small)
+        self.layout.addWidget(label)
+
+        self.line_edit = QLineEdit()
+        self.line_edit.setText(name)
+        self.layout.addWidget(self.line_edit)
+        self.line_edit.selectAll()
+
+        button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(0, 10, 0, 0)
+        button_layout.setAlignment(Qt.AlignRight)
+
+        self.button_ok = QPushButton("Ок")
+        self.button_ok.setFixedSize(70, 24)
+        self.button_ok.clicked.connect(self.accept)
+        button_layout.addWidget(self.button_ok)
+
+        self.button_cancel = QPushButton("Отмена")
+        self.button_cancel.setFixedSize(70, 24)
+        self.button_cancel.clicked.connect(self.reject)
+        button_layout.addWidget(self.button_cancel)
+
+        self.layout.addLayout(button_layout)
+        self.setLayout(self.layout)
+
+        self.setStyleSheet(tm.bg_style_sheet)
+        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
+        self.button_ok.setFont(tm.font_small)
+        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
+        self.button_cancel.setFont(tm.font_small)
+        self.line_edit.setStyleSheet(tm.style_sheet)
+        self.line_edit.setFont(tm.font_small)
+
+        self.resize(280, 50)
+
+    def get_dir(self):
+        path = QFileDialog.getExistingDirectory(None, "Выберите директорию", self.path_edit.text())
+        if os.path.isdir(path):
+            self.path_edit.setText(path)
+

@@ -1,5 +1,8 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout
+from sys import argv
 
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
+
+from other.macros_converter import background_process_manager
 from other.themes import ThemeManager
 from widgets.code_widget import CodeWidget
 from widgets.project_widget import ProjectWidget
@@ -87,7 +90,11 @@ class MainWindow(QMainWindow):
             self.show_tab('project_widget')
         else:
             self.show_tab('project_widget')
-        self.project_widget.open_project(forced=True)
+        if len(argv) == 2:
+            if argv[1].endswith('.7z') and os.path.isfile(argv[1]):
+                self.project_widget.project_from_zip(argv[1])
+        else:
+            self.project_widget.open_project(forced=True)
 
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
@@ -147,4 +154,43 @@ class MainWindow(QMainWindow):
         self.git_widget.hide()
         self.settings_widget.hide()
         self.sm.store()
-        super(MainWindow, self).close()
+        if len(background_process_manager.dict):
+            dialog = ExitDialog(self.tm)
+            background_process_manager.all_finished.connect(dialog.accept)
+            if dialog.exec():
+                for process in background_process_manager.dict.values():
+                    process.close()
+                super(MainWindow, self).close()
+            else:
+                a0.ignore()
+                self.project_widget.show()
+        else:
+            super(MainWindow, self).close()
+
+
+class ExitDialog(QDialog):
+    def __init__(self, tm):
+        super(ExitDialog, self).__init__()
+        self.tm = tm
+
+        self.setWindowTitle("Выход")
+
+        layout = QVBoxLayout()
+        label = QLabel("В данный момент идет сохранение одного или нескольких наборов тестов."
+                       "Если вы выйдите из программы, данные будут записаны в рабочую директорию не полностью.")
+        label.setWordWrap(True)
+        label.setFont(self.tm.font_small)
+
+        QBtn = QDialogButtonBox.Close | QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.button(QDialogButtonBox.Close).clicked.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.button(QDialogButtonBox.Close).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Close).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+
+        layout.addWidget(label)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)
