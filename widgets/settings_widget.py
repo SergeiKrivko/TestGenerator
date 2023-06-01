@@ -36,7 +36,8 @@ class SettingsWidget(QWidget):
 
         self.testing_widget = OptionsWidget({
             "Компилятор": {'type': str, 'width': 400, 'initial': self.sm.get_general('compiler', 'gcc')},
-            "Ключ -lm": {'type': bool, 'name': OptionsWidget.NAME_RIGHT, 'initial': self.sm.get_general('-lm', True)},
+            "Ключ -lm": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
+                         'initial': bool(self.sm.get_general('-lm', True))},
             "Компаратор для позитивных тестов:": {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'values': [
                 'Числа', 'Числа как текст', 'Текст после подстроки', 'Слова после подстроки', 'Текст', 'Слова'],
                                                   'initial': self.sm.get_general('pos_comparator', 0)},
@@ -50,9 +51,9 @@ class SettingsWidget(QWidget):
             'Подстрока для негативных тестов': {'type': str, 'name': OptionsWidget.NAME_RIGHT,
                                                 'initial': self.sm.get_general('neg_substring', 'Error:')},
             "Coverage": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
-                         'initial': self.sm.get_general('coverage', False)},
+                         'initial': bool(self.sm.get_general('coverage', False))},
             "Тестирование по памяти": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
-                                       'initial': self.sm.get_general('memory_testing', False)},
+                                       'initial': bool(self.sm.get_general('memory_testing', False))},
             "Ограничение по времени:": {'type': float, 'min': 0.01, 'max': 600, 'name': OptionsWidget.NAME_LEFT,
                                         'initial': self.sm.get_general('time_limit', 3)},
         }, margins=(20, 20, 20, 20))
