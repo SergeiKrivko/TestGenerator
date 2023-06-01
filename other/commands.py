@@ -318,11 +318,11 @@ class TestingLooper(QThread):
                     for j, file in enumerate(dct.get('in_files', [])):
                         if file.get('type', 'txt') == 'txt':
                             MacrosConverter.convert_txt(
-                                file['text'], f"{self.path}/func_tests/data_files/_{i + 1:0>2}_in{j + 1}.txt",
+                                file['text'], f"{self.path}/func_tests/data_files/neg_{i + 1:0>2}_in{j + 1}.txt",
                                 self.sm.get('line_sep'))
                         else:
                             MacrosConverter.convert_bin(
-                                file['text'], f"{self.path}/func_tests/data_files/_{i + 1:0>2}_in{j + 1}.bin")
+                                file['text'], f"{self.path}/func_tests/data_files/neg_{i + 1:0>2}_in{j + 1}.bin")
 
                     if self.memory_testing:
                         valgrind_out = CommandManager.cmd_command(

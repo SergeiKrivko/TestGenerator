@@ -549,8 +549,8 @@ class ThemeManager:
                 'Paper': QColor('#F7DDF4'),
                 'CaretLineBackgroundColor': QColor('#F5BFF7'),
                 'BraceColor': QColor('#CB45F0'),
-                'MainColor': '#F2B5F1',
-                'BgColor': '#F5D7FF',
+                'MainColor': '#F0C6F2',
+                'BgColor': '#FFFFFF',
                 'BorderColor': '#93699E',
                 'TextColor': '#2F1233',
                 'ColorSelected': '#D6A0D5',
@@ -565,6 +565,60 @@ class ThemeManager:
                 'TxtFile': QColor('#2065D4'),
                 'Directory': QColor('#F74A15')
             }),
+            'cyan':
+                Theme({
+                    'QsciLexerCPP':
+                        {
+                            'Identifier': QColor('#263330'),
+                            'PreProcessor': QColor('#28871A'),
+                            'Comment': QColor('#A6A424'),
+                            'CommentLine': QColor('#A6A424'),
+                            'CommentDoc': QColor('#A6A424'),
+                            'Keyword': QColor('#D92C2C'),
+                            'Number': QColor('#AF27D4'),
+                            'Operator': QColor('#263330'),
+                            'DoubleQuotedString': QColor('#247FD9'),
+                            'SingleQuotedString': QColor('#247FD9')
+                        },
+                    'QsciLexerPython':
+                        {
+                            'Identifier': QColor('#263330'),
+                            'Comment': QColor('#A6A424'),
+                            'CommentBlock': QColor('#A6A424'),
+                            'Keyword': QColor('#D92C2C'),
+                            'Number': QColor('#AF27D4'),
+                            'Operator': QColor('#263330'),
+                            'ClassName': QColor('#28871A'),
+                            'Decorator': QColor('#28871A'),
+                            'FunctionMethodName': QColor('#247FD9'),
+                            'DoubleQuotedString': QColor('#247FD9'),
+                            'SingleQuotedString': QColor('#247FD9'),
+                            'DoubleQuotedFString': QColor('#247FD9'),
+                            'SingleQuotedFString': QColor('#247FD9'),
+                            'TripleDoubleQuotedString': QColor('#247FD9'),
+                            'TripleSingleQuotedString': QColor('#247FD9'),
+                            'TripleDoubleQuotedFString': QColor('#247FD9'),
+                            'TripleSingleQuotedFString': QColor('#247FD9'),
+                        },
+                    'Paper': QColor('#DCF2EC'),
+                    'CaretLineBackgroundColor': QColor('#B4F2E5'),
+                    'BraceColor': QColor('#FF8831'),
+                    'MainColor': '#BBDED0',
+                    'BgColor': '#E8E8E8',
+                    'BorderColor': '#4FDEAF',
+                    'TextColor': '#0C3326',
+                    'ColorSelected': '#66F2CB',
+                    'ColorHover': '#8CF2D8',
+                    'TestPassed': QColor('#327329'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrashed': QColor('A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'MdFile': QColor('#1BBDD4')
+                }),
         }
 
         self.theme_name = ''
