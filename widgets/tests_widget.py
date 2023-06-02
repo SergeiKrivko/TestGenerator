@@ -587,6 +587,7 @@ class TestCopyWindow(QDialog):
         self.tm = tm
 
         self.setWindowTitle("Копировать тесты")
+        self.setStyleSheet(self.tm.bg_style_sheet)
 
         QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
 
@@ -602,6 +603,8 @@ class TestCopyWindow(QDialog):
         self.setLayout(self.layout)
 
         self.options_widget = OptionsWidget({
+            'Проект': {'type': 'combo', 'values': list(self.sm.projects.keys()), 'name': OptionsWidget.NAME_LEFT,
+                       'initial': list(self.sm.projects.keys()).index(self.sm.project)},
             'h_line': {
                 'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
                                 'name': OptionsWidget.NAME_LEFT, 'width': 60},
@@ -611,6 +614,7 @@ class TestCopyWindow(QDialog):
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60}
             }
         })
+        self.options_widget.widgets['Проект'].setStyleSheet(self.tm.combo_box_style_sheet)
         self.options_widget.widgets['Номер лабы:'].setStyleSheet(self.tm.spin_box_style_sheet)
         self.options_widget.widgets['Номер задания:'].setStyleSheet(self.tm.spin_box_style_sheet)
         self.options_widget.widgets['Номер варианта:'].setStyleSheet(self.tm.spin_box_style_sheet)
@@ -632,66 +636,42 @@ class TestCopyWindow(QDialog):
 
         self.layout.addWidget(self.buttonBox)
 
-        self.path = ""
+        self.path = self.sm.data_lab_path() + '/func_tests'
         self.test_list = []
         self.check_boxes = []
 
-        self.get_path()
         self.open_task()
         self.update_list()
 
     def options_changed(self, key):
-        if key in ('Номер лабы:', 'Номер задания:'):
-            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
-                                              -1)):
-                self.options_widget.set_value('Номер варианта:', -1)
-            else:
-                for i in range(100):
-                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                                      self.options_widget['Номер задания:'], i)):
-                        self.options_widget.set_value('Номер варианта:', i)
-                        break
+        if key in ('Проект', 'Номер лабы:', 'Номер задания:'):
+            for i in range(-1, 100):
+                if os.path.isdir(self.sm.data_lab_path(
+                        self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'], i,
+                        self.options_widget.widgets['Проект'].currentText())):
+                    self.options_widget.set_value('Номер варианта:', i)
+                    break
         self.clear_scroll_area()
         self.check_boxes.clear()
-        self.get_path()
+        self.path = self.sm.data_lab_path(
+            self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
+            self.options_widget['Номер варианта:'], self.options_widget.widgets['Проект'].currentText()) + '/func_tests'
         self.open_task()
         self.update_list()
 
-    def get_path(self, from_settings=False):
-        if from_settings:
-            self.path = self.sm.lab_path()
-            self.data_dir = self.sm.data_lab_path() + '/func_tests'
-        else:
-            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
-                                         self.options_widget['Номер варианта:'])
-            self.data_dir = self.sm.data_lab_path(self.options_widget['Номер лабы:'],
-                                                  self.options_widget['Номер задания:'],
-                                                  self.options_widget['Номер варианта:']) + '/func_tests'
-
     def open_task(self):
         self.test_list.clear()
-        print(f"{self.data_dir}/pos")
-        if os.path.isdir(f"{self.data_dir}/pos"):
-            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/pos")))
-            lst.sort(key=lambda s: int(s.rstrip('.json')))
-            for i, el in enumerate(lst):
-                with open(f"{self.data_dir}/pos/{el}", encoding='utf-8') as f:
-                    try:
-                        desc = json.loads(f.read()).get('desc', '-')
-                    except json.JSONDecodeError:
-                        desc = '-'
-                    self.test_list.append(f"POS {i}\t{desc}")
-
-        if os.path.isdir(f"{self.data_dir}/neg"):
-            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/neg")))
-            lst.sort(key=lambda s: int(s.rstrip('.json')))
-            for i, el in enumerate(lst):
-                with open(f"{self.data_dir}/neg/{el}", encoding='utf-8') as f:
-                    try:
-                        desc = json.loads(f.read()).get('desc', '-')
-                    except json.JSONDecodeError:
-                        desc = '-'
-                    self.test_list.append(f"neg {i}\t{desc}")
+        for test_type in ['pos', 'neg']:
+            if os.path.isdir(f"{self.path}/{test_type}"):
+                lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.path}/{test_type}")))
+                lst.sort(key=lambda s: int(s.rstrip('.json')))
+                for i, el in enumerate(lst):
+                    with open(f"{self.path}/{test_type}/{el}", encoding='utf-8') as f:
+                        try:
+                            desc = json.loads(f.read()).get('desc', '-')
+                        except json.JSONDecodeError:
+                            desc = '-'
+                        self.test_list.append(f"{test_type.upper()} {i}\t{desc}")
 
     def update_list(self):
         for el in self.test_list:
@@ -718,7 +698,7 @@ class TestCopyWindow(QDialog):
             if self.test_list[i].startswith("POS"):
                 pos_ind += 1
                 if self.check_boxes[i].isChecked():
-                    with open(f"{self.data_dir}/pos/{self.test_list[i].split()[1]}.json",
+                    with open(f"{self.path}/pos/{self.test_list[i].split()[1]}.json",
                               encoding='utf-8') as f:
                         try:
                             yield json.loads(f.read())
@@ -727,7 +707,7 @@ class TestCopyWindow(QDialog):
 
             else:
                 neg_ind += 1
-                with open(f"{self.data_dir}/neg/{self.test_list[i].split()[1]}.json", encoding='utf-8') as f:
+                with open(f"{self.path}/neg/{self.test_list[i].split()[1]}.json", encoding='utf-8') as f:
                     try:
                         yield json.loads(f.read())
                     except json.JSONDecodeError:
