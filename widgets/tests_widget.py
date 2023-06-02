@@ -506,6 +506,7 @@ class Test(QListWidgetItem):
     def store(self):
         if self.dict is None:
             return
+        os.makedirs(os.path.split(self.path)[0], exist_ok=True)
         with open(self.path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(self.dict))
         self.dict = None
@@ -695,9 +696,9 @@ class TestCopyWindow(QDialog):
         pos_ind = 0
         neg_ind = 0
         for i in range(len(self.test_list)):
-            if self.test_list[i].startswith("POS"):
-                pos_ind += 1
-                if self.check_boxes[i].isChecked():
+            if self.check_boxes[i].isChecked():
+                if self.test_list[i].startswith("POS"):
+                    pos_ind += 1
                     with open(f"{self.path}/pos/{self.test_list[i].split()[1]}.json",
                               encoding='utf-8') as f:
                         try:
@@ -705,10 +706,10 @@ class TestCopyWindow(QDialog):
                         except json.JSONDecodeError:
                             yield dict()
 
-            else:
-                neg_ind += 1
-                with open(f"{self.path}/neg/{self.test_list[i].split()[1]}.json", encoding='utf-8') as f:
-                    try:
-                        yield json.loads(f.read())
-                    except json.JSONDecodeError:
-                        yield dict()
+                else:
+                    neg_ind += 1
+                    with open(f"{self.path}/neg/{self.test_list[i].split()[1]}.json", encoding='utf-8') as f:
+                        try:
+                            yield json.loads(f.read())
+                        except json.JSONDecodeError:
+                            yield dict()

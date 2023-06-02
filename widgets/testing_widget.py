@@ -4,7 +4,7 @@ import os
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton, QProgressBar
+    QPushButton, QProgressBar, QComboBox
 
 from widgets.message_box import MessageBox
 from widgets.options_window import OptionsWidget
@@ -86,8 +86,13 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout2.addLayout(l)
-        l.addWidget(label := QLabel("Вывод программы"))
+        h_l = QHBoxLayout()
+        l.addLayout(h_l)
+        h_l.addWidget(label := QLabel("Вывод программы"))
         self.labels.append(label)
+        self.prog_out_combo_box = QComboBox()
+        self.prog_out_combo_box.currentIndexChanged.connect(self.prog_out_combo_box_triggered)
+        h_l.addWidget(self.prog_out_combo_box)
         self.prog_out = QTextEdit()
         self.prog_out.setReadOnly(True)
         self.prog_out.setFont(QFont("Courier", 10))
@@ -98,8 +103,13 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout3.addLayout(l)
-        l.addWidget(label := QLabel("Входные данные"))
+        h_l = QHBoxLayout()
+        l.addLayout(h_l)
+        h_l.addWidget(label := QLabel("Входные данные"))
         self.labels.append(label)
+        self.in_data_combo_box = QComboBox()
+        self.in_data_combo_box.currentIndexChanged.connect(self.in_data_combo_box_triggered)
+        h_l.addWidget(self.in_data_combo_box)
         self.in_data = QTextEdit()
         self.in_data.setReadOnly(True)
         self.in_data.setFont(QFont("Courier", 10))
@@ -107,8 +117,13 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout3.addLayout(l)
-        l.addWidget(label := QLabel("Эталонный вывод"))
+        h_l = QHBoxLayout()
+        l.addLayout(h_l)
+        h_l.addWidget(label := QLabel("Выходные данные"))
         self.labels.append(label)
+        self.out_data_combo_box = QComboBox()
+        self.out_data_combo_box.currentIndexChanged.connect(self.out_data_combo_box_triggered)
+        h_l.addWidget(self.out_data_combo_box)
         self.out_data = QTextEdit()
         self.out_data.setReadOnly(True)
         self.out_data.setFont(QFont("Courier", 10))
@@ -118,6 +133,8 @@ class TestingWidget(QWidget):
         self.old_dir = os.getcwd()
         self.ui_disable_func = None
         self.test_count = 0
+
+        self.current_item = None
 
     def set_theme(self):
         self.button.setStyleSheet(self.tm.buttons_style_sheet)
@@ -131,6 +148,12 @@ class TestingWidget(QWidget):
         self.out_data.setFont(self.tm.font_small)
         self.progress_bar.setStyleSheet(self.tm.progress_bar_style_sheet)
         self.progress_bar.setFont(self.tm.font_small)
+        self.prog_out_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.prog_out_combo_box.setFont(self.tm.font_small)
+        self.in_data_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.in_data_combo_box.setFont(self.tm.font_small)
+        self.out_data_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
+        self.out_data_combo_box.setFont(self.tm.font_small)
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
@@ -180,11 +203,30 @@ class TestingWidget(QWidget):
             self.current_task = task
 
     def open_test_info(self):
+        if isinstance(self.current_item, TestingListWidgetItem):
+            self.current_item.unload()
         item = self.tests_list.currentItem()
         if isinstance(item, TestingListWidgetItem):
-            self.in_data.setText(item.in_data)
-            self.out_data.setText(item.out_data)
-            self.prog_out.setText(item.prog_out)
+            self.current_item = item
+            item.load()
+            self.in_data_combo_box.clear()
+            self.in_data_combo_box.addItems(item.in_data.keys())
+            self.in_data.setText(item.dict.get('in', ''))
+            self.out_data_combo_box.clear()
+            self.out_data_combo_box.addItems(item.out_data.keys())
+            self.out_data.setText(item.dict.get('out', ''))
+            self.prog_out_combo_box.clear()
+            self.prog_out_combo_box.addItems(item.prog_out.keys())
+            self.prog_out.setText(item.prog_out.get('STDOUT', ''))
+
+    def in_data_combo_box_triggered(self):
+        self.in_data.setText(self.current_item.in_data.get(self.in_data_combo_box.currentText(), ''))
+
+    def out_data_combo_box_triggered(self):
+        self.out_data.setText(self.current_item.out_data.get(self.out_data_combo_box.currentText(), ''))
+
+    def prog_out_combo_box_triggered(self):
+        self.prog_out.setText(self.current_item.prog_out.get(self.prog_out_combo_box.currentText(), ''))
 
     def get_path(self, from_settings=False):
         if from_settings:
@@ -217,7 +259,7 @@ class TestingWidget(QWidget):
         self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  TIMEOUT", self.tm['TestFailed'])
         self.test_count += 1
         self.open_test_info()
-        
+
     def modify_testing_res(self, test_type='pos', res=True):
         widget = self.pos_result_bar if test_type == 'pos' else self.neg_result_bar
         if not res:
@@ -268,11 +310,9 @@ class TestingWidget(QWidget):
             lst.sort(key=lambda s: int(s.rstrip('.json')))
             for i, el in enumerate(lst):
                 try:
-                    dct = json.loads(read_file(f"{data_dir}/pos/{el}"))
                     self.tests_list.addItem(TestingListWidgetItem(
-                        self.tm, f"pos{i + 1}", dct.get('in', ''), dct.get('out', ''),
-                        self.sm.get('memory_testing', False)))
-                    tests_list.append(f'pos{i+1}')
+                        self.tm, f"pos{i + 1}", f"{data_dir}/pos/{el}", self.sm.get('memory_testing', False)))
+                    tests_list.append(f'pos{i + 1}')
                 except json.JSONDecodeError:
                     pass
 
@@ -285,11 +325,9 @@ class TestingWidget(QWidget):
             lst.sort(key=lambda s: int(s.rstrip('.json')))
             for i, el in enumerate(lst):
                 try:
-                    dct = json.loads(read_file(f"{data_dir}/neg/{el}"))
                     self.tests_list.addItem(TestingListWidgetItem(
-                        self.tm, f"neg{i + 1}", dct.get('in', ''), dct.get('out', ''),
-                        self.sm.get('memory_testing', False)))
-                    tests_list.append(f'neg{i+1}')
+                        self.tm, f"neg{i + 1}", f"{data_dir}/neg/{el}", self.sm.get('memory_testing', False)))
+                    tests_list.append(f'neg{i + 1}')
                 except json.JSONDecodeError:
                     pass
 
@@ -299,7 +337,7 @@ class TestingWidget(QWidget):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(len(tests_list))
         self.progress_bar.setValue(0)
-        
+
         self.testing_start.emit(tests_list)
 
         if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt", ''):
@@ -504,19 +542,44 @@ class TestingListWidgetItem(QListWidgetItem):
     terminated = 3
     crashed = 2
 
-    def __init__(self, tm, name, in_data, out_data, memory_testing=False):
+    def __init__(self, tm, name, file, memory_testing=False):
         super(TestingListWidgetItem, self).__init__()
         self.tm = tm
         self.setText(f"{name:6}  in progress…")
         self.setForeground(self.tm['TestInProgress'])
         self.name = name
-        self.in_data = in_data
-        self.out_data = out_data
+        self.path = file
         self.status = TestingListWidgetItem.in_progress
-        self.prog_out = ''
+        self.prog_out = dict()
+        self.dict = dict()
+        self.in_data = dict()
+        self.out_data = dict()
         self.exit_code = 0
         self.setFont(self.tm.code_font)
         self.memory_testing = memory_testing
+
+    def load(self):
+        try:
+            with open(self.path, encoding='utf-8') as f:
+                self.dict = json.loads(f.read())
+
+                self.in_data = {'STDIN': self.dict.get('in', '')}
+                for i, el in enumerate(self.dict.get('in_files')):
+                    self.in_data[f"in_file_{i + 1}.{el['type']}"] = el['text']
+
+                self.out_data = {'STDOUT': self.dict.get('out', '')}
+                for i, el in enumerate(self.dict.get('out_files')):
+                    self.in_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
+                for i, el in self.dict.get('check_files', dict()).items():
+                    self.out_data[f"in_file_{i}.{el['type']}"] = el['text']
+
+        except FileNotFoundError:
+            self.dict = dict()
+        except json.JSONDecodeError:
+            self.dict = dict()
+
+    def unload(self):
+        self.dict = None
 
     def set_completed(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.status = TestingListWidgetItem.passed if res else TestingListWidgetItem.failed
