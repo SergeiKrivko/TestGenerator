@@ -6,7 +6,7 @@ from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox
 
-from widgets.message_box import MessageBox
+from widgets.compiler_errors_window import CompilerErrorWindow
 from widgets.options_window import OptionsWidget
 
 
@@ -15,6 +15,7 @@ class TestingWidget(QWidget):
     add_test = pyqtSignal(str, QColor)
     clear_tests = pyqtSignal()
     testing_end = pyqtSignal()
+    jump_to_code = pyqtSignal(str, int, int)
 
     def __init__(self, sm, cm, tm):
         super(TestingWidget, self).__init__()
@@ -377,7 +378,7 @@ class TestingWidget(QWidget):
         else:
             self.enable_ui()
 
-    def testing_is_terminated(self, errors):
+    def testing_is_terminated(self, errors=''):
         self.progress_bar.hide()
         self.coverage_bar.show()
 
@@ -389,7 +390,10 @@ class TestingWidget(QWidget):
         self.testing_end.emit()
 
         if errors:
-            MessageBox(MessageBox.Warning, "Error", errors, self.tm)
+            dialog = CompilerErrorWindow(errors, os.listdir(self.path), self.tm)
+            if dialog.exec():
+                if dialog.goto:
+                    self.jump_to_code.emit(*dialog.goto)
 
         for i in range(self.test_count, self.tests_list.count()):
             self.tests_list.item(i).set_terminated()

@@ -807,14 +807,14 @@ QScrollArea {{
     {self.style_sheet}
 }}
 QScrollArea QScrollBar:vertical {{
-    background: {self['MainColor']};
+    background: {self['BgColor']};
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
     width: 12px;
     margin: 0px;
 }}
 QScrollArea QScrollBar:horizontal {{
-    background: {self['MainColor']};
+    background: {self['BgColor']};
     border-bottom-left-radius: 4px;
     border-bottom-right-radius: 4px;
     height: 12px;

@@ -57,6 +57,7 @@ class MainWindow(QMainWindow):
 
         self.testing_widget = TestingWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.testing_widget)
+        self.testing_widget.jump_to_code.connect(self.jump_to_code_from_testing)
         self.testing_widget.hide()
 
         self.code_widget = CodeWidget(self.sm, self.cm, self.tm)
@@ -117,10 +118,18 @@ class MainWindow(QMainWindow):
         }}
         """)
 
+    def jump_to_code_from_testing(self, file_name, line, pos):
+        self.show_tab('code_widget')
+        for i in range(self.code_widget.files_widget.files_list.count()):
+            if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == file_name:
+                self.code_widget.files_widget.files_list.setCurrentRow(i)
+                self.code_widget.code_edit.setCursorPosition(line, pos)
+                break
+
     def jump_to_code_from_todo(self, file_name, line):
         self.show_tab('code_widget')
         for i in range(self.code_widget.files_widget.files_list.count()):
-            if self.code_widget.files_widget.files_list.item(i).text() == file_name:
+            if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == file_name:
                 self.code_widget.files_widget.files_list.setCurrentRow(i)
                 self.code_widget.code_edit.setCursorPosition(line, 0)
                 break
