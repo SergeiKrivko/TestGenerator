@@ -22,36 +22,36 @@ class ProjectWidget(QWidget):
         left_layout = QVBoxLayout()
 
         self.button_new_project = QPushButton("Новый проект")
-        self.button_new_project.setFixedSize(200, 50)
+        self.button_new_project.setFixedSize(225, 50)
         self.button_new_project.clicked.connect(self.new_project)
         left_layout.addWidget(self.button_new_project)
 
         self.list_widget = QListWidget()
-        self.list_widget.setFixedWidth(200)
+        self.list_widget.setFixedWidth(225)
         self.list_widget.currentRowChanged.connect(self.open_project)
         left_layout.addWidget(self.list_widget)
 
         buttons_layout = QGridLayout()
-        buttons_layout.setColumnMinimumWidth(0, 90)
-        buttons_layout.setColumnMinimumWidth(1, 90)
+        buttons_layout.setColumnMinimumWidth(0, 110)
+        buttons_layout.setColumnMinimumWidth(1, 110)
 
         self.button_rename_project = QPushButton("Переименовать")
-        self.button_rename_project.setFixedHeight(24)
+        self.button_rename_project.setFixedSize(110, 24)
         self.button_rename_project.clicked.connect(self.rename_project)
         buttons_layout.addWidget(self.button_rename_project)
 
         self.button_delete_project = QPushButton("Удалить")
-        self.button_delete_project.setFixedHeight(24)
+        self.button_delete_project.setFixedSize(110, 24)
         self.button_delete_project.clicked.connect(self.delete_project)
         buttons_layout.addWidget(self.button_delete_project)
 
         self.button_to_zip = QPushButton("В zip")
-        self.button_to_zip.setFixedHeight(24)
+        self.button_to_zip.setFixedSize(110, 24)
         self.button_to_zip.clicked.connect(self.project_to_zip)
         buttons_layout.addWidget(self.button_to_zip)
 
         self.button_from_zip = QPushButton("Из zip")
-        self.button_from_zip.setFixedHeight(24)
+        self.button_from_zip.setFixedSize(110, 24)
         self.button_from_zip.clicked.connect(self.project_from_zip)
         buttons_layout.addWidget(self.button_from_zip)
 
@@ -158,7 +158,16 @@ class ProjectWidget(QWidget):
     def delete_project(self):
         self.dialog = DeleteProjectDialog(self.sm.data_path, self.tm)
         if self.dialog.exec():
-            shutil.rmtree(self.sm.data_path)
+            try:
+                if os.path.isdir(self.sm.path) and self.dialog.check_box.isChecked():
+                    shutil.rmtree(self.sm.path)
+            except PermissionError:
+                pass
+            try:
+                if os.path.isdir(self.sm.data_path):
+                    shutil.rmtree(self.sm.data_path)
+            except PermissionError:
+                pass
             self.sm.projects.pop(self.sm.project)
             self.update_projects()
             self.disable_menu_func(True)
@@ -224,9 +233,12 @@ class ProjectWidget(QWidget):
         if not path.endswith('.7z'):
             path += '.7z'
 
-        with py7zr.SevenZipFile(path, mode='w') as archive:
-            archive.writeall(self.sm.path, arcname='main')
-            archive.writeall(self.sm.data_path, arcname='data')
+        if os.path.isdir(self.sm.path) and os.path.isdir(self.sm.data_path):
+            with py7zr.SevenZipFile(path, mode='w') as archive:
+                archive.writeall(self.sm.path, arcname='main')
+                archive.writeall(self.sm.data_path, arcname='data')
+        else:
+            MessageBox(MessageBox.Warning, "Ошибка", "Неизвестная ошибка. Сжатие проекта невозможно", self.tm)
 
     def project_from_zip(self, path=''):
         if not os.path.isfile(path):
@@ -263,6 +275,7 @@ class ProjectWidget(QWidget):
                 self.sm.projects[dialog.line_edit.text()] = main_path
                 self.sm.set_project(dialog.line_edit.text())
                 self.update_projects()
+
     def save_settings(self):
         if self.opening_project:
             return
@@ -386,12 +399,23 @@ class DeleteProjectDialog(QDialog):
         self.setWindowTitle("Удалить проект")
         self.setMinimumWidth(300)
 
+        h_layout = QHBoxLayout()
+        h_layout.setAlignment(Qt.AlignLeft)
+        self.check_box = QCheckBox()
+        self.check_box.setChecked(True)
+        h_layout.addWidget(self.check_box)
+
+        label = QLabel("Удалить папку проекта")
+        label.setFont(tm.font_small)
+        h_layout.addWidget(label)
+
         layout = QVBoxLayout()
+        layout.addLayout(h_layout)
         layout.setSpacing(15)
-        label = QLabel(f"Эта операция приведет к удалению из программы всех сведений о данном проекте, а "
-                       f"именно факта его существования и всех его настроек. При этом файлы проекта удалены "
-                       f"не будут. Удалить проект {os.path.basename(self.path)}?")
+        label = QLabel(f"Эта операция приведет к безвозвратному удалению всех данных проекта. "
+                       f"Удалить проект {os.path.basename(self.path)}?")
         label.setWordWrap(True)
+        label.setFont(tm.font_small)
         layout.addWidget(label)
 
         buttons_layout = QHBoxLayout()
@@ -411,7 +435,9 @@ class DeleteProjectDialog(QDialog):
 
         self.setStyleSheet(tm.bg_style_sheet)
         self.button_yes.setStyleSheet(tm.buttons_style_sheet)
+        self.button_no.setFont(tm.font_small)
         self.button_no.setStyleSheet(tm.buttons_style_sheet)
+        self.button_no.setFont(tm.font_small)
 
 
 class ProjectFromZipDialog(QDialog):
@@ -478,4 +504,3 @@ class ProjectFromZipDialog(QDialog):
         path = QFileDialog.getExistingDirectory(None, "Выберите директорию", self.path_edit.text())
         if os.path.isdir(path):
             self.path_edit.setText(path)
-
