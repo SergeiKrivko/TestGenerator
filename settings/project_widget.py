@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLis
 import py7zr
 
 from ui.message_box import MessageBox
-from widgets.options_window import OptionsWidget
+from ui.options_window import OptionsWidget
 
 
 class ProjectWidget(QWidget):

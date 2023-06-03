@@ -1,12 +1,14 @@
 from PyQt5.QtGui import QColor, QFontMetrics
-from PyQt5.Qsci import QsciScintilla, QsciLexerCPP, QsciLexerPython, QsciAPIs
-from code_tab.autocomplition.c import CodeAutocompletionManager
+from PyQt5.Qsci import QsciScintilla, QsciAPIs, QsciLexerCPP
+from PyQt5.Qsci import *
+from code_tab.autocomplition.abstract import CodeAutocompletionManager
+from code_tab.languages import languages
 
 
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, sm, tm, lexer: type):
+    def __init__(self, sm, tm):
         super(CodeEditor, self).__init__(None)
 
         self.sm = sm
@@ -35,7 +37,7 @@ class CodeEditor(QsciScintilla):
         # Current line visible with special background color
         self.setCaretLineVisible(True)
 
-        self._lexer = lexer(None)
+        self._lexer = QsciLexerBash(None)
         self._lexer.setDefaultFont(self.tm.code_font_std)
         self.setLexer(self._lexer)
 
@@ -66,6 +68,7 @@ class CodeEditor(QsciScintilla):
         self.textChanged.connect(self.set_text_changed)
         self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
         self.text_changed = False
+        print("OK")
 
     def set_text_changed(self):
         self.text_changed = True
@@ -83,8 +86,6 @@ class CodeEditor(QsciScintilla):
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
         self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))
         self.setMarginsForegroundColor(QColor(self.tm['TextColor']))
-        for key, item in self.tm.code_colors(self._lexer.__class__.__name__):
-            self._lexer.setColor(item, self._lexer.__class__.__dict__[key])
         self._lexer.setPaper(self.tm['Paper'])
         self.setCaretLineBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setMatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
@@ -99,9 +100,25 @@ class CodeEditor(QsciScintilla):
         else:
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
-    def open_file(self, path, file_name):
+    def set_lexer(self, data: dict):
+        self._lexer = data.get('lexer', QsciLexerCPP)(None)
+        # self._lexer = QsciLexerPascal(None)
+        self._lexer.setDefaultFont(self.tm.code_font_std)
+        self.setLexer(self._lexer)
+        for key, item in data.get('colors', dict()).items():
+            self._lexer.setColor(self.tm[item], key)
+
+        self.am = data.get('autocompletion', CodeAutocompletionManager)(self.sm, self.path)
+
+    def open_file(self, path, file_name: str):
         self.path = path
         self.current_file = file_name
+
+        for language, data in languages.items():
+            if file_name.endswith(data['files']) or 'other_files' in data and file_name.endswith(data['other_files']):
+                self.set_lexer(data)
+                break
+
         self.am.dir = path
         self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
         self.update_api(self.getCursorPosition())
@@ -109,14 +126,6 @@ class CodeEditor(QsciScintilla):
     def set_text(self, text):
         self.setText(text)
         self.update_api(self.getCursorPosition())
-
-    def update_api(self, pos):
-        pass
-
-
-class CCodeEditor(CodeEditor):
-    def __init__(self, sm, tm):
-        super(CCodeEditor, self).__init__(sm, tm, QsciLexerCPP)
 
     def update_api(self, pos):
         row = pos[0]
@@ -134,16 +143,3 @@ class CCodeEditor(CodeEditor):
             pass
         self._api.prepare()
         self._lexer.setAPIs(self._api)
-
-
-class PythonCodeEditor(CodeEditor):
-    def __init__(self, sm, tm, autocomplitions):
-        super(PythonCodeEditor, self).__init__(sm, tm, QsciLexerPython)
-        self.autocomplitions = autocomplitions
-
-    def update_api(self, pos):
-        api = QsciAPIs(self._lexer)
-        for el in self.autocomplitions:
-            api.add(el)
-        api.prepare()
-        self._lexer.setAPIs(api)

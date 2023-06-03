@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QCheckBox, QPushButton, QLabel, QListWidget, \
     QListWidgetItem, QLineEdit
-from widgets.options_window import OptionsWidget, OptionsWindow
+from ui.options_window import OptionsWidget, OptionsWindow
 import os
 
 

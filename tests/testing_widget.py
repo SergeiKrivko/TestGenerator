@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBox
     QPushButton, QProgressBar, QComboBox, QLineEdit
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
-from widgets.options_window import OptionsWidget
+from ui.options_window import OptionsWidget
 
 
 class TestingWidget(QWidget):
@@ -584,7 +584,7 @@ class TestingListWidgetItem(QListWidgetItem):
 
                 self.out_data = {'STDOUT': self.dict.get('out', '')}
                 for i, el in enumerate(self.dict.get('out_files', [])):
-                    self.in_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
+                    self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
                 for i, el in self.dict.get('check_files', dict()).items():
                     self.out_data[f"in_file_{i}.{el['type']}"] = el['text']
 

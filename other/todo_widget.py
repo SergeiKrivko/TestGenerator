@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QHBoxLayout, QPushButton, QDialog, \
     QDialogButtonBox, QLabel, QComboBox, QLineEdit
 
-from widgets.options_window import OptionsWidget, OptionsWindow
+from ui.options_window import OptionsWidget, OptionsWindow
 
 
 class TODOWidget(QWidget):

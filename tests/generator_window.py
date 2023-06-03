@@ -4,9 +4,9 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMainWindow, QDialog, QListWidget, \
     QLineEdit
 
-from widgets.menu_bar import MenuBar
+from ui.menu_bar import MenuBar
 from ui.message_box import MessageBox
-from code_tab.syntax_highlighter import PythonCodeEditor
+from code_tab.syntax_highlighter import CodeEditor
 
 
 class GeneratorWindow(QMainWindow):
@@ -33,7 +33,7 @@ class GeneratorWindow(QMainWindow):
         })
         self.setMenuBar(self.menu_bar)
 
-        self.code_edit = PythonCodeEditor(self.sm, self.tm, [])
+        self.code_edit = CodeEditor(self.sm, self.tm)
 
         main_layout.addWidget(self.code_edit)
         central_widget.setLayout(main_layout)

@@ -4,8 +4,8 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget
 
 from code_tab.files_widget import FilesWidget
-from widgets.options_window import OptionsWidget
-from code_tab.syntax_highlighter import CCodeEditor
+from ui.options_window import OptionsWidget
+from code_tab.syntax_highlighter import CodeEditor
 
 
 class CodeWidget(QWidget):
@@ -52,7 +52,7 @@ class CodeWidget(QWidget):
         self.todo_widget.doubleClicked.connect(self.jump_by_todo)
         layout_left.addWidget(self.tab_widget)
 
-        self.code_edit = CCodeEditor(sm, tm)
+        self.code_edit = CodeEditor(sm, tm)
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)
         layout.addWidget(self.code_edit)
@@ -208,7 +208,7 @@ class CodeWidget(QWidget):
         if self.isHidden():
             self.update_options()
             self.first_open()
-            self.code_edit.am.update_libs()
+            # self.code_edit.am.update_libs()
         super(CodeWidget, self).show()
 
     def hide(self):

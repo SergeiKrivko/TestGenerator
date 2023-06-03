@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QSc
 
 from tests.generator_window import GeneratorWindow
 from ui.message_box import MessageBox
-from widgets.options_window import OptionsWidget
+from ui.options_window import OptionsWidget
 from tests.test_table_widget import TestTableWidget
 from tests.test_edit_widget import TestEditWidget
 from tests.macros_converter import MacrosConverter, background_process_manager
