@@ -568,11 +568,11 @@ class TestingListWidgetItem(QListWidgetItem):
                 self.dict = json.loads(f.read())
 
                 self.in_data = {'STDIN': self.dict.get('in', '')}
-                for i, el in enumerate(self.dict.get('in_files')):
+                for i, el in enumerate(self.dict.get('in_files', [])):
                     self.in_data[f"in_file_{i + 1}.{el['type']}"] = el['text']
 
                 self.out_data = {'STDOUT': self.dict.get('out', '')}
-                for i, el in enumerate(self.dict.get('out_files')):
+                for i, el in enumerate(self.dict.get('out_files', [])):
                     self.in_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
                 for i, el in self.dict.get('check_files', dict()).items():
                     self.out_data[f"in_file_{i}.{el['type']}"] = el['text']

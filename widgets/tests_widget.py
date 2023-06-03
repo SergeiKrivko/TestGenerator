@@ -606,14 +606,18 @@ class TestCopyWindow(QDialog):
         self.options_widget = OptionsWidget({
             'Проект': {'type': 'combo', 'values': list(self.sm.projects.keys()), 'name': OptionsWidget.NAME_LEFT,
                        'initial': list(self.sm.projects.keys()).index(self.sm.project)},
-            'h_line': {
+            'h_line1': {
                 'Номер лабы:': {'type': int, 'min': 1, 'initial': self.sm.get('lab', 1),
                                 'name': OptionsWidget.NAME_LEFT, 'width': 60},
                 'Номер задания:': {'type': int, 'min': 1, 'initial': self.sm.get('task', 1),
                                    'name': OptionsWidget.NAME_LEFT, 'width': 60},
                 'Номер варианта:': {'type': int, 'min': -1, 'initial': self.sm.get('var', 0),
                                     'name': OptionsWidget.NAME_LEFT, 'width': 60}
-            }
+            },
+            'h_line2': {
+                'Позитивные': {'type': bool, 'name': OptionsWidget.NAME_RIGHT, 'initial': False},
+                'Негативные': {'type': bool, 'name': OptionsWidget.NAME_RIGHT, 'initial': False}
+            },
         })
         self.options_widget.widgets['Проект'].setStyleSheet(self.tm.combo_box_style_sheet)
         self.options_widget.widgets['Номер лабы:'].setStyleSheet(self.tm.spin_box_style_sheet)
@@ -645,6 +649,16 @@ class TestCopyWindow(QDialog):
         self.update_list()
 
     def options_changed(self, key):
+        if key == 'Позитивные':
+            for i in range(len(self.test_list)):
+                if self.test_list[i].startswith("POS"):
+                    self.check_boxes[i].setChecked(self.options_widget['Позитивные'])
+            return
+        if key == 'Негативные':
+            for i in range(len(self.test_list)):
+                if self.test_list[i].startswith("NEG"):
+                    self.check_boxes[i].setChecked(self.options_widget['Негативные'])
+            return
         if key in ('Проект', 'Номер лабы:', 'Номер задания:'):
             for i in range(-1, 100):
                 if os.path.isdir(self.sm.data_lab_path(
@@ -672,7 +686,7 @@ class TestCopyWindow(QDialog):
                             desc = json.loads(f.read()).get('desc', '-')
                         except json.JSONDecodeError:
                             desc = '-'
-                        self.test_list.append(f"{test_type.upper()} {i}\t{desc}")
+                        self.test_list.append(f"{test_type.upper()} {i + 1}\t{desc}")
 
     def update_list(self):
         for el in self.test_list:

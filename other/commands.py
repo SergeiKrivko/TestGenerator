@@ -289,69 +289,6 @@ class TestingLooper(QThread):
                 except JSONDecodeError:
                     pass
 
-        # if os.path.isdir(f"{self.data_path}/neg"):
-        #     lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_path}/neg")))
-        #     lst.sort(key=lambda s: int(s.rstrip('.json')))
-        #     for i, el in enumerate(lst):
-        #         try:
-        #             dct = loads(CommandManager.read_file(f"{self.data_path}/neg/{el}"))
-        #             try:
-        #                 res = CommandManager.cmd_command(
-        #                     f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/neg_{i + 1:0>2}_args.txt')}",
-        #                     input=dct.get('in', ''), timeout=self.time_limit, shell=True)
-        #             except TimeoutExpired:
-        #                 self.test_timeout.emit()
-        #                 continue
-        #             if res.stderr:
-        #                 self.test_crash.emit(res.stdout, res.returncode, res.stderr)
-        #                 continue
-        #             comparator_res = self.neg_comparator(dct.get('out', ''), res.stdout)
-        #
-        #             for j, file in enumerate(dct.get('out_files', [])):
-        #                 if file.get('type', 'txt') == 'txt':
-        #                     comparator_res = comparator_res and file.text == CommandManager.read_file(
-        #                         f"{self.path}/func_tests/data_files/temp_{j + 1}.txt", '')
-        #                 else:
-        #                     comparator_res = comparator_res and CommandManager.read_binary(
-        #                         f"{self.path}/func_tests/data_files/_{i + 1:0>2}_out{j + 1}.bin", b'') == \
-        #                                      CommandManager.read_binary(
-        #                                          f"{self.path}/func_tests/data_files/temp_{j + 1}.bin", b'')
-        #
-        #             for j, file in dct.get('check_files', dict()).items():
-        #                 if file.get('type', 'txt') == 'txt':
-        #                     comparator_res = comparator_res and file.text == CommandManager.read_file(
-        #                         f"{self.path}/func_tests/data_files/_{i + 1:0>2}_in{j}.txt", '')
-        #                 else:
-        #                     comparator_res = comparator_res and CommandManager.read_binary(
-        #                         f"{self.path}/func_tests/data_files/_{i + 1:0>2}_check{j}.bin", b'') == \
-        #                                      CommandManager.read_binary(
-        #                                          f"{self.path}/func_tests/data_files/_{i + 1:0>2}_in{j}.bin", b'')
-        #
-        #             for j, file in enumerate(dct.get('in_files', [])):
-        #                 if file.get('type', 'txt') == 'txt':
-        #                     MacrosConverter.convert_txt(
-        #                         file['text'], f"{self.path}/func_tests/data_files/neg_{i + 1:0>2}_in{j + 1}.txt",
-        #                         self.sm.get('line_sep'))
-        #                 else:
-        #                     MacrosConverter.convert_bin(
-        #                         file['text'], f"{self.path}/func_tests/data_files/neg_{i + 1:0>2}_in{j + 1}.bin")
-        #
-        #             if self.memory_testing:
-        #                 valgrind_out = CommandManager.cmd_command(
-        #                     ["valgrind", "-q", "./app.exe", dct.get('args', '')], input=dct.get('in', '')).stderr
-        #             else:
-        #                 valgrind_out = ""
-        #
-        #             expected_code = dct.get('exit', None)
-        #             expected_code = int(expected_code) if expected_code else None
-        #             self.test_complete.emit(
-        #                 (res.returncode if expected_code is None else res.returncode == expected_code) and
-        #                 comparator_res, res.stdout, res.returncode, not valgrind_out, valgrind_out)
-        #             sleep(0.1)
-        #             i += 1
-        #         except JSONDecodeError:
-        #             pass
-
         self.end_testing.emit()
 
     def terminate(self) -> None:
