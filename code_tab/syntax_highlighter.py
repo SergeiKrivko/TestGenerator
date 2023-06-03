@@ -101,13 +101,18 @@ class CodeEditor(QsciScintilla):
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
     def set_lexer(self, data: dict):
-        self._lexer = data.get('lexer', QsciLexerCPP)(None)
-        # self._lexer = QsciLexerPascal(None)
-        self._lexer.setDefaultFont(self.tm.code_font_std)
-        self.setLexer(self._lexer)
-        for key, item in data.get('colors', dict()).items():
-            self._lexer.setColor(self.tm[item], key)
+        if data.get('lexer') is None:
+            self._lexer = QsciLexerCPP(None)
+            self._lexer.setDefaultFont(self.tm.code_font_std)
+            for key in languages['c']['colors'].keys():
+                self._lexer.setColor(self.tm['Identifier'], key)
+        else:
+            self._lexer = data['lexer'](None)
+            self._lexer.setDefaultFont(self.tm.code_font_std)
+            for key, item in data.get('colors', dict()).items():
+                self._lexer.setColor(self.tm[item], key)
 
+        self.setLexer(self._lexer)
         self.am = data.get('autocompletion', CodeAutocompletionManager)(self.sm, self.path)
 
     def open_file(self, path, file_name: str):
@@ -115,9 +120,14 @@ class CodeEditor(QsciScintilla):
         self.current_file = file_name
 
         for language, data in languages.items():
-            if file_name.endswith(data['files']) or 'other_files' in data and file_name.endswith(data['other_files']):
-                self.set_lexer(data)
-                break
+            for f in data['files']:
+                if file_name.endswith(f):
+                    self.set_lexer(data)
+
+                    self.am.dir = path
+                    self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
+                    self.update_api(self.getCursorPosition())
+                    return
 
         self.am.dir = path
         self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())

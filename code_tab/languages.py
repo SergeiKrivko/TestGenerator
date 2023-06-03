@@ -1,10 +1,11 @@
 from PyQt5.Qsci import QsciLexerCPP, QsciLexerPython, QsciLexerBash, QsciLexerBatch, QsciLexerCSharp, QsciLexerJava, \
-    QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON
+    QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON, QsciLexer
 from code_tab.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 from code_tab.autocomplition.c import CodeAutocompletionManager as AcMC
 
 languages = {
-    'c': {'lexer': QsciLexerCPP, 'files': '.c', 'other_files': '.h', 'autocompletion': AcMC, 'colors': {
+    'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
+    'c': {'lexer': QsciLexerCPP, 'files': ['.c', '.h'], 'autocompletion': AcMC, 'colors': {
         QsciLexerCPP.Identifier: 'Identifier',
         QsciLexerCPP.PreProcessor: 'Preprocessor',
         QsciLexerCPP.Comment: 'Comment',
@@ -16,7 +17,7 @@ languages = {
         QsciLexerCPP.DoubleQuotedString: 'String',
         QsciLexerCPP.SingleQuotedString: 'String',
     }},
-    'python': {'lexer': QsciLexerPython, 'files': '.py', 'autocompletion': AcMAbstract, 'colors': {
+    'python': {'lexer': QsciLexerPython, 'files': ['.py'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerPython.Identifier: 'Identifier',
         QsciLexerPython.Comment: 'Comment',
         QsciLexerPython.CommentBlock: 'Comment',
@@ -35,8 +36,8 @@ languages = {
         QsciLexerPython.TripleDoubleQuotedFString: 'String',
         QsciLexerPython.TripleSingleQuotedFString: 'String',
     }},
-    'c++': {'lexer': QsciLexerCPP, 'files': '.cpp', 'other_files': '.h', 'autocompletion': AcMAbstract},
-    'bach': {'lexer': QsciLexerBash, 'files': '.sh', 'autocompletion': AcMAbstract, 'colors': {
+    'c++': {'lexer': QsciLexerCPP, 'files': ['.cpp', '.h'], 'autocompletion': AcMAbstract},
+    'bach': {'lexer': QsciLexerBash, 'files': ['.sh'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerBash.Identifier: 'Identifier',
         QsciLexerBash.Operator: 'Identifier',
         QsciLexerBash.Number: 'Number',
@@ -47,7 +48,7 @@ languages = {
         QsciLexerBash.ParameterExpansion: 'Preprocessor',
         QsciLexerBash.Error: 'Preprocessor',
     }},
-    'batch': {'lexer': QsciLexerBatch, 'files': 'bat', 'other_files': '.cmd', 'autocompletion': AcMAbstract, 'colors': {
+    'batch': {'lexer': QsciLexerBatch, 'files': ['.bat', '.cmd'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerBatch.Keyword: 'Keyword',
         QsciLexerBatch.Comment: 'Comment',
         QsciLexerBatch.ExternalCommand: 'Preprocessor',
@@ -56,7 +57,7 @@ languages = {
         QsciLexerBatch.Variable: 'Number',
         QsciLexerBatch.Default: 'Identifier'
     }},
-    'markdown': {'lexer': QsciLexerMarkdown, 'files': '.md', 'autocompletion': AcMAbstract, 'colors': {
+    'markdown': {'lexer': QsciLexerMarkdown, 'files': ['.md'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerMarkdown.BlockQuote: 'Keyword',
         QsciLexerMarkdown.CodeBlock: 'Preprocessor',
         QsciLexerMarkdown.CodeBackticks: 'Preprocessor',
@@ -68,10 +69,11 @@ languages = {
         QsciLexerMarkdown.Header5: 'Keyword',
         QsciLexerMarkdown.Header6: 'Keyword',
         QsciLexerMarkdown.Link: 'String',
+        QsciLexerMarkdown.Default: 'Identifier'
     }},
-    'html': {'lexer': QsciLexerHTML, 'files': '.html', 'autocompletion': AcMAbstract},
-    'json': {'lexer': QsciLexerJSON, 'files': '.json', 'autocompletion': AcMAbstract},
+    'html': {'lexer': QsciLexerHTML, 'files': ['.html'], 'autocompletion': AcMAbstract},
+    'json': {'lexer': QsciLexerJSON, 'files': ['.json'], 'autocompletion': AcMAbstract},
     'c#': {'lexer': QsciLexerCSharp},
     'java': {'lexer': QsciLexerJava},
-    'javascript': {'lexer': QsciLexerJavaScript, 'files': '.js', 'autocompletion': AcMAbstract},
+    'javascript': {'lexer': QsciLexerJavaScript, 'files': ['.js'], 'autocompletion': AcMAbstract},
 }
