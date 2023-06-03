@@ -713,7 +713,7 @@ class TestCopyWindow(QDialog):
             if self.check_boxes[i].isChecked():
                 if self.test_list[i].startswith("POS"):
                     pos_ind += 1
-                    with open(f"{self.path}/pos/{self.test_list[i].split()[1]}.json",
+                    with open(f"{self.path}/pos/{int(self.test_list[i].split()[1]) - 1}.json",
                               encoding='utf-8') as f:
                         try:
                             yield json.loads(f.read())
@@ -722,7 +722,7 @@ class TestCopyWindow(QDialog):
 
                 else:
                     neg_ind += 1
-                    with open(f"{self.path}/neg/{self.test_list[i].split()[1]}.json", encoding='utf-8') as f:
+                    with open(f"{self.path}/neg/{int(self.test_list[i].split()[1]) - 1}.json", encoding='utf-8') as f:
                         try:
                             yield json.loads(f.read())
                         except json.JSONDecodeError:
