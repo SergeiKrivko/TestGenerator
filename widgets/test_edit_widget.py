@@ -55,7 +55,6 @@ class TestEditWidget(QWidget):
         layout1 = QVBoxLayout()
         h_layout.addLayout(layout1, 1)
         layout_h1 = QHBoxLayout()
-        layout1.addLayout(layout_h1)
         layout_h1.addWidget(label := QLabel("Входные данные"))
         self.labels.append(label)
 

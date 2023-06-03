@@ -167,7 +167,7 @@ class TestsWidget(QWidget):
             for dct in dlg.copy_tests():
                 item = Test(self.create_temp_file(), tm=self.tm)
 
-                item.dict = dct
+                item.set_dict(dct)
                 item['desc'] = dct.get('desc', '-')
                 item.store()
 
@@ -187,7 +187,7 @@ class TestsWidget(QWidget):
             self.test_list_widget.neg_test_list.setCurrentItem(None)
             item.load()
             self.current_test = item
-            self.test_edit_widget.open_test(item.dict)
+            self.test_edit_widget.open_test(item)
 
     def select_neg_test(self):
         item = self.test_list_widget.neg_test_list.currentItem()
@@ -197,7 +197,7 @@ class TestsWidget(QWidget):
             self.test_list_widget.pos_test_list.setCurrentItem(None)
             item.load()
             self.current_test = item
-            self.test_edit_widget.open_test(item.dict)
+            self.test_edit_widget.open_test(item)
 
     def move_pos_test_up(self):
         self.tests_changed = True
@@ -489,30 +489,36 @@ class Test(QListWidgetItem):
         Test.files_links[self.path] = self
 
         self.load()
-        self.setText(self.get('desc', '-'))
-        self.dict = None
+        self.update_name()
+        self._dict = None
 
         self.setFont(tm.font_small)
+
+    def is_loaded(self):
+        return self._dict is not None
+
+    def set_dict(self, dct):
+        self._dict = dct
 
     def load(self):
         try:
             with open(self.path, 'r', encoding='utf-8') as f:
-                self.dict = json.loads(f.read())
+                self._dict = json.loads(f.read())
         except FileNotFoundError:
-            self.dict = {'desc': '-', 'in': '', 'out': '', 'args': ''}
+            self._dict = {'desc': '-', 'in': '', 'out': '', 'args': ''}
         except json.JSONDecodeError:
-            self.dict = {'desc': '-', 'in': '', 'out': '', 'args': ''}
+            self._dict = {'desc': '-', 'in': '', 'out': '', 'args': ''}
 
     def store(self):
-        if self.dict is None:
+        if self._dict is None:
             return
         os.makedirs(os.path.split(self.path)[0], exist_ok=True)
         with open(self.path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(self.dict))
-        self.dict = None
+            f.write(json.dumps(self._dict))
+        self._dict = None
 
-    def get(self, key, default):
-        return self.dict.get(key, default)
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
 
     def rename_file(self, new_name):
         Test.files_links.pop(self.path)
@@ -535,15 +541,15 @@ class Test(QListWidgetItem):
             pass
 
     def update_name(self):
-        self.setText(self.dict.get('desc', ''))
+        self.setText(self.get('desc', '-'))
 
     def __getitem__(self, item):
-        return self.dict[item]
+        return self._dict[item]
 
     def __setitem__(self, key, value):
+        self._dict[key] = value
         if key == 'desc':
-            self.setText(value)
-        self.dict[key] = value
+            self.update_name()
 
 
 def read_file(path, default=None):

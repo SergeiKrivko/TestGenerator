@@ -4,7 +4,7 @@ import os
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton, QProgressBar, QComboBox
+    QPushButton, QProgressBar, QComboBox, QLineEdit
 
 from widgets.compiler_errors_window import CompilerErrorWindow
 from widgets.options_window import OptionsWidget
@@ -79,8 +79,14 @@ class TestingWidget(QWidget):
 
         l = QVBoxLayout()
         layout2.addLayout(l)
-        l.addWidget(label := QLabel("Список тестов"))
-        self.labels.append(label)
+        h_l = QHBoxLayout()
+        l.addLayout(h_l)
+        # h_l.addWidget(label := QLabel("Список Тестов"))
+        # self.labels.append(label)
+        self.test_name_bar = QLineEdit()
+        self.test_name_bar.setReadOnly(True)
+        h_l.addWidget(self.test_name_bar)
+
         self.tests_list = QListWidget()
         self.tests_list.itemSelectionChanged.connect(self.open_test_info)
         l.addWidget(self.tests_list)
@@ -155,6 +161,8 @@ class TestingWidget(QWidget):
         self.in_data_combo_box.setFont(self.tm.font_small)
         self.out_data_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
         self.out_data_combo_box.setFont(self.tm.font_small)
+        self.test_name_bar.setStyleSheet(self.tm.style_sheet)
+        self.test_name_bar.setFont(self.tm.font_small)
         self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
         self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
@@ -219,6 +227,7 @@ class TestingWidget(QWidget):
             self.prog_out_combo_box.clear()
             self.prog_out_combo_box.addItems(item.prog_out.keys())
             self.prog_out.setText(item.prog_out.get('STDOUT', ''))
+            self.test_name_bar.setText(item.dict.get('desc', '-'))
 
     def in_data_combo_box_triggered(self):
         self.in_data.setText(self.current_item.in_data.get(self.in_data_combo_box.currentText(), ''))
@@ -331,6 +340,8 @@ class TestingWidget(QWidget):
                     tests_list.append(f'neg{i + 1}')
                 except json.JSONDecodeError:
                     pass
+
+        self.tests_list.setCurrentRow(0)
 
         self.neg_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
         self.neg_result_bar.setText(f"NEG: 0/{len(tests_list) - pos_count}")
