@@ -586,7 +586,7 @@ class TestingListWidgetItem(QListWidgetItem):
                 for i, el in enumerate(self.dict.get('out_files', [])):
                     self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
                 for i, el in self.dict.get('check_files', dict()).items():
-                    self.out_data[f"in_file_{i}.{el['type']}"] = el['text']
+                    self.out_data[f"check_file_{i}.{el['type']}"] = el['text']
 
         except FileNotFoundError:
             self.dict = dict()

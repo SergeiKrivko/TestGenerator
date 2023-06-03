@@ -57,11 +57,18 @@ class MacrosConverter(QThread):
     def convert_args(self, text, path, test_type, index, in_files, out_files):
         text = text.split()
         for i in range(len(text)):
-            if text[i].startswith('#fin') and (n := text[i].lstrip('#fin').isdigit()):
+            if text[i] == '#fin':
+                text[i] = '#fin1'
+            if text[i].startswith('#fin') and (n := text[i].lstrip('#fin')).isdigit():
                 text[i] = in_files.get(int(n), '#fin')
-            if text[i].startswith('#fout') and (n := text[i].lstrip('#fout').isdigit()):
+            if text[i] == '#fout':
+                text[i] = '#fout1'
+            if text[i].startswith('#fout') and (n := text[i].lstrip('#fout')).isdigit():
                 if int(n) in out_files:
                     text[i] = os.path.split(out_files[int(n)])[0] + f'/temp_{int(n)}{out_files[int(n)][-4:]}'
+                else:
+                    text[i] = os.path.split(self.dst_format.get(f'{test_type}_out_files').format(0, 0))[0] + \
+                              f'/temp_{int(n)}'
         with open(path, 'w', encoding='utf-8', newline=self.line_sep) as f:
             f.write(' '.join(text))
 

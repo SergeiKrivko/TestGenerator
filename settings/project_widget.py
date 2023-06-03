@@ -233,6 +233,7 @@ class ProjectWidget(QWidget):
         if not path.endswith('.7z'):
             path += '.7z'
 
+        self.sm.store()
         if os.path.isdir(self.sm.path) and os.path.isdir(self.sm.data_path):
             with py7zr.SevenZipFile(path, mode='w') as archive:
                 archive.writeall(self.sm.path, arcname='main')
