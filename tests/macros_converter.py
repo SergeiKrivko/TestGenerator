@@ -1,11 +1,10 @@
 import os
 import shutil
-import time
 from json import loads, JSONDecodeError
 
 from PyQt5.QtCore import QThread, pyqtSignal, QObject
 
-from convert_binary import convert as convert_binary
+from tests.convert_binary import convert as convert_binary
 
 
 class BackgroundProcessManager(QObject):
