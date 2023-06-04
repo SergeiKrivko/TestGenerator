@@ -88,7 +88,7 @@ class MacrosConverter(QThread):
                 except JSONDecodeError:
                     data = dict()
 
-            self.readme.write(f"- {index:0>2} - {data.get('desc', '-')}\n")
+            self.readme.write(f"- {index + 1:0>2} - {data.get('desc', '-')}\n")
             self.convert_txt(data.get('in', ''),
                              f"{self.dst_dir}/{self.dst_format.get(f'{tests_type}_in').format(index + 1)}",
                              self.line_sep)

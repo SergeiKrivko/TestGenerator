@@ -156,6 +156,7 @@ class ProjectWidget(QWidget):
                 self.update_projects()
 
     def delete_project(self):
+        print(self.sm.data_path)
         self.dialog = DeleteProjectDialog(self.sm.data_path, self.tm)
         if self.dialog.exec():
             try:
@@ -270,8 +271,10 @@ class ProjectWidget(QWidget):
                     shutil.rmtree(main_path)
                 if os.path.isdir(data_path):
                     shutil.rmtree(data_path)
-                shutil.copytree(f"{self.sm.app_data_dir}/temp/main", main_path)
-                shutil.copytree(f"{self.sm.app_data_dir}/temp/data", data_path)
+                os.rename(f"{self.sm.app_data_dir}/temp/main", main_path)
+                os.rename(f"{self.sm.app_data_dir}/temp/data", data_path)
+                # shutil.copytree(f"{self.sm.app_data_dir}/temp/main", main_path)
+                # shutil.copytree(f"{self.sm.app_data_dir}/temp/data", data_path)
                 shutil.rmtree(f"{self.sm.app_data_dir}/temp")
                 self.sm.projects[dialog.line_edit.text()] = main_path
                 self.sm.set_project(dialog.line_edit.text())
