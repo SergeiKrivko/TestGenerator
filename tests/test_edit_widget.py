@@ -126,6 +126,7 @@ class TestEditWidget(QWidget):
 
     def open_test(self, data: dict):
         self.data = data
+        current_in, current_out = data.get('current_in', 0), data.get('current_out', 0)
         self.in_files.clear()
         self.test_name_edit.setText(data.get('desc', '-'))
         self.cmd_args_edit.setText(data.get('args', ''))
@@ -150,8 +151,8 @@ class TestEditWidget(QWidget):
         for i, el in data['check_files'].items():
             self.out_combo_box.addItems([f"check_file_{i}.{el['type']}"])
 
-        self.test_in_edit.setText(data.get('in', ''))
-        self.test_out_edit.setText(data.get('out', ''))
+        self.in_combo_box.setCurrentIndex(current_in)
+        self.out_combo_box.setCurrentIndex(current_out)
 
         self.test_in_edit.setDisabled(False)
         self.test_out_edit.setDisabled(False)
@@ -222,9 +223,11 @@ class TestEditWidget(QWidget):
         elif index == 0:
             self.button_delete_in.setDisabled(True)
             self.test_in_edit.setText(self.data['in'])
+            self.data['current_in'] = index
         else:
             self.button_delete_in.setDisabled(False)
             self.test_in_edit.setText(self.data['in_files'][index - 1]['text'])
+            self.data['current_in'] = index
 
     def select_out_file(self):
         index = self.out_combo_box.currentIndex()
@@ -235,12 +238,15 @@ class TestEditWidget(QWidget):
         elif index == 0:
             self.button_delete_out.setDisabled(True)
             self.test_out_edit.setText(self.data['out'])
+            self.data['current_out'] = index
         elif self.out_combo_box.currentText().startswith('check'):
             index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
             self.test_out_edit.setText(self.data['check_files'][index]['text'])
+            self.data['current_out'] = self.out_combo_box.currentIndex()
         else:
             index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
             self.test_out_edit.setText(self.data['out_files'][index - 1]['text'])
+            self.data['current_out'] = self.out_combo_box.currentIndex()
 
     def set_test_in(self):
         index = self.in_combo_box.currentIndex()

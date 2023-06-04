@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLin
     QPushButton, QDialog, QLabel, QListWidgetItem
 
 from ui.message_box import MessageBox
+from code_tab.languages import languages
 
 
 class FilesWidget(QWidget):
@@ -166,14 +167,21 @@ class FileListWidgetItem(QListWidgetItem):
                 self.setText(f"◆ {self.name}")
                 self.file_type = 'header'
                 self.priority = 3
-            elif self.path.endswith(".txt") or self.path.endswith('.md'):
-                self.setText(f"● {self.name}")
-                self.file_type = 'text'
-                self.priority = 4
             else:
-                self.setText(f"?   {self.name}")
-                self.file_type = 'unknown'
-                self.priority = 5
+                for key, item in languages.items():
+                    flag = False
+                    for el in item.get('files', []):
+                        if self.path.endswith(el):
+                            self.setText(f" ●  {self.name}")
+                            self.file_type = 'text'
+                            self.priority = 4
+                            flag = True
+                    if flag:
+                        break
+                else:
+                    self.setText(f" ?  {self.name}")
+                    self.file_type = 'unknown'
+                    self.priority = 5
 
         self.set_theme()
 

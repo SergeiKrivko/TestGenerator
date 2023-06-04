@@ -218,6 +218,8 @@ class TestingWidget(QWidget):
         if isinstance(item, TestingListWidgetItem):
             self.current_item = item
             item.load()
+            current_in, current_out = item.dict.get('current_in', 0), item.dict.get('current_out', 0)
+
             self.in_data_combo_box.clear()
             self.in_data_combo_box.addItems(item.in_data.keys())
             self.in_data.setText(item.dict.get('in', ''))
@@ -228,6 +230,9 @@ class TestingWidget(QWidget):
             self.prog_out_combo_box.addItems(item.prog_out.keys())
             self.prog_out.setText(item.prog_out.get('STDOUT', ''))
             self.test_name_bar.setText(item.dict.get('desc', '-'))
+
+            self.in_data_combo_box.setCurrentIndex(current_in)
+            self.out_data_combo_box.setCurrentIndex(current_out)
 
     def in_data_combo_box_triggered(self):
         self.in_data.setText(self.current_item.in_data.get(self.in_data_combo_box.currentText(), ''))
