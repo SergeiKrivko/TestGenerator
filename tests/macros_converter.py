@@ -75,7 +75,7 @@ class MacrosConverter(QThread):
     def convert_tests(self, tests_type='pos'):
         if not os.path.isdir(f"{self.src_dir}/{tests_type}"):
             return
-        for file in os.listdir(f"{self.src_dir}/{tests_type}"):
+        for file in sorted(os.listdir(f"{self.src_dir}/{tests_type}"), key=lambda s: int(s.rstrip('.json'))):
             if self.closed:
                 return
             if not file.rstrip('.json').isdigit():

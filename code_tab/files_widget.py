@@ -180,6 +180,7 @@ class FileListWidgetItem(QListWidgetItem):
                         break
                 else:
                     self.setText(f" ?  {self.name}")
+
                     self.file_type = 'unknown'
                     self.priority = 5
 
@@ -213,7 +214,6 @@ class DeleteFileDialog(QDialog):
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
         button_layout.setAlignment(Qt.AlignRight)
-
         self.button_ok = QPushButton("Ок")
         self.button_ok.setFixedSize(70, 24)
         self.button_ok.clicked.connect(self.accept)
