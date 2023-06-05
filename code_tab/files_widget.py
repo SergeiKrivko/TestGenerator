@@ -128,10 +128,8 @@ class FilesWidget(QWidget):
                 self.openFile.emit(item.path)
 
     def set_theme(self):
-        self.button_add_file.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_add_file.setFont(self.tm.font_small)
-        self.button_delete_file.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_delete_file.setFont(self.tm.font_small)
+        for el in [self.button_add_file, self.button_delete_file]:
+            self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
         for i in range(self.files_list.count()):
             self.files_list.item(i).set_theme()

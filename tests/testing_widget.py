@@ -144,31 +144,11 @@ class TestingWidget(QWidget):
         self.current_item = None
 
     def set_theme(self):
-        self.button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button.setFont(self.tm.font_small)
+        for el in [self.button, self.prog_out, self.in_data, self.out_data, self.progress_bar, self.prog_out_combo_box,
+                   self.in_data_combo_box, self.out_data_combo_box, self.test_name_bar]:
+            self.tm.auto_css(el)
         self.tm.set_theme_to_list_widget(self.tests_list)
-        self.prog_out.setStyleSheet(self.tm.text_edit_style_sheet)
-        self.prog_out.setFont(self.tm.font_small)
-        self.in_data.setStyleSheet(self.tm.text_edit_style_sheet)
-        self.in_data.setFont(self.tm.font_small)
-        self.out_data.setStyleSheet(self.tm.text_edit_style_sheet)
-        self.out_data.setFont(self.tm.font_small)
-        self.progress_bar.setStyleSheet(self.tm.progress_bar_style_sheet)
-        self.progress_bar.setFont(self.tm.font_small)
-        self.prog_out_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.prog_out_combo_box.setFont(self.tm.font_small)
-        self.in_data_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.in_data_combo_box.setFont(self.tm.font_small)
-        self.out_data_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.out_data_combo_box.setFont(self.tm.font_small)
-        self.test_name_bar.setStyleSheet(self.tm.style_sheet)
-        self.test_name_bar.setFont(self.tm.font_small)
-        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
-        self.options_widget.setFont(self.tm.font_small)
-        for label in self.labels:
-            label.setFont(self.tm.font_small)
+        self.tm.css_to_options_widget(self.options_widget)
 
     def option_changed(self, key):
         if key in ('Номер лабы:', 'Номер задания:'):

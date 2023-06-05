@@ -1,5 +1,7 @@
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget
 
 basic_theme = {
     'Identifier': Qt.black,
@@ -417,6 +419,40 @@ class ThemeManager:
         widget.setStyleSheet(self.list_widget_style_sheet)
         for i in range(widget.count()):
             widget.item(i).setFont(font if font else self.font_small)
+
+    def auto_css(self, widget: QWidget, code_font=False):
+        if code_font:
+            widget.setFont(self.code_font)
+        else:
+            widget.setFont(self.font_small)
+
+        if isinstance(widget, QMainWindow):
+            widget.setStyleSheet(self.bg_style_sheet)
+        elif isinstance(widget, QLineEdit):
+            widget.setStyleSheet(self.style_sheet)
+        elif isinstance(widget, QTextEdit):
+            widget.setStyleSheet(self.text_edit_style_sheet)
+        elif isinstance(widget, QScrollArea):
+            widget.setStyleSheet(self.scroll_area_style_sheet)
+        elif isinstance(widget, QPushButton):
+            widget.setStyleSheet(self.buttons_style_sheet)
+        elif isinstance(widget, QSpinBox):
+            widget.setStyleSheet(self.spin_box_style_sheet)
+        elif isinstance(widget, QDoubleSpinBox):
+            widget.setStyleSheet(self.double_spin_box_style_sheet)
+        elif isinstance(widget, QComboBox):
+            widget.setStyleSheet(self.combo_box_style_sheet)
+        elif isinstance(widget, QProgressBar):
+            widget.setStyleSheet(self.progress_bar_style_sheet)
+        elif isinstance(widget, QTabWidget):
+            widget.setStyleSheet(self.tab_widget_style_sheet)
+
+    def css_to_options_widget(self, widget):
+        widget.setFont(self.font_small)
+        for el in widget.widgets.values():
+            self.auto_css(el)
+        for el in widget.labels.values():
+            self.auto_css(el)
 
     def set_theme(self, theme_name):
         self.theme_name = theme_name

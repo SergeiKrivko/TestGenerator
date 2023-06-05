@@ -1,9 +1,9 @@
 import os
 import shutil
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget, QGridLayout
+    QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget, QGridLayout, QMessageBox
 import py7zr
 
 from ui.message_box import MessageBox
@@ -121,6 +121,7 @@ class ProjectWidget(QWidget):
 
         self.disable_menu_func(True)
         self.update_projects()
+        self.looper = None
 
     def testing_checkbox_triggered(self, value):
         self.sm.set('default_testing_settings', value)
@@ -236,9 +237,12 @@ class ProjectWidget(QWidget):
 
         self.sm.store()
         if os.path.isdir(self.sm.path) and os.path.isdir(self.sm.data_path):
-            with py7zr.SevenZipFile(path, mode='w') as archive:
-                archive.writeall(self.sm.path, arcname='main')
-                archive.writeall(self.sm.data_path, arcname='data')
+            looper = ProjectPacker(path, self.sm.path, self.sm.data_path)
+            looper.start()
+            dialog = ProgressDialog("Запаковка проекта", "Идет запаковка проекта. Пожалуйста, подождите", self.tm)
+            looper.finished.connect(dialog.reject)
+            if dialog.exec():
+                looper.cancel()
         else:
             MessageBox(MessageBox.Warning, "Ошибка", "Неизвестная ошибка. Сжатие проекта невозможно", self.tm)
 
@@ -261,24 +265,30 @@ class ProjectWidget(QWidget):
                 MessageBox(MessageBox.Warning, 'Распаковка проекта',
                            f"Директория {dialog.path_edit.text()} не существует. Невозможно создать проект.", self.tm)
             else:
-                with py7zr.SevenZipFile(path, mode='r') as archive:
-                    archive.extractall(f"{self.sm.app_data_dir}/temp")
-
                 main_path = f"{dialog.path_edit.text()}/{dialog.line_edit.text()}"
                 data_path = f"{self.sm.app_data_dir}/projects/{dialog.line_edit.text()}"
 
-                if os.path.isdir(main_path):
-                    shutil.rmtree(main_path)
-                if os.path.isdir(data_path):
-                    shutil.rmtree(data_path)
-                os.rename(f"{self.sm.app_data_dir}/temp/main", main_path)
-                os.rename(f"{self.sm.app_data_dir}/temp/data", data_path)
-                # shutil.copytree(f"{self.sm.app_data_dir}/temp/main", main_path)
-                # shutil.copytree(f"{self.sm.app_data_dir}/temp/data", data_path)
-                shutil.rmtree(f"{self.sm.app_data_dir}/temp")
-                self.sm.projects[dialog.line_edit.text()] = main_path
-                self.sm.set_project(dialog.line_edit.text())
-                self.update_projects()
+                looper = ProjectUnpacker(path, main_path, data_path, self.sm.app_data_dir)
+                looper.start()
+                progress_dialog = ProgressDialog("Распаковка проекта", "Идет распаковка проекта. Пожалуйста, подождите",
+                                                 self.tm)
+                looper.finished.connect(progress_dialog.reject)
+                if progress_dialog.exec():
+                    looper.cancel()
+                else:
+                    self.sm.projects[dialog.line_edit.text()] = main_path
+                    self.sm.set_project(dialog.line_edit.text())
+                    self.update_projects()
+
+                # with py7zr.SevenZipFile(path, mode='r') as archive:
+                #     archive.extractall(f"{self.sm.app_data_dir}/temp")
+                # if os.path.isdir(main_path):
+                #     shutil.rmtree(main_path)
+                # if os.path.isdir(data_path):
+                #     shutil.rmtree(data_path)
+                # os.rename(f"{self.sm.app_data_dir}/temp/main", main_path)
+                # os.rename(f"{self.sm.app_data_dir}/temp/data", data_path)
+                # shutil.rmtree(f"{self.sm.app_data_dir}/temp")
 
     def save_settings(self):
         if self.opening_project:
@@ -305,46 +315,22 @@ class ProjectWidget(QWidget):
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
+        for el in [self.button_delete_project, self.button_rename_project, self.button_to_zip, self.button_from_zip]:
+            self.tm.auto_css(el)
         self.button_new_project.setStyleSheet(self.tm.buttons_style_sheet)
         self.button_new_project.setFont(self.tm.font_big)
         self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
         self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
-        self.button_delete_project.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_delete_project.setFont(self.tm.font_small)
-        self.button_rename_project.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_rename_project.setFont(self.tm.font_small)
-        self.button_to_zip.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_to_zip.setFont(self.tm.font_small)
-        self.button_from_zip.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_from_zip.setFont(self.tm.font_small)
 
         self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet.replace('width: 50px', 'width: 120px'))
         self.tab_widget.setFont(self.tm.font_small)
 
-        self.struct_settings_widget.setFont(self.tm.font_small)
-        self.struct_settings_widget.widgets['Структура проекта'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.struct_settings_widget.widgets['Название папки с лабой'].setStyleSheet(self.tm.style_sheet)
-        self.struct_settings_widget.widgets['Описание тестов'].setStyleSheet(self.tm.style_sheet)
-        self.struct_settings_widget.widgets['Входные данные для позитивных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.struct_settings_widget.widgets['Входные данные для негативных тестов'].setStyleSheet(self.tm.style_sheet)
-        for label in self.struct_settings_widget.labels.values():
-            label.setFont(self.tm.font_small)
-
-        self.testing_settings_widget.setFont(self.tm.font_small)
-        self.label.setFont(self.tm.font_small)
-        self.testing_settings_widget.widgets['Компилятор'].setStyleSheet(self.tm.style_sheet)
-        self.testing_settings_widget.widgets['Компаратор для позитивных тестов:'].setStyleSheet(
-            self.tm.combo_box_style_sheet)
-        self.testing_settings_widget.widgets['Компаратор для негативных тестов:'].setStyleSheet(
-            self.tm.combo_box_style_sheet)
-        self.testing_settings_widget.widgets['Погрешность сравнения чисел:'].setStyleSheet(
-            self.tm.double_spin_box_style_sheet)
-        self.testing_settings_widget.widgets['Подстрока для позитивных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.testing_settings_widget.widgets['Подстрока для негативных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.testing_settings_widget.widgets['Ограничение по времени:'].setStyleSheet(
-            self.tm.double_spin_box_style_sheet)
-        for label in self.testing_settings_widget.labels.values():
-            label.setFont(self.tm.font_small)
+        for widget in [self.struct_settings_widget, self.testing_settings_widget]:
+            widget.setFont(self.tm.font_small)
+            for el in widget.widgets.values():
+                self.tm.auto_css(el)
+            for label in widget.labels.values():
+                label.setFont(self.tm.font_small)
 
     def show(self) -> None:
         if self.isHidden():
@@ -508,3 +494,62 @@ class ProjectFromZipDialog(QDialog):
         path = QFileDialog.getExistingDirectory(None, "Выберите директорию", self.path_edit.text())
         if os.path.isdir(path):
             self.path_edit.setText(path)
+
+
+class ProgressDialog(QMessageBox):
+    def __init__(self, title, message, tm):
+        super().__init__(None)
+
+        self.setIcon(QMessageBox.Information)
+        self.setText(message)
+        self.setWindowTitle(title)
+        self.setFont(tm.font_small)
+
+        self.setStyleSheet(tm.bg_style_sheet)
+        self.addButton(QMessageBox.Cancel)
+        button = self.button(QMessageBox.Cancel)
+        button.setFont(tm.font_small)
+        button.setStyleSheet(tm.buttons_style_sheet)
+        button.setFixedSize(70, 24)
+
+
+class ProjectPacker(QThread):
+    def __init__(self, path, main_path, data_path):
+        super().__init__()
+        self.path = path
+        self.main_path = main_path
+        self.data_path = data_path
+
+    def run(self):
+        with py7zr.SevenZipFile(self.path, mode='w') as archive:
+            archive.writeall(self.main_path, arcname='main')
+            archive.writeall(self.data_path, arcname='data')
+
+    def cancel(self):
+        self.terminate()
+
+
+class ProjectUnpacker(QThread):
+    def __init__(self, path, main_path, data_path, app_data_dir):
+        super().__init__()
+        self.path = path
+        self.main_path = main_path
+        self.data_path = data_path
+        self.app_data_dir = app_data_dir
+
+    def run(self):
+        with py7zr.SevenZipFile(self.path, mode='r') as archive:
+            archive.extractall(f"{self.app_data_dir}/temp")
+
+        if os.path.isdir(self.main_path):
+            shutil.rmtree(self.main_path)
+        if os.path.isdir(self.data_path):
+            shutil.rmtree(self.data_path)
+        os.rename(f"{self.app_data_dir}/temp/main", self.main_path)
+        os.rename(f"{self.app_data_dir}/temp/data", self.data_path)
+        shutil.rmtree(f"{self.app_data_dir}/temp")
+
+    def cancel(self):
+        self.terminate()
+        shutil.rmtree(self.main_path, ignore_errors=True)
+        shutil.rmtree(self.data_path, ignore_errors=True)

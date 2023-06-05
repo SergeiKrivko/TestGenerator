@@ -458,12 +458,7 @@ class TestsWidget(QWidget):
     def set_theme(self):
         self.test_list_widget.set_theme()
         self.test_edit_widget.set_theme()
-        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Вход:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Выход:', self.tm.style_sheet)
-        self.options_widget.setFont(self.tm.font_small)
+        self.tm.css_to_options_widget(self.options_widget)
         self.generator_window.set_theme()
 
     def show(self):

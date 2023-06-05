@@ -194,15 +194,10 @@ class CodeWidget(QWidget):
     def set_theme(self):
         self.tm.set_theme_to_list_widget(self.test_res_widget)
         self.tm.set_theme_to_list_widget(self.todo_widget)
-        self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet)
-        self.tab_widget.setFont(self.tm.font_small)
+        self.tm.auto_css(self.tab_widget)
         self.code_edit.set_theme()
         self.files_widget.set_theme()
-        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер задания:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Номер варианта:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('Тестировать', self.tm.buttons_style_sheet)
-        self.options_widget.setFont(self.tm.font_small)
+        self.tm.css_to_options_widget(self.options_widget)
 
     def show(self) -> None:
         if self.isHidden():

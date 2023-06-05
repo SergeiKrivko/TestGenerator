@@ -1,6 +1,5 @@
 from PyQt5.QtGui import QColor, QFontMetrics
-from PyQt5.Qsci import QsciScintilla, QsciAPIs, QsciLexerCPP
-from PyQt5.Qsci import *
+from PyQt5.Qsci import QsciScintilla, QsciAPIs, QsciLexerCPP, QsciLexerBash
 from code_tab.autocomplition.abstract import CodeAutocompletionManager
 from code_tab.languages import languages
 

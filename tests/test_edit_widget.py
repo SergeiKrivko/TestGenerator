@@ -182,32 +182,12 @@ class TestEditWidget(QWidget):
         self.exit_code_edit.setText("")
 
     def set_theme(self):
-        self.test_name_edit.setStyleSheet(self.tm.style_sheet)
-        self.test_name_edit.setFont(self.tm.font_small)
-        self.test_in_edit.setStyleSheet(self.tm.text_edit_style_sheet)
-        self.test_in_edit.setFont(self.tm.code_font)
-        self.test_out_edit.setStyleSheet(self.tm.text_edit_style_sheet)
-        self.test_out_edit.setFont(self.tm.code_font)
-        self.cmd_args_edit.setStyleSheet(self.tm.style_sheet)
-        self.cmd_args_edit.setFont(self.tm.code_font)
-        self.exit_code_edit.setStyleSheet(self.tm.style_sheet)
-        self.exit_code_edit.setFont(self.tm.font_small)
-        self.preprocessor_line.setStyleSheet(self.tm.style_sheet)
-        self.preprocessor_line.setFont(self.tm.code_font)
-        self.postprocessor_line.setStyleSheet(self.tm.style_sheet)
-        self.postprocessor_line.setFont(self.tm.code_font)
-        self.in_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.in_combo_box.setFont(self.tm.font_small)
-        self.button_add_in.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_add_in.setFont(self.tm.font_small)
-        self.button_delete_in.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_delete_in.setFont(self.tm.font_small)
-        self.out_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.out_combo_box.setFont(self.tm.font_small)
-        self.button_add_out.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_add_out.setFont(self.tm.font_small)
-        self.button_delete_out.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_delete_out.setFont(self.tm.font_small)
+        for el in [self.test_name_edit, self.in_combo_box, self.out_combo_box, self.button_add_in,
+                   self.button_delete_in, self.button_add_out, self.button_delete_out, self.exit_code_edit]:
+            self.tm.auto_css(el)
+        for el in [self.test_in_edit, self.test_out_edit, self.cmd_args_edit, self.preprocessor_line,
+                   self.postprocessor_line]:
+            self.tm.auto_css(el, code_font=True)
         for label in self.labels:
             label.setFont(self.tm.font_small)
 

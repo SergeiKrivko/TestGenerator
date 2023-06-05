@@ -142,14 +142,10 @@ class TestTableWidget(QWidget):
     def set_theme(self):
         self.tm.set_theme_to_list_widget(self.pos_test_list)
         self.tm.set_theme_to_list_widget(self.neg_test_list)
-        for button in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
-                       self.pos_button_copy, self.pos_button_generate, self.neg_add_button, self.neg_delete_button,
-                       self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_generate]:
-            button.setStyleSheet(self.tm.buttons_style_sheet)
-            button.setFont(self.tm.font_small)
-        self.pos_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.pos_comparator_widget.setFont(self.tm.font_small)
-        self.neg_comparator_widget.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.neg_comparator_widget.setFont(self.tm.font_small)
+        for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
+                   self.pos_button_copy, self.pos_button_generate, self.neg_add_button, self.neg_delete_button,
+                   self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_generate,
+                   self.pos_comparator_widget, self.neg_comparator_widget]:
+            self.tm.auto_css(el)
         for label in self.labels:
             label.setFont(self.tm.font_small)
