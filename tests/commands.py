@@ -245,7 +245,8 @@ class TestingLooper(QThread):
                                                               b'')
                             comparator_res = comparator_res and CommandManager.read_binary(
                                 f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_out{j + 1}.bin", b'') == text
-                            prog_out[f"out_file_{i}.txt"] = ' '.join(f"{b:0>3}" for b in text)
+                            # prog_out[f"out_file_{i}.txt"] = ' '.join(f"{b:0>3}" for b in text)
+                            prog_out[f"out_file_{i}.txt"] = str(text).lstrip("b'").rstrip("'")
 
                     for j, file in dct.get('check_files', dict()).items():
                         if file.get('type', 'txt') == 'txt':
@@ -261,7 +262,8 @@ class TestingLooper(QThread):
                             #     f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_check{j}.bin", b''))
                             comparator_res = comparator_res and CommandManager.read_binary(
                                 f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_check{j}.bin", b'') == text
-                            prog_out[f"in_file_{i}.txt"] = ' '.join(f"{b:0>3}" for b in text)
+                            # prog_out[f"in_file_{i}.txt"] = ' '.join(f"{b:0>3}" for b in text)
+                            prog_out[f"in_file_{i}.txt"] = str(text).lstrip("b'").rstrip("'")
 
                     for j, file in enumerate(dct.get('in_files', [])):
                         if file.get('type', 'txt') == 'txt':

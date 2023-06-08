@@ -144,9 +144,11 @@ class TestingWidget(QWidget):
         self.current_item = None
 
     def set_theme(self):
-        for el in [self.button, self.prog_out, self.in_data, self.out_data, self.progress_bar, self.prog_out_combo_box,
-                   self.in_data_combo_box, self.out_data_combo_box, self.test_name_bar]:
+        for el in [self.button, self.progress_bar, self.prog_out_combo_box, self.in_data_combo_box,
+                   self.out_data_combo_box, self.test_name_bar]:
             self.tm.auto_css(el)
+        for el in [self.prog_out, self.in_data, self.out_data]:
+            self.tm.auto_css(el, code_font=True)
         self.tm.set_theme_to_list_widget(self.tests_list)
         self.tm.css_to_options_widget(self.options_widget)
 

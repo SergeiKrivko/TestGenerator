@@ -164,6 +164,7 @@ class TestsWidget(QWidget):
     def copy_tests(self, test_type='pos'):
         dlg = TestCopyWindow(self.sm, self.tm)
         if dlg.exec():
+            self.tests_changed = True
             for dct in dlg.copy_tests():
                 item = Test(self.create_temp_file(), tm=self.tm)
 
@@ -542,6 +543,8 @@ class Test(QListWidgetItem):
         return self._dict[item]
 
     def __setitem__(self, key, value):
+        if self._dict is None:
+            return
         self._dict[key] = value
         if key == 'desc':
             self.update_name()
@@ -554,7 +557,7 @@ def read_file(path, default=None):
             res = file.read()
             file.close()
             return res
-        except:
+        except Exception:
             return default
     file = open(path, encoding='utf-8')
     res = file.read()

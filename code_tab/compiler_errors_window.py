@@ -24,7 +24,7 @@ class CompilerErrorWindow(QDialog):
         main_layout.addWidget(self.scroll_area)
 
         for line in text.split('\n'):
-            if ' ' in line and line.split()[0].count(':') >= 2:
+            if len(line.split()) and line.split()[0].count(':') >= 2:
                 lst = line.split()[0].split(':')
                 if lst[0] in files and lst[1].isdigit() and lst[2].isdigit():
                     button = QPushButton(f"{lst[0]} {lst[1]}:{lst[2]}")
