@@ -284,6 +284,7 @@ class TestingWidget(QWidget):
         self.options_widget.setDisabled(True)
         self.ui_disable_func(True)
         self.button.setText("Прервать")
+        self.cm.clear_coverage_files()
 
         self.coverage_bar.hide()
         self.progress_bar.show()

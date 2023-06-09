@@ -7,8 +7,9 @@ def decode(text: str, byte_str):
     for line in preprocessor(text):
         try:
             mask = line.split()[0]
-            res.append(mask + ' ' + ' '.join(map(lambda s: s.split(b'\0')[0].decode('utf-8') if isinstance(s, bytes) else str(s),
-                                                 struct.unpack(mask, byte_str[:struct.calcsize(mask)]))))
+            res.append(mask + ' ' + ' '.join(map(
+                lambda s: s.split(b'\0')[0].decode('utf-8') if isinstance(s, bytes) else str(s),
+                struct.unpack(mask, byte_str[:struct.calcsize(mask)]))))
             byte_str = byte_str[struct.calcsize(mask):]
         except UnicodeDecodeError:
             break
@@ -31,7 +32,6 @@ def comparator(prog_out: bytes, out: str, out_bytes: bytes):
             i += 1
         while not out[j].strip():
             j += 1
-        print(prog_res[i], out[j])
         if prog_res[i] != out[j]:
             return False
         i += 1
