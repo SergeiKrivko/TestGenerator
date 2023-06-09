@@ -6,6 +6,7 @@ from time import sleep
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from tests.binary_decoder import decode, comparator as bytes_comparator
 from tests.macros_converter import MacrosConverter, background_process_manager
 
 
@@ -243,27 +244,28 @@ class TestingLooper(QThread):
                         else:
                             text = CommandManager.read_binary(f"{self.path}/func_tests/data_files/temp_{j + 1}.bin",
                                                               b'')
-                            comparator_res = comparator_res and CommandManager.read_binary(
-                                f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_out{j + 1}.bin", b'') == text
-                            # prog_out[f"out_file_{i}.txt"] = ' '.join(f"{b:0>3}" for b in text)
-                            prog_out[f"out_file_{i}.txt"] = str(text).lstrip("b'").rstrip("'")
+                            comparator_res = comparator_res and bytes_comparator(
+                                text, file['text'], CommandManager.read_binary(
+                                    f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_out{j + 1}.bin", b''))
+                            # prog_out[f"out_file_{i}.bin"] = ' '.join(f"{b:0>3}" for b in text)
+                            # prog_out[f"out_file_{i}.bin"] = str(text).lstrip("b'").rstrip("'")
+                            prog_out[f"out_file_{i}.bin"], _ = decode(file['text'], text)
 
                     for j, file in dct.get('check_files', dict()).items():
                         if file.get('type', 'txt') == 'txt':
                             text = CommandManager.read_file(
                                 f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_in{j}.txt", '')
-                            comparator_res = comparator_res and file.text == text
+                            comparator_res = comparator_res and file['text'] == text
                             prog_out[f"in_file_{i}.txt"] = text
                         else:
                             text = CommandManager.read_binary(
                                 f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_in{j}.bin", b'')
-                            # print(text)
-                            # print(CommandManager.read_binary(
-                            #     f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_check{j}.bin", b''))
-                            comparator_res = comparator_res and CommandManager.read_binary(
-                                f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_check{j}.bin", b'') == text
-                            # prog_out[f"in_file_{i}.txt"] = ' '.join(f"{b:0>3}" for b in text)
-                            prog_out[f"in_file_{i}.txt"] = str(text).lstrip("b'").rstrip("'")
+                            comparator_res = comparator_res and bytes_comparator(
+                                text, file['text'], CommandManager.read_binary(
+                                    f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_check{j}.bin", b''))
+                            # prog_out[f"in_file_{i}.bin"] = ' '.join(f"{b:0>3}" for b in text)
+                            # prog_out[f"in_file_{i}.bin"] = str(text).lstrip("b'").rstrip("'")
+                            prog_out[f"in_file_{i}.bin"], _ = decode(file['text'], text)
 
                     for j, file in enumerate(dct.get('in_files', [])):
                         if file.get('type', 'txt') == 'txt':

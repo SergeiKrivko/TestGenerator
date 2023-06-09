@@ -11,8 +11,7 @@ class PackError(Exception):
         return self.message
 
 
-def convert(text: str, path):
-    file = open(path, 'bw')
+def preprocessor(text: str):
     defines = []
     lst = text.split('\n')
     for i, line in enumerate(lst):
@@ -30,8 +29,13 @@ def convert(text: str, path):
         if line.startswith("#define "):
             words = line.split()
             defines.append((words[1], words[2]))
-            continue
+        else:
+            yield line
 
+
+def convert(text: str, path):
+    file = open(path, 'bw')
+    for i, line in enumerate(preprocessor(text)):
         try:
             file.write(convert_line(line))
         except PackError:
