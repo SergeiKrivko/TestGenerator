@@ -75,11 +75,11 @@ class CodeEditor(QsciScintilla):
     def set_theme(self):
         self.setStyleSheet(self.tm.scintilla_style_sheet)
 
-        self.setFont(self.tm.code_font_std)
-        self.setMarginsFont(self.tm.code_font_std)
-        fontmetrics = QFontMetrics(self.tm.code_font_std)
-        self.setMarginsFont(self.tm.code_font_std)
-        self._lexer.setDefaultFont(self.tm.code_font_std)
+        self.setFont(self.tm.code_font)
+        self.setMarginsFont(self.tm.code_font)
+        fontmetrics = QFontMetrics(self.tm.code_font)
+        self.setMarginsFont(self.tm.code_font)
+        self._lexer.setDefaultFont(self.tm.code_font)
         self.setMarginWidth(0, fontmetrics.width("00000") + 6)
 
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
@@ -105,11 +105,13 @@ class CodeEditor(QsciScintilla):
             self._lexer.setDefaultFont(self.tm.code_font_std)
             for key in languages['c']['colors'].keys():
                 self._lexer.setColor(self.tm['Identifier'], key)
+                self._lexer.setFont(self.tm.code_font, key)
         else:
             self._lexer = data['lexer'](None)
             self._lexer.setDefaultFont(self.tm.code_font_std)
             for key, item in data.get('colors', dict()).items():
                 self._lexer.setColor(self.tm[item], key)
+                self._lexer.setFont(self.tm.code_font, key)
 
         self.setLexer(self._lexer)
         self.am = data.get('autocompletion', CodeAutocompletionManager)(self.sm, self.path)

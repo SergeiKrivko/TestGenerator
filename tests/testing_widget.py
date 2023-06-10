@@ -149,6 +149,8 @@ class TestingWidget(QWidget):
             self.tm.auto_css(el)
         for el in [self.prog_out, self.in_data, self.out_data]:
             self.tm.auto_css(el, code_font=True)
+        for label in self.labels:
+            label.setFont(self.tm.font_small)
         self.tm.set_theme_to_list_widget(self.tests_list)
         self.tm.css_to_options_widget(self.options_widget)
 

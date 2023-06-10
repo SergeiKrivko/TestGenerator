@@ -62,7 +62,7 @@ basic_theme = {
     'TxtFile': QColor('#2065D4'),
     'Directory': QColor('#2F7519'),
     'FontFamily': "Calibri",
-    'CodeFontFamily': "Courier",
+    'CodeFontFamily': "Consolas",
 }
 
 

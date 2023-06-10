@@ -33,6 +33,15 @@ def preprocessor(text: str):
             yield line
 
 
+def get_defines(text: str):
+    defines = dict()
+    lst = text.split('\n')
+    for i, line in enumerate(lst):
+        if line.startswith("#define ") and len(words := line.split()) == 3:
+            defines[words[1]] = words[2]
+    return defines
+
+
 def convert(text: str, path):
     file = open(path, 'bw')
     for i, line in enumerate(preprocessor(text)):
@@ -47,26 +56,29 @@ def convert(text: str, path):
 
 
 class StructFormat:
-    def __init__(self, literal: str, size: int, value_type, name=''):
+    def __init__(self, literal: str, size: int, value_type, name='',
+                 minimum: int | float = 0, maximum: int | float = 0):
         self.literal = literal
         self.value_type = value_type
         self.size = size
         self.name = ''
+        self.min = minimum
+        self.max = maximum
 
 
 FORMATS = {
     'x': StructFormat('x', 1, None, 'pad byte'),
     's': StructFormat('s', 1, str, 'char'),
-    'b': StructFormat('b', 1, int, 'byte'),
-    'B': StructFormat('B', 1, int, 'unsigned byte'),
-    'h': StructFormat('h', 2, int, 'short'),
-    'H': StructFormat('H', 2, int, 'unsigned short'),
-    'i': StructFormat('i', 4, int, 'int'),
-    'I': StructFormat('I', 4, int, 'unsigned int'),
-    'q': StructFormat('q', 8, int, 'long'),
-    'Q': StructFormat('Q', 8, int, 'unsigned long'),
-    'f': StructFormat('f', 4, float, 'float'),
-    'd': StructFormat('d', 4, float, 'double')
+    'b': StructFormat('b', 1, int, 'byte', -(2 ** 7), 2 ** 7 - 1),
+    'B': StructFormat('B', 1, int, 'unsigned byte', 0, 2 ** 8 - 1),
+    'h': StructFormat('h', 2, int, 'short', -(2 ** 15), 2 ** 15 - 1),
+    'H': StructFormat('H', 2, int, 'unsigned short', 0, 2 ** 16 - 1),
+    'i': StructFormat('i', 4, int, 'int', -(2 ** 31), 2 ** 31 - 1),
+    'I': StructFormat('I', 4, int, 'unsigned int', 0, 2 ** 32 - 1),
+    'q': StructFormat('q', 8, int, 'long', -(2 ** 63), 2 ** 63 - 1),
+    'Q': StructFormat('Q', 8, int, 'unsigned long', 0, 2 ** 64 - 1),
+    'f': StructFormat('f', 4, float, 'float', -3.402823466e38, 3.402823466e38),
+    'd': StructFormat('d', 4, float, 'double', -1.7976931348623157e308, 1.7976931348623157e308)
 }
 
 
@@ -99,6 +111,18 @@ def parse_mask(mask: str):
     while mask:
         num, literal, mask = get_number(mask)
         yield num, literal
+
+
+def get_expected_values(mask: str):
+    res = []
+    while mask:
+        num, literal, mask = get_number(mask)
+        if literal == 's':
+            res.append((str, 0, num - 1))
+        elif literal != 'x':
+            for _ in range(num):
+                res.append((FORMATS[literal].value_type, FORMATS[literal].min, FORMATS[literal].max))
+    return res
 
 
 def get_number(mask: str):

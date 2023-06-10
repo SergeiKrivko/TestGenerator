@@ -2,6 +2,8 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QComboBox, \
     QDialog, QDialogButtonBox
 
+from binary_redactor.redactor import BinaryRedactor
+
 
 class TestEditWidget(QWidget):
     test_edited = pyqtSignal()
@@ -72,7 +74,7 @@ class TestEditWidget(QWidget):
         layout_h1.addWidget(self.button_delete_in)
 
         layout1.addLayout(layout_h1)
-        self.test_in_edit = QTextEdit()
+        self.test_in_edit = BinaryRedactor(self.tm)
         layout1.addWidget(self.test_in_edit)
 
         layout2 = QVBoxLayout()
@@ -95,7 +97,7 @@ class TestEditWidget(QWidget):
         self.button_delete_out.setFixedSize(20, 20)
         layout_h2.addWidget(self.button_delete_out)
 
-        self.test_out_edit = QTextEdit()
+        self.test_out_edit = BinaryRedactor(self.tm)
         layout2.addWidget(self.test_out_edit)
 
         self.data = dict()
@@ -174,8 +176,8 @@ class TestEditWidget(QWidget):
         self.out_combo_box.setDisabled(True)
         self.button_add_out.setDisabled(True)
         self.button_delete_out.setDisabled(True)
-        self.test_in_edit.setText("")
-        self.test_out_edit.setText("")
+        self.test_in_edit.open_text("", False)
+        self.test_out_edit.open_text("", False)
         self.test_name_edit.setText("")
         self.preprocessor_line.setText("")
         self.postprocessor_line.setText("")
@@ -185,9 +187,10 @@ class TestEditWidget(QWidget):
         for el in [self.test_name_edit, self.in_combo_box, self.out_combo_box, self.button_add_in,
                    self.button_delete_in, self.button_add_out, self.button_delete_out, self.exit_code_edit]:
             self.tm.auto_css(el)
-        for el in [self.test_in_edit, self.test_out_edit, self.cmd_args_edit, self.preprocessor_line,
-                   self.postprocessor_line]:
+        for el in [self.cmd_args_edit, self.preprocessor_line, self.postprocessor_line]:
             self.tm.auto_css(el, code_font=True)
+        for el in [self.test_in_edit, self.test_out_edit]:
+            el.set_theme()
         for label in self.labels:
             label.setFont(self.tm.font_small)
 
@@ -202,11 +205,12 @@ class TestEditWidget(QWidget):
             pass
         elif index == 0:
             self.button_delete_in.setDisabled(True)
-            self.test_in_edit.setText(self.data['in'])
+            self.test_in_edit.open_text(self.data['in'], False)
             self.data['current_in'] = index
         else:
             self.button_delete_in.setDisabled(False)
-            self.test_in_edit.setText(self.data['in_files'][index - 1]['text'])
+            data = self.data['in_files'][index - 1]
+            self.test_in_edit.open_text(data['text'], data['type'] == 'bin')
             self.data['current_in'] = index
 
     def select_out_file(self):
@@ -217,23 +221,25 @@ class TestEditWidget(QWidget):
             pass
         elif index == 0:
             self.button_delete_out.setDisabled(True)
-            self.test_out_edit.setText(self.data['out'])
+            self.test_out_edit.open_text(self.data['out'], False)
             self.data['current_out'] = index
         elif self.out_combo_box.currentText().startswith('check'):
             index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
-            self.test_out_edit.setText(self.data['check_files'][index]['text'])
+            data = self.data['check_files'][index]
+            self.test_out_edit.open_text(data['text'], data['type'] == 'bin')
             self.data['current_out'] = self.out_combo_box.currentIndex()
         else:
             index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
-            self.test_out_edit.setText(self.data['out_files'][index - 1]['text'])
+            data = self.data['out_files'][index - 1]
+            self.test_out_edit.open_text(data['text'], data['type'] == 'bin')
             self.data['current_out'] = self.out_combo_box.currentIndex()
 
     def set_test_in(self):
         index = self.in_combo_box.currentIndex()
         if index == 0:
-            self.data['in'] = self.test_in_edit.toPlainText()
+            self.data['in'] = self.test_in_edit.text()
         else:
-            self.data['in_files'][index - 1]['text'] = self.test_in_edit.toPlainText()
+            self.data['in_files'][index - 1]['text'] = self.test_in_edit.text()
         self.test_edited.emit()
 
     def set_test_out(self):
@@ -241,13 +247,13 @@ class TestEditWidget(QWidget):
         if index < 0:
             pass
         elif index == 0:
-            self.data['out'] = self.test_out_edit.toPlainText()
+            self.data['out'] = self.test_out_edit.text()
         elif self.out_combo_box.currentText().startswith('check'):
             index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
-            self.data['check_files'][index]['text'] = self.test_out_edit.toPlainText()
+            self.data['check_files'][index]['text'] = self.test_out_edit.text()
         else:
             index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
-            self.data['out_files'][index - 1]['text'] = self.test_out_edit.toPlainText()
+            self.data['out_files'][index - 1]['text'] = self.test_out_edit.text()
         self.test_edited.emit()
 
     def delete_in(self):
