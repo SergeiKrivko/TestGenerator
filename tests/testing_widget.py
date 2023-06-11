@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBox
     QPushButton, QProgressBar, QComboBox, QLineEdit
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
-from ui.options_window import OptionsWidget
+from settings.lab_widget import LabWidget
 
 
 class TestingWidget(QWidget):
@@ -27,15 +27,9 @@ class TestingWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.options_widget = OptionsWidget({
-            'h_line': {
-                'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'name': OptionsWidget.NAME_LEFT, 'width': 60}
-            }
-        })
-        self.options_widget.clicked.connect(self.option_changed)
-        layout.addWidget(self.options_widget)
+        self.lab_widget = LabWidget(tm, sm)
+        self.lab_widget.finish_change_task.connect(self.open_task)
+        layout.addWidget(self.lab_widget)
 
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -152,33 +146,7 @@ class TestingWidget(QWidget):
         for label in self.labels:
             label.setFont(self.tm.font_small)
         self.tm.set_theme_to_list_widget(self.tests_list)
-        self.tm.css_to_options_widget(self.options_widget)
-
-    def option_changed(self, key):
-        if key in ('Номер лабы:', 'Номер задания:'):
-            self.sm.set('lab', self.options_widget["Номер лабы:"])
-            self.sm.set('task', self.options_widget["Номер задания:"])
-            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                              self.options_widget['Номер задания:'], -1)):
-                self.options_widget.set_value('Номер варианта:', -1)
-            else:
-                for i in range(100):
-                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                                      self.options_widget['Номер задания:'], i)):
-                        self.options_widget.set_value('Номер варианта:', i)
-                        break
-            self.sm.set('var', self.options_widget["Номер варианта:"])
-            self.open_task()
-        elif key == 'Номер варианта:':
-            self.sm.set('var', self.options_widget["Номер варианта:"])
-            self.open_task()
-
-    def update_options(self):
-        self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
-        self.options_widget.set_value('Номер задания:',
-                                      self.sm.get('task', self.options_widget['Номер задания:']))
-        self.options_widget.set_value('Номер варианта:',
-                                      self.sm.get('var', self.options_widget['Номер варианта:']))
+        self.lab_widget.set_theme()
 
     def open_task(self):
         self.get_path()
@@ -227,12 +195,8 @@ class TestingWidget(QWidget):
     def prog_out_combo_box_triggered(self):
         self.prog_out.setText(self.current_item.prog_out.get(self.prog_out_combo_box.currentText(), ''))
 
-    def get_path(self, from_settings=False):
-        if from_settings:
-            self.path = self.sm.lab_path()
-        else:
-            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
-                                         self.options_widget['Номер варианта:'])
+    def get_path(self):
+        self.path = self.sm.lab_path()
 
     def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
@@ -283,7 +247,7 @@ class TestingWidget(QWidget):
         self.testing_is_terminated(None)
 
     def testing(self):
-        self.options_widget.setDisabled(True)
+        self.lab_widget.setDisabled(True)
         self.ui_disable_func(True)
         self.button.setText("Прервать")
         self.cm.clear_coverage_files()
@@ -293,12 +257,12 @@ class TestingWidget(QWidget):
         self.pos_result_bar.show()
         self.neg_result_bar.show()
 
-        self.get_path(True)
+        self.get_path()
         self.old_dir = os.getcwd()
         os.chdir(self.path)
 
         if self.isHidden():
-            self.get_path(True)
+            self.get_path()
         self.tests_list.clear()
         self.current_task = self.sm['lab'], self.sm['task'], self.sm['var']
 
@@ -342,7 +306,15 @@ class TestingWidget(QWidget):
 
         self.testing_start.emit(tests_list)
 
-        if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/preprocessor.txt", ''):
+        try:
+            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
+                settings = json.loads(f.read())
+                command = settings.get('preprocessor')
+        except FileNotFoundError:
+            command = ''
+        except json.JSONDecodeError:
+            command = ''
+        if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(lambda: self.start_testing(tests_list))
             self.looper.start()
@@ -372,7 +344,15 @@ class TestingWidget(QWidget):
         if self.sm.get('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
-        if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt", ''):
+        try:
+            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
+                settings = json.loads(f.read())
+                command = settings.get('postprocessor')
+        except FileNotFoundError:
+            command = ''
+        except json.JSONDecodeError:
+            command = ''
+        if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(self.enable_ui)
             self.looper.start()
@@ -401,7 +381,15 @@ class TestingWidget(QWidget):
 
         self.cm.clear_coverage_files()
 
-        if command := read_file(f"{self.sm.lab_path(appdata=True)}/func_tests/postprocessor.txt", ''):
+        try:
+            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
+                settings = json.loads(f.read())
+                command = settings.get('postprocessor')
+        except FileNotFoundError:
+            command = ''
+        except json.JSONDecodeError:
+            command = ''
+        if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
             self.looper.finished.connect(self.enable_ui)
             self.looper.start()
@@ -409,7 +397,7 @@ class TestingWidget(QWidget):
             self.enable_ui()
 
     def enable_ui(self):
-        self.options_widget.setDisabled(False)
+        self.lab_widget.setDisabled(False)
         self.ui_disable_func(False)
         self.button.setText("Тестировать")
         self.button.setDisabled(False)
@@ -454,7 +442,7 @@ class TestingWidget(QWidget):
             return comparator6(str1, str2)
 
     def show(self) -> None:
-        self.update_options()
+        self.lab_widget.open_task()
         self.open_task()
         super(TestingWidget, self).show()
 

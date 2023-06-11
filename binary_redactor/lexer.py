@@ -1,11 +1,11 @@
 import sys
 
-from PyQt5.Qsci import QsciLexerCustom, QsciScintilla
+from PyQt5.Qsci import QsciLexerCustom
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QFrame, QApplication, QStyleFactory, QMainWindow
 
-from tests.convert_binary import get_expected_values, get_defines
+from tests.convert_binary import get_expected_values
 
 
 class LexerBin(QsciLexerCustom):
@@ -100,84 +100,3 @@ class LexerBin(QsciLexerCustom):
 
     def set_defines(self, dct):
         self.defines = dct
-
-
-myCodeSample = r"""#define STUDENT 26s11s3x4I
-STUDENT Serysheva Dar'ya 6 1 5 5
-STUDENT Onishchuk Ivan 3 5 6 3
-STUDENT Parfenov Arsenij 5 3 4 2
-STUDENT Tarasenko Egor 2 1 1 1
-STUDENT Suhilina Aleksandra 6 2 1 2
-STUDENT Krivko Sergej 5 3 2 1
-STUDENT Soshnin Nikita 6 6 1 5
-STUDENT Kozin Mihail 1 3 4 2
-STUDENT Bugakov Ivan 5 6 6 3
-STUDENT SHirokov Andrej 6 1 2 2
-STUDENT Enikeev Timur 1 5 1 5
-STUDENT Sal'nikov Mihail 2 2 1 5
-STUDENT Slinyakov Mihail 6 4 5 3
-STUDENT Timofeev Daniil 3 5 3 2
-STUDENT YAkovlev Roman 1 4 2 1
-STUDENT Vavilova Varvara 1 1 1 5
-STUDENT Paramonova Ekaterina 5 2 5 5
-STUDENT Orlov Aleksej 5 1 5 1
-STUDENT Asadullin Tagir 2 3 6 2
-STUDENT ZHilyaev Anton 2 6 2 3
-STUDENT Volov Aleksandr 4 3 2 3
-""".replace("\n", "\r\n")
-
-
-class CustomMainWindow(QMainWindow):
-    def __init__(self):
-        super(CustomMainWindow, self).__init__()
-
-        # -------------------------------- #
-        #           Window setup           #
-        # -------------------------------- #
-
-        # 1. Define the geometry of the main window
-        # ------------------------------------------
-        self.setGeometry(300, 300, 800, 400)
-        self.setWindowTitle("QScintilla Test")
-
-        # 2. Create frame and layout
-        # ---------------------------
-        self.__frm = QFrame(self)
-        self.__frm.setStyleSheet("QWidget { background-color: #ffeaeaea }")
-        self.__lyt = QVBoxLayout()
-        self.__frm.setLayout(self.__lyt)
-        self.setCentralWidget(self.__frm)
-        self.__myFont = QFont()
-        self.__myFont.setPointSize(14)
-
-        # 3. Place a button
-        # ------------------
-        self.__btn = QPushButton("Qsci")
-        self.__btn.setFixedWidth(50)
-        self.__btn.setFixedHeight(50)
-        self.__btn.clicked.connect(self.__btn_action)
-        self.__btn.setFont(self.__myFont)
-        self.__lyt.addWidget(self.__btn)
-
-        # -------------------------------- #
-        #     QScintilla editor setup      #
-        # -------------------------------- #
-
-        # ! Make instance of QSciScintilla class!
-        # ----------------------------------------
-
-
-        # ! Add editor to layout !
-        # -------------------------
-        self.__lyt.addWidget(self.__editor)
-        self.show()
-
-    def __btn_action(self):
-        print("Hello World!")
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    QApplication.setStyle(QStyleFactory.create('Fusion'))
-    myGUI = CustomMainWindow()
-    sys.exit(app.exec_())

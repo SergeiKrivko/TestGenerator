@@ -62,7 +62,7 @@ class ProjectWidget(QWidget):
 
         self.struct_settings_widget = OptionsWidget({
             'Структура проекта': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'width': 200,
-                                  'values': ['Лаба - задание - вариант', 'Лаба - вариант', 'Лаба', 'Без структуры']},
+                                  'values': ['Лаба - задание - вариант', 'Без структуры']},
             'Название папки с лабой': {'type': str, 'width': 250, 'name': OptionsWidget.NAME_RIGHT,
                                        'initial': self.sm.get('dir_format', '')},
             'Описание тестов': {'type': str, 'initial': self.sm.get('readme', 'func_tests/readme.md'),
@@ -74,6 +74,7 @@ class ProjectWidget(QWidget):
                 'type': str, 'width': 250, 'initial': self.sm.get('pos_in', ''),
                 'name': OptionsWidget.NAME_RIGHT},
         }, margins=(25, 25, 25, 25))
+        self.struct_settings_widget.clicked.connect(self.save_settings)
         self.tab_widget.addTab(self.struct_settings_widget, 'Структура проекта')
 
         widget = QWidget()
@@ -111,9 +112,9 @@ class ProjectWidget(QWidget):
         self.testing_settings_widget.clicked.connect(self.save_settings)
         testing_settings_layout.addWidget(self.testing_settings_widget)
 
-        # self.tab_widget.addTab(widget, 'Тестирование')
+        self.tab_widget.addTab(widget, 'Тестирование')
 
-        layout.addWidget(widget)
+        layout.addWidget(self.tab_widget)
         self.setLayout(layout)
 
         self.opening_project = False
@@ -293,14 +294,15 @@ class ProjectWidget(QWidget):
     def save_settings(self):
         if self.opening_project:
             return
-        if not self.testing_checkbox.isChecked():
-            dct = self.struct_settings_widget.values
-            self.sm.set('struct', dct['Структура проекта'])
-            self.sm.set('dir_format', dct['Название папки с лабой'])
-            self.sm.set('readme', dct['Описание тестов'])
-            self.sm.set('pos_in', dct['Входные данные для позитивных тестов'])
-            self.sm.set('neg_in', dct['Входные данные для негативных тестов'])
 
+        dct = self.struct_settings_widget.values
+        self.sm.set('struct', dct['Структура проекта'])
+        self.sm.set('dir_format', dct['Название папки с лабой'])
+        self.sm.set('readme', dct['Описание тестов'])
+        self.sm.set('pos_in', dct['Входные данные для позитивных тестов'])
+        self.sm.set('neg_in', dct['Входные данные для негативных тестов'])
+
+        if not self.testing_checkbox.isChecked():
             dct = self.testing_settings_widget.values
             self.sm.set('compiler', dct['Компилятор'])
             self.sm.set('-lm', dct['Ключ -lm'])

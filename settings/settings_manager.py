@@ -24,7 +24,13 @@ class SettingsManager:
         if project is None:
             dct = self.project_settings
         else:
-            dct = loads(self.get_general(project, '{}'))
+            try:
+                with open(f"{self.data_path}/projects/{project}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                    dct = loads(f.read())
+            except FileNotFoundError:
+                return default
+            except JSONDecodeError:
+                return default
         return dct.get(key, self.get_general(key, default))
 
     def __getitem__(self, item):
@@ -55,7 +61,9 @@ class SettingsManager:
         except JSONDecodeError:
             self.project_settings = dict()
 
-    def lab_path(self, lab=None, task=None, var=None, appdata=False):
+    def lab_path(self, lab=None, task=None, var=None):
+        if self.get('struct') == 1:
+            return self.path
         if lab is None:
             lab = self.get('lab')
         if task is None:
@@ -63,10 +71,12 @@ class SettingsManager:
         if var is None:
             var = self.get('var')
         if var == -1:
-            return f"{self.data_path if appdata else self.path}/lab_{lab:0>2}_{task:0>2}"
-        return f"{self.data_path if appdata else self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
+            return f"{self.path}/lab_{lab:0>2}_{task:0>2}"
+        return f"{self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
 
     def data_lab_path(self, lab=None, task=None, var=None, project=None):
+        if self.get('struct', project=project) == 1:
+            return f"{self.data_path}/data"
         if project in self.projects:
             project = f"{self.app_data_dir}/projects/{project}"
         else:
@@ -82,13 +92,9 @@ class SettingsManager:
     def set_general(self, key, value):
         self.q_settings.setValue(key, value)
 
-    def set(self, key, value, project=None):
-        if project is None:
-            self.project_settings[key] = value
-        else:       # TODO: изменить на файлы в АппДате
-            dct = loads(self.get_general(project, '{}'))
-            dct[key] = value
-            self.q_settings.setValue(project, dumps(dct))
+    def set(self, key, value):
+        print(key, value)
+        self.project_settings[key] = value
 
     def __setitem__(self, key, value):
         self.set(key, value)
@@ -98,11 +104,11 @@ class SettingsManager:
             # if self.q_settings.value(self.data_path) is None:
             #     self.q_settings.setValue(self.data_path, '{}')
 
-            if not isinstance(self.get('lab'), int):
+            if not isinstance(self.get('lab'), int) or self.get('struct') == 1:
                 self.set('lab', 1)
-            if not isinstance(self.get('task'), int):
+            if not isinstance(self.get('task'), int) or self.get('struct') == 1:
                 self.set('task', 1)
-            if not isinstance(self.get('var'), int):
+            if not isinstance(self.get('var'), int) or self.get('struct') == 1:
                 self.set('var', 0)
 
             if self.get('default_testing_settings', True):

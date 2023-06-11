@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
 
+from settings.lab_widget import LabWidget
 from tests.generator_window import GeneratorWindow
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
@@ -22,18 +23,16 @@ class TestsWidget(QWidget):
 
         layout = QVBoxLayout()
 
+        self.lab_widget = LabWidget(tm, sm)
+        layout.addWidget(self.lab_widget)
+        self.lab_widget.start_change_task.connect(self.save_tests)
+        self.lab_widget.finish_change_task.connect(self.open_tests)
         self.options_widget = OptionsWidget({
-            'h_line1': {
-                'Номер лабы:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер задания:': {'type': int, 'min': 1, 'name': OptionsWidget.NAME_LEFT, 'width': 60},
-                'Номер варианта:': {'type': int, 'min': -1, 'name': OptionsWidget.NAME_LEFT, 'width': 60}
-            },
             'h_line2': {
                 'Вход:': {'type': str, 'initial': '-', 'width': 300, 'name': OptionsWidget.NAME_LEFT},
                 'Выход:': {'type': str, 'initial': '-', 'width': 300, 'name': OptionsWidget.NAME_LEFT}
             }
         }, margins=(0, 0, 0, 0))
-        self.options_widget.clicked.connect(self.option_changed)
         layout.addWidget(self.options_widget)
 
         self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
@@ -62,6 +61,8 @@ class TestsWidget(QWidget):
         self.test_edit_widget = TestEditWidget(self.tm)
         self.test_edit_widget.setMinimumHeight(300)
         self.test_edit_widget.test_edited.connect(self.set_tests_changed)
+        self.test_edit_widget.preprocessor_line.textEdited.connect(self.set_preprocessor)
+        self.test_edit_widget.postprocessor_line.textEdited.connect(self.set_postprocessor)
         # self.test_edit_widget.button_generate.clicked.connect(self.generate_test)
         layout.addWidget(self.test_edit_widget)
 
@@ -76,34 +77,7 @@ class TestsWidget(QWidget):
         self.file_compiled = False
         self.temp_file_index = 0
         self.tests_changed = False
-
-    def option_changed(self, key):
-        if key in ('Номер лабы:', 'Номер задания:'):
-            self.save_tests()
-            self.sm.set('lab', self.options_widget["Номер лабы:"])
-            self.sm.set('task', self.options_widget["Номер задания:"])
-            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                              self.options_widget['Номер задания:'], -1)):
-                self.options_widget.set_value('Номер варианта:', -1)
-            else:
-                for i in range(100):
-                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                                      self.options_widget['Номер задания:'], i)):
-                        self.options_widget.set_value('Номер варианта:', i)
-                        break
-            self.sm.set('var', self.options_widget["Номер варианта:"])
-            self.open_tests()
-        elif key == 'Номер варианта:':
-            self.save_tests()
-            self.sm.set('var', self.options_widget["Номер варианта:"])
-            self.open_tests()
-
-    def update_options(self):
-        self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
-        self.options_widget.set_value('Номер задания:',
-                                      self.sm.get('task', self.options_widget['Номер задания:']))
-        self.options_widget.set_value('Номер варианта:',
-                                      self.sm.get('var', self.options_widget['Номер варианта:']))
+        self.task_settings = dict()
 
     def open_pos_generator_window(self):
         self.save_tests()
@@ -118,6 +92,14 @@ class TestsWidget(QWidget):
         self.generator_window.tests_list = [self.test_list_widget.neg_test_list.item(i).desc for i in
                                             range(self.test_list_widget.neg_test_list.count())]
         self.generator_window.show()
+
+    def set_preprocessor(self):
+        self.task_settings['preprocessor'] = self.test_edit_widget.preprocessor_line.text()
+        self.tests_changed = True
+
+    def set_postprocessor(self):
+        self.task_settings['postprocessor'] = self.test_edit_widget.postprocessor_line.text()
+        self.tests_changed = True
 
     def add_pos_test(self):
         self.tests_changed = True
@@ -237,13 +219,10 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_test_list.setCurrentRow(index + 1)
 
     def get_path(self, from_settings=False):
-        if from_settings:
-            self.path = self.sm.lab_path()
-        else:
-            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
-                                         self.options_widget['Номер варианта:'])
+        self.path = self.sm.lab_path()
 
     def open_tests(self):
+        print('open')
         self.get_path()
         self.test_list_widget.pos_test_list.clear()
         self.test_list_widget.neg_test_list.clear()
@@ -276,6 +255,18 @@ class TestsWidget(QWidget):
                 for el in lst:
                     self.test_list_widget.neg_test_list.addItem(Test(f"{self.data_dir}/neg/{el}", self.tm))
 
+        try:
+            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
+                self.task_settings = json.loads(f.read())
+                if not isinstance(self.task_settings, dict):
+                    self.task_settings = dict()
+                self.test_edit_widget.preprocessor_line.setText(self.task_settings.get('preprocessor', ''))
+                self.test_edit_widget.postprocessor_line.setText(self.task_settings.get('postprocessor', ''))
+        except FileNotFoundError:
+            self.task_settings = dict()
+        except json.JSONDecodeError:
+            self.task_settings = dict()
+
     def open_tests_from_readme(self):
         if not os.path.isdir(f"{self.path}/func_tests/data"):
             return
@@ -287,6 +278,7 @@ class TestsWidget(QWidget):
         self.load_data_files()
         self.tests_changed = True
         self.test_edit_widget.set_disabled()
+        self.task_settings = dict()
 
     def readme_parser(self):
         self.test_list_widget.pos_test_list.clear()
@@ -397,6 +389,7 @@ class TestsWidget(QWidget):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
     def save_tests(self):
+        print('save')
         if not self.test_list_widget.pos_test_list.count() and not self.test_list_widget.neg_test_list.count() or \
                 not self.tests_changed:
             return
@@ -407,6 +400,9 @@ class TestsWidget(QWidget):
 
         os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
         os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
+
+        with open(f"{self.sm.data_lab_path()}/settings.json", 'w') as f:
+            f.write(json.dumps(self.task_settings))
 
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
         readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
@@ -457,6 +453,7 @@ class TestsWidget(QWidget):
         return path
 
     def set_theme(self):
+        self.lab_widget.set_theme()
         self.test_list_widget.set_theme()
         self.test_edit_widget.set_theme()
         self.tm.css_to_options_widget(self.options_widget)
@@ -464,8 +461,7 @@ class TestsWidget(QWidget):
 
     def show(self):
         if self.isHidden():
-            self.update_options()
-            self.open_tests()
+            self.lab_widget.open_task()
         super(TestsWidget, self).show()
 
     def hide(self) -> None:

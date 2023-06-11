@@ -1,10 +1,10 @@
 import os
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget, QPushButton
 
 from code_tab.files_widget import FilesWidget
-from ui.options_window import OptionsWidget
+from settings.lab_widget import LabWidget
 from code_tab.syntax_highlighter import CodeEditor
 
 
@@ -23,14 +23,14 @@ class CodeWidget(QWidget):
         layout_left = QVBoxLayout()
         layout.addLayout(layout_left)
 
-        self.options_widget = OptionsWidget({
-            'Номер лабы:': {'type': int, 'min': 1},
-            'Номер задания:': {'type': int, 'min': 1},
-            'Номер варианта:': {'type': int, 'min': -1},
-            'Тестировать': {'type': 'button', 'text': 'Тестировать', 'name': OptionsWidget.NAME_SKIP}
-        })
-        self.options_widget.clicked.connect(self.option_changed)
-        layout_left.addWidget(self.options_widget)
+        self.lab_widget = LabWidget(tm, sm, vertical=True)
+        self.lab_widget.finish_change_task.connect(self.first_open)
+        layout_left.addWidget(self.lab_widget)
+
+        self.button = QPushButton("Тестировать")
+        self.button.setFixedSize(150, 26)
+        self.button.clicked.connect(lambda: (self.save_code(), self.testing_signal.emit()))
+        layout_left.addWidget(self.button)
 
         self.test_res_widget = QListWidget()
         self.test_res_widget.setMaximumWidth(200)
@@ -60,41 +60,8 @@ class CodeWidget(QWidget):
         self.test_count = 0
         self.file_update_time = 0
 
-    def option_changed(self, key):
-        if key in ('Номер лабы:', 'Номер задания:'):
-            self.sm.set('lab', self.options_widget["Номер лабы:"])
-            self.sm.set('task', self.options_widget["Номер задания:"])
-            if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                              self.options_widget['Номер задания:'], -1)):
-                self.options_widget.set_value('Номер варианта:', -1)
-            else:
-                for i in range(100):
-                    if os.path.isdir(self.sm.lab_path(self.options_widget['Номер лабы:'],
-                                                      self.options_widget['Номер задания:'], i)):
-                        self.options_widget.set_value('Номер варианта:', i)
-                        break
-            self.sm.set('var', self.options_widget["Номер варианта:"])
-            self.first_open()
-        elif key == 'Номер варианта:':
-            self.sm.set('var', self.options_widget["Номер варианта:"])
-            self.first_open()
-        elif key == 'Тестировать':
-            self.save_code()
-            self.testing_signal.emit()
-
-    def update_options(self):
-        self.options_widget.set_value('Номер лабы:', self.sm.get('lab', self.options_widget['Номер лабы:']))
-        self.options_widget.set_value('Номер задания:',
-                                      self.sm.get('task', self.options_widget['Номер задания:']))
-        self.options_widget.set_value('Номер варианта:',
-                                      self.sm.get('var', self.options_widget['Номер варианта:']))
-
-    def get_path(self, from_settings=False):
-        if from_settings:
-            self.path = self.sm.lab_path()
-        else:
-            self.path = self.sm.lab_path(self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'],
-                                         self.options_widget['Номер варианта:'])
+    def get_path(self):
+        self.path = self.sm.lab_path()
 
     def rename_file(self, name):
         self.current_file = name
@@ -158,7 +125,8 @@ class CodeWidget(QWidget):
     def testing_start(self, lst):
         self.test_count = 0
         self.test_res_widget.clear()
-        self.options_widget.setDisabled(True)
+        self.lab_widget.setDisabled(True)
+        self.button.setDisabled(True)
         self.tab_widget.setCurrentIndex(1)
         for test in lst:
             item = QListWidgetItem(test)
@@ -173,7 +141,8 @@ class CodeWidget(QWidget):
 
     def end_testing(self):
         self.parse_gcov_file()
-        self.options_widget.setDisabled(False)
+        self.lab_widget.setDisabled(False)
+        self.button.setDisabled(False)
 
     def parse_gcov_file(self):
         path = self.current_file + '.gcov'
@@ -197,11 +166,12 @@ class CodeWidget(QWidget):
         self.tm.auto_css(self.tab_widget)
         self.code_edit.set_theme()
         self.files_widget.set_theme()
-        self.tm.css_to_options_widget(self.options_widget)
+        self.lab_widget.set_theme()
+        self.tm.auto_css(self.button)
 
     def show(self) -> None:
         if self.isHidden():
-            self.update_options()
+            self.lab_widget.open_task()
             self.first_open()
             # self.code_edit.am.update_libs()
         super(CodeWidget, self).show()

@@ -29,6 +29,7 @@ class SettingsWidget(QWidget):
                                          'initial': list(line_sep.keys()).index(self.sm.get_general('line_sep', '\n'))},
             "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWidget.NAME_LEFT,
                       'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)},
+            # "Шрифт для кода": {'type': str, 'initial': self.sm.get('code_font', 'Consolas')},
             "Python": {'type': str, 'initial': self.sm.get_general('python', 'python3'), 'width': 250}
         }, margins=(20, 20, 20, 20))
         self.main_options_widget.clicked.connect(self.save_main_settings)
@@ -72,16 +73,8 @@ class SettingsWidget(QWidget):
         self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
         self.main_options_widget.setFont(self.tm.font_small)
         self.testing_widget.setFont(self.tm.font_small)
-        self.main_options_widget.widgets['Символ переноса строки: '].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.main_options_widget.widgets['Тема:'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.main_options_widget.widgets['Python'].setStyleSheet(self.tm.style_sheet)
-        self.testing_widget.widgets['Компилятор'].setStyleSheet(self.tm.style_sheet)
-        self.testing_widget.widgets['Компаратор для позитивных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.testing_widget.widgets['Компаратор для негативных тестов:'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.testing_widget.widgets['Погрешность сравнения чисел:'].setStyleSheet(self.tm.double_spin_box_style_sheet)
-        self.testing_widget.widgets['Подстрока для позитивных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.testing_widget.widgets['Подстрока для негативных тестов'].setStyleSheet(self.tm.style_sheet)
-        self.testing_widget.widgets['Ограничение по времени:'].setStyleSheet(self.tm.double_spin_box_style_sheet)
+        self.tm.css_to_options_widget(self.main_options_widget)
+        self.tm.css_to_options_widget(self.testing_widget)
         self.libs_widget.set_theme()
 
     def save_main_settings(self):
