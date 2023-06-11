@@ -40,6 +40,10 @@ class SettingsManager:
         self.q_settings.remove(key)
 
     def set_project(self, project):
+        if project is None:
+            self.project = ''
+            self.set_general('projects', dumps(self.projects))
+            return
         self.store()
         self.project = project
         try:
@@ -55,7 +59,7 @@ class SettingsManager:
         self.data_path = f"{self.app_data_dir}/projects/{self.project}"
         try:
             with open(f"{self.data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
-                self.project_settings = loads(f.read())
+                self.project_settings = loads(text := f.read())
         except FileNotFoundError:
             self.project_settings = dict()
         except JSONDecodeError:
@@ -92,9 +96,21 @@ class SettingsManager:
     def set_general(self, key, value):
         self.q_settings.setValue(key, value)
 
-    def set(self, key, value):
-        print(key, value)
-        self.project_settings[key] = value
+    def set(self, key, value, project=None):
+        if project is None:
+            self.project_settings[key] = value
+        else:
+            try:
+                with open(f"{self.app_data_dir}/projects/{project}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                    dct = loads(f.read())
+            except FileNotFoundError:
+                dct = dict()
+            except JSONDecodeError:
+                dct = dict()
+            dct[key] = value
+            os.makedirs(f"{self.app_data_dir}/projects/{project}", exist_ok=True)
+            with open(f"{self.app_data_dir}/projects/{project}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
+                f.write(dumps(dct))
 
     def __setitem__(self, key, value):
         self.set(key, value)
@@ -175,7 +191,9 @@ class SettingsManager:
                     self.set('time_limit', self.get_general('time_limit', 10))
                     
     def store(self):
-        if self.project and self.data_path:
+        if self.project not in self.projects:
+            return
+        if self.data_path:
             os.makedirs(self.data_path, exist_ok=True)
             with open(f"{self.data_path}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
                 f.write(dumps(self.project_settings))

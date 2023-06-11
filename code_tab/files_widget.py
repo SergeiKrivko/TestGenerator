@@ -88,6 +88,7 @@ class FilesWidget(QWidget):
 
     def open_task(self):
         self.path = self.sm.lab_path()
+        print(self.path)
         self.current_path = self.path
         self.update_files_list()
 

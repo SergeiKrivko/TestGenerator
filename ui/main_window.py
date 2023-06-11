@@ -91,9 +91,11 @@ class MainWindow(QMainWindow):
             self.show_tab('project_widget')
         else:
             self.show_tab('project_widget')
-        if len(argv) == 2:
-            if argv[1].endswith('.7z') and os.path.isfile(argv[1]):
+        if len(argv) == 2 and os.path.isfile(argv[1]):
+            if argv[1].endswith('.7z'):
                 self.project_widget.project_from_zip(argv[1])
+            else:
+                self.project_widget.open_as_project(argv[1])
         else:
             self.project_widget.open_project(forced=True)
 
@@ -169,11 +171,13 @@ class MainWindow(QMainWindow):
             if dialog.exec():
                 for process in background_process_manager.dict.values():
                     process.close()
+                self.project_widget.remove_temp_projects()
                 super(MainWindow, self).close()
             else:
                 a0.ignore()
                 self.project_widget.show()
         else:
+            self.project_widget.remove_temp_projects()
             super(MainWindow, self).close()
 
 

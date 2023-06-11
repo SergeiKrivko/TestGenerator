@@ -123,6 +123,7 @@ class ProjectWidget(QWidget):
         self.disable_menu_func(True)
         self.update_projects()
         self.looper = None
+        self.temp_project = []
 
     def testing_checkbox_triggered(self, value):
         self.sm.set('default_testing_settings', value)
@@ -131,6 +132,45 @@ class ProjectWidget(QWidget):
             self.testing_settings_widget.hide()
         else:
             self.testing_settings_widget.show()
+
+    def select_project(self, project):
+        for i in range(self.list_widget.count()):
+            if self.list_widget.item(i).text() == project:
+                self.list_widget.setCurrentRow(i)
+                break
+
+    def find_project(self, path):
+        path, _ = os.path.split(path)
+        while True:
+            for key, item in self.sm.projects.items():
+                if os.path.samefile(path, item):
+                    self.select_project(key)
+                    return True
+            if path == (path := os.path.split(path)[0]):
+                break
+        return False
+
+    def open_as_project(self, path):
+        if self.find_project(path):
+            return
+        dialog = OpenAsProjectDialog(self.tm, self.sm, path)
+        if dialog.exec():
+            name = dialog.line_edit.text()
+        elif dialog.create_temp_project:
+            name = "Текущий проект"
+            i = 2
+            while name in self.sm.projects:
+                name = f"Текущий проект {i}"
+                i += 1
+            self.temp_project.append(name)
+        else:
+            exit(0)
+
+        self.sm.projects[name] = os.path.split(path)[0]
+        self.sm.set('struct', 1, project=name)
+        self.update_projects()
+        self.select_project(name)
+        self.disable_menu_func(False)
 
     def update_projects(self):
         self.list_widget.clear()
@@ -157,12 +197,11 @@ class ProjectWidget(QWidget):
                 self.sm.repair_settings()
                 self.update_projects()
 
-    def delete_project(self):
-        print(self.sm.data_path)
+    def delete_project(self, forced=False):
         self.dialog = DeleteProjectDialog(self.sm.data_path, self.tm)
-        if self.dialog.exec():
+        if forced or self.dialog.exec():
             try:
-                if os.path.isdir(self.sm.path) and self.dialog.check_box.isChecked():
+                if not forced and os.path.isdir(self.sm.path) and self.dialog.check_box.isChecked():
                     shutil.rmtree(self.sm.path)
             except PermissionError:
                 pass
@@ -172,6 +211,7 @@ class ProjectWidget(QWidget):
             except PermissionError:
                 pass
             self.sm.projects.pop(self.sm.project)
+            self.sm.set_project(None)
             self.update_projects()
             self.disable_menu_func(True)
 
@@ -333,6 +373,13 @@ class ProjectWidget(QWidget):
                 self.tm.auto_css(el)
             for label in widget.labels.values():
                 label.setFont(self.tm.font_small)
+
+    def remove_temp_projects(self):
+        project = self.sm.project
+        for el in self.temp_project:
+            self.select_project(el)
+            self.delete_project(forced=True)
+        self.select_project(project)
 
     def show(self) -> None:
         if self.isHidden():
@@ -555,3 +602,55 @@ class ProjectUnpacker(QThread):
         self.terminate()
         shutil.rmtree(self.main_path, ignore_errors=True)
         shutil.rmtree(self.data_path, ignore_errors=True)
+
+
+class OpenAsProjectDialog(QDialog):
+    def __init__(self, tm, sm, path):
+        super().__init__()
+        self.setWindowTitle("TestGenerator")
+        self.tm = tm
+        self.sm = sm
+
+        main_layout = QVBoxLayout()
+
+        self.label = QLabel("Название проекта:")
+        main_layout.addWidget(self.label)
+
+        self.line_edit = QLineEdit()
+        self.line_edit.setText(os.path.basename(os.path.split(path)[0]))
+        main_layout.addWidget(self.line_edit)
+
+        buttons_layout = QHBoxLayout()
+
+        self.button_cancel = QPushButton("Отмена")
+        self.button_cancel.setFixedSize(80, 24)
+        self.button_cancel.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.button_cancel)
+
+        self.button_scip = QPushButton("Не создавать проект")
+        self.button_scip.setFixedSize(140, 24)
+        self.button_scip.clicked.connect(self.button_scip_triggered)
+        buttons_layout.addWidget(self.button_scip)
+
+        self.button_create = QPushButton("Создать проект")
+        self.button_create.setFixedSize(140, 24)
+        self.button_create.clicked.connect(self.button_create_triggered)
+        buttons_layout.addWidget(self.button_create)
+
+        main_layout.addLayout(buttons_layout)
+        self.setLayout(main_layout)
+
+        for el in [self.label, self.line_edit, self.button_cancel, self.button_scip, self.button_create]:
+            self.tm.auto_css(el)
+        self.create_temp_project = False
+
+    def button_scip_triggered(self):
+        self.create_temp_project = True
+        self.reject()
+
+    def button_create_triggered(self):
+        if self.line_edit.text() in self.sm.projects:
+            MessageBox(MessageBox.Warning, "Создание проекта", f"Невозможно создать проект {self.line_edit.text()}, так"
+                                                               f" как проект с таким названием уже существует", self.tm)
+        else:
+            self.accept()
