@@ -183,7 +183,7 @@ class MainWindow(QMainWindow):
 
     def open_test_from_code(self):
         index = self.code_widget.test_res_widget.currentRow()
-        self.testing_widget.get_path(True)
+        self.testing_widget.get_path()
         self.testing_widget.tests_list.setCurrentRow(index)
         self.testing_widget.open_test_info()
         self.show_tab('testing_widget')

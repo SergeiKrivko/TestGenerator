@@ -64,6 +64,13 @@ class ProjectWidget(QWidget):
 
         self.tab_widget = QTabWidget()
 
+        self.main_settings_widget = OptionsWidget({
+            'Язык': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT,
+                     'values': ['C', 'Python']}
+        }, margins=(25, 25, 25, 25))
+        self.main_settings_widget.clicked.connect(self.save_settings)
+        self.tab_widget.addTab(self.main_settings_widget, 'Основные')
+
         self.struct_settings_widget = OptionsWidget({
             'Структура проекта': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'width': 200,
                                   'values': ['Лаба - задание - вариант', 'Без структуры']},
@@ -251,6 +258,8 @@ class ProjectWidget(QWidget):
         else:
             self.testing_settings_widget.show()
 
+        self.main_settings_widget.widgets['Язык'].setCurrentIndex(self.sm.get('language', 0))
+
         self.struct_settings_widget.widgets['Структура проекта'].setCurrentIndex(self.sm.get(
             'struct', 0))
         self.struct_settings_widget.widgets['Название папки с лабой'].setText(self.sm.get(
@@ -347,6 +356,9 @@ class ProjectWidget(QWidget):
         if self.opening_project:
             return
 
+        dct = self.main_settings_widget.values
+        self.sm.set('language', dct['Язык'])
+
         dct = self.struct_settings_widget.values
         self.sm.set('struct', dct['Структура проекта'])
         self.sm.set('dir_format', dct['Название папки с лабой'])
@@ -379,12 +391,8 @@ class ProjectWidget(QWidget):
         self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet.replace('width: 50px', 'width: 120px'))
         self.tab_widget.setFont(self.tm.font_small)
 
-        for widget in [self.struct_settings_widget, self.testing_settings_widget]:
-            widget.setFont(self.tm.font_small)
-            for el in widget.widgets.values():
-                self.tm.auto_css(el)
-            for label in widget.labels.values():
-                label.setFont(self.tm.font_small)
+        for widget in [self.main_settings_widget, self.struct_settings_widget, self.testing_settings_widget]:
+            self.tm.css_to_options_widget(widget)
 
     def remove_temp_projects(self):
         project = self.sm.project

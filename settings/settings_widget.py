@@ -19,7 +19,7 @@ class SettingsWidget(QWidget):
         layout = QHBoxLayout()
 
         self.list_widget = QListWidget()
-        self.list_widget.addItems(['Основные', 'Тестирование', 'Библиотеки'])
+        self.list_widget.addItems(['Основные', 'C', 'Python', 'Тестирование', 'Библиотеки'])
         self.list_widget.setFixedWidth(175)
         self.list_widget.currentItemChanged.connect(self.select_tab)
         layout.addWidget(self.list_widget)
@@ -28,17 +28,28 @@ class SettingsWidget(QWidget):
             "Символ переноса строки: ": {'type': 'combo', 'values': line_sep.values(), 'name': OptionsWidget.NAME_LEFT,
                                          'initial': list(line_sep.keys()).index(self.sm.get_general('line_sep', '\n'))},
             "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWidget.NAME_LEFT,
-                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)},
-            # "Шрифт для кода": {'type': str, 'initial': self.sm.get('code_font', 'Consolas')},
-            "Python": {'type': str, 'initial': self.sm.get_general('python', 'python3'), 'width': 250}
+                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)}
         }, margins=(20, 20, 20, 20))
         self.main_options_widget.clicked.connect(self.save_main_settings)
         layout.addWidget(self.main_options_widget)
 
-        self.testing_widget = OptionsWidget({
-            "Компилятор": {'type': str, 'width': 400, 'initial': self.sm.get_general('compiler', 'gcc')},
+        self.c_options_widget = OptionsWidget({
+            "Компилятор": {'type': str, 'width': 400, 'initial': self.sm.get_general('c_compiler', 'gcc')},
             "Ключ -lm": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
-                         'initial': bool(self.sm.get_general('-lm', True))},
+                         'initial': bool(self.sm.get_general('c_lm', True))},
+        }, margins=(20, 20, 20, 20))
+        self.c_options_widget.clicked.connect(self.save_c_settings)
+        self.c_options_widget.hide()
+        layout.addWidget(self.c_options_widget)
+
+        self.python_options_widget = OptionsWidget({
+            "Python": {'type': str, 'width': 250, 'initial': self.sm.get_general('python', 'python')},
+        }, margins=(20, 20, 20, 20))
+        self.python_options_widget.clicked.connect(self.save_python_settings)
+        self.python_options_widget.hide()
+        layout.addWidget(self.python_options_widget)
+
+        self.testing_widget = OptionsWidget({
             "Компаратор для позитивных тестов:": {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'values': [
                 'Числа', 'Числа как текст', 'Текст после подстроки', 'Слова после подстроки', 'Текст', 'Слова'],
                                                   'initial': self.sm.get_general('pos_comparator', 0)},
@@ -85,6 +96,15 @@ class SettingsWidget(QWidget):
         self.change_theme.emit()
         self.sm.set_general('python', dct['Python'])
 
+    def save_c_settings(self):
+        dct = self.c_options_widget.values
+        self.sm.set_general('c_compiler', dct['Компилятор'])
+        self.sm.set_general('c_lm', int(dct['Ключ -lm']))
+
+    def save_python_settings(self):
+        dct = self.python_options_widget.values
+        self.sm.set_general('python', dct['Python'])
+
     def save_testing_settings(self):
         dct = self.testing_widget.values
         self.sm.set_general('compiler', dct['Компилятор'])
@@ -107,11 +127,17 @@ class SettingsWidget(QWidget):
     def select_tab(self, item):
         if item is not None:
             self.main_options_widget.hide()
+            self.c_options_widget.hide()
+            self.python_options_widget.hide()
             self.testing_widget.hide()
             self.libs_widget.hide()
             tab = item.text()
             if tab == 'Основные':
                 self.main_options_widget.show()
+            if tab == 'C':
+                self.c_options_widget.show()
+            if tab == 'Python':
+                self.python_options_widget.show()
             if tab == 'Тестирование':
                 self.testing_widget.show()
             if tab == 'Библиотеки':
