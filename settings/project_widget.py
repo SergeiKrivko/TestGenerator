@@ -1,5 +1,7 @@
+import json
 import os
 import shutil
+import sys
 
 from PyQt5.QtCore import Qt, QThread
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
@@ -123,7 +125,12 @@ class ProjectWidget(QWidget):
         self.disable_menu_func(True)
         self.update_projects()
         self.looper = None
-        self.temp_project = []
+        try:
+            self.temp_project = json.loads(self.sm.get_general('temp_projects', '[]'))
+        except json.JSONDecodeError:
+            self.temp_project = []
+        if self.temp_project:
+            self.remove_temp_projects()
 
     def testing_checkbox_triggered(self, value):
         self.sm.set('default_testing_settings', value)
@@ -163,8 +170,9 @@ class ProjectWidget(QWidget):
                 name = f"Текущий проект {i}"
                 i += 1
             self.temp_project.append(name)
+            self.sm.set_general('temp_projects', json.dumps(self.temp_project))
         else:
-            exit(0)
+            sys.exit()
 
         self.sm.projects[name] = os.path.split(path)[0]
         self.sm.set('struct', 1, project=name)
@@ -377,9 +385,12 @@ class ProjectWidget(QWidget):
     def remove_temp_projects(self):
         project = self.sm.project
         for el in self.temp_project:
-            self.select_project(el)
-            self.delete_project(forced=True)
+            if el in self.sm.projects:
+                self.select_project(el)
+                self.delete_project(forced=True)
         self.select_project(project)
+        self.temp_project.clear()
+        self.sm.set_general('temp_projects', '[]')
 
     def show(self) -> None:
         if self.isHidden():
