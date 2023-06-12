@@ -222,7 +222,6 @@ class TestsWidget(QWidget):
         self.path = self.sm.lab_path()
 
     def open_tests(self):
-        print('open')
         self.get_path()
         self.test_list_widget.pos_test_list.clear()
         self.test_list_widget.neg_test_list.clear()
@@ -389,7 +388,6 @@ class TestsWidget(QWidget):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
     def save_tests(self):
-        print('save')
         if not self.test_list_widget.pos_test_list.count() and not self.test_list_widget.neg_test_list.count() or \
                 not self.tests_changed:
             return

@@ -11,7 +11,13 @@ class SettingsManager:
         self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko").replace('\\', '/')
 
         self.project = ''
-        self.projects = dict()
+        try:
+            s = self.get_general('projects')
+            self.projects = loads(s)
+        except JSONDecodeError:
+            self.projects = dict()
+        except TypeError:
+            self.projects = dict()
         self.path = ''
         self.data_path = ''
         self.project_settings = dict()
@@ -46,20 +52,13 @@ class SettingsManager:
             return
         self.store()
         self.project = project
-        try:
-            s = self.get_general('projects')
-            self.projects = loads(s)
-        except JSONDecodeError:
-            self.projects = dict()
-        except TypeError:
-            self.projects = dict()
 
         self.path = self.projects.get(self.project)
-
         self.data_path = f"{self.app_data_dir}/projects/{self.project}"
         try:
             with open(f"{self.data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
                 self.project_settings = loads(text := f.read())
+                # print(f"read from {self.data_path}/TestGeneratorSettings.json:\n{text}")
         except FileNotFoundError:
             self.project_settings = dict()
         except JSONDecodeError:
@@ -97,7 +96,7 @@ class SettingsManager:
         self.q_settings.setValue(key, value)
 
     def set(self, key, value, project=None):
-        if project is None:
+        if project is None or project == self.project:
             self.project_settings[key] = value
         else:
             try:
@@ -110,6 +109,7 @@ class SettingsManager:
             dct[key] = value
             os.makedirs(f"{self.app_data_dir}/projects/{project}", exist_ok=True)
             with open(f"{self.app_data_dir}/projects/{project}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
+                # print(f"write \"{dumps(dct)}\" to {self.app_data_dir}/projects/{project}/TestGeneratorSettings.json")
                 f.write(dumps(dct))
 
     def __setitem__(self, key, value):
@@ -196,6 +196,7 @@ class SettingsManager:
         if self.data_path:
             os.makedirs(self.data_path, exist_ok=True)
             with open(f"{self.data_path}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
+                # print(f"write \"{dumps(self.project_settings)}\" to {self.data_path}/TestGeneratorSettings.json")
                 f.write(dumps(self.project_settings))
             self.set_general('projects', dumps(self.projects))
             self.set_general('project', self.project)

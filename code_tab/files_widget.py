@@ -48,7 +48,7 @@ class FilesWidget(QWidget):
 
     def update_files_list(self):
         self.files_list.clear()
-        if not os.path.isdir(self.current_path):
+        if not self.current_path or not os.path.isdir(self.current_path):
             return
 
         items = []
@@ -88,7 +88,6 @@ class FilesWidget(QWidget):
 
     def open_task(self):
         self.path = self.sm.lab_path()
-        print(self.path)
         self.current_path = self.path
         self.update_files_list()
 

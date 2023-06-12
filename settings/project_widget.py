@@ -3,7 +3,7 @@ import os
 import shutil
 import sys
 
-from PyQt5.QtCore import Qt, QThread
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
     QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget, QGridLayout, QMessageBox
 import py7zr
@@ -13,6 +13,8 @@ from ui.options_window import OptionsWidget
 
 
 class ProjectWidget(QWidget):
+    jump_to_code = pyqtSignal(str)
+
     def __init__(self, sm, tm, disable_menu_func):
         super(ProjectWidget, self).__init__()
         self.sm = sm
@@ -159,6 +161,7 @@ class ProjectWidget(QWidget):
 
     def open_as_project(self, path):
         if self.find_project(path):
+            self.jump_to_code.emit(path)
             return
         dialog = OpenAsProjectDialog(self.tm, self.sm, path)
         if dialog.exec():
@@ -179,6 +182,7 @@ class ProjectWidget(QWidget):
         self.update_projects()
         self.select_project(name)
         self.disable_menu_func(False)
+        self.jump_to_code.emit(path)
 
     def update_projects(self):
         self.list_widget.clear()

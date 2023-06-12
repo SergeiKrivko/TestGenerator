@@ -49,6 +49,7 @@ class MainWindow(QMainWindow):
 
         self.project_widget = ProjectWidget(self.sm, self.tm, self.menu_bar.setDisabled)
         self.project_widget.hide()
+        self.project_widget.jump_to_code.connect(self.jump_to_code_from_project)
         layout.addWidget(self.project_widget)
 
         self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
@@ -119,6 +120,37 @@ class MainWindow(QMainWindow):
         background-color: {self.tm['MainColor']};
         }}
         """)
+
+    def jump_to_code_from_project(self, path):
+        path = os.path.abspath(path)
+        self.show_tab('code_widget')
+        if self.sm.get('struct', 0) == 1:
+            self.code_widget.files_widget.current_path, name = os.path.split(path)
+            self.code_widget.files_widget.update_files_list()
+            for i in range(self.code_widget.files_widget.files_list.count()):
+                if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == name:
+                    self.code_widget.files_widget.files_list.setCurrentRow(i)
+                    break
+            return
+        if not os.path.isdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}"):
+            return
+        for dir1 in os.listdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}"):
+            if not dir1.isdigit():
+                continue
+            for dir2 in os.listdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}/{dir1}"):
+                for dir3 in os.listdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}/{dir1}/{dir2}"):
+                    lab_path = os.path.abspath(self.sm.lab_path(int(dir1), int(dir2), int(dir3)))
+                    if path.startswith(lab_path):
+                        self.sm.set('lab', int(dir1))
+                        self.sm.set('task', int(dir2))
+                        self.sm.set('var', int(dir3))
+                        self.show_tab('code_widget')
+                        self.code_widget.files_widget.current_path, name = os.path.split(path)
+                        self.code_widget.files_widget.update_files_list()
+                        for i in range(self.code_widget.files_widget.files_list.count()):
+                            if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == name:
+                                self.code_widget.files_widget.files_list.setCurrentRow(i)
+                                return
 
     def jump_to_code_from_testing(self, file_name, line, pos):
         self.show_tab('code_widget')

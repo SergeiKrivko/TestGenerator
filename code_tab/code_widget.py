@@ -110,7 +110,7 @@ class CodeWidget(QWidget):
 
     def save_code(self):
         code = self.code_edit.text()
-        if code:
+        if code and self.path:
             os.makedirs(self.path, exist_ok=True)
             file = open(f"{self.current_file}", 'w', encoding='utf=8', newline=self.sm['line_sep'])
             file.write(code)
