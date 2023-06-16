@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBox
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
 from settings.lab_widget import LabWidget
+from ui.message_box import MessageBox
 
 
 class TestingWidget(QWidget):
@@ -247,10 +248,16 @@ class TestingWidget(QWidget):
         self.testing_is_terminated(None)
 
     def testing(self):
+        try:
+            self.cm.clear_coverage_files()
+        except FileNotFoundError:
+            MessageBox(MessageBox.Warning, "Ошибка",
+                       "Папки с данным заданием не существует. Тестирование невозможно", self.tm)
+            return
+
         self.lab_widget.setDisabled(True)
         self.ui_disable_func(True)
         self.button.setText("Прервать")
-        self.cm.clear_coverage_files()
 
         self.coverage_bar.hide()
         self.progress_bar.show()
@@ -322,8 +329,12 @@ class TestingWidget(QWidget):
             self.start_testing(tests_list)
 
     def start_testing(self, lst):
-        self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
-                        self.sm.get('coverage', False))
+        try:
+            self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
+                            self.sm.get('coverage', False))
+        except FileNotFoundError:
+            self.enable_ui()
+            return
 
         self.cm.looper.test_complete.connect(self.add_list_item)
         self.cm.looper.test_crash.connect(self.add_crash_list_item)
