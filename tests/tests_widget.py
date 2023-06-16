@@ -37,7 +37,7 @@ class TestsWidget(QWidget):
 
         self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
         self.generator_window.hide()
-        # self.generator_window.complete.connect(self.write_readme_after_generation)
+        self.generator_window.complete.connect(self.open_tests_after_generation)
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm)
         self.test_list_widget.setMinimumWidth(400)
@@ -82,16 +82,16 @@ class TestsWidget(QWidget):
     def open_pos_generator_window(self):
         self.save_tests()
         self.generator_window.test_type = 'pos'
-        self.generator_window.tests_list = [self.test_list_widget.pos_test_list.item(i).desc for i in
-                                            range(self.test_list_widget.pos_test_list.count())]
         self.generator_window.show()
 
     def open_neg_generator_window(self):
         self.save_tests()
         self.generator_window.test_type = 'neg'
-        self.generator_window.tests_list = [self.test_list_widget.neg_test_list.item(i).desc for i in
-                                            range(self.test_list_widget.neg_test_list.count())]
         self.generator_window.show()
+
+    def open_tests_after_generation(self):
+        self.tests_changed = False
+        self.open_tests()
 
     def set_preprocessor(self):
         self.task_settings['preprocessor'] = self.test_edit_widget.preprocessor_line.text()

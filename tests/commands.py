@@ -89,6 +89,8 @@ class CommandManager:
 
     def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
+        if not os.path.isdir(self.path):
+            raise FileNotFoundError
         self.looper = TestingLooper(
             self.sm, self.compile, self.sm.lab_path(), f"{self.sm.data_lab_path()}/func_tests",
             pos_comparator, neg_comparator, memory_testing, coverage, time_limit=self.sm.get('time_limit'))

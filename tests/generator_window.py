@@ -10,7 +10,7 @@ from code_tab.syntax_highlighter import CodeEditor
 
 
 class GeneratorWindow(QMainWindow):
-    complete = pyqtSignal(list, str)
+    complete = pyqtSignal()
 
     def __init__(self, sm, cm, tm):
         super(GeneratorWindow, self).__init__()
@@ -28,6 +28,7 @@ class GeneratorWindow(QMainWindow):
         self.menu_bar = MenuBar({
             'Открыть': (self.open_code, None),
             'Сохранить': (self.save_code, None),
+            'Документация': (self.show_info, None),
             'Протестировать': (lambda: print('test'), None),
             'Запустить': (self.run_code, None)
         })
@@ -41,7 +42,6 @@ class GeneratorWindow(QMainWindow):
 
         self.set_autocompletion()
 
-        self.tests_list = []
         self.dialog = None
         self.scripts_dir = f"{self.sm.app_data_dir}/scripts"
 
@@ -93,11 +93,10 @@ class GeneratorWindow(QMainWindow):
                                           "path"]
 
     def run_code(self):
-        os.makedirs(f"{self.sm.lab_path()}/func_tests/data", exist_ok=True)
+        os.makedirs(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}", exist_ok=True)
         file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
         file.write(self.previous_code())
         file.write(self.code_edit.text())
-        file.write(self.end_code())
         file.close()
 
         self.menu_bar.setDisabled(True)
@@ -112,76 +111,96 @@ class GeneratorWindow(QMainWindow):
             MessageBox(MessageBox.Information, 'STDOUT', res.stdout, self.tm)
         if res.stderr:
             MessageBox(MessageBox.Information, 'STDERR', res.stderr, self.tm)
-        if os.path.isfile(f'{self.sm.app_data_dir}/temp.txt'):
-            file = open(f"{self.sm.app_data_dir}/temp.txt", encoding='utf-8')
-            self.complete.emit(list(map(str.strip, file.readlines())), self.test_type)
-            file.close()
-            os.remove(f'{self.sm.app_data_dir}/temp.txt')
         if os.path.isfile(f'{self.sm.app_data_dir}/temp.py'):
             os.remove(f'{self.sm.app_data_dir}/temp.py')
+        self.complete.emit()
         if res.returncode == 0:
             self.hide()
 
+    def show_info(self):
+        MessageBox(MessageBox.Information, "Генерация тестов",
+                   f"class Test:\n"
+                   f"    def __init__(self, desc='', in_data='', out_data='', args='', exit='')\n"
+                   f"    def set_desc(self, desc)\n"
+                   f"    def set_in(self, in_data)\n"
+                   f"    def set_in(self, text)\n"
+                   f"    def set_out(self, text)\n"
+                   f"    def set_args(self, args)\n"
+                   f"    def set_exit(self, exit='')\n"
+                   f"    def add_in_file(self, type='txt', text='')\n"
+                   f"    def add_out_file(self, type='txt', text='')\n"
+                   f"    def add_check_file(self, index: int, type='txt', text='')\n\n"
+                   f"def add_test(test: Test, index=None)", self.tm)
+
     def previous_code(self):
         return f"""
-__tests_list__ = {str(self.tests_list)}
-test_count = {len(self.tests_list)}
+import json
+
+__tests_list__ = []
+
+
+class Test:
+    def __init__(self, desc='', in_data='', out_data='', args='', exit=''):
+        self.dict = {{'desc': desc, 'in': in_data, 'out': out_data, 'args': args, 'exit': exit, 'in_files': [],
+                      'out_files': [], 'check_files': dict()}}
+
+    def __getitem__(self, item):
+        return self.dict[item]
+
+    def __setitem__(self, item, value):
+        self.dict[item] = value
+
+    def set_desc(self, desc):
+        self.dict['desc'] = str(desc)
+
+    def set_in(self, text):
+        self.dict['in'] = str(text)
+
+    def set_out(self, text):
+        self.dict['out'] = str(text)
+
+    def set_args(self, args):
+        self.dict['args'] = str(args)
+
+    def set_exit(self, exit=''):
+        self.dict['exit'] = str(exit)
+        
+    def add_in_file(self, type='txt', text=''):
+        self.dict['in_files'].append({{'type': type, 'text': text}})
+        
+    def add_out_file(self, type='txt', text=''):
+        self.dict['out_files'].append({{'type': type, 'text': text}})
+        
+    def add_check_file(self, index: int, type='txt', text=''):
+        self.dict['check_files'][index] = {{'type': type, 'text': text}}
+        
+        
+for el in {os.listdir(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}")}:
+    if el.rstrip('.json').isdigit():
+        test = Test()
+        try:
+            with open(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}/{{el}}", encoding='utf-8') as f:
+                for key, item in json.loads(f.read()).items():
+                    test[key] = item
+            __tests_list__.append(test)
+        except json.JSONDecodeError:
+            pass
+        except ValueError:
+            pass
+test_count = len(__tests_list__)
 path = "{self.sm.lab_path()}"
-        
-        
-def open_in_file(test_num, mode='w', **kwargs):
-    return open(f"{self.sm.lab_path()}/func_tests/data/{self.test_type}_{{test_num:0>2}}_in.txt", mode, **kwargs)
+data_path = "{self.sm.data_lab_path()}"
 
 
-def open_out_file(test_num, mode='w', **kwargs):
-    return open(f"{self.sm.lab_path()}/func_tests/data/{self.test_type}_{{test_num:0>2}}_out.txt", mode, **kwargs)
-
-
-def open_args_file(test_num, mode='w', **kwargs):
-    return open(f"{self.sm.lab_path()}/func_tests/data/{self.test_type}_{{test_num:0>2}}_args.txt", mode, **kwargs)
-
-
-def write_in(test_num, data, mode='w', **kwargs):
-    file = open_in_file(test_num, mode=mode, **kwargs)
-    file.write(str(data))
-    file.close()
-
-
-def write_out(test_num, data, mode='w', **kwargs):
-    file = open_out_file(test_num, mode=mode, **kwargs)
-    file.write(str(data))
-    file.close()
-
-
-def write_args(test_num, data, mode='w', **kwargs):
-    file = open_args_file(test_num, mode=mode, **kwargs)
-    file.write(str(data))
-    file.close()
-    
-    
-def set_desc(test_num, desc):
-    while len(__tests_list__) < test_num:
-        __tests_list__.append('')
-    __tests_list__[test_num - 1] = desc
-    
-
-def add_test(in_data='', out_data='', args='', desc='-', index=None):
+def add_test(test: Test, index=None):
     if index is None:
         index = len(__tests_list__) + 1
-    write_in(index, in_data)
-    write_out(index, out_data)
-    if args:
-        write_args(index, args)
-    set_desc(index, desc)
+        __tests_list__.append(test)
+    else:
+        __tests_list[index] = test
+    with open(f"{{data_path}}/func_tests/{self.test_type}/{{index}}.json", 'w', encoding='utf-8') as f:
+        f.write(json.dumps(test.dict))
 
-"""
-
-    def end_code(self):
-        return f"""
-file = open('{self.sm.app_data_dir}/temp.txt', 'w', encoding='utf-8')
-for el in __tests_list__:
-    file.write(str(el) + '\\n')
-file.close()
 """
 
     def show(self) -> None:
