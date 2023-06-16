@@ -159,6 +159,8 @@ class ProjectWidget(QWidget):
         path, _ = os.path.split(path)
         while True:
             for key, item in self.sm.projects.items():
+                if not os.path.isdir(item):
+                    continue
                 if os.path.samefile(path, item):
                     self.select_project(key)
                     return True
@@ -169,25 +171,25 @@ class ProjectWidget(QWidget):
     def open_as_project(self, path):
         if self.find_project(path):
             self.jump_to_code.emit(path)
-            return
-        dialog = OpenAsProjectDialog(self.tm, self.sm, path)
-        if dialog.exec():
-            name = dialog.line_edit.text()
-        elif dialog.create_temp_project:
-            name = "Текущий проект"
-            i = 2
-            while name in self.sm.projects:
-                name = f"Текущий проект {i}"
-                i += 1
-            self.temp_project.append(name)
-            self.sm.set_general('temp_projects', json.dumps(self.temp_project))
         else:
-            sys.exit()
+            dialog = OpenAsProjectDialog(self.tm, self.sm, path)
+            if dialog.exec():
+                name = dialog.line_edit.text()
+            elif dialog.create_temp_project:
+                name = "Текущий проект"
+                i = 2
+                while name in self.sm.projects:
+                    name = f"Текущий проект {i}"
+                    i += 1
+                self.temp_project.append(name)
+                self.sm.set_general('temp_projects', json.dumps(self.temp_project))
+            else:
+                sys.exit()
+            self.sm.projects[name] = os.path.split(path)[0]
+            self.sm.set('struct', 1, project=name)
+            self.update_projects()
+            self.select_project(name)
 
-        self.sm.projects[name] = os.path.split(path)[0]
-        self.sm.set('struct', 1, project=name)
-        self.update_projects()
-        self.select_project(name)
         self.disable_menu_func(False)
         self.jump_to_code.emit(path)
 
