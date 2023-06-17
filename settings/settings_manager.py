@@ -42,6 +42,11 @@ class SettingsManager:
     def __getitem__(self, item):
         return self.get(item)
 
+    def get_smart(self, key, default):
+        if key in self.project_settings:
+            return self.project_settings[key]
+        return self.get_general(key, default)
+
     def remove(self, key):
         self.q_settings.remove(key)
 

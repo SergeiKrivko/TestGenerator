@@ -1,7 +1,7 @@
 from PyQt5.QtGui import QColor, QFontMetrics
 from PyQt5.Qsci import QsciScintilla, QsciAPIs, QsciLexerCPP, QsciLexerBash
-from code_tab.autocomplition.abstract import CodeAutocompletionManager
-from code_tab.languages import languages
+from language.autocomplition.abstract import CodeAutocompletionManager
+from language.languages import languages
 
 
 class CodeEditor(QsciScintilla):
@@ -67,7 +67,6 @@ class CodeEditor(QsciScintilla):
         self.textChanged.connect(self.set_text_changed)
         self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
         self.text_changed = False
-        print("OK")
 
     def set_text_changed(self):
         self.text_changed = True

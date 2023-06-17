@@ -8,6 +8,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from tests.binary_decoder import decode, comparator as bytes_comparator
 from tests.macros_converter import MacrosConverter, background_process_manager
+from language.languages import languages
 
 
 class CommandManager:
@@ -32,54 +33,14 @@ class CommandManager:
 
     def compile(self, coverage=False):
         self.update_path()
-        old_dir = os.getcwd()
-        os.chdir(self.path)
+        return languages[self.sm.get('language', 'C')].get(
+            'compile', lambda *args: (False, 'Can\'t compile this file'))(self.path, self, self.sm, coverage)
 
-        compile_res = self.cmd_command(self.sm['compiler'].split() + ["-c"] +
-                                       (['--coverage'] if coverage else []) +
-                                       list(filter(lambda path: path.endswith('.c'), os.listdir(self.path))) + ["-g"] +
-                                       (['-lm'] if self.sm['-lm'] else []))
-        if compile_res.returncode:
-            os.chdir(old_dir)
-            return False, compile_res.stderr
-
-        compile_res = self.cmd_command(self.sm['compiler'].split() +
-                                       (['--coverage'] if coverage else []) + ['-o'] +
-                                       [f"{self.path}/app.exe"] +
-                                       list(filter(lambda path: path.endswith('.o'), os.listdir(self.path))) +
-                                       (['-lm'] if self.sm['-lm'] else []))
-
-        if compile_res.returncode:
-            os.chdir(old_dir)
-            return False, compile_res.stderr
-
-        for file in os.listdir(self.path):
-            if file.endswith('.o'):
-                os.remove(f"{self.path}/{file}")
-
-        os.chdir(old_dir)
-        return True, ''
+    def run_code(self, args='', in_data='', file=''):
+        return languages[self.sm.get('language', 'C')].get('run')(f"{self.path}/{file}", self.sm, self, args, in_data)
 
     def collect_coverage(self):
-        total_count = 0
-        count = 0
-
-        self.update_path()
-        for file in os.listdir(self.path):
-            if file.endswith('.c'):
-                res = self.cmd_command(["gcov", f"{self.path}/{file}"])
-                for line in res.stdout.split('\n'):
-                    if "Lines executed:" in line:
-                        p, _, c = line.split(":")[1].split()
-                        total_count += int(c)
-                        count += round(float(p[:-1]) / 100 * int(c))
-                        break
-
-        self.clear_coverage_files()
-
-        if total_count == 0:
-            return 0
-        return count / total_count * 100
+        return languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)
 
     def clear_coverage_files(self):
         self.path = self.sm.lab_path()
@@ -92,7 +53,7 @@ class CommandManager:
         if not os.path.isdir(self.path):
             raise FileNotFoundError
         self.looper = TestingLooper(
-            self.sm, self.compile, self.sm.lab_path(), f"{self.sm.data_lab_path()}/func_tests",
+            self.sm, self, self.compile, self.sm.lab_path(), f"{self.sm.data_lab_path()}/func_tests",
             pos_comparator, neg_comparator, memory_testing, coverage, time_limit=self.sm.get('time_limit'))
         if f"{self.sm.data_lab_path()}/func_tests" in background_process_manager.dict:
             background_process_manager.dict[f"{self.sm.data_lab_path()}/func_tests"].finished.connect(self.looper.start)
@@ -188,7 +149,6 @@ class Looper(QThread):
         self.res = None
 
     def run(self) -> None:
-        print(os.getcwd())
         self.res = self.func()
         self.complete.emit(self.res)
 
@@ -200,7 +160,7 @@ class TestingLooper(QThread):
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, sm, compiler, path, data_path, pos_comparator, neg_comparator,
+    def __init__(self, sm, cm, compiler, path, data_path, pos_comparator, neg_comparator,
                  memory_testing=False, coverage=False, time_limit=10):
         super(TestingLooper, self).__init__()
         self.time_limit = time_limit
@@ -212,6 +172,7 @@ class TestingLooper(QThread):
         self.neg_comparator = neg_comparator
         self.coverage = coverage
         self.sm = sm
+        self.cm = cm
 
     def run(self):
         code, errors = self.compiler(coverage=self.coverage)
@@ -226,9 +187,12 @@ class TestingLooper(QThread):
                 try:
                     dct = loads(CommandManager.read_file(f"{self.data_path}/{pos}/{el}"))
                     try:
-                        res = CommandManager.cmd_command(
-                            f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt')}",
-                            input=dct.get('in', ''), timeout=self.time_limit, shell=True)
+                        res = self.cm.run_code(
+                            CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt'),
+                            dct.get('in', ''))
+                        # res = CommandManager.cmd_command(
+                        #     f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt')}",
+                        #     input=dct.get('in', ''), timeout=self.time_limit, shell=True)
                     except TimeoutExpired:
                         self.test_timeout.emit()
                         continue

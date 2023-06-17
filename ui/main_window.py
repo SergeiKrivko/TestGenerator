@@ -2,6 +2,7 @@ from sys import argv
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
 
+from language.testing.python import python_run
 from tests.macros_converter import background_process_manager
 from ui.themes import ThemeManager
 from code_tab.code_widget import CodeWidget

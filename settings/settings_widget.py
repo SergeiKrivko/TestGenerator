@@ -94,12 +94,11 @@ class SettingsWidget(QWidget):
         self.sm.set_general('theme', th := list(self.tm.themes.keys())[dct['Тема:']])
         self.tm.set_theme(th)
         self.change_theme.emit()
-        self.sm.set_general('python', dct['Python'])
 
     def save_c_settings(self):
         dct = self.c_options_widget.values
-        self.sm.set_general('c_compiler', dct['Компилятор'])
-        self.sm.set_general('c_lm', int(dct['Ключ -lm']))
+        self.sm.set_general('compiler', dct['Компилятор'])
+        self.sm.set_general('-lm', int(dct['Ключ -lm']))
 
     def save_python_settings(self):
         dct = self.python_options_widget.values
@@ -107,8 +106,6 @@ class SettingsWidget(QWidget):
 
     def save_testing_settings(self):
         dct = self.testing_widget.values
-        self.sm.set_general('compiler', dct['Компилятор'])
-        self.sm.set_general('-lm', int(dct['Ключ -lm']))
         self.sm.set_general('pos_comparator', dct['Компаратор для позитивных тестов:'])
         self.sm.set_general('neg_comparator', dct['Компаратор для негативных тестов:'])
         self.sm.set_general('memory_testing', int(dct['Тестирование по памяти']))

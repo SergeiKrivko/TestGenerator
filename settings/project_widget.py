@@ -12,6 +12,9 @@ from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 
 
+LANGUAGES = ['C', 'Python']
+
+
 class ProjectWidget(QWidget):
     jump_to_code = pyqtSignal(str)
 
@@ -65,8 +68,7 @@ class ProjectWidget(QWidget):
         self.tab_widget = QTabWidget()
 
         self.main_settings_widget = OptionsWidget({
-            'Язык': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT,
-                     'values': ['C', 'Python']}
+            'Язык': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'values': LANGUAGES}
         }, margins=(25, 25, 25, 25))
         self.main_settings_widget.clicked.connect(self.save_settings)
         self.tab_widget.addTab(self.main_settings_widget, 'Основные')
@@ -260,7 +262,7 @@ class ProjectWidget(QWidget):
         else:
             self.testing_settings_widget.show()
 
-        self.main_settings_widget.widgets['Язык'].setCurrentIndex(self.sm.get('language', 0))
+        self.main_settings_widget.widgets['Язык'].setCurrentText(str(self.sm.get('language', 'C')))
 
         self.struct_settings_widget.widgets['Структура проекта'].setCurrentIndex(self.sm.get(
             'struct', 0))
@@ -359,7 +361,7 @@ class ProjectWidget(QWidget):
             return
 
         dct = self.main_settings_widget.values
-        self.sm.set('language', dct['Язык'])
+        self.sm.set('language', LANGUAGES[dct['Язык']])
 
         dct = self.struct_settings_widget.values
         self.sm.set('struct', dct['Структура проекта'])

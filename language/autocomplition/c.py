@@ -1,4 +1,4 @@
-from code_tab.autocomplition.c_lib import words, types
+from language.autocomplition.c_lib import words, types
 import os
 
 

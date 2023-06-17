@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLin
     QPushButton, QDialog, QLabel, QListWidgetItem
 
 from ui.message_box import MessageBox
-from code_tab.languages import languages
+from language.languages import languages
 
 
 class FilesWidget(QWidget):
