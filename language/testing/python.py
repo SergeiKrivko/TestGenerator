@@ -8,15 +8,16 @@ def python_compile(path, sm, cm, coverage):
 def python_run(path, sm, cm, args='', in_data=''):
     if os.path.isfile(path):
         return cm.cmd_command(f"{sm['python']} {path} {args}", input=in_data, shell=True,
-                              timeout=sm.get_smart('time_limit', 3))
+                              timeout=float(sm.get_smart('time_limit', 3)))
     return cm.cmd_command(f"{sm['python']} {path}/main.py {args}", input=in_data, shell=True,
-                          timeout=sm.get_smart('time_limit', 3))
+                          timeout=float(sm.get_smart('time_limit', 3)))
 
 
 def python_collect_coverage(path, sm, cm):
     old_dir = os.getcwd()
     os.chdir(path)
-    text = cm.cmd_command(f"coverage report", shell=True).stdout
+    res = cm.cmd_command(f"coverage report", shell=True)
+    text = res.stdout
     try:
         for line in text.split('\n'):
             if line.startswith('TOTAL'):

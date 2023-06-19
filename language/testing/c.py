@@ -29,8 +29,9 @@ def c_compile(path, cm, sm, coverage=False):
 
 def c_run(path, sm, cm, args, in_data):
     if os.path.isfile(path):
-        return cm.cmd_command(f"{path} {args}", input=in_data, shell=True, timeout=sm.get_smart('time_limit', 3))
-    return cm.cmd_command(f"{path}/app.exe {args}", input=in_data, shell=True, timeout=sm.get_smart('time_limit', 3))
+        return cm.cmd_command(f"{path} {args}", input=in_data, shell=True, timeout=float(sm.get_smart('time_limit', 3)))
+    return cm.cmd_command(f"{path}/app.exe {args}", input=in_data, shell=True,
+                          timeout=float(sm.get_smart('time_limit', 3)))
 
 
 def c_clear_coverage_files(path):

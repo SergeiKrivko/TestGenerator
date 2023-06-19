@@ -282,7 +282,7 @@ class TestingWidget(QWidget):
             for i, el in enumerate(lst):
                 try:
                     self.tests_list.addItem(TestingListWidgetItem(
-                        self.tm, f"pos{i + 1}", f"{data_dir}/pos/{el}", self.sm.get('memory_testing', False)))
+                        self.tm, f"pos{i + 1}", f"{data_dir}/pos/{el}", self.sm.get_smart('memory_testing', False)))
                     tests_list.append(f'pos{i + 1}')
                 except json.JSONDecodeError:
                     pass
@@ -297,7 +297,7 @@ class TestingWidget(QWidget):
             for i, el in enumerate(lst):
                 try:
                     self.tests_list.addItem(TestingListWidgetItem(
-                        self.tm, f"neg{i + 1}", f"{data_dir}/neg/{el}", self.sm.get('memory_testing', False)))
+                        self.tm, f"neg{i + 1}", f"{data_dir}/neg/{el}", self.sm.get_smart('memory_testing', False)))
                     tests_list.append(f'neg{i + 1}')
                 except json.JSONDecodeError:
                     pass
@@ -330,8 +330,8 @@ class TestingWidget(QWidget):
 
     def start_testing(self, lst):
         try:
-            self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get('memory_testing', False),
-                            self.sm.get('coverage', False))
+            self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get_smart('memory_testing', False),
+                            self.sm.get_smart('coverage', False))
         except FileNotFoundError:
             self.enable_ui()
             return
@@ -352,7 +352,7 @@ class TestingWidget(QWidget):
             os.remove(f"{self.path}/temp.txt")
         self.testing_end.emit()
 
-        if self.sm.get('coverage', False):
+        if self.sm.get_smart('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         try:
@@ -374,7 +374,7 @@ class TestingWidget(QWidget):
         self.progress_bar.hide()
         self.coverage_bar.show()
 
-        if self.sm.get('coverage', False):
+        if self.sm.get_smart('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         if os.path.isfile(f"{self.path}/temp.txt"):
@@ -418,15 +418,15 @@ class TestingWidget(QWidget):
         comparator = self.sm.get('pos_comparators', dict()).get(
             f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
         if comparator == -1:
-            comparator = self.sm.get('pos_comparator', 0)
+            comparator = self.sm.get_smart('pos_comparator', 0)
         if comparator == 0:
-            return comparator1(str1, str2, self.sm.get('epsilon', 0))
+            return comparator1(str1, str2, self.sm.get_smart('epsilon', 0))
         if comparator == 1:
             return comparator2(str1, str2)
         if comparator == 2:
-            return comparator3(str1, str2, self.sm.get('pos_substring', ''))
+            return comparator3(str1, str2, self.sm.get_smart('pos_substring', ''))
         if comparator == 3:
-            return comparator4(str1, str2, self.sm.get('pos_substring', ''))
+            return comparator4(str1, str2, self.sm.get_smart('pos_substring', ''))
         if comparator == 4:
             return comparator5(str1, str2)
         if comparator == 5:
@@ -436,17 +436,17 @@ class TestingWidget(QWidget):
         comparator = self.sm.get('neg_comparators', dict()).get(
             f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
         if comparator == -1:
-            comparator = self.sm.get('neg_comparator', 0)
+            comparator = self.sm.get_smart('neg_comparator', 0)
         if comparator == 0:
             return True
         if comparator == 1:
-            return comparator1(str1, str2, self.sm.get('epsilon', 0))
+            return comparator1(str1, str2, self.sm.get_smart('epsilon', 0))
         if comparator == 2:
             return comparator2(str1, str2)
         if comparator == 3:
-            return comparator3(str1, str2, self.sm.get('neg_substring', ''))
+            return comparator3(str1, str2, self.sm.get_smart('neg_substring', ''))
         if comparator == 4:
-            return comparator4(str1, str2, self.sm.get('neg_substring', ''))
+            return comparator4(str1, str2, self.sm.get_smart('neg_substring', ''))
         if comparator == 5:
             return comparator5(str1, str2)
         if comparator == 6:

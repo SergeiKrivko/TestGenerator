@@ -113,7 +113,7 @@ class SettingsWidget(QWidget):
         self.sm.set_general('epsilon', dct['Погрешность сравнения чисел:'])
         self.sm.set_general('pos_substring', dct['Подстрока для позитивных тестов'])
         self.sm.set_general('neg_substring', dct['Подстрока для негативных тестов'])
-        self.sm.set_general('time_limit', dct['Ограничение по времени:'])
+        self.sm.set_general('time_limit', float(dct['Ограничение по времени:']))
 
     def hide(self, save_settings=True):
         if not self.isHidden() and save_settings:

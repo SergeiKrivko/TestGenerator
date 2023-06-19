@@ -15,25 +15,30 @@ def decode(text: str, byte_str):
             break
         except IndexError:
             break
+        except struct.error:
+            break
     else:
         return '\n'.join(res), 0
     return '\n'.join(res) + '\n' + str(byte_str).lstrip("b'").rstrip("'"), 1
 
 
 def comparator(prog_out: bytes, out: str, out_bytes: bytes):
-    prog_res, code = decode(out, prog_out)
-    if code == 1:
-        return prog_out == out_bytes
-    prog_res = prog_res.split('\n')
-    out = tuple(preprocessor(out))
-    i, j = 0, 0
-    while i < len(prog_res) and j < len(out):
-        while not prog_res[i].strip():
+    try:
+        prog_res, code = decode(out, prog_out)
+        if code == 1:
+            return prog_out == out_bytes
+        prog_res = prog_res.split('\n')
+        out = tuple(preprocessor(out))
+        i, j = 0, 0
+        while i < len(prog_res) and j < len(out):
+            while not prog_res[i].strip():
+                i += 1
+            while not out[j].strip():
+                j += 1
+            if prog_res[i] != out[j]:
+                return False
             i += 1
-        while not out[j].strip():
             j += 1
-        if prog_res[i] != out[j]:
-            return False
-        i += 1
-        j += 1
-    return i == len(prog_res) and j == len(out)
+        return i == len(prog_res) and j == len(out)
+    except Exception:
+        return False

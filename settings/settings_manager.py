@@ -151,8 +151,8 @@ class SettingsManager:
                     self.set_general('memory_testing', 0)
                 if not isinstance(self.get_general('coverage'), int):
                     self.set_general('coverage', 0)
-                if not isinstance(self.get_general('time_limit'), (float, int)):
-                    self.set_general('time_limit', 10)
+                if not isinstance(self.get_general('time_limit'), (float, int, str)):
+                    self.set_general('time_limit', '10.0')
                 if 'compiler' in self.project_settings:
                     self.project_settings.pop('compiler')
                 if '-lm' in self.project_settings:

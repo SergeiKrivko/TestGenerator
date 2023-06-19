@@ -290,7 +290,7 @@ class ProjectWidget(QWidget):
         self.testing_settings_widget.widgets['Coverage'].setChecked(bool(self.sm.get('coverage', False)))
         self.testing_settings_widget.widgets['Тестирование по памяти'].setChecked(
             bool(self.sm.get('memory_testing', False)))
-        self.testing_settings_widget.widgets['Ограничение по времени:'].setValue(int(self.sm.get('time_limit', 3)))
+        self.testing_settings_widget.widgets['Ограничение по времени:'].setValue(float(self.sm.get('time_limit', 3)))
         self.opening_project = False
         self.disable_menu_func(False)
 

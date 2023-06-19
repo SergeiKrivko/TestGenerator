@@ -155,7 +155,7 @@ class Looper(QThread):
 
 class TestingLooper(QThread):
     test_complete = pyqtSignal(bool, dict, int, bool, str)
-    test_crash = pyqtSignal(str, int, str)
+    test_crash = pyqtSignal(dict, int, str)
     test_timeout = pyqtSignal()
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
@@ -197,7 +197,7 @@ class TestingLooper(QThread):
                         self.test_timeout.emit()
                         continue
                     if res.stderr:
-                        self.test_crash.emit(res.stdout, res.returncode, res.stderr)
+                        self.test_crash.emit({'STDOUT': res.stdout}, res.returncode, res.stderr)
                         continue
                     comparator = self.pos_comparator if pos == 'pos' else self.neg_comparator
                     comparator_res = comparator(dct.get('out', ''), res.stdout)
