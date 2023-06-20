@@ -1,14 +1,52 @@
 import struct
+import sys
 from sys import argv
 
 
-class PackError(Exception):
-    def __init__(self, message=''):
-        super(PackError, self).__init__()
-        self.message = message
+class BinaryConverterError(Exception):
+    INVALID_MASK = 0
+    TOO_BIG_VALUE = 1
+    TOO_SMALL_VALUE = 2
+    INVALID_VALUES_COUNT = 3
+    INVALID_TYPE = 4
+
+    def __init__(self, error_type: int, line=0, text='', start=0, end=0, **kwargs):
+        super(BinaryConverterError, self).__init__()
+        self.error_type = error_type
+        self.line = line
+        self.text = text
+        self.start = start
+        self.end = end
+        self.kwargs = kwargs
 
     def __str__(self):
-        return self.message
+        errors = {self.INVALID_MASK: "Некорректная форматная строка",
+                  self.TOO_BIG_VALUE: "Слишком большое значение",
+                  self.TOO_SMALL_VALUE: "Слишком маленькое значение",
+                  self.INVALID_VALUES_COUNT: "Неправильное количество значений",
+                  self.INVALID_TYPE: "Некорректный тип значения"}
+        if self.error_type == self.INVALID_MASK:
+            message = ""
+        elif self.error_type == self.TOO_BIG_VALUE and 'max' in self.kwargs:
+            if 'literal' in self.kwargs:
+                message = f"Спецификатор {self.kwargs['literal']} требует значение, " \
+                          f"не превышающее {self.kwargs['max']}\n"
+            else:
+                message = f"Ожидалось значение, не превышающее {self.kwargs['max']}\n"
+        elif self.error_type == self.TOO_SMALL_VALUE and 'min' in self.kwargs:
+            if 'literal' in self.kwargs:
+                message = f"Спецификатор {self.kwargs['literal']} требует значение " \
+                          f"не ниже {self.kwargs['max']}\n"
+            else:
+                message = f"Ожидалось значение не ниже {self.kwargs['min']}\n"
+        elif self.error_type == self.INVALID_VALUES_COUNT and 'expected' in self.kwargs and 'found' in self.kwargs:
+            message = f"Ожидалось {self.kwargs['expected']} значений, но получено {self.kwargs['found']}\n"
+        elif self.error_type == self.INVALID_TYPE and 'expected' in self.kwargs:
+            types = {int: "целое число", float: "вещественное число"}
+            message = f"Ожидалось {types[self.kwargs['expected']]}\n"
+        else:
+            message = ""
+        return f"Строка {self.line + 1}: {errors[self.error_type]}\n{self.text}\n{message}"
 
 
 def preprocessor(text: str):
@@ -45,14 +83,21 @@ def get_defines(text: str):
 def convert(text: str, path):
     file = open(path, 'bw')
     for i, line in enumerate(preprocessor(text)):
+        if not line.strip():
+            continue
+
+        try:
+            n = len(get_expected_values(line.split()[0]))
+        except BinaryConverterError as ex:
+            raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
+
+        if n != (found := len(line.split()) - 1):
+            raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT, i, line, expected=n, found=found)
+
         try:
             file.write(convert_line(line))
-        except PackError:
-            raise PackError(f"Invalid mask on line {i + 1}")
-        except ValueError as ex:
-            raise PackError(f"Invalid value on line {i + 1}: \n{ex}")
-        except IndexError as ex:
-            raise PackError(f"Invalid values on line {i + 1}: \n{ex}")
+        except BinaryConverterError as ex:
+            raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
 
 
 class StructFormat:
@@ -90,7 +135,7 @@ def convert_line(line: str):
         if literal == 'x':
             continue
         if i == len(lst):
-            raise IndexError(f"Expected more values then {i}")
+            raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
         if literal == 's':
             byte_str = lst[i].encode('utf-8')
             if len(byte_str) >= count:
@@ -100,10 +145,17 @@ def convert_line(line: str):
             i += 1
         else:
             for j in range(count):
-                numbers.append(FORMATS[literal].value_type(lst[i]))
+                try:
+                    numbers.append(FORMATS[literal].value_type(lst[i]))
+                except ValueError:
+                    raise BinaryConverterError(BinaryConverterError.INVALID_TYPE, expected=FORMATS[literal].value_type)
+                if numbers[-1] > FORMATS[literal].max:
+                    raise BinaryConverterError(BinaryConverterError.TOO_BIG_VALUE, max=FORMATS[literal].max)
+                if numbers[-1] < FORMATS[literal].min:
+                    raise BinaryConverterError(BinaryConverterError.TOO_SMALL_VALUE, min=FORMATS[literal].min)
                 i += 1
     if i != len(lst):
-        raise IndexError(f"Expected {i - 1} values but {len(lst) - 1} found")
+        raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
     return struct.pack(lst[0], *numbers)
 
 
@@ -120,6 +172,8 @@ def get_expected_values(mask: str):
         if literal == 's':
             res.append((str, 0, num - 1))
         elif literal != 'x':
+            if literal not in FORMATS:
+                raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
             for _ in range(num):
                 res.append((FORMATS[literal].value_type, FORMATS[literal].min, FORMATS[literal].max))
     return res
@@ -134,18 +188,39 @@ def get_number(mask: str):
             return 1, mask[0], mask[1:]
         return int(mask[:i]), mask[i], mask[i + 1:]
     except IndexError:
-        raise PackError("Invalid mask")
+        raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
 
 
 if __name__ == '__main__':
+    code = 0
     if len(argv) > 1:
         if len(argv) != 3:
             print('Error: invalid args')
+            code = 1
         else:
-            with open(argv[1], encoding='utf-8') as f:
-                convert(f.read(), argv[2])
+            try:
+                with open(argv[1], encoding='utf-8') as f:
+                    convert(f.read(), argv[2])
+            except BinaryConverterError as ex:
+                print(ex)
+                code = 2
+            except FileNotFoundError as ex:
+                print(f"Error: {ex}")
+                code = 3
+            except PermissionError as ex:
+                print(f"Permission error: {ex}")
     else:
         file1 = input("Enter input file: ")
         file2 = input("Enter output file: ")
-        with open(file1, encoding='utf-8') as f:
-            convert(f.read(), file2)
+        try:
+            with open(file1, encoding='utf-8') as f:
+                convert(f.read(), file2)
+        except BinaryConverterError as ex:
+            print(ex)
+            code = 2
+        except FileNotFoundError as ex:
+            print(f"Error: {ex}")
+            code = 3
+        except PermissionError as ex:
+            print(f"Permission error: {ex}")
+    sys.exit(code)
