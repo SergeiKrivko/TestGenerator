@@ -53,14 +53,14 @@ class FilesWidget(QWidget):
 
         items = []
         if self.current_path != self.path:
-            items.append(FileListWidgetItem('..', self.tm))
+            items.append(FileListWidgetItem('..', self.tm, self.sm))
 
         for file in os.listdir(self.current_path):
             for el in FilesWidget.ignore_files:
                 if file.endswith(el):
                     break
             else:
-                items.append(FileListWidgetItem(f"{self.current_path}/{file}", self.tm))
+                items.append(FileListWidgetItem(f"{self.current_path}/{file}", self.tm, self.sm))
 
         items.sort(key=lambda it: it.priority)
         for item in items:
@@ -93,7 +93,9 @@ class FilesWidget(QWidget):
 
     def create_file(self, *args):
         self.dialog = RenameFileDialog(
-            'main.c' if self.path == self.current_path and not os.path.isfile(f"{self.path}/main.c") else '', self.tm)
+            f"main{languages[self.sm.get('language', 'C')]['files'][0]}"
+            if self.path == self.current_path and not os.path.isfile(
+                f"{self.path}/main{languages[self.sm.get('language', 'C')]['files'][0]}") else '', self.tm)
         if self.dialog.exec():
             os.makedirs(self.current_path, exist_ok=True)
             if not self.dialog.line_edit.text():
@@ -136,11 +138,13 @@ class FilesWidget(QWidget):
 
 
 class FileListWidgetItem(QListWidgetItem):
-    def __init__(self, path, tm):
+    def __init__(self, path, tm, sm):
         super(FileListWidgetItem, self).__init__()
         self.path = path
 
         self.tm = tm
+        self.sm = sm
+        language = languages[self.sm.get('language', 'C')]
 
         if path == '..':
             self.name = '..'
@@ -153,34 +157,37 @@ class FileListWidgetItem(QListWidgetItem):
                 self.setText(f"▼ {self.name}")
                 self.file_type = 'dir'
                 self.priority = 1
-            elif self.path.endswith("main.c"):
+            elif self.path.endswith(f"main{language.get('files')[0]}"):
                 self.setText(f"◆ {self.name}")
                 self.file_type = 'main'
                 self.priority = 2
-            elif self.path.endswith(".c"):
+            elif self.path.endswith(language.get('files')[0]):
                 self.setText(f"◆ {self.name}")
                 self.file_type = 'code'
                 self.priority = 3
-            elif self.path.endswith(".h"):
-                self.setText(f"◆ {self.name}")
-                self.file_type = 'header'
-                self.priority = 3
             else:
-                for key, item in languages.items():
-                    flag = False
-                    for el in item.get('files', []):
-                        if self.path.endswith(el):
-                            self.setText(f" ●  {self.name}")
-                            self.file_type = 'text'
-                            self.priority = 4
-                            flag = True
-                    if flag:
+                for elem in language.get('files'):
+                    if self.path.endswith(elem):
+                        self.setText(f"◆ {self.name}")
+                        self.file_type = 'header'
+                        self.priority = 3
                         break
                 else:
-                    self.setText(f" ?  {self.name}")
+                    for key, item in languages.items():
+                        flag = False
+                        for el in item.get('files', []):
+                            if self.path.endswith(el):
+                                self.setText(f" ●  {self.name}")
+                                self.file_type = 'text'
+                                self.priority = 4
+                                flag = True
+                        if flag:
+                            break
+                    else:
+                        self.setText(f" ?  {self.name}")
 
-                    self.file_type = 'unknown'
-                    self.priority = 5
+                        self.file_type = 'unknown'
+                        self.priority = 5
 
         self.set_theme()
 

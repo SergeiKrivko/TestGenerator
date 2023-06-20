@@ -27,7 +27,7 @@ def c_compile(path, cm, sm, coverage=False):
     return False, compile_res.stderr
 
 
-def c_run(path, sm, cm, args, in_data):
+def c_run(path, sm, cm, args='', in_data='', coverage=False):
     if os.path.isfile(path):
         return cm.cmd_command(f"{path} {args}", input=in_data, shell=True, timeout=float(sm.get_smart('time_limit', 3)))
     return cm.cmd_command(f"{path}/app.exe {args}", input=in_data, shell=True,

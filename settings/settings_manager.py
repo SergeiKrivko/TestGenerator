@@ -42,7 +42,7 @@ class SettingsManager:
     def __getitem__(self, item):
         return self.get(item)
 
-    def get_smart(self, key, default):
+    def get_smart(self, key, default=None):
         if key in self.project_settings:
             return self.project_settings[key]
         return self.get_general(key, default)

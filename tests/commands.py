@@ -36,8 +36,9 @@ class CommandManager:
         return languages[self.sm.get('language', 'C')].get(
             'compile', lambda *args: (False, 'Can\'t compile this file'))(self.path, self, self.sm, coverage)
 
-    def run_code(self, args='', in_data='', file=''):
-        return languages[self.sm.get('language', 'C')].get('run')(f"{self.path}/{file}", self.sm, self, args, in_data)
+    def run_code(self, args='', in_data='', file='', coverage=False):
+        return languages[self.sm.get('language', 'C')].get('run')(f"{self.path}/{file}", self.sm, self, args, in_data,
+                                                                  coverage)
 
     def collect_coverage(self):
         return languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)
@@ -189,7 +190,7 @@ class TestingLooper(QThread):
                     try:
                         res = self.cm.run_code(
                             CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt'),
-                            dct.get('in', ''))
+                            dct.get('in', ''), coverage=self.coverage)
                         # res = CommandManager.cmd_command(
                         #     f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt')}",
                         #     input=dct.get('in', ''), timeout=self.time_limit, shell=True)
