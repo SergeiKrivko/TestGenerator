@@ -18,8 +18,16 @@ class Searcher(QThread):
         self.res = dict()
 
     def run(self):
-        self.res = find('C:\\', {
-            'gcc.exe': None,
-            'gcov.exe': None,
-            'python.exe': None,
-            'coverage.exe': None})
+        if os.name == 'nt':
+            self.res = find('C:\\', {
+                'gcc.exe': None,
+                'gcov.exe': None,
+                'python.exe': None,
+                'coverage.exe': None})
+        else:
+            self.res = {
+                'gcc.exe': ['gcc'],
+                'gcov.exe': ['gcov'],
+                'python.exe': ['python3'],
+                'coverage.exe': ['coverage']
+            }

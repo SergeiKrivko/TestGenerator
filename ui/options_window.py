@@ -157,7 +157,14 @@ class OptionsWidget(QWidget):
         elif isinstance(self.widgets[item], QLineEdit):
             self.widgets[item].setText(value)
         elif isinstance(self.widgets[item], QCheckBox):
-            self.widgets[item].setChecked(value)
+            if isinstance(value, bool | int):
+                self.widgets[item].setChecked(bool(value))
+            elif value == 'true':
+                self.widgets[item].setChecked(True)
+            elif value == 'false':
+                self.widgets[item].setChecked(False)
+            else:
+                self.widgets[item].setChecked(bool(int(value)))
         elif isinstance(self.widgets[item], QComboBox):
             self.widgets[item].setCurrentIndex(value)
         elif isinstance(self.widgets[item], ProgramComboBox):

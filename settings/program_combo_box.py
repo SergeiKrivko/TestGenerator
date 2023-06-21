@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton
 
 
@@ -29,6 +31,9 @@ class ProgramComboBox(QWidget):
         self.setLayout(layout)
 
         self.sm.searching_complete.connect(self.update_items)
+
+        if os.name == 'posix':
+            self.setDisabled(True)
 
     def set_items(self, items: list, delete_current=False):
         text = self.combo_box.currentText()

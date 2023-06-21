@@ -111,7 +111,7 @@ class TestingSettingsWidget(QWidget):
         self.apply_values()
         self.compiler_checkbox.setChecked(self.sm.get('default_compiler_settings', True))
         self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
-        self.language_widgets[self.sm.get('language', 'C')].show()
+        # self.language_widgets[self.sm.get('language', 'C')].show()
 
     def save_settings(self):
         for key, item in self.language_keys[self.sm.get('language', 'C')].items():

@@ -6,7 +6,7 @@ def c_compile(path, cm, sm, coverage=False):
     os.chdir(path)
     compiler = sm.get_smart('gcc', 'gcc')
     compiler_keys = sm.get_smart('c_compiler_keys', '')
-    env = {'PATH': os.path.split(compiler)[0]}
+    env = {'PATH': f"{os.path.split(compiler)[0]};{os.getenv('PATH')}"}
     compile_res = cm.cmd_command(f"{compiler} {compiler_keys} -c {'--coverage' if coverage else ''} "
                                  f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} "
                                  f"-g {'-lm' if sm.get_smart('-lm', False) else ''}", shell=True, env=env)
