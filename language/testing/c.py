@@ -4,14 +4,16 @@ import os
 def c_compile(path, cm, sm, coverage=False):
     old_dir = os.getcwd()
     os.chdir(path)
-    compiler = sm.get_smart('compiler', 'gcc')
-    compile_res = cm.cmd_command(f"{compiler} -c {'--coverage' if coverage else ''} "
+    compiler = sm.get_smart('gcc', 'gcc')
+    compiler_keys = sm.get_smart('c_compiler_keys', '')
+    env = {'PATH': os.path.split(compiler)[0]}
+    compile_res = cm.cmd_command(f"{compiler} {compiler_keys} -c {'--coverage' if coverage else ''} "
                                  f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} "
-                                 f"-g {'-lm' if sm.get_smart('-lm', False) else ''}", shell=True)
+                                 f"-g {'-lm' if sm.get_smart('-lm', False) else ''}", shell=True, env=env)
     if not compile_res.returncode:
-        compile_res = cm.cmd_command(f"{compiler} {'--coverage' if coverage else ''} -o {path}/app.exe "
+        compile_res = cm.cmd_command(f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/app.exe "
                                      f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} "
-                                     f"{'-lm' if sm.get_smart('-lm', False) else ''}", shell=True)
+                                     f"{'-lm' if sm.get_smart('-lm', False) else ''}", shell=True, env=env)
 
         if not compile_res.returncode:
             for file in os.listdir(path):
@@ -46,7 +48,7 @@ def c_collect_coverage(path, sm, cm):
 
     for file in os.listdir(path):
         if file.endswith('.c'):
-            res = cm.cmd_command(f"gcov {path}/{file}", shell=True)
+            res = cm.cmd_command(f"{sm.get_smart('gcov', 'gcov')} {path}/{file}", shell=True)
             for line in res.stdout.split('\n'):
                 if "Lines executed:" in line:
                     p, _, c = line.split(":")[1].split()

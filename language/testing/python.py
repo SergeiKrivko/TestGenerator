@@ -6,7 +6,8 @@ def python_compile(path, sm, cm, coverage):
 
 
 def python_run(path, sm, cm, args='', in_data='', coverage=False):
-    command = 'coverage run' if coverage else f"\"{sm.get_smart('python', 'python')}\""
+    command = f"\"{sm.get_smart('python_coverage', 'coverage')}\" run" \
+        if coverage else f"\"{sm.get_smart('python', 'python')}\""
     if os.path.isfile(path):
         return cm.cmd_command(f"{command} {path} {args}", input=in_data, shell=True,
                               timeout=float(sm.get_smart('time_limit', 3)))

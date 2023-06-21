@@ -34,16 +34,23 @@ class SettingsWidget(QWidget):
         layout.addWidget(self.main_options_widget)
 
         self.c_options_widget = OptionsWidget({
-            "Компилятор": {'type': str, 'width': 400, 'initial': self.sm.get_general('c_compiler', 'gcc')},
+            "Компилятор": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'gcc.exe', 'key': 'gcc',
+                           'initial': self.sm.get_general('gcc', '')},
+            "Ключи компилятора": {'type': str, 'width': 400, 'initial': self.sm.get_general('c_compiler_keys', '')},
             "Ключ -lm": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
                          'initial': bool(self.sm.get_general('c_lm', True))},
+            "Coverage": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'gcov.exe', 'key': 'gcov',
+                         'initial': self.sm.get_general('gcov', '')},
         }, margins=(20, 20, 20, 20))
         self.c_options_widget.clicked.connect(self.save_c_settings)
         self.c_options_widget.hide()
         layout.addWidget(self.c_options_widget)
 
         self.python_options_widget = OptionsWidget({
-            "Python": {'type': str, 'width': 250, 'initial': self.sm.get_general('python', 'python')},
+            "Python": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'python.exe', 'key': 'python',
+                       'initial': self.sm.get_general('python', '')},
+            "Python coverage": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'coverage.exe',
+                                'key': 'python_coverage', 'initial': self.sm.get_general('python_coverage', 'coverage')},
         }, margins=(20, 20, 20, 20))
         self.python_options_widget.clicked.connect(self.save_python_settings)
         self.python_options_widget.hide()
@@ -85,6 +92,8 @@ class SettingsWidget(QWidget):
         self.main_options_widget.setFont(self.tm.font_small)
         self.testing_widget.setFont(self.tm.font_small)
         self.tm.css_to_options_widget(self.main_options_widget)
+        self.tm.css_to_options_widget(self.c_options_widget)
+        self.tm.css_to_options_widget(self.python_options_widget)
         self.tm.css_to_options_widget(self.testing_widget)
         self.libs_widget.set_theme()
 
@@ -97,7 +106,7 @@ class SettingsWidget(QWidget):
 
     def save_c_settings(self):
         dct = self.c_options_widget.values
-        self.sm.set_general('compiler', dct['Компилятор'])
+        self.sm.set_general('c_compiler_keys', dct['Ключи компилятора'])
         self.sm.set_general('-lm', int(dct['Ключ -lm']))
 
     def save_python_settings(self):

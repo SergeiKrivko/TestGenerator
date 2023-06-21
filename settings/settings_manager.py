@@ -1,11 +1,16 @@
 import os
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, pyqtSignal, QObject
 from json import dumps, loads, JSONDecodeError
 import appdirs
 
+from settings.search import Searcher
 
-class SettingsManager:
+
+class SettingsManager(QObject):
+    searching_complete = pyqtSignal()
+
     def __init__(self):
+        super().__init__()
         # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
         self.q_settings = QSettings()
         self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko").replace('\\', '/')
@@ -22,6 +27,11 @@ class SettingsManager:
         self.data_path = ''
         self.project_settings = dict()
         self.set_project(self.get_general('project'))
+
+        self.programs = dict()
+        self.searcher = Searcher()
+        self.searcher.finished.connect(self.search_finish)
+        self.searcher.start()
 
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)
@@ -47,8 +57,12 @@ class SettingsManager:
             return self.project_settings[key]
         return self.get_general(key, default)
 
-    def remove(self, key):
+    def remove_general(self, key):
         self.q_settings.remove(key)
+
+    def remove(self, key):
+        if key in self.project_settings:
+            self.project_settings.pop(key)
 
     def set_project(self, project):
         if project is None:
@@ -205,4 +219,8 @@ class SettingsManager:
                 f.write(dumps(self.project_settings))
             self.set_general('projects', dumps(self.projects))
             self.set_general('project', self.project)
+
+    def search_finish(self):
+        self.programs = self.searcher.res
+        self.searching_complete.emit()
 

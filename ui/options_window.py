@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox,
     QLineEdit, QCheckBox, QComboBox, QFileDialog, QPushButton, QApplication, QDialog, QDialogButtonBox
 from PyQt5.QtCore import Qt, pyqtSignal
 
+from settings.program_combo_box import ProgramComboBox
+
 
 class OptionsWindow(QDialog):
     NAME_TOP = 0
@@ -151,13 +153,15 @@ class OptionsWidget(QWidget):
     def set_value(self, item, value):
         self.values[item] = value
         if isinstance(self.widgets[item], (QSpinBox, QDoubleSpinBox)):
-            self.widgets[item].setValue(value)
+            self.widgets[item].setValue(float(value))
         elif isinstance(self.widgets[item], QLineEdit):
             self.widgets[item].setText(value)
         elif isinstance(self.widgets[item], QCheckBox):
             self.widgets[item].setChecked(value)
         elif isinstance(self.widgets[item], QComboBox):
             self.widgets[item].setCurrentIndex(value)
+        elif isinstance(self.widgets[item], ProgramComboBox):
+            self.widgets[item].set_value(value)
 
     def setFont(self, a0) -> None:
         for widget in self.widgets.values():
@@ -182,6 +186,8 @@ class OptionsWidget(QWidget):
             return self.button(key, item)
         elif item['type'] == 'size':
             return self.size_widget(key, item)
+        elif item['type'] == 'program':
+            return self.program_widget(key, item)
         else:
             raise TypeError(f"unknown value type {item['type']}")
 
@@ -310,6 +316,14 @@ class OptionsWidget(QWidget):
         widget1.valueChanged.connect(lambda value: self.set_dict_value(key, (value, widget2.value())))
         widget2.valueChanged.connect(lambda value: self.set_dict_value(key, (widget1.value(), value)))
         return widget, value
+
+    def program_widget(self, key, item):
+        widget = ProgramComboBox(item['sm'], item['file'], item['key'], item.get('general', True))
+        if 'initial' in item:
+            widget.set_value(str(item['initial']))
+        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        return widget, ''
 
     def set_widgets_width(self, width):
         for key, item in self.dct.items():

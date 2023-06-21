@@ -3,6 +3,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget
 
+from settings.program_combo_box import ProgramComboBox
+
 basic_theme = {
     'Identifier': Qt.black,
     'Preprocessor': Qt.darkYellow,
@@ -450,6 +452,8 @@ class ThemeManager:
     def css_to_options_widget(self, widget):
         widget.setFont(self.font_small)
         for el in widget.widgets.values():
+            if isinstance(el, ProgramComboBox):
+                el.set_theme(self)
             self.auto_css(el)
         for el in widget.labels.values():
             self.auto_css(el)
@@ -669,21 +673,47 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
         """
         self.combo_box_style_sheet = f"""
         QComboBox {{
-        {self.style_sheet}
+            {self.style_sheet}
         }}
         QComboBox::hover {{
-        background-color: {self['ColorHover']};
+            background-color: {self['ColorHover']};
         }}
         QComboBox::drop-down:button {{
-        border-radius: 5px;
+            border-radius: 5px;
         }}
         QComboBox QAbstractItemView {{
-        color: {self['TextColor']};
-        background-color: {self['MainColor']};
-        border: 1px solid {self['BorderColor']};
-        selection-color: {self['TextColor']};
-        selection-background-color: {self['ColorHover']};
-        border-radius: 4px;
+            color: {self['TextColor']};
+            background-color: {self['MainColor']};
+            border: 1px solid {self['BorderColor']};
+            selection-color: {self['TextColor']};
+            selection-background-color: {self['ColorHover']};
+            border-radius: 4px;
+        }}
+        QComboBox QScrollBar:vertical {{
+            background: {self['MainColor']};
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            width: 12px;
+            margin: 0px;
+        }}
+        QComboBox QScrollBar::handle::vertical {{
+            background-color: {self['BorderColor']};
+            margin: 2px 2px 2px 6px;
+            border-radius: 2px;
+            min-height: 20px;
+        }}
+        QComboBox QScrollBar::handle::vertical:hover {{
+            margin: 2px;
+            border-radius: 4px;
+        }}
+        QComboBox QScrollBar::sub-page, QScrollBar::add-page {{
+            background: none;
+        }}
+        QComboBox QScrollBar::sub-line, QScrollBar::add-line {{
+            background: none;
+            height: 0px;
+            subcontrol-position: left;
+            subcontrol-origin: margin;
         }}
         """
         self.spin_box_style_sheet = f"""
