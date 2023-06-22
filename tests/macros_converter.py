@@ -38,6 +38,7 @@ class MacrosConverter(QThread):
         self.closed = False
 
         self.line_sep = sm.get_general('line_sep', '\n')
+        self.data_path = sm.data_lab_path()
         background_process_manager.add_process(src_dir, self)
 
     @staticmethod
@@ -65,10 +66,9 @@ class MacrosConverter(QThread):
                 text[i] = '#fout1'
             if text[i].startswith('#fout') and (n := text[i].lstrip('#fout')).isdigit():
                 if int(n) in out_files:
-                    text[i] = os.path.split(out_files[int(n)])[0] + f'/temp_{int(n)}{out_files[int(n)][-4:]}'
+                    text[i] = f"{self.data_path}/temp_{int(n)}{out_files[int(n)][-4:]}"
                 else:
-                    text[i] = os.path.split(self.dst_format.get(f'{test_type}_out_files').format(0, 0))[0] + \
-                              f'/temp_{int(n)}'
+                    text[i] = f"{self.data_path}/temp_{int(n)}{out_files[int(n)][-4:]}/temp_{int(n)}"
         with open(path, 'w', encoding='utf-8', newline=self.line_sep) as f:
             f.write(' '.join(text))
 

@@ -144,17 +144,17 @@ class SettingsManager(QObject):
         return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_args.txt"
 
     def test_in_file_path(self, test_type, number, file_number=1, binary=False):
-        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_in" \
+        return f"{self.lab_path()}/func_tests/data_files/{test_type}_{number + 1:0>2}_in" \
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
     def test_out_file_path(self, test_type, number, file_number=1, binary=False):
-        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_out" \
+        return f"{self.lab_path()}/func_tests/data_files/{test_type}_{number + 1:0>2}_out" \
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
     def test_check_file_path(self, test_type, number, file_number=1, binary=False):
-        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_check" \
+        return f"{self.lab_path()}/func_tests/data_files/{test_type}_{number + 1:0>2}_check" \
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
