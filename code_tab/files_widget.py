@@ -1,8 +1,8 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem
+    QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
 
 from ui.message_box import MessageBox
 from language.languages import languages
@@ -13,28 +13,37 @@ class FilesWidget(QWidget):
     openFile = pyqtSignal(str)
     ignore_files = [".exe", ".o", "temp.txt"]
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm, cm, tm):
         super(FilesWidget, self).__init__()
         self.sm = sm
+        self.cm = cm
         self.tm = tm
 
         self.setMaximumWidth(175)
         files_layout = QVBoxLayout()
-        files_layout.setContentsMargins(0, 0, 0, 0)
+        files_layout.setContentsMargins(0, 5, 0, 0)
         self.setLayout(files_layout)
         self.path = ''
         self.current_path = ''
 
         buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(3)
         files_layout.addLayout(buttons_layout)
+
         self.button_add_file = QPushButton()
         self.button_add_file.setText("+")
         self.button_add_file.setFixedHeight(20)
         buttons_layout.addWidget(self.button_add_file)
+
         self.button_delete_file = QPushButton()
         self.button_delete_file.setText("✕")
         self.button_delete_file.setFixedHeight(20)
         buttons_layout.addWidget(self.button_delete_file)
+
+        self.button_run = QPushButton()
+        self.button_run.setText("▶")
+        self.button_run.setFixedHeight(20)
+        buttons_layout.addWidget(self.button_run)
 
         self.files_list = QListWidget()
         files_layout.addWidget(self.files_list)
@@ -43,6 +52,8 @@ class FilesWidget(QWidget):
         self.button_add_file.clicked.connect(self.create_file)
         self.button_delete_file.clicked.connect(self.delete_file)
         self.files_list.doubleClicked.connect(self.rename_file)
+        self.button_run.clicked.connect(self.run_file)
+        self.button_run.setDisabled(True)
 
         self.dialog = None
 
@@ -128,9 +139,39 @@ class FilesWidget(QWidget):
                 pass
             else:
                 self.openFile.emit(item.path)
+                for language in languages.values():
+                    if language.get('fast_run', False):
+                        for el in language['files']:
+                            if item.path.endswith(el):
+                                self.button_run.setDisabled(False)
+                                return
+            self.button_run.setDisabled(True)
+
+    def run_file(self):
+        if not self.files_list.currentItem():
+            return
+        for language in languages.values():
+            if language.get('fast_run', False):
+                for el in language['files']:
+                    if self.files_list.currentItem().path.endswith(el):
+                        old_dir = os.getcwd()
+                        os.chdir(self.current_path)
+                        looper = FileRunner(language['run'], self.files_list.currentItem().path, self.sm, self.cm)
+                        dialog = RunDialog(self.tm, os.path.basename(self.files_list.currentItem().path))
+                        dialog.rejected.connect(looper.terminate)
+                        looper.finished.connect(dialog.accept)
+                        looper.start()
+                        if dialog.exec() and looper.res:
+                            if looper.res.stderr:
+                                MessageBox(MessageBox.Information, "STDERR", looper.res.stderr, self.tm)
+                            if looper.res.stdout:
+                                MessageBox(MessageBox.Information, "STDOUT", looper.res.stdout, self.tm)
+
+                        os.chdir(old_dir)
+                        return
 
     def set_theme(self):
-        for el in [self.button_add_file, self.button_delete_file]:
+        for el in [self.button_add_file, self.button_delete_file, self.button_run]:
             self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
         for i in range(self.files_list.count()):
@@ -281,3 +322,41 @@ class RenameFileDialog(QDialog):
         self.line_edit.setFont(tm.font_small)
 
         self.resize(280, 50)
+
+
+class FileRunner(QThread):
+    def __init__(self, func, path, sm, cm):
+        super().__init__()
+        self.func = func
+        self.path = path
+        self.sm = sm
+        self.cm = cm
+        self.res = None
+
+    def run(self):
+        self.res = self.func(self.path, self.sm, self.cm, scip_timeout=True)
+
+
+class RunDialog(QDialog):
+    def __init__(self, tm, path):
+        super().__init__()
+        self.tm = tm
+
+        self.setWindowTitle(path)
+
+        layout = QVBoxLayout()
+        label = QLabel(f"Идет выполнение скрипта \"{path}\"")
+        label.setWordWrap(True)
+        label.setFont(self.tm.font_small)
+
+        QBtn = QDialogButtonBox.Cancel
+
+        self.buttonBox = QDialogButtonBox(QBtn)
+        self.buttonBox.rejected.connect(self.reject)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+
+        layout.addWidget(label)
+        layout.addWidget(self.buttonBox)
+        self.setLayout(layout)
+

@@ -4,6 +4,7 @@ from language.autocomplition.abstract import CodeAutocompletionManager as AcMAbs
 from language.autocomplition.c import CodeAutocompletionManager as AcMC
 import language.testing.c
 import language.testing.python
+import language.testing.shell
 
 languages = {
     'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
@@ -54,7 +55,8 @@ languages = {
         'compile': language.testing.python.python_compile,
         'run': language.testing.python.python_run,
         'coverage': language.testing.python.python_collect_coverage,
-        'clear_coverage': language.testing.python.python_clear_coverage_files
+        'clear_coverage': language.testing.python.python_clear_coverage_files,
+        'fast_run': True,
     },
     'C++': {'lexer': QsciLexerCPP, 'files': ['.cpp', '.h'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerCPP.Identifier: 'Identifier',
@@ -68,26 +70,39 @@ languages = {
         QsciLexerCPP.DoubleQuotedString: 'String',
         QsciLexerCPP.SingleQuotedString: 'String',
     }},
-    'Bach': {'lexer': QsciLexerBash, 'files': ['.sh'], 'autocompletion': AcMAbstract, 'colors': {
-        QsciLexerBash.Identifier: 'Identifier',
-        QsciLexerBash.Operator: 'Identifier',
-        QsciLexerBash.Number: 'Number',
-        QsciLexerBash.Comment: 'Comment',
-        QsciLexerBash.Keyword: 'Keyword',
-        QsciLexerBash.DoubleQuotedString: 'String',
-        QsciLexerBash.SingleQuotedString: 'String',
-        QsciLexerBash.ParameterExpansion: 'Preprocessor',
-        QsciLexerBash.Error: 'Preprocessor',
-    }},
-    'Batch': {'lexer': QsciLexerBatch, 'files': ['.bat', '.cmd'], 'autocompletion': AcMAbstract, 'colors': {
-        QsciLexerBatch.Keyword: 'Keyword',
-        QsciLexerBatch.Comment: 'Comment',
-        QsciLexerBatch.ExternalCommand: 'Preprocessor',
-        QsciLexerBatch.Operator: 'Identifier',
-        QsciLexerBatch.HideCommandChar: 'String',
-        QsciLexerBatch.Variable: 'Number',
-        QsciLexerBatch.Default: 'Identifier'
-    }},
+    'Bach': {
+        'lexer': QsciLexerBash,
+        'files': ['.sh'],
+        'autocompletion': AcMAbstract,
+        'colors': {
+            QsciLexerBash.Identifier: 'Identifier',
+            QsciLexerBash.Operator: 'Identifier',
+            QsciLexerBash.Number: 'Number',
+            QsciLexerBash.Comment: 'Comment',
+            QsciLexerBash.Keyword: 'Keyword',
+            QsciLexerBash.DoubleQuotedString: 'String',
+            QsciLexerBash.SingleQuotedString: 'String',
+            QsciLexerBash.ParameterExpansion: 'Preprocessor',
+            QsciLexerBash.Error: 'Preprocessor'
+        },
+        'run': language.testing.shell.bash_run,
+        'fast_run': True,
+    },
+    'Batch': {
+        'lexer': QsciLexerBatch,
+        'files': ['.bat', '.cmd'],
+        'autocompletion': AcMAbstract,
+        'colors': {
+            QsciLexerBatch.Keyword: 'Keyword',
+            QsciLexerBatch.Comment: 'Comment',
+            QsciLexerBatch.ExternalCommand: 'Preprocessor',
+            QsciLexerBatch.Operator: 'Identifier',
+            QsciLexerBatch.HideCommandChar: 'String',
+            QsciLexerBatch.Variable: 'Number',
+            QsciLexerBatch.Default: 'Identifier'
+        },
+        'run': language.testing.shell.batch_run,
+        'fast_run': True, },
     'Markdown': {'lexer': QsciLexerMarkdown, 'files': ['.md'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerMarkdown.BlockQuote: 'Keyword',
         QsciLexerMarkdown.CodeBlock: 'Preprocessor',

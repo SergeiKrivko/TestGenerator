@@ -35,7 +35,7 @@ class CodeWidget(QWidget):
         self.test_res_widget = QListWidget()
         self.test_res_widget.setMaximumWidth(200)
 
-        self.files_widget = FilesWidget(self.sm, self.tm)
+        self.files_widget = FilesWidget(self.sm, self.cm, self.tm)
         self.files_widget.setMaximumWidth(200)
 
         self.files_widget.openFile.connect(self.open_code)
