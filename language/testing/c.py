@@ -56,8 +56,6 @@ def c_collect_coverage(path, sm, cm):
                     count += round(float(p[:-1]) / 100 * int(c))
                     break
 
-    c_clear_coverage_files(path)
-
     if total_count == 0:
         return 0
     return count / total_count * 100

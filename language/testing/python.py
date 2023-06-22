@@ -35,5 +35,6 @@ def python_collect_coverage(path, sm, cm):
 
 
 def python_clear_coverage_files(path):
+    print('Python: clear coverage')
     if os.path.isfile(f"{path}/.coverage"):
         os.remove(f"{path}/.coverage")

@@ -41,13 +41,13 @@ class CommandManager:
                                                                   coverage)
 
     def collect_coverage(self):
-        return languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)
+        res = languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)
+        self.clear_coverage_files()
+        return res
 
     def clear_coverage_files(self):
         self.path = self.sm.lab_path()
-        for file in os.listdir(self.sm.lab_path()):
-            if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
-                os.remove(f"{self.path}/{file}")
+        languages[self.sm.get('language', 'C')].get('clear_coverage', lambda *args: 0)(self.path)
 
     def testing(self, pos_comparator, neg_comparator, memory_testing, coverage):
         self.update_path()
@@ -161,7 +161,7 @@ class TestingLooper(QThread):
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, sm, cm, compiler, path, data_path, pos_comparator, neg_comparator,
+    def __init__(self, sm, cm: CommandManager, compiler, path, data_path, pos_comparator, neg_comparator,
                  memory_testing=False, coverage=False, time_limit=10):
         super(TestingLooper, self).__init__()
         self.time_limit = time_limit
