@@ -134,9 +134,9 @@ class ProjectWidget(QWidget):
             self.jump_to_code.emit(path)
         else:
             dialog = OpenAsProjectDialog(self.tm, self.sm, path)
-            if dialog.exec():
+            if not self.sm.get_general('not_create_project', False) and dialog.exec():
                 name = dialog.line_edit.text()
-            elif dialog.create_temp_project:
+            elif self.sm.get_general('not_create_project', False) or dialog.create_temp_project:
                 name = "Текущий проект"
                 i = 2
                 while name in self.sm.projects:

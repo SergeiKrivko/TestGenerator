@@ -28,7 +28,12 @@ class SettingsWidget(QWidget):
             "Символ переноса строки: ": {'type': 'combo', 'values': line_sep.values(), 'name': OptionsWidget.NAME_LEFT,
                                          'initial': list(line_sep.keys()).index(self.sm.get_general('line_sep', '\n'))},
             "Тема:": {'type': 'combo', 'values': list(self.tm.themes.keys()), 'name': OptionsWidget.NAME_LEFT,
-                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)}
+                      'initial': list(self.tm.themes.keys()).index(self.tm.theme_name)},
+            "Поиск программ при каждом запуске": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
+                                                  'initial': self.sm.get_general('search_after_start', True)},
+            "Не предлагать создание проекта при открытии файла": {
+                'type': bool, 'name': OptionsWidget.NAME_RIGHT,
+                'initial': self.sm.get_general('not_create_project', False)}
         }, margins=(20, 20, 20, 20))
         self.main_options_widget.clicked.connect(self.save_main_settings)
         layout.addWidget(self.main_options_widget)
@@ -50,7 +55,8 @@ class SettingsWidget(QWidget):
             "Python": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'python.exe', 'key': 'python',
                        'initial': self.sm.get_general('python', '')},
             "Python coverage": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'coverage.exe',
-                                'key': 'python_coverage', 'initial': self.sm.get_general('python_coverage', 'coverage')},
+                                'key': 'python_coverage',
+                                'initial': self.sm.get_general('python_coverage', 'coverage')},
         }, margins=(20, 20, 20, 20))
         self.python_options_widget.clicked.connect(self.save_python_settings)
         self.python_options_widget.hide()
@@ -100,6 +106,8 @@ class SettingsWidget(QWidget):
     def save_main_settings(self):
         dct = self.main_options_widget.values
         self.sm.set_general('line_sep', list(line_sep.keys())[dct['Символ переноса строки: ']])
+        self.sm.set_general('search_after_start', int(dct['Поиск программ при каждом запуске']))
+        self.sm.set_general('not_create_project', int(dct['Не предлагать создание проекта при открытии файла']))
         self.sm.set_general('theme', th := list(self.tm.themes.keys())[dct['Тема:']])
         self.tm.set_theme(th)
         self.change_theme.emit()

@@ -235,6 +235,8 @@ class OptionsWidget(QWidget):
         widget = QCheckBox()
         widget.setFixedHeight(item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
         value = item.get('initial', False)
+        if isinstance(value, int):
+            value = bool(value)
         if not isinstance(value, bool):
             value = False
         widget.setChecked(value)

@@ -23,6 +23,7 @@ class ProgramComboBox(QWidget):
         self.button_update = QPushButton("↺")
         layout.addWidget(self.button_update)
         self.button_update.setFixedWidth(24)
+        self.button_update.clicked.connect(self.sm.start_search)
 
         self.button_add = QPushButton("+")
         layout.addWidget(self.button_add)
@@ -32,8 +33,10 @@ class ProgramComboBox(QWidget):
 
         self.sm.searching_complete.connect(self.update_items)
 
-        if os.name == 'posix':
+        if os.name != 'nt':
             self.setDisabled(True)
+        else:
+            self.update_items()
 
     def set_items(self, items: list, delete_current=False):
         text = self.combo_box.currentText()

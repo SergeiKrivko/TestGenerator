@@ -29,9 +29,10 @@ class SettingsManager(QObject):
         self.set_project(self.get_general('project'))
 
         self.programs = dict()
-        self.searcher = Searcher()
-        self.searcher.finished.connect(self.search_finish)
-        self.searcher.start()
+        self.searcher = None
+        self.load_programs()
+        if self.get_general('search_after_start', True):
+            self.start_search()
 
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)
@@ -247,6 +248,29 @@ class SettingsManager(QObject):
             self.set_general('projects', dumps(self.projects))
             self.set_general('project', self.project)
 
+    def load_programs(self):
+        try:
+            with open(f'{self.app_data_dir}/programs.json', encoding='utf-8') as f:
+                self.programs = loads(f.read())
+                if not isinstance(self.programs, dict):
+                    raise TypeError
+        except JSONDecodeError:
+            self.start_search()
+        except TypeError:
+            self.start_search()
+        except FileNotFoundError:
+            self.start_search()
+
+    def start_search(self):
+        if self.searcher and not self.searcher.isFinished():
+            return
+        print('start_search')
+        self.searcher = Searcher()
+        self.searcher.finished.connect(self.search_finish)
+        self.searcher.start()
+
     def search_finish(self):
         self.programs = self.searcher.res
         self.searching_complete.emit()
+        with open(f'{self.app_data_dir}/programs.json', 'w', encoding='utf-8') as f:
+            f.write(dumps(self.programs))
