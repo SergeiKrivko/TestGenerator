@@ -348,10 +348,6 @@ class TestingWidget(QWidget):
         self.progress_bar.hide()
         self.coverage_bar.show()
 
-        if os.path.isfile(f"{self.path}/temp.txt"):
-            os.remove(f"{self.path}/temp.txt")
-        self.testing_end.emit()
-
         if self.sm.get_smart('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
@@ -376,10 +372,6 @@ class TestingWidget(QWidget):
 
         if self.sm.get_smart('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
-
-        if os.path.isfile(f"{self.path}/temp.txt"):
-            os.remove(f"{self.path}/temp.txt")
-        self.testing_end.emit()
 
         if errors:
             dialog = CompilerErrorWindow(errors, os.listdir(self.path), self.tm)

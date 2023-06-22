@@ -54,8 +54,8 @@ class CommandManager:
         if not os.path.isdir(self.path):
             raise FileNotFoundError
         self.looper = TestingLooper(
-            self.sm, self, self.compile, self.sm.lab_path(), f"{self.sm.data_lab_path()}/func_tests",
-            pos_comparator, neg_comparator, memory_testing, coverage, time_limit=self.sm.get('time_limit'))
+            self.sm, self,
+            pos_comparator, neg_comparator, memory_testing, coverage)
         if f"{self.sm.data_lab_path()}/func_tests" in background_process_manager.dict:
             background_process_manager.dict[f"{self.sm.data_lab_path()}/func_tests"].finished.connect(self.looper.start)
         else:
@@ -64,10 +64,10 @@ class CommandManager:
     def test_count(self):
         count = 0
         i = 1
-        while os.path.isfile(f"{self.path}/func_tests/data/pos_{i:0>2}_in.txt"):
+        while os.path.isfile(self.sm.test_in_file_path('pos', i)):
             count += 1
         i = 1
-        while os.path.isfile(f"{self.path}/func_tests/data/neg_{i:0>2}_in.txt"):
+        while os.path.isfile(self.sm.test_in_file_path('neg', i)):
             count += 1
         return count
 
@@ -161,22 +161,18 @@ class TestingLooper(QThread):
     end_testing = pyqtSignal()
     testing_terminate = pyqtSignal(str)
 
-    def __init__(self, sm, cm: CommandManager, compiler, path, data_path, pos_comparator, neg_comparator,
-                 memory_testing=False, coverage=False, time_limit=10):
+    def __init__(self, sm, cm: CommandManager, pos_comparator, neg_comparator, memory_testing=False, coverage=False):
         super(TestingLooper, self).__init__()
-        self.time_limit = time_limit
-        self.compiler = compiler
+        self.sm = sm
+        self.cm = cm
         self.memory_testing = memory_testing
-        self.path = path
-        self.data_path = data_path
+        self.data_path = f"{self.sm.data_lab_path()}/func_tests"
         self.pos_comparator = pos_comparator
         self.neg_comparator = neg_comparator
         self.coverage = coverage
-        self.sm = sm
-        self.cm = cm
 
     def run(self):
-        code, errors = self.compiler(coverage=self.coverage)
+        code, errors = self.cm.compile(coverage=self.coverage)
         if not code:
             self.testing_terminate.emit(errors)
             return
@@ -188,12 +184,8 @@ class TestingLooper(QThread):
                 try:
                     dct = loads(CommandManager.read_file(f"{self.data_path}/{pos}/{el}"))
                     try:
-                        res = self.cm.run_code(
-                            CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt'),
-                            dct.get('in', ''), coverage=self.coverage)
-                        # res = CommandManager.cmd_command(
-                        #     f"{self.path}/app.exe {CommandManager.read_file(f'{self.path}/func_tests/data/{pos}_{i + 1:0>2}_args.txt')}",
-                        #     input=dct.get('in', ''), timeout=self.time_limit, shell=True)
+                        res = self.cm.run_code(CommandManager.read_file(self.sm.test_args_path(pos, i)),
+                                               dct.get('in', ''), coverage=self.coverage)
                     except TimeoutExpired:
                         self.test_timeout.emit()
                         continue
@@ -206,43 +198,35 @@ class TestingLooper(QThread):
 
                     for j, file in enumerate(dct.get('out_files', [])):
                         if file.get('type', 'txt') == 'txt':
-                            text = CommandManager.read_file(f"{self.path}/func_tests/data_files/temp_{j + 1}.txt", '')
+                            text = CommandManager.read_file(f"{self.sm.data_lab_path()}/temp_{j + 1}.txt", '')
                             comparator_res = comparator_res and file.text == text
                             prog_out[f"out_file_{i}.txt"] = text
                         else:
-                            text = CommandManager.read_binary(f"{self.path}/func_tests/data_files/temp_{j + 1}.bin",
+                            text = CommandManager.read_binary(f"{self.sm.data_lab_path()}/temp_{j + 1}.bin",
                                                               b'')
                             comparator_res = comparator_res and bytes_comparator(
-                                text, file['text'], CommandManager.read_binary(
-                                    f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_out{j + 1}.bin", b''))
-                            # prog_out[f"out_file_{i}.bin"] = ' '.join(f"{b:0>3}" for b in text)
-                            # prog_out[f"out_file_{i}.bin"] = str(text).lstrip("b'").rstrip("'")
+                                text, file['text'],
+                                CommandManager.read_binary(self.sm.test_out_file_path(pos, i, j, True), b''))
                             prog_out[f"out_file_{i}.bin"], _ = decode(file['text'], text)
 
                     for j, file in dct.get('check_files', dict()).items():
                         if file.get('type', 'txt') == 'txt':
-                            text = CommandManager.read_file(
-                                f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_in{j}.txt", '')
+                            text = CommandManager.read_file(self.sm.test_in_file_path(pos, i, j, False), '')
                             comparator_res = comparator_res and file['text'] == text
                             prog_out[f"in_file_{i}.txt"] = text
                         else:
-                            text = CommandManager.read_binary(
-                                f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_in{j}.bin", b'')
+                            text = CommandManager.read_binary(self.sm.test_in_file_path(pos, i, j, True), b'')
                             comparator_res = comparator_res and bytes_comparator(
                                 text, file['text'], CommandManager.read_binary(
-                                    f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_check{j}.bin", b''))
-                            # prog_out[f"in_file_{i}.bin"] = ' '.join(f"{b:0>3}" for b in text)
-                            # prog_out[f"in_file_{i}.bin"] = str(text).lstrip("b'").rstrip("'")
+                                    self.sm.test_check_file_path(pos, i, j, True), b''))
                             prog_out[f"in_file_{i}.bin"], _ = decode(file['text'], text)
 
                     for j, file in enumerate(dct.get('in_files', [])):
                         if file.get('type', 'txt') == 'txt':
-                            MacrosConverter.convert_txt(
-                                file['text'], f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_in{j + 1}.txt",
-                                self.sm.get('line_sep'))
+                            MacrosConverter.convert_txt(file['text'], self.sm.test_in_file_path(pos, i, j, False),
+                                                        self.sm.get('line_sep'))
                         else:
-                            MacrosConverter.convert_bin(
-                                file['text'], f"{self.path}/func_tests/data_files/{pos}_{i + 1:0>2}_in{j + 1}.bin")
+                            MacrosConverter.convert_bin(file['text'], self.sm.test_in_file_path(pos, i, j, True))
 
                     if self.memory_testing:
                         valgrind_out = CommandManager.cmd_command(
@@ -268,7 +252,5 @@ class TestingLooper(QThread):
 
     def terminate(self) -> None:
         sleep(0.1)
-        for file in os.listdir(self.path):
-            if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
-                os.remove(f"{self.path}/{file}")
+        self.cm.clear_coverage_files()
         super(TestingLooper, self).terminate()

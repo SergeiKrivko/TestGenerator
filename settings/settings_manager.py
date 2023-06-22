@@ -134,6 +134,33 @@ class SettingsManager(QObject):
     def __setitem__(self, key, value):
         self.set(key, value)
 
+    def test_in_path(self, test_type, number):
+        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_in.txt"
+
+    def test_out_path(self, test_type, number):
+        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_out.txt"
+
+    def test_args_path(self, test_type, number):
+        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_args.txt"
+
+    def test_in_file_path(self, test_type, number, file_number=1, binary=False):
+        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_in" \
+               f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
+               f"{'bin' if binary else 'txt'}"
+
+    def test_out_file_path(self, test_type, number, file_number=1, binary=False):
+        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_out" \
+               f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
+               f"{'bin' if binary else 'txt'}"
+
+    def test_check_file_path(self, test_type, number, file_number=1, binary=False):
+        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_check" \
+               f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
+               f"{'bin' if binary else 'txt'}"
+
+    def readme_path(self):
+        return f"{self.lab_path()}/func_tests/readme.md"
+
     def repair_settings(self):
         if self.data_path:
             # if self.q_settings.value(self.data_path) is None:
@@ -208,7 +235,7 @@ class SettingsManager(QObject):
                     self.set('coverage', self.get_general('coverage', 0))
                 if not isinstance(self.get('time_limit'), (float, int)):
                     self.set('time_limit', self.get_general('time_limit', 10))
-                    
+
     def store(self):
         if self.project not in self.projects:
             return
@@ -223,4 +250,3 @@ class SettingsManager(QObject):
     def search_finish(self):
         self.programs = self.searcher.res
         self.searching_complete.emit()
-

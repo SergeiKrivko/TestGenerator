@@ -102,7 +102,7 @@ class CodeEditor(QsciScintilla):
         if data.get('lexer') is None:
             self._lexer = QsciLexerCPP(None)
             self._lexer.setDefaultFont(self.tm.code_font_std)
-            for key in languages['c']['colors'].keys():
+            for key in languages['C']['colors'].keys():
                 self._lexer.setColor(self.tm['Identifier'], key)
                 self._lexer.setFont(self.tm.code_font, key)
         else:

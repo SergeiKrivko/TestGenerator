@@ -331,7 +331,7 @@ class TestsWidget(QWidget):
             for j in range(list_widget.count()):
                 yield j
             j += 1
-            while os.path.isfile(f"{self.path}/func_tests/data/{test_type}_{j + 1:0>2}_in.txt"):
+            while os.path.isfile(self.sm.test_in_path(test_type, j)):
                 list_widget.addItem(Test(self.create_temp_file(), self.tm))
                 yield j
                 j += 1
@@ -342,17 +342,17 @@ class TestsWidget(QWidget):
         for i in get_files('pos'):
             item = self.test_list_widget.pos_test_list.item(i)
             item.load()
-            item['in'] = read_file(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_in.txt", '')
-            item['out'] = read_file(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_out.txt", '')
-            item['args'] = read_file(f"{self.path}/func_tests/data/pos_{i + 1:0>2}_args.txt", '')
+            item['in'] = read_file(self.sm.test_in_path('pos', i), '')
+            item['out'] = read_file(self.sm.test_out_path('pos', i), '')
+            item['args'] = read_file(self.sm.test_args_path('pos', i), '')
             item.store()
 
         for i in get_files('neg'):
             item = self.test_list_widget.neg_test_list.item(i)
             item.load()
-            item['in'] = read_file(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_in.txt", '')
-            item['out'] = read_file(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_out.txt", '')
-            item['args'] = read_file(f"{self.path}/func_tests/data/neg_{i + 1:0>2}_args.txt", '')
+            item['in'] = read_file(self.sm.test_in_path('neg', i), '')
+            item['out'] = read_file(self.sm.test_out_path('neg', i), '')
+            item['args'] = read_file(self.sm.test_args_path('neg', i), '')
             item.store()
 
     def generate_test(self):
@@ -422,7 +422,7 @@ class TestsWidget(QWidget):
         if self.data_dir in background_process_manager.dict:
             background_process_manager.dict[self.data_dir].close()
 
-        looper = MacrosConverter(self.data_dir, f"{self.sm.lab_path()}", {
+        looper = MacrosConverter(self.data_dir, self.sm.lab_path(), {
             'pos_in': 'func_tests/data/pos_{:0>2}_in.txt',
             'pos_out': 'func_tests/data/pos_{:0>2}_out.txt',
             'pos_args': 'func_tests/data/pos_{:0>2}_args.txt',
