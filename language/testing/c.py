@@ -7,13 +7,15 @@ def c_compile(path, cm, sm, coverage=False):
     compiler = sm.get_smart('gcc', 'gcc')
     compiler_keys = sm.get_smart('c_compiler_keys', '')
     env = {'PATH': f"{os.path.split(compiler)[0]};{os.getenv('PATH')}"}
-    compile_res = cm.cmd_command(f"{compiler} {compiler_keys} -c {'--coverage' if coverage else ''} "
-                                 f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} "
-                                 f"-g {'-lm' if sm.get_smart('-lm', False) else ''}", shell=True, env=env)
+    command = f"{compiler} {compiler_keys} -c {'--coverage' if coverage else ''} " \
+              f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} " \
+              f"-g {'-lm' if sm.get_smart('-lm', False) else ''}"
+    compile_res = cm.cmd_command(command, shell=True, env=env)
     if not compile_res.returncode:
-        compile_res = cm.cmd_command(f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/app.exe "
-                                     f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} "
-                                     f"{'-lm' if sm.get_smart('-lm', False) else ''}", shell=True, env=env)
+        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/app.exe " \
+                  f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} " \
+                  f"{'-lm' if sm.get_smart('-lm', False) else ''}"
+        compile_res = cm.cmd_command(command, shell=True, env=env)
 
         if not compile_res.returncode:
             for file in os.listdir(path):

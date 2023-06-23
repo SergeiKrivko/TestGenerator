@@ -103,7 +103,8 @@ class TestingSettingsWidget(QWidget):
         else:
             self.testing_widget.show()
             for item in self.testing_keys.values():
-                self.sm.set(item, self.sm.get_smart(item))
+                if value := self.sm.get_smart(item):
+                    self.sm.set(item, value)
 
     def open(self):
         for el in self.language_widgets.values():
@@ -115,15 +116,19 @@ class TestingSettingsWidget(QWidget):
 
     def save_settings(self):
         for key, item in self.language_keys[self.sm.get('language', 'C')].items():
-            self.sm.set(item, self.language_widgets[self.sm.get('language', 'C')][key])
+            if value := self.language_widgets[self.sm.get('language', 'C')][key]:
+                self.sm.set(item, value)
         for key, item in self.testing_keys.items():
-            self.sm.set(item, self.testing_widget[key])
+            if value := self.testing_widget[key]:
+                self.sm.set(item, value)
 
     def apply_values(self):
         for key, item in self.language_keys[self.sm.get('language', 'C')].items():
-            self.language_widgets[self.sm.get('language', 'C')].set_value(key, self.sm.get(item))
+            if value := self.sm.get(item):
+                self.language_widgets[self.sm.get('language', 'C')].set_value(key, value)
         for key, item in self.testing_keys.items():
-            self.testing_widget.set_value(key, self.sm.get(item))
+            if value := self.sm.get(item):
+                self.testing_widget.set_value(key, value)
 
     def set_theme(self):
         for el in [self.testing_label, self.compiler_label]:

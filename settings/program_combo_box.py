@@ -40,7 +40,7 @@ class ProgramComboBox(QWidget):
 
     def set_items(self, items: list, delete_current=False):
         text = self.combo_box.currentText()
-        if not delete_current and text not in items:
+        if not delete_current and text not in items and text.strip():
             items.append(text)
         self.items = items
         self.combo_box.clear()

@@ -29,8 +29,8 @@ class TestsWidget(QWidget):
         self.lab_widget.finish_change_task.connect(self.open_tests)
         self.options_widget = OptionsWidget({
             'h_line2': {
-                'Вход:': {'type': str, 'initial': '-', 'width': 300, 'name': OptionsWidget.NAME_LEFT},
-                'Выход:': {'type': str, 'initial': '-', 'width': 300, 'name': OptionsWidget.NAME_LEFT}
+                'Вход:': {'type': str, 'width': 300, 'name': OptionsWidget.NAME_LEFT},
+                'Выход:': {'type': str, 'width': 300, 'name': OptionsWidget.NAME_LEFT}
             }
         }, margins=(0, 0, 0, 0))
         layout.addWidget(self.options_widget)
@@ -238,10 +238,25 @@ class TestsWidget(QWidget):
         path = f"{self.sm.data_lab_path()}/func_tests/postprocessor.txt"
         self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
 
+        self.options_widget.set_value("Вход:", "-")
+        self.options_widget.set_value("Выход:", "-")
+
         self.data_dir = f"{self.sm.data_lab_path()}/func_tests"
         if not os.path.isdir(self.data_dir):
             self.open_tests_from_readme()
         else:
+            try:
+                self.task_settings = json.loads(read_file(f"{self.sm.data_lab_path()}/settings.json", '{}'))
+                self.test_edit_widget.preprocessor_line.setText(self.task_settings.get('preprocessor', ''))
+                self.test_edit_widget.postprocessor_line.setText(self.task_settings.get('postprocessor', ''))
+                self.options_widget.set_value('Вход:', self.task_settings.get('in_data', '-'))
+                self.options_widget.set_value('Выход:', self.task_settings.get('out_data', '-'))
+            except json.JSONDecodeError:
+                self.test_edit_widget.preprocessor_line.setText('')
+                self.test_edit_widget.postprocessor_line.setText('')
+                self.options_widget.set_value('Вход:', '-')
+                self.options_widget.set_value('Выход:', '-')
+
             if os.path.isdir(f"{self.data_dir}/pos"):
                 lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/pos")))
                 lst.sort(key=lambda s: int(s.rstrip('.json')))
@@ -253,18 +268,6 @@ class TestsWidget(QWidget):
                 lst.sort(key=lambda s: int(s.rstrip('.json')))
                 for el in lst:
                     self.test_list_widget.neg_test_list.addItem(Test(f"{self.data_dir}/neg/{el}", self.tm))
-
-        try:
-            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
-                self.task_settings = json.loads(f.read())
-                if not isinstance(self.task_settings, dict):
-                    self.task_settings = dict()
-                self.test_edit_widget.preprocessor_line.setText(self.task_settings.get('preprocessor', ''))
-                self.test_edit_widget.postprocessor_line.setText(self.task_settings.get('postprocessor', ''))
-        except FileNotFoundError:
-            self.task_settings = dict()
-        except json.JSONDecodeError:
-            self.task_settings = dict()
 
     def open_tests_from_readme(self):
         if not os.path.isdir(f"{self.path}/func_tests/data"):
@@ -288,8 +291,6 @@ class TestsWidget(QWidget):
         file = open(f"{self.path}/func_tests/readme.md", encoding='utf-8')
         lines = file.readlines()
         file.close()
-        self.options_widget.set_value("Вход:", "-")
-        self.options_widget.set_value("Выход:", "-")
 
         os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
         os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
@@ -388,6 +389,15 @@ class TestsWidget(QWidget):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
     def save_tests(self):
+        if self.path == '':
+            return
+
+        self.task_settings['in_data'] = self.options_widget['Вход:']
+        self.task_settings['out_data'] = self.options_widget['Выход:']
+        os.makedirs(self.sm.data_lab_path(), exist_ok=True)
+        with open(f"{self.sm.data_lab_path()}/settings.json", 'w') as f:
+            f.write(json.dumps(self.task_settings))
+
         if not self.test_list_widget.pos_test_list.count() and not self.test_list_widget.neg_test_list.count() or \
                 not self.tests_changed:
             return
@@ -398,9 +408,6 @@ class TestsWidget(QWidget):
 
         os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
         os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
-
-        with open(f"{self.sm.data_lab_path()}/settings.json", 'w') as f:
-            f.write(json.dumps(self.task_settings))
 
         os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
         readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))

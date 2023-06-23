@@ -136,7 +136,7 @@ class FilesWidget(QWidget):
         item = self.files_list.currentItem()
         if isinstance(item, FileListWidgetItem):
             if item.file_type == 'dir':
-                pass
+                self.openFile.emit('')
             else:
                 self.openFile.emit(item.path)
                 for language in languages.values():

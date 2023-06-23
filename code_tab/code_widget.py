@@ -70,6 +70,7 @@ class CodeWidget(QWidget):
         self.test_res_widget.clear()
         self.files_widget.open_task()
         self.tab_widget.setCurrentIndex(0)
+        self.open_code('')
         for i in range(self.files_widget.files_list.count()):
             if self.files_widget.files_list.item(i) == 'main.c':
                 self.files_widget.files_list.setCurrentRow(i)
@@ -95,8 +96,7 @@ class CodeWidget(QWidget):
         self.code_edit.setText("")
         try:
             if not os.path.isfile(path):
-                self.code_edit.setDisabled(True)
-                return
+                raise Exception
 
             self.current_file = path
             self.file_update_time = os.path.getmtime(self.current_file)

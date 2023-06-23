@@ -90,8 +90,10 @@ class MacrosConverter(QThread):
                     data = dict()
 
             self.readme.write(f"- {index + 1:0>2} - {data.get('desc', '-')}\n")
-            self.convert_txt(data.get('in', ''), self.sm.test_in_path(tests_type, index, project=self.project), self.line_sep)
-            self.convert_txt(data.get('out', ''), self.sm.test_out_path(tests_type, index, project=self.project), self.line_sep)
+            self.convert_txt(data.get('in', ''), self.sm.test_in_path(tests_type, index, project=self.project),
+                             self.line_sep)
+            self.convert_txt(data.get('out', ''), self.sm.test_out_path(tests_type, index, project=self.project),
+                             self.line_sep)
 
             in_files = dict()
             out_files = dict()
@@ -99,28 +101,34 @@ class MacrosConverter(QThread):
 
             for i, el in enumerate(data.get('in_files', [])):
                 if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], s := self.sm.test_in_file_path(tests_type, index, i, False, project=self.project),
+                    self.convert_txt(el['text'],
+                                     s := self.sm.test_in_file_path(tests_type, index, i, False, project=self.project),
                                      self.line_sep)
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
                 else:
-                    self.convert_bin(el['text'], s := self.sm.test_in_file_path(tests_type, index, i, True, project=self.project))
+                    self.convert_bin(el['text'],
+                                     s := self.sm.test_in_file_path(tests_type, index, i, True, project=self.project))
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
 
             for i, el in enumerate(data.get('out_files', [])):
                 if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], s := self.sm.test_out_file_path(tests_type, index, i, False, project=self.project),
+                    self.convert_txt(el['text'],
+                                     s := self.sm.test_out_file_path(tests_type, index, i, False, project=self.project),
                                      self.line_sep)
                     out_files[i + 1] = os.path.relpath(s, self.dst_dir)
                 else:
-                    self.convert_bin(el['text'], s := self.sm.test_out_file_path(tests_type, index, i, True, project=self.project))
+                    self.convert_bin(el['text'],
+                                     s := self.sm.test_out_file_path(tests_type, index, i, True, project=self.project))
                     out_files[i + 1] = os.path.relpath(s, self.dst_dir)
 
             for i, el in data.get('check_files', dict()).items():
                 if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, False, project=self.project), self.line_sep)
+                    self.convert_txt(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, False,
+                                                                                   project=self.project), self.line_sep)
                     check_files[i] = os.path.relpath(s, self.dst_dir)
                 else:
-                    self.convert_bin(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, True, project=self.project))
+                    self.convert_bin(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, True,
+                                                                                   project=self.project))
                     check_files[i] = os.path.relpath(s, self.dst_dir)
 
             if data.get('args', ''):
@@ -132,18 +140,15 @@ class MacrosConverter(QThread):
 
     def run(self):
         for test_type in ['pos', 'neg']:
-            shutil.rmtree(d := os.path.split(self.sm.test_in_path(test_type, 0))[0])
-            os.makedirs(d, exist_ok=True)
-            shutil.rmtree(d := os.path.split(self.sm.test_out_path(test_type, 0))[0])
-            os.makedirs(d, exist_ok=True)
-            shutil.rmtree(d := os.path.split(self.sm.test_args_path(test_type, 0))[0])
-            os.makedirs(d, exist_ok=True)
-            shutil.rmtree(d := os.path.split(self.sm.test_in_file_path(test_type, 0, 1, False))[0])
-            os.makedirs(d, exist_ok=True)
-            shutil.rmtree(d := os.path.split(self.sm.test_out_file_path(test_type, 0, 1, False))[0])
-            os.makedirs(d, exist_ok=True)
-            shutil.rmtree(d := os.path.split(self.sm.test_check_file_path(test_type, 0, 1, False))[0])
-            os.makedirs(d, exist_ok=True)
+            for d in [self.sm.test_in_path(test_type, 0), self.sm.test_out_path(test_type, 0),
+                      self.sm.test_args_path(test_type, 0), self.sm.test_in_file_path(test_type, 0, 1, False),
+                      self.sm.test_out_file_path(test_type, 0, 1, False),
+                      self.sm.test_check_file_path(test_type, 0, 1, False)]:
+                try:
+                    shutil.rmtree(d := os.path.split(d)[0])
+                    os.makedirs(d, exist_ok=True)
+                except Exception:
+                    pass
 
         self.readme.write("\n## Позитивные тесты:\n")
         self.convert_tests('pos')
