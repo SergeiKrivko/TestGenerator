@@ -42,7 +42,7 @@ class SettingsManager(QObject):
             dct = self.project_settings
         else:
             try:
-                with open(f"{self.data_path}/projects/{project}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                with open(f"{self.data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
                     dct = loads(f.read())
             except FileNotFoundError:
                 return default
@@ -84,18 +84,22 @@ class SettingsManager(QObject):
         except JSONDecodeError:
             self.project_settings = dict()
 
-    def lab_path(self, lab=None, task=None, var=None):
+    def lab_path(self, lab=None, task=None, var=None, project=None):
         if self.get('struct') == 1:
             return self.path
         if lab is None:
-            lab = self.get('lab')
+            lab = self.get('lab', project=project)
         if task is None:
-            task = self.get('task')
+            task = self.get('task', project=project)
         if var is None:
-            var = self.get('var')
+            var = self.get('var', project=project)
+        if project is None:
+            if var == -1:
+                return f"{self.path}/lab_{lab:0>2}_{task:0>2}"
+            return f"{self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
         if var == -1:
-            return f"{self.path}/lab_{lab:0>2}_{task:0>2}"
-        return f"{self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
+            return f"{self.projects[project]}/lab_{lab:0>2}_{task:0>2}"
+        return f"{self.projects[project]}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
 
     def data_lab_path(self, lab=None, task=None, var=None, project=None):
         if self.get('struct', project=project) == 1:
@@ -135,32 +139,32 @@ class SettingsManager(QObject):
     def __setitem__(self, key, value):
         self.set(key, value)
 
-    def test_in_path(self, test_type, number):
-        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_in.txt"
+    def test_in_path(self, test_type, number, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/data/{test_type}_{number + 1:0>2}_in.txt"
 
-    def test_out_path(self, test_type, number):
-        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_out.txt"
+    def test_out_path(self, test_type, number, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/data/{test_type}_{number + 1:0>2}_out.txt"
 
-    def test_args_path(self, test_type, number):
-        return f"{self.lab_path()}/func_tests/data/{test_type}_{number + 1:0>2}_args.txt"
+    def test_args_path(self, test_type, number, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/data/{test_type}_{number + 1:0>2}_args.txt"
 
-    def test_in_file_path(self, test_type, number, file_number=1, binary=False):
-        return f"{self.lab_path()}/func_tests/data_files/{test_type}_{number + 1:0>2}_in" \
+    def test_in_file_path(self, test_type, number, file_number=1, binary=False, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_in" \
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
-    def test_out_file_path(self, test_type, number, file_number=1, binary=False):
-        return f"{self.lab_path()}/func_tests/data_files/{test_type}_{number + 1:0>2}_out" \
+    def test_out_file_path(self, test_type, number, file_number=1, binary=False, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_out" \
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
-    def test_check_file_path(self, test_type, number, file_number=1, binary=False):
-        return f"{self.lab_path()}/func_tests/data_files/{test_type}_{number + 1:0>2}_check" \
+    def test_check_file_path(self, test_type, number, file_number=1, binary=False, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_check" \
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
-    def readme_path(self):
-        return f"{self.lab_path()}/func_tests/readme.md"
+    def readme_path(self, project=None):
+        return f"{self.lab_path(project=project)}/func_tests/readme.md"
 
     def repair_settings(self):
         if self.data_path:

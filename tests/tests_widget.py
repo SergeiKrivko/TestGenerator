@@ -422,21 +422,7 @@ class TestsWidget(QWidget):
         if self.data_dir in background_process_manager.dict:
             background_process_manager.dict[self.data_dir].close()
 
-        looper = MacrosConverter(self.data_dir, self.sm.lab_path(), {
-            'pos_in': 'func_tests/data/pos_{:0>2}_in.txt',
-            'pos_out': 'func_tests/data/pos_{:0>2}_out.txt',
-            'pos_args': 'func_tests/data/pos_{:0>2}_args.txt',
-            'neg_in': 'func_tests/data/neg_{:0>2}_in.txt',
-            'neg_out': 'func_tests/data/neg_{:0>2}_out.txt',
-            'neg_args': 'func_tests/data/neg_{:0>2}_args.txt',
-
-            'pos_in_files': 'func_tests/data_files/pos_{:0>2}_in{}',
-            'pos_out_files': 'func_tests/data_files/pos_{:0>2}_out{}',
-            'pos_check_files': 'func_tests/data_files/pos_{:0>2}_check{}',
-            'neg_in_files': 'func_tests/data_files/neg_{:0>2}_in{}',
-            'neg_out_files': 'func_tests/data_files/neg_{:0>2}_out{}',
-            'neg_check_files': 'func_tests/data_files/neg_{:0>2}_check{}',
-        }, self.sm, readme)
+        looper = MacrosConverter(self.data_dir, self.sm.lab_path(), self.sm.project, self.sm, readme)
         self.loopers[self.sm.lab_path()] = looper
         looper.start()
 

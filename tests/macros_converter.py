@@ -28,12 +28,13 @@ background_process_manager = BackgroundProcessManager()
 
 
 class MacrosConverter(QThread):
-    def __init__(self, src_dir, dst_dir, dst_format, sm, readme=None):
+    def __init__(self, src_dir, dst_dir, project, sm, readme=None):
         super(MacrosConverter, self).__init__()
 
         self.src_dir = src_dir
         self.dst_dir = dst_dir
-        self.dst_format = dst_format
+        self.project = project
+        self.sm = sm
         self.readme = readme
         self.closed = False
 
@@ -68,7 +69,7 @@ class MacrosConverter(QThread):
                 if int(n) in out_files:
                     text[i] = f"{self.data_path}/temp_{int(n)}{out_files[int(n)][-4:]}"
                 else:
-                    text[i] = f"{self.data_path}/temp_{int(n)}{out_files[int(n)][-4:]}/temp_{int(n)}"
+                    text[i] = f"{self.data_path}/temp_{int(n)}"
         with open(path, 'w', encoding='utf-8', newline=self.line_sep) as f:
             f.write(' '.join(text))
 
@@ -89,12 +90,8 @@ class MacrosConverter(QThread):
                     data = dict()
 
             self.readme.write(f"- {index + 1:0>2} - {data.get('desc', '-')}\n")
-            self.convert_txt(data.get('in', ''),
-                             f"{self.dst_dir}/{self.dst_format.get(f'{tests_type}_in').format(index + 1)}",
-                             self.line_sep)
-            self.convert_txt(data.get('out', ''),
-                             f"{self.dst_dir}/{self.dst_format.get(f'{tests_type}_out').format(index + 1)}",
-                             self.line_sep)
+            self.convert_txt(data.get('in', ''), self.sm.test_in_path(tests_type, index, project=self.project), self.line_sep)
+            self.convert_txt(data.get('out', ''), self.sm.test_out_path(tests_type, index, project=self.project), self.line_sep)
 
             in_files = dict()
             out_files = dict()
@@ -102,52 +99,50 @@ class MacrosConverter(QThread):
 
             for i, el in enumerate(data.get('in_files', [])):
                 if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], self.dst_dir + '/' + (s := self.dst_format.get(
-                        f'{tests_type}_in_files').format(index + 1, i + 1) + '.txt'), self.line_sep)
-                    in_files[i + 1] = s
+                    self.convert_txt(el['text'], s := self.sm.test_in_file_path(tests_type, index, i, False, project=self.project),
+                                     self.line_sep)
+                    in_files[i + 1] = os.path.relpath(s, self.dst_dir)
                 else:
-                    self.convert_bin(el['text'], self.dst_dir + '/' + (s := self.dst_format.get(
-                        f'{tests_type}_in_files').format(index + 1, i + 1) + '.bin'))
-                    in_files[i + 1] = s
+                    self.convert_bin(el['text'], s := self.sm.test_in_file_path(tests_type, index, i, True, project=self.project))
+                    in_files[i + 1] = os.path.relpath(s, self.dst_dir)
 
             for i, el in enumerate(data.get('out_files', [])):
                 if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], self.dst_dir + '/' + (s := self.dst_format.get(
-                        f'{tests_type}_out_files').format(index + 1, i + 1) + '.txt'),
+                    self.convert_txt(el['text'], s := self.sm.test_out_file_path(tests_type, index, i, False, project=self.project),
                                      self.line_sep)
-                    out_files[i + 1] = s
+                    out_files[i + 1] = os.path.relpath(s, self.dst_dir)
                 else:
-                    self.convert_bin(el['text'], self.dst_dir + '/' + (s := self.dst_format.get(
-                        f'{tests_type}_out_files').format(index + 1, i + 1) + '.bin'))
-                    out_files[i + 1] = s
+                    self.convert_bin(el['text'], s := self.sm.test_out_file_path(tests_type, index, i, True, project=self.project))
+                    out_files[i + 1] = os.path.relpath(s, self.dst_dir)
 
             for i, el in data.get('check_files', dict()).items():
                 if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], self.dst_dir + '/' + (s := self.dst_format.get(
-                        f'{tests_type}_check_files').format(index + 1, i) + '.txt'), self.line_sep)
-                    check_files[i] = s
+                    self.convert_txt(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, False, project=self.project), self.line_sep)
+                    check_files[i] = os.path.relpath(s, self.dst_dir)
                 else:
-                    self.convert_bin(el['text'], self.dst_dir + '/' + (s := self.dst_format.get(
-                        f'{tests_type}_check_files').format(index + 1, i) + '.bin'))
-                    check_files[i] = s
+                    self.convert_bin(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, True, project=self.project))
+                    check_files[i] = os.path.relpath(s, self.dst_dir)
 
             if data.get('args', ''):
-                self.convert_args(data.get('args', ''),
-                                  f"{self.dst_dir}/{self.dst_format.get(f'{tests_type}_args').format(index + 1)}",
+                self.convert_args(data.get('args', ''), self.sm.test_args_path(tests_type, index, project=self.project),
                                   tests_type, index, in_files, out_files)
 
     def close(self):
         self.closed = True
 
     def run(self):
-        for el in ['pos_in', 'pos_out', 'pos_args', 'neg_in', 'neg_out', 'neg_args']:
-            shutil.rmtree(d := os.path.split(f"{self.dst_dir}/{self.dst_format.get(el).format(0)}")[0],
-                          ignore_errors=True)
+        for test_type in ['pos', 'neg']:
+            shutil.rmtree(d := os.path.split(self.sm.test_in_path(test_type, 0))[0])
             os.makedirs(d, exist_ok=True)
-        for el in ['pos_in_files', 'pos_out_files', 'pos_check_files',
-                   'neg_in_files', 'neg_out_files', 'neg_check_files']:
-            shutil.rmtree(d := os.path.split(f"{self.dst_dir}/{self.dst_format.get(el).format(0, 0)}")[0],
-                          ignore_errors=True)
+            shutil.rmtree(d := os.path.split(self.sm.test_out_path(test_type, 0))[0])
+            os.makedirs(d, exist_ok=True)
+            shutil.rmtree(d := os.path.split(self.sm.test_args_path(test_type, 0))[0])
+            os.makedirs(d, exist_ok=True)
+            shutil.rmtree(d := os.path.split(self.sm.test_in_file_path(test_type, 0, 1, False))[0])
+            os.makedirs(d, exist_ok=True)
+            shutil.rmtree(d := os.path.split(self.sm.test_out_file_path(test_type, 0, 1, False))[0])
+            os.makedirs(d, exist_ok=True)
+            shutil.rmtree(d := os.path.split(self.sm.test_check_file_path(test_type, 0, 1, False))[0])
             os.makedirs(d, exist_ok=True)
 
         self.readme.write("\n## Позитивные тесты:\n")
