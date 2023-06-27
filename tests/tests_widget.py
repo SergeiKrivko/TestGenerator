@@ -358,7 +358,6 @@ class TestsWidget(QWidget):
 
     def generate_test(self):
         self.data_changed = True
-        os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
 
         old_dir = os.getcwd()
         os.chdir(self.path)
@@ -409,8 +408,8 @@ class TestsWidget(QWidget):
         os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
         os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
 
-        os.makedirs(f"{self.path}/func_tests/data", exist_ok=True)
-        readme = open(f"{self.path}/func_tests/readme.md", 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+        os.makedirs(os.path.split(self.sm.readme_path())[0], exist_ok=True)
+        readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
         readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
                      f"{self.sm.get('task'):0>2}\n\n"
                      f"## Входные данные\n{self.options_widget['Вход:']}\n\n"

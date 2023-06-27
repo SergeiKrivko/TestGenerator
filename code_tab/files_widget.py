@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
@@ -129,7 +130,10 @@ class FilesWidget(QWidget):
             return
         dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().name}?", self.tm)
         if dlg.exec():
-            os.remove(self.files_list.currentItem().path)
+            if os.path.isdir(self.files_list.currentItem().path):
+                shutil.rmtree(self.files_list.currentItem().path)
+            else:
+                os.remove(self.files_list.currentItem().path)
             self.update_files_list()
 
     def open_file(self):

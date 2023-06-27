@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLis
     QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget, QGridLayout, QMessageBox
 import py7zr
 
+from settings.project_struct_widget import ProjectStructWidget
 from settings.testing_settings_widget import TestingSettingsWidget
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
@@ -74,21 +75,7 @@ class ProjectWidget(QWidget):
         self.main_settings_widget.clicked.connect(self.save_settings)
         self.tab_widget.addTab(self.main_settings_widget, 'Основные')
 
-        self.struct_settings_widget = OptionsWidget({
-            'Структура проекта': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'width': 200,
-                                  'values': ['Лаба - задание - вариант', 'Без структуры']},
-            'Название папки с лабой': {'type': str, 'width': 250, 'name': OptionsWidget.NAME_RIGHT,
-                                       'initial': self.sm.get('dir_format', '')},
-            'Описание тестов': {'type': str, 'initial': self.sm.get('readme', 'func_tests/readme.md'),
-                                'width': 250, 'name': OptionsWidget.NAME_RIGHT},
-            'Входные данные для позитивных тестов': {
-                'type': str, 'width': 250, 'initial': self.sm.get('pos_in', ''),
-                'name': OptionsWidget.NAME_RIGHT},
-            'Входные данные для негативных тестов': {
-                'type': str, 'width': 250, 'initial': self.sm.get('pos_in', ''),
-                'name': OptionsWidget.NAME_RIGHT},
-        }, margins=(25, 25, 25, 25))
-        self.struct_settings_widget.clicked.connect(self.save_settings)
+        self.struct_settings_widget = ProjectStructWidget(self.sm, self.tm)
         self.tab_widget.addTab(self.struct_settings_widget, 'Структура проекта')
 
         self.testing_settings_widget = TestingSettingsWidget(self.sm, self.tm)
@@ -219,16 +206,7 @@ class ProjectWidget(QWidget):
 
         self.main_settings_widget.widgets['Язык'].setCurrentText(str(self.sm.get('language', 'C')))
 
-        self.struct_settings_widget.widgets['Структура проекта'].setCurrentIndex(self.sm.get(
-            'struct', 0))
-        self.struct_settings_widget.widgets['Название папки с лабой'].setText(self.sm.get(
-            'dir_format', 'lab_{lab:0>2}_{task:0>2}_{var:0>2}'))
-        self.struct_settings_widget.widgets['Описание тестов'].setText(self.sm.get(
-            'readme', 'func_tests/readme.md'))
-        self.struct_settings_widget.widgets['Входные данные для позитивных тестов'].setText(self.sm.get(
-            'pos_in', 'func_tests/data/pos_{:0>2}_in.txt'))
-        self.struct_settings_widget.widgets['Входные данные для негативных тестов'].setText(self.sm.get(
-            'neg_in', 'func_tests/data/neg_{:0>2}_in.txt'))
+        self.struct_settings_widget.apply_values()
 
         self.opening_project = False
         self.disable_menu_func(False)
@@ -302,13 +280,6 @@ class ProjectWidget(QWidget):
         dct = self.main_settings_widget.values
         self.sm.set('language', LANGUAGES[dct['Язык']])
 
-        dct = self.struct_settings_widget.values
-        self.sm.set('struct', dct['Структура проекта'])
-        self.sm.set('dir_format', dct['Название папки с лабой'])
-        self.sm.set('readme', dct['Описание тестов'])
-        self.sm.set('pos_in', dct['Входные данные для позитивных тестов'])
-        self.sm.set('neg_in', dct['Входные данные для негативных тестов'])
-
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
         for el in [self.button_delete_project, self.button_rename_project, self.button_to_zip, self.button_from_zip]:
@@ -321,8 +292,9 @@ class ProjectWidget(QWidget):
         self.tab_widget.setStyleSheet(self.tm.tab_widget_style_sheet.replace('width: 50px', 'width: 120px'))
         self.tab_widget.setFont(self.tm.font_small)
 
-        for widget in [self.main_settings_widget, self.struct_settings_widget]:
+        for widget in [self.main_settings_widget]:
             self.tm.css_to_options_widget(widget)
+        self.struct_settings_widget.set_theme()
         self.testing_settings_widget.set_theme()
 
     def remove_temp_projects(self):
