@@ -2,6 +2,7 @@ from PyQt5.Qsci import QsciLexerCPP, QsciLexerPython, QsciLexerBash, QsciLexerBa
     QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON
 from language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 from language.autocomplition.c import CodeAutocompletionManager as AcMC
+from language.autocomplition.python import CodeAutocompletionManager as AcMPython
 import language.testing.c
 import language.testing.python
 import language.testing.shell
@@ -32,7 +33,7 @@ languages = {
     'Python': {
         'lexer': QsciLexerPython,
         'files': ['.py'],
-        'autocompletion': AcMAbstract,
+        'autocompletion': AcMPython,
         'colors': {
             QsciLexerPython.Identifier: 'Identifier',
             QsciLexerPython.Comment: 'Comment',
