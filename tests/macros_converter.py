@@ -39,6 +39,7 @@ class MacrosConverter(QThread):
         self.closed = False
 
         self.line_sep = sm.get_general('line_sep', '\n')
+        self.lab_path = sm.lab_path()
         self.data_path = sm.data_lab_path()
         background_process_manager.add_process(src_dir, self)
 
@@ -56,7 +57,8 @@ class MacrosConverter(QThread):
         except Exception as ex:
             print(f"{ex.__class__.__name__}: {ex}")
 
-    def convert_args(self, text, path, test_type, index, in_files, out_files):
+    @staticmethod
+    def convert_args(text, path, test_type, index, in_files, out_files, data_path, line_sep='\n'):
         text = text.split()
         for i in range(len(text)):
             if text[i] == '#fin':
@@ -67,11 +69,14 @@ class MacrosConverter(QThread):
                 text[i] = '#fout1'
             if text[i].startswith('#fout') and (n := text[i].lstrip('#fout')).isdigit():
                 if int(n) in out_files:
-                    text[i] = f"{self.data_path}/temp_{int(n)}{out_files[int(n)][-4:]}"
+                    text[i] = f"{data_path}/temp_{int(n)}{out_files[int(n)][-4:]}"
                 else:
-                    text[i] = f"{self.data_path}/temp_{int(n)}"
-        with open(path, 'w', encoding='utf-8', newline=self.line_sep) as f:
-            f.write(' '.join(text))
+                    text[i] = f"{data_path}/temp_{int(n)}"
+        if path:
+            with open(path, 'w', encoding='utf-8', newline=line_sep) as f:
+                f.write(' '.join(text))
+        else:
+            return ' '.join(text)
 
     def convert_tests(self, tests_type='pos'):
         if not os.path.isdir(f"{self.src_dir}/{tests_type}"):
@@ -133,7 +138,7 @@ class MacrosConverter(QThread):
 
             if data.get('args', ''):
                 self.convert_args(data.get('args', ''), self.sm.test_args_path(tests_type, index, project=self.project),
-                                  tests_type, index, in_files, out_files)
+                                  tests_type, index, in_files, out_files, '.', self.line_sep)
 
     def close(self):
         self.closed = True

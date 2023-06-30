@@ -405,32 +405,33 @@ class TestsWidget(QWidget):
         if item:
             item.store()
 
-        os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
-        os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
+        if self.sm.get('func_tests_in_project', False):
+            os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
+            os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
 
-        os.makedirs(os.path.split(self.sm.readme_path())[0], exist_ok=True)
-        readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
-        readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
-                     f"{self.sm.get('task'):0>2}\n\n"
-                     f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
-                     f"## Выходные данные\n{self.options_widget['Выход:']}\n")
+            os.makedirs(os.path.split(self.sm.readme_path())[0], exist_ok=True)
+            readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+            readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
+                         f"{self.sm.get('task'):0>2}\n\n"
+                         f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
+                         f"## Выходные данные\n{self.options_widget['Выход:']}\n")
 
-        for i in range(self.test_list_widget.pos_test_list.count()):
-            item = self.test_list_widget.pos_test_list.item(i)
-            if not item.path.endswith(f"{i}.json"):
-                item.rename_file(f"{self.data_dir}/pos/{i}.json")
+            for i in range(self.test_list_widget.pos_test_list.count()):
+                item = self.test_list_widget.pos_test_list.item(i)
+                if not item.path.endswith(f"{i}.json"):
+                    item.rename_file(f"{self.data_dir}/pos/{i}.json")
 
-        for i in range(self.test_list_widget.neg_test_list.count()):
-            item = self.test_list_widget.neg_test_list.item(i)
-            if not item.path.endswith(f"{i}.json"):
-                item.rename_file(f"{self.data_dir}/neg/{i}.json")
+            for i in range(self.test_list_widget.neg_test_list.count()):
+                item = self.test_list_widget.neg_test_list.item(i)
+                if not item.path.endswith(f"{i}.json"):
+                    item.rename_file(f"{self.data_dir}/neg/{i}.json")
 
-        if self.data_dir in background_process_manager.dict:
-            background_process_manager.dict[self.data_dir].close()
+            if self.data_dir in background_process_manager.dict:
+                background_process_manager.dict[self.data_dir].close()
 
-        looper = MacrosConverter(self.data_dir, self.sm.lab_path(), self.sm.project, self.sm, readme)
-        self.loopers[self.sm.lab_path()] = looper
-        looper.start()
+            looper = MacrosConverter(self.data_dir, self.sm.lab_path(), self.sm.project, self.sm, readme)
+            self.loopers[self.sm.lab_path()] = looper
+            looper.start()
 
     def write_file(self, path, data=''):
         file = open(path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep'))

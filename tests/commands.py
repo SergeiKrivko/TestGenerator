@@ -1,4 +1,5 @@
 import os
+import shutil
 from json import loads, JSONDecodeError
 from subprocess import run, TimeoutExpired
 import subprocess
@@ -184,8 +185,20 @@ class TestingLooper(QThread):
                 try:
                     dct = loads(CommandManager.read_file(f"{self.data_path}/{pos}/{el}"))
                     try:
-                        res = self.cm.run_code(CommandManager.read_file(self.sm.test_args_path(pos, i)),
-                                               dct.get('in', ''), coverage=self.coverage)
+                        if self.sm.get('func_tests_in_project'):
+                            args = CommandManager.read_file(self.sm.test_args_path(pos, i))
+                        else:
+                            args = MacrosConverter.convert_args(
+                                dct.get('args', ''), '', pos, i,
+                                {j + 1: self.sm.test_in_file_path(pos, i, j, binary=d.get('type', 'txt') == 'bin')
+                                 for j, d in enumerate(dct.get('in_files', []))},
+                                {j + 1: self.sm.test_out_file_path(pos, i, j, binary=d.get('type', 'txt') == 'bin')
+                                 for j, d in enumerate(dct.get('out_files', []))},
+                                f"{self.sm.app_data_dir}/temp_files")
+                            self.convert_test_files('in', dct, pos, i)
+                            self.convert_test_files('out', dct, pos, i)
+                            self.convert_test_files('check', dct, pos, i)
+                        res = self.cm.run_code(args, dct.get('in', ''), coverage=self.coverage)
                     except TimeoutExpired:
                         self.test_timeout.emit()
                         continue
@@ -197,13 +210,13 @@ class TestingLooper(QThread):
                     prog_out = {"STDOUT": res.stdout}
 
                     for j, file in enumerate(dct.get('out_files', [])):
+                        path = "" if self.sm.get('func_tests_in_project') else f"{self.sm.app_data_dir}/temp_files/"
                         if file.get('type', 'txt') == 'txt':
-                            text = CommandManager.read_file(f"{self.sm.data_lab_path()}/temp_{j + 1}.txt", '')
+                            text = CommandManager.read_file(f"{path}temp_{j + 1}.txt", '')
                             comparator_res = comparator_res and file.text == text
                             prog_out[f"out_file_{i}.txt"] = text
                         else:
-                            text = CommandManager.read_binary(f"{self.sm.data_lab_path()}/temp_{j + 1}.bin",
-                                                              b'')
+                            text = CommandManager.read_binary(f"{path}temp_{j + 1}.bin", b'')
                             comparator_res = comparator_res and bytes_comparator(
                                 text, file['text'],
                                 CommandManager.read_binary(self.sm.test_out_file_path(pos, i, j, True), b''))
@@ -221,18 +234,19 @@ class TestingLooper(QThread):
                                     self.sm.test_check_file_path(pos, i, j, True), b''))
                             prog_out[f"in_file_{i}.bin"], _ = decode(file['text'], text)
 
-                    for j, file in enumerate(dct.get('in_files', [])):
-                        if file.get('type', 'txt') == 'txt':
-                            MacrosConverter.convert_txt(file['text'], self.sm.test_in_file_path(pos, i, j, False),
-                                                        self.sm.get('line_sep'))
-                        else:
-                            MacrosConverter.convert_bin(file['text'], self.sm.test_in_file_path(pos, i, j, True))
 
                     if self.memory_testing:
+                        self.convert_test_files('in', dct, pos, i)
+
                         valgrind_out = CommandManager.cmd_command(
-                            ["valgrind", "-q", "./app.exe", dct.get('args', '')], input=dct.get('in', '')).stderr
+                            ["valgrind", "-q", "./app.exe", *args], input=dct.get('in', '')).stderr
                     else:
                         valgrind_out = ""
+
+                    if self.sm.get('func_tests_in_project'):
+                        self.convert_test_files('in', dct, pos, i)
+                    elif os.path.isdir(f"{self.sm.app_data_dir}/temp_files"):
+                        shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
 
                     expected_code = dct.get('exit', '')
                     if expected_code:
@@ -249,6 +263,23 @@ class TestingLooper(QThread):
                     pass
 
         self.end_testing.emit()
+
+    def convert_test_files(self, in_out, dct, pos, i):
+        if in_out == 'in':
+            iterator = enumerate(dct.get('in_files', []))
+        elif in_out == 'out':
+            iterator = enumerate(dct.get('out_files', []))
+        elif in_out == 'check':
+            iterator = dct.get('check_files', []).items()
+        else:
+            raise ValueError(f'Unknown files type: "{in_out}". Can be only "in", "out" and "check" files')
+
+        for j, file in iterator:
+            if file.get('type', 'txt') == 'txt':
+                MacrosConverter.convert_txt(file['text'], self.sm.test_in_file_path(pos, i, j, False),
+                                            self.sm.get('line_sep'))
+            else:
+                MacrosConverter.convert_bin(file['text'], self.sm.test_in_file_path(pos, i, j, True))
 
     def terminate(self) -> None:
         sleep(0.1)
