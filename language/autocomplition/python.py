@@ -2,9 +2,12 @@ import os
 import re
 import time
 
+from PyQt5.QtCore import QThread
+
 
 class PythonObject:
     def __init__(self, name, _class):
+        super().__init__()
         self._class = _class
         self.name = name
 
@@ -183,7 +186,8 @@ class PythonModule(PythonObject):
 
         self.re = re.compile(r"[*]\/|\/[*]|\s+|\w+|\W")
 
-        self.parse_file()
+        if not main:
+            self.parse_file()
 
     def _get_lines(self, file=None):
         scip = False
@@ -364,8 +368,9 @@ class PythonModule(PythonObject):
             yield el
 
 
-class CodeAutocompletionManager:
+class CodeAutocompletionManager(QThread):
     def __init__(self, sm, directory):
+        super().__init__()
         self._sm = sm
         self.dir = directory
 
@@ -402,6 +407,16 @@ class CodeAutocompletionManager:
         self.main = PythonModule('__main__', '', [self._sm.lab_path(), lib_path1, lib_path2, lib_path3, lib_path4,
                                                   f"{self._sm.app_data_dir}/global_libs",
                                                   f"{self._sm.app_data_dir}/custom_libs"], builtins, main=True)
+        self.parsed = False
+
+    def run(self):
+        self.parsed = True
+        time.sleep(0.01)
+        self.main.parse_file()
+
+    def __del__(self):
+        if not self.isFinished():
+            self.terminate()
 
     def update_libs(self):
         pass
@@ -409,6 +424,11 @@ class CodeAutocompletionManager:
     def full_update(self, text, current_pos):
         self.main.text = text
         self._current_line, self._current_symbol = current_pos
+        if not self.parsed:
+            self.start()
+            return
+        if not self.isFinished():
+            return
         self.main.parse_file()
 
     def parse_current_line(self, line):
@@ -450,6 +470,11 @@ class CodeAutocompletionManager:
         return
 
     def get(self, text: str, current_pos):
+        if not self.parsed:
+            self.start()
+            return [], 0
+        if not self.isFinished():
+            return [], 0
         self._current_line, self._current_symbol = current_pos
         lst = []
         if (res := self.parse_current_line(text.split('\n')[self._current_line][:self._current_symbol])) is not None:
