@@ -248,6 +248,7 @@ class PythonModule(PythonObject):
         return self.get_object_type(line[2:])
 
     def parse_file(self):
+        print(self.name)
         if self.main:
             self.variables = self.builtins.copy()
         else:

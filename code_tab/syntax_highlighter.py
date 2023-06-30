@@ -140,6 +140,7 @@ class CodeEditor(QsciScintilla):
     def update_api(self, pos):
         row = pos[0]
         if row != self.current_row and self.text_changed:
+            self.current_row = row
             self.am.full_update(self.text(), pos)
             self.text_changed = False
         self._api = QsciAPIs(self._lexer)
