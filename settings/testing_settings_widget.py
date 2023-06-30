@@ -83,7 +83,6 @@ class TestingSettingsWidget(QWidget):
         self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
 
     def compiler_checkbox_triggered(self):
-        print('compiler_checkbox_triggered', self.compiler_checkbox.isChecked())
         self.sm.set('default_compiler_settings', self.compiler_checkbox.isChecked())
         language = self.sm.get('language', 'C')
         if self.compiler_checkbox.isChecked():
@@ -119,18 +118,18 @@ class TestingSettingsWidget(QWidget):
 
     def save_settings(self):
         for key, item in self.language_keys[self.sm.get('language', 'C')].items():
-            if value := self.language_widgets[self.sm.get('language', 'C')][key]:
-                self.sm.set(item, value)
+            value = self.language_widgets[self.sm.get('language', 'C')][key]
+            self.sm.set(item, value)
         for key, item in self.testing_keys.items():
             if value := self.testing_widget[key]:
                 self.sm.set(item, value)
 
     def apply_values(self):
         for key, item in self.language_keys[self.sm.get('language', 'C')].items():
-            if value := self.sm.get(item):
+            if (value := self.sm.get(item)) is not None:
                 self.language_widgets[self.sm.get('language', 'C')].set_value(key, value)
         for key, item in self.testing_keys.items():
-            if value := self.sm.get(item):
+            if (value := self.sm.get(item)) is not None:
                 self.testing_widget.set_value(key, value)
 
     def set_theme(self):

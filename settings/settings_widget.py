@@ -43,7 +43,7 @@ class SettingsWidget(QWidget):
                            'initial': self.sm.get_general('gcc', '')},
             "Ключи компилятора": {'type': str, 'width': 400, 'initial': self.sm.get_general('c_compiler_keys', '')},
             "Ключ -lm": {'type': bool, 'name': OptionsWidget.NAME_RIGHT,
-                         'initial': bool(self.sm.get_general('c_lm', True))},
+                         'initial': bool(self.sm.get_general('-lm', True))},
             "Coverage": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'gcov.exe', 'key': 'gcov',
                          'initial': self.sm.get_general('gcov', '')},
         }, margins=(20, 20, 20, 20))
