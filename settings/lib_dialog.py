@@ -82,13 +82,9 @@ class LibWidget(QWidget):
         self.open_lib()
 
     def set_theme(self):
-        self.lib_list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
-        self.button_add_lib.setStyleSheet(self.tm.buttons_style_sheet)
-        self.text_edit.setStyleSheet(self.tm.text_edit_style_sheet)
-        self.delete_button.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_update.setStyleSheet(self.tm.buttons_style_sheet)
-        self.lib_name_edit.setStyleSheet(self.tm.style_sheet)
-        self.new_lib_dialog.set_theme()
+        for el in [self.lib_list_widget, self.button_add_lib,self.text_edit, self.delete_button, self.button_update,
+                   self.lib_name_edit, self.new_lib_dialog]:
+            self.tm.auto_css(el)
         for i in range(self.lib_list_widget.count()):
             item = self.lib_list_widget.item(i)
             item.setForeground(self.tm['HFile'] if item.lib_type == CustomLib.GLOBAL else self.tm['CFile'])

@@ -1,7 +1,7 @@
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget
 
 from settings.program_combo_box import ProgramComboBox
 
@@ -400,6 +400,35 @@ class ThemeManager:
                     'TxtFile': QColor('#D6D6D6'),
                     'Directory': QColor('#95D68C')
                 }),
+            'summer':
+                Theme({
+                    'Identifier': QColor('#22420D'),
+                    'Preprocessor': QColor('#7A4875'),
+                    'Comment': QColor('#702425'),
+                    'Keyword': QColor('#162DA8'),
+                    'Number': QColor('#289396'),
+                    'String': QColor('#8B8C1E'),
+
+                    'Paper': QColor('#A9D696'),
+                    'CaretLineBackgroundColor': QColor('#86D673'),
+                    'BraceColor': QColor('#162DA8'),
+
+                    'MainColor': '#A0C95E',
+                    'BgColor': '#E8E8E8',
+                    'BorderColor': '#4F8C25',
+                    'TextColor': '#354711',
+                    'ColorSelected': '#B1D12D',
+                    'ColorHover': '#86A84F',
+
+                    'TestPassed': QColor('#3F8731'),
+                    'TestFailed': QColor('#D96612'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrashed': QColor('B02424'),
+                    'MainC': QColor('#20339E'),
+                    'CFile': QColor('#21669E'),
+                    'HFile': QColor('#7A4875'),
+                    'TxtFile': QColor('#3E733F'),
+                }),
         }
 
         self.theme_name = ''
@@ -448,6 +477,8 @@ class ThemeManager:
             widget.setStyleSheet(self.progress_bar_style_sheet)
         elif isinstance(widget, QTabWidget):
             widget.setStyleSheet(self.tab_widget_style_sheet)
+        elif isinstance(widget, QListWidget):
+            self.set_theme_to_list_widget(widget)
 
     def css_to_options_widget(self, widget):
         widget.setFont(self.font_small)

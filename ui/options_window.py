@@ -327,7 +327,7 @@ class OptionsWidget(QWidget):
         return widget, value
 
     def program_widget(self, key, item):
-        widget = ProgramComboBox(item['sm'], item['file'], item['key'], item.get('general', True))
+        widget = ProgramComboBox(item['sm'], item['file'], item['key'], item.get('global', True))
         if 'initial' in item:
             widget.set_value(str(item['initial']))
         widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),

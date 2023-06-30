@@ -83,6 +83,7 @@ class TestingSettingsWidget(QWidget):
         self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
 
     def compiler_checkbox_triggered(self):
+        print('compiler_checkbox_triggered', self.compiler_checkbox.isChecked())
         self.sm.set('default_compiler_settings', self.compiler_checkbox.isChecked())
         language = self.sm.get('language', 'C')
         if self.compiler_checkbox.isChecked():
@@ -111,7 +112,9 @@ class TestingSettingsWidget(QWidget):
             el.hide()
         self.apply_values()
         self.compiler_checkbox.setChecked(self.sm.get('default_compiler_settings', True))
+        self.compiler_checkbox_triggered()
         self.testing_checkbox.setChecked(self.sm.get('default_testing_settings', True))
+        self.testing_checkbox_triggered()
         # self.language_widgets[self.sm.get('language', 'C')].show()
 
     def save_settings(self):
