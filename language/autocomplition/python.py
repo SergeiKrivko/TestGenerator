@@ -20,20 +20,24 @@ class PythonType(PythonObject):
         super().__init__(name, None)
         self.fields = fields
 
+    def get_all(self, line=-1):
+        for el in self.fields:
+            yield el
+
+    def get_fields(self):
+        for el in self.fields:
+            yield el
+
+    def get(self, key, default=None):
+        return self.fields.get(key, default)
+
     def __repr__(self):
         return f"PythonType({self.name})"
 
 
-MAX_IMPORT_RECURSION = 8
-FUNCTION = PythonType('function', [])
-UNKNOWN_CLASS = PythonType('unknown', [])
-INT = PythonType('int', [])
-FLOAT = PythonType('float', [])
-STR = PythonType('str', [])
-BOOL = PythonType('bool', [])
-LIST = PythonType('list', [])
-TUPLE = PythonType('tuple', [])
-DICT = PythonType('dict', [])
+MAX_IMPORT_RECURSION = 12
+FUNCTION = PythonType('function', dict())
+UNKNOWN_CLASS = PythonType('unknown', dict())
 
 
 class PythonFunction(PythonObject):
@@ -90,7 +94,7 @@ class PythonFunction(PythonObject):
     def get(self, name):
         return self.variables.get(name)
 
-    def get_all(self, line):
+    def get_all(self, line=-1):
         return *self.variables.keys(), *self.params
 
     def __repr__(self):
@@ -110,9 +114,6 @@ class PythonClass(PythonObject):
         self.methods = dict()
 
         self.main_indent = 0
-
-    def parse_header(self):
-        pass
 
     def parse_fields(self):
         current_function = None
@@ -140,19 +141,26 @@ class PythonClass(PythonObject):
         self.lines.append((i, indent - self.main_indent, line))
         self.stop = max(self.stop, i)
 
-    def get_all(self, line):
+    def get_all(self, line=-1):
+        yield 'self'
         for method in self.methods.values():
             if method.start <= line <= method.stop + 1:
-                return 'self', *method.get_all(line)
-        return 'self'
+                for el in method.get_all(line):
+                    yield el
+                break
 
     def get_fields(self):
-        return *self.fields, *self.methods
+        for el in self.fields:
+            yield el
+        for el in self.methods:
+            yield el
+        for el in self.parent.get_fields():
+            yield el
 
-    def get(self, key):
+    def get(self, key, default=None):
         if key == 'self':
             return self
-        return self.methods.get(key, self.fields.get(key))
+        return self.methods.get(key, self.fields.get(key, self.parent.get(key, default)))
 
     def __repr__(self):
         return f"PythonClass({self.name})"
@@ -255,7 +263,13 @@ class PythonModule(PythonObject):
                     function_indent = indent
                     self.functions[line[1]] = current_function
                 elif line[0] == 'class' and len(line) >= 3:
-                    current_function = PythonClass(self, line[1], UNKNOWN_CLASS, i)
+                    if len(line) >= 5 and line[3].isidentifier():
+                        parent = self.get(line[3], UNKNOWN_CLASS)
+                        if not isinstance(parent, PythonClass):
+                            parent = UNKNOWN_CLASS
+                    else:
+                        parent = UNKNOWN_CLASS
+                    current_function = PythonClass(self, line[1], parent, i)
                     function_indent = indent
                     self.classes[line[1]] = current_function
                 elif indent == 0 and line[0] == 'import' and self.recursion < MAX_IMPORT_RECURSION:
@@ -370,7 +384,7 @@ class CodeAutocompletionManager:
         self.re = re.compile(r"[*]\/|\/[*]|\s+|\w+|\W")
         self.keywords = ('def', 'class', 'if', 'elif', 'else', 'while', 'for', 'in', 'is', 'try', 'except', 'finally',
                          'None', 'True', 'False', 'pass', 'and', 'or', 'not', 'lambda', 'import', 'from', 'as',
-                         'return', 'yield')
+                         'return', 'yield', 'global', 'nonlocal', 'del', 'with', 'raise')
         lib_path1 = f"{os.path.split(self._sm.get('python', ''))[0]}/Lib"
         lib_path2 = f"{lib_path1}/site-packages"
         lib_path3 = f"{os.path.split(os.path.split(self._sm.get('python', ''))[0])[0]}/Lib"
