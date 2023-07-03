@@ -133,7 +133,7 @@ class TestingSettingsWidget(QWidget):
                 self.testing_widget.set_value(key, value)
 
     def set_theme(self):
-        for el in [self.testing_label, self.compiler_label]:
+        for el in [self.testing_label, self.compiler_label, self.testing_checkbox, self.compiler_checkbox]:
             self.tm.auto_css(el)
         for el in self.language_widgets.values():
             self.tm.css_to_options_widget(el)

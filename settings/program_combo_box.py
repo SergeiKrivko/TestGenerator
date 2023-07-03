@@ -2,6 +2,8 @@ import os
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton
 
+from ui.button import Button
+
 
 class ProgramComboBox(QWidget):
     def __init__(self, sm, file, key, general=True):
@@ -20,14 +22,14 @@ class ProgramComboBox(QWidget):
         layout.addWidget(self.combo_box)
         self.combo_box.currentTextChanged.connect(self.set_sm_value)
 
-        self.button_update = QPushButton("↺")
+        self.button_update = Button(None, 'update')
         layout.addWidget(self.button_update)
-        self.button_update.setFixedWidth(24)
+        self.button_update.setFixedSize(24, 22)
         self.button_update.clicked.connect(self.sm.start_search)
 
-        self.button_add = QPushButton("+")
+        self.button_add = Button(None, 'plus')
         layout.addWidget(self.button_add)
-        self.button_add.setFixedWidth(24)
+        self.button_add.setFixedSize(24, 22)
 
         self.setLayout(layout)
 

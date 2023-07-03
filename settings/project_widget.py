@@ -367,6 +367,7 @@ class DeleteProjectDialog(QDialog):
         h_layout = QHBoxLayout()
         h_layout.setAlignment(Qt.AlignLeft)
         self.check_box = QCheckBox()
+        tm.auto_css(self.check_box)
         self.check_box.setChecked(True)
         h_layout.addWidget(self.check_box)
 

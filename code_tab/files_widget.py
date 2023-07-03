@@ -6,6 +6,7 @@ from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
     QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
 
+from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
 from ui.resources import resources
@@ -33,20 +34,21 @@ class FilesWidget(QWidget):
         buttons_layout.setSpacing(3)
         files_layout.addLayout(buttons_layout)
 
-        self.button_add_file = QPushButton()
-        self.button_add_file.setText("+")
-        self.button_add_file.setFixedHeight(20)
+        self.button_add_file = Button(self.tm, 'plus')
+        self.button_add_file.setFixedHeight(22)
         buttons_layout.addWidget(self.button_add_file)
 
-        self.button_delete_file = QPushButton()
-        self.button_delete_file.setText("✕")
-        self.button_delete_file.setFixedHeight(20)
+        self.button_delete_file = Button(self.tm, 'delete')
+        self.button_delete_file.setFixedHeight(22)
         buttons_layout.addWidget(self.button_delete_file)
 
-        self.button_run = QPushButton()
-        self.button_run.setText("▶")
-        self.button_run.setFixedHeight(20)
+        self.button_run = Button(self.tm, 'run')
+        self.button_run.setFixedHeight(22)
         buttons_layout.addWidget(self.button_run)
+
+        self.button_search = Button(self.tm, 'search')
+        self.button_search.setFixedHeight(22)
+        buttons_layout.addWidget(self.button_search)
 
         self.files_list = QListWidget()
         files_layout.addWidget(self.files_list)
@@ -177,7 +179,7 @@ class FilesWidget(QWidget):
                         return
 
     def set_theme(self):
-        for el in [self.button_add_file, self.button_delete_file, self.button_run]:
+        for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search]:
             self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
         for i in range(self.files_list.count()):

@@ -4,7 +4,7 @@ import shutil
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox
 import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
@@ -455,7 +455,7 @@ class ThemeManager:
         elif isinstance(widget, QScrollArea):
             widget.setStyleSheet(self.scroll_area_style_sheet)
         elif isinstance(widget, Button):
-            widget.set_theme()
+            widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
             widget.setStyleSheet(self.buttons_style_sheet)
         elif isinstance(widget, QSpinBox):
@@ -470,6 +470,8 @@ class ThemeManager:
             widget.setStyleSheet(self.tab_widget_style_sheet)
         elif isinstance(widget, QListWidget):
             self.set_theme_to_list_widget(widget)
+        elif isinstance(widget, QCheckBox):
+            widget.setStyleSheet(self.checkbox_style_sheet)
 
     def css_to_options_widget(self, widget):
         widget.setFont(self.font_small)
@@ -818,6 +820,29 @@ QTabBar::tab:selected {{
     background-color: {self['ColorSelected']};
 }}
 """
+        self.checkbox_style_sheet = f"""
+QCheckBox::indicator {{
+    width: 13px;
+    height: 13px;
+}}
+QCheckBox::indicator:unchecked {{
+    image: url({self.get_image('checkbox_unchecked')});
+}}
+QCheckBox::indicator:unchecked:hover {{
+    image: url({self.get_image('checkbox_unchecked')});
+}}
+QCheckBox::indicator:unchecked:pressed {{
+    image: url({self.get_image('checkbox_unchecked')});
+}}
+QCheckBox::indicator:checked {{
+    image: url({self.get_image('checkbox')});
+}}
+QCheckBox::indicator:checked:hover {{
+    image: url({self.get_image('checkbox')});
+}}
+QCheckBox::indicator:checked:pressed {{
+    image: url({self.get_image('checkbox')});
+}}"""
 
     def get_image(self, name: str, default=None, color=None):
         if name not in resources and default is not None:
