@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLay
     QDialog, QDialogButtonBox
 
 from binary_redactor.redactor import BinaryRedactor
+from ui.button import Button
 
 
 class TestEditWidget(QWidget):
@@ -65,12 +66,12 @@ class TestEditWidget(QWidget):
         self.in_combo_box.setFixedHeight(20)
         layout_h1.addWidget(self.in_combo_box)
 
-        self.button_add_in = QPushButton("+")
-        self.button_add_in.setFixedSize(20, 20)
+        self.button_add_in = Button(self.tm, 'plus')
+        self.button_add_in.setFixedSize(22, 22)
         layout_h1.addWidget(self.button_add_in)
 
-        self.button_delete_in = QPushButton("✕")
-        self.button_delete_in.setFixedSize(20, 20)
+        self.button_delete_in = Button(self.tm, 'delete')
+        self.button_delete_in.setFixedSize(22, 22)
         layout_h1.addWidget(self.button_delete_in)
 
         layout1.addLayout(layout_h1)
@@ -89,12 +90,12 @@ class TestEditWidget(QWidget):
         self.out_combo_box.setFixedHeight(20)
         layout_h2.addWidget(self.out_combo_box)
 
-        self.button_add_out = QPushButton("+")
-        self.button_add_out.setFixedSize(20, 20)
+        self.button_add_out = Button(self.tm, 'plus')
+        self.button_add_out.setFixedSize(22, 22)
         layout_h2.addWidget(self.button_add_out)
 
-        self.button_delete_out = QPushButton("✕")
-        self.button_delete_out.setFixedSize(20, 20)
+        self.button_delete_out = Button(self.tm, 'delete')
+        self.button_delete_out.setFixedSize(22, 22)
         layout_h2.addWidget(self.button_delete_out)
 
         self.test_out_edit = BinaryRedactor(self.tm)

@@ -2,7 +2,6 @@ from sys import argv
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
 
-from language.testing.python import python_run
 from tests.macros_converter import background_process_manager
 from ui.themes import ThemeManager
 from code_tab.code_widget import CodeWidget
@@ -35,7 +34,7 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(layout)
 
         self.cm = CommandManager(self.sm)
-        self.tm = ThemeManager(self.sm.get_general('theme'))
+        self.tm = ThemeManager(self.sm, self.sm.get_general('theme'))
 
         self.menu_bar = MenuBar({
             'Проект': (lambda: self.show_tab('project_widget'), None),

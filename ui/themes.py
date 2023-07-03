@@ -1,9 +1,15 @@
+import os
+import shutil
+
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget
+import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
+from ui.button import Button
+from ui.resources import resources
 
 basic_theme = {
     'Identifier': Qt.black,
@@ -12,39 +18,7 @@ basic_theme = {
     'Keyword': Qt.darkBlue,
     'Number': Qt.blue,
     'String': QColor(255, 50, 120),
-    'QsciLexerCPP':
-        {
-            'Identifier': Qt.black,
-            'PreProcessor': Qt.darkYellow,
-            'Comment': Qt.darkGreen,
-            'CommentLine': Qt.darkGreen,
-            'CommentDoc': Qt.darkGreen,
-            'Keyword': Qt.darkBlue,
-            'Number': Qt.blue,
-            'Operator': Qt.black,
-            'DoubleQuotedString': QColor(255, 50, 120),
-            'SingleQuotedString': QColor(255, 50, 120),
-        },
-    'QsciLexerPython':
-        {
-            'Identifier': Qt.black,
-            'Comment': Qt.darkGreen,
-            'CommentBlock': Qt.darkGreen,
-            'Keyword': Qt.darkBlue,
-            'Number': Qt.blue,
-            'Operator': Qt.black,
-            'ClassName': Qt.darkBlue,
-            'Decorator': Qt.blue,
-            'FunctionMethodName': Qt.darkBlue,
-            'DoubleQuotedString': QColor(255, 50, 120),
-            'SingleQuotedString': QColor(255, 50, 120),
-            'DoubleQuotedFString': QColor(255, 50, 120),
-            'SingleQuotedFString': QColor(255, 50, 120),
-            'TripleDoubleQuotedString': QColor(255, 50, 120),
-            'TripleSingleQuotedString': QColor(255, 50, 120),
-            'TripleDoubleQuotedFString': QColor(255, 50, 120),
-            'TripleSingleQuotedFString': QColor(255, 50, 120),
-        },
+
     'Paper': QColor(Qt.white),
     'CaretLineBackgroundColor': QColor('#E5F3FF'),
     'BraceColor': QColor('#373EF0'),
@@ -54,6 +28,7 @@ basic_theme = {
     'TextColor': '#000000',
     'ColorSelected': '#CCE8FF',
     'ColorHover': '#E5F3FF',
+    'ImageColor': (0, 0, 0),
     'TestPassed': QColor('#12A013'),
     'TestFailed': QColor('#F82525'),
     'TestInProgress': QColor('#A0A0A0'),
@@ -89,7 +64,8 @@ class Theme:
 class ThemeManager:
     BASIC_THEME = 'basic'
 
-    def __init__(self, theme_name='basic'):
+    def __init__(self, sm, theme_name='basic'):
+        self.sm = sm
         self.themes = {
             ThemeManager.BASIC_THEME: Theme(basic_theme),
             'darcula':
@@ -110,6 +86,8 @@ class ThemeManager:
                     'TextColor': '#F0F0F0',
                     'ColorSelected': '#909090',
                     'ColorHover': '#777777',
+                    'ImageColor': (250, 250, 250),
+
                     'TestPassed': QColor('#CBF742'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -138,6 +116,7 @@ class ThemeManager:
                     'TextColor': '#2C3333',
                     'ColorSelected': '#A2D7E5',
                     'ColorHover': '#C1EDF5',
+                    'ImageColor': (44, 51, 51),
                     'TestPassed': QColor('#449C38'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -166,6 +145,7 @@ class ThemeManager:
                     'TextColor': '#483838',
                     'ColorSelected': '#A3CF63',
                     'ColorHover': '#BAD78C',
+                    'ImageColor': (72, 56, 56),
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -194,6 +174,7 @@ class ThemeManager:
                     'TextColor': '#A31ACB',
                     'ColorSelected': '#CFA0D9',
                     'ColorHover': '#EEC1F0',
+                    'ImageColor': (166, 23, 203),
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -222,6 +203,7 @@ class ThemeManager:
                     'TextColor': '#402218',
                     'ColorSelected': '#E8C3B0',
                     'ColorHover': '#E0BB9D',
+                    'ImageColor': (64, 34, 24),
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -250,6 +232,7 @@ class ThemeManager:
                     'TextColor': '#F1BC31',
                     'ColorSelected': '#CF0E04',
                     'ColorHover': '#DB4016',
+                    'ImageColor': (241, 188, 49),
                     'TestPassed': QColor('#2496C9'),
                     'TestFailed': QColor('#ED8029'),
                     'TestInProgress': QColor('#B8BD65'),
@@ -278,6 +261,7 @@ class ThemeManager:
                     'TextColor': '#EDBFF2',
                     'ColorSelected': '#3E5378',
                     'ColorHover': '#4E4378',
+                    'ImageColor': (237, 191, 242),
                     'TestPassed': QColor('#62DB26'),
                     'TestFailed': QColor('#E54E13'),
                     'TestInProgress': QColor('#DEABDC'),
@@ -306,6 +290,7 @@ class ThemeManager:
                     'TextColor': '#000000',
                     'ColorSelected': '#FFCB99',
                     'ColorHover': '#F2CE9C',
+                    'ImageColor': (217, 126, 29),
                     'TestPassed': QColor('#3BA126'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -334,6 +319,7 @@ class ThemeManager:
                     'TextColor': '#2F1233',
                     'ColorSelected': '#D6A0D5',
                     'ColorHover': '#E6ACE5',
+                    'ImageColor': (47, 18, 51),
                     'TestPassed': QColor('#2D9124'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#9D70A0'),
@@ -362,6 +348,7 @@ class ThemeManager:
                     'TextColor': '#0C3326',
                     'ColorSelected': '#66F2CB',
                     'ColorHover': '#8CF2D8',
+                    'ImageColor': (12, 51, 38),
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -390,6 +377,7 @@ class ThemeManager:
                     'TextColor': '#F0F0F0',
                     'ColorSelected': '#20204D',
                     'ColorHover': '#23233D',
+                    'ImageColor': (240, 240, 240),
                     'TestPassed': QColor('#CBF742'),
                     'TestFailed': QColor('#FC6921'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -419,6 +407,7 @@ class ThemeManager:
                     'TextColor': '#354711',
                     'ColorSelected': '#B1D12D',
                     'ColorHover': '#86A84F',
+                    'ImageColor': (57, 71, 17),
 
                     'TestPassed': QColor('#3F8731'),
                     'TestFailed': QColor('#D96612'),
@@ -465,6 +454,8 @@ class ThemeManager:
             widget.setStyleSheet(self.text_edit_style_sheet)
         elif isinstance(widget, QScrollArea):
             widget.setStyleSheet(self.scroll_area_style_sheet)
+        elif isinstance(widget, Button):
+            widget.set_theme()
         elif isinstance(widget, QPushButton):
             widget.setStyleSheet(self.buttons_style_sheet)
         elif isinstance(widget, QSpinBox):
@@ -491,6 +482,7 @@ class ThemeManager:
 
     def set_theme(self, theme_name):
         self.theme_name = theme_name
+        self.clear_images()
         if theme_name not in self.themes:
             self.theme_name = ThemeManager.BASIC_THEME
         self.theme = self.themes.get(theme_name, self.themes[ThemeManager.BASIC_THEME])
@@ -712,6 +704,9 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
         QComboBox::drop-down:button {{
             border-radius: 5px;
         }}
+        QComboBox::down-arrow {{
+            image: url({self.get_image('down_arrow')});
+        }}
         QComboBox QAbstractItemView {{
             color: {self['TextColor']};
             background-color: {self['MainColor']};
@@ -764,6 +759,9 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
         QSpinBox::up-button::hover {{
             background-color: {self['ColorHover']};
         }}
+        QSpinBox::up-arrow {{
+            image: url({self.get_image('up_arrow')});
+        }}
         QSpinBox::down-button {{
             color: {self['TextColor']};
             background-color: {self['MainColor']};
@@ -776,6 +774,9 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
         }}
         QSpinBox::down-button::hover {{
             background-color: {self['ColorHover']};
+        }}
+        QSpinBox::down-arrow {{
+            image: url({self.get_image('down_arrow')});
         }}
         QSpinBox::disabled {{
             color: {self['BgColor']};
@@ -817,6 +818,43 @@ QTabBar::tab:selected {{
     background-color: {self['ColorSelected']};
 }}
 """
+
+    def get_image(self, name: str, default=None, color=None):
+        if name not in resources and default is not None:
+            name = default
+
+        path = f"{self.sm.app_data_dir}/images/{name}.png"
+        if color is not None or not os.path.isfile(path):
+            if color is None:
+                color = self['ImageColor']
+            elif isinstance(color, str):
+                color = QColor(color)
+                color = color.red(), color.green(), color.blue()
+            elif isinstance(color, QColor):
+                color = color.red(), color.green(), color.blue()
+
+            os.makedirs(f"{self.sm.app_data_dir}/images", exist_ok=True)
+            image = Image.frombytes(*resources[name])
+
+            image = image.convert("RGBA")
+            datas = image.getdata()
+            new_data = []
+            for item in datas:
+                if item[0] == 255 and item[1] == 255 and item[2] == 255:
+                    new_data.append((255, 255, 255, 0))
+                elif item[0] == 0 and item[1] == 0 and item[2] == 0:
+                    new_data.append(color)
+                else:
+                    new_data.append(item)
+            image.putdata(new_data)
+
+            image.save(path)
+
+        return path
+
+    def clear_images(self):
+        if os.path.isdir(path := f"{self.sm.app_data_dir}/images"):
+            shutil.rmtree(path)
 
     def add_custom_theme(self, theme_name, theme_data):
         self.themes[theme_name] = Theme(theme_data)

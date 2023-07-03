@@ -1,5 +1,8 @@
+from PyQt5.QtGui import QIcon, QImage
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel, \
     QComboBox
+
+from ui.button import Button
 
 BUTTONS_MAX_WIDTH = 30
 
@@ -24,33 +27,33 @@ class TestTableWidget(QWidget):
         pos_buttons_layout.addWidget(label := QLabel("Позитивные тесты"))
         self.labels.append(label)
 
-        self.pos_add_button = QPushButton()
-        self.pos_add_button.setText("+")
+        self.pos_add_button = Button(self.tm, 'plus')
+        self.pos_add_button.setFixedHeight(22)
         self.pos_add_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_add_button)
 
-        self.pos_delete_button = QPushButton()
-        self.pos_delete_button.setText("✕")
+        self.pos_delete_button = Button(self.tm, 'delete')
+        self.pos_delete_button.setFixedHeight(22)
         self.pos_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_delete_button)
 
-        self.pos_button_up = QPushButton()
-        self.pos_button_up.setText("▲")
+        self.pos_button_up = Button(self.tm, 'button_up')
+        self.pos_button_up.setFixedHeight(22)
         self.pos_button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_up)
 
-        self.pos_button_down = QPushButton()
-        self.pos_button_down.setText("▼")
+        self.pos_button_down = Button(self.tm, 'button_down')
+        self.pos_button_down.setFixedHeight(22)
         self.pos_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_down)
 
-        self.pos_button_copy = QPushButton()
-        self.pos_button_copy.setText("📑")
+        self.pos_button_copy = Button(self.tm, 'copy')
+        self.pos_button_copy.setFixedHeight(22)
         self.pos_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_copy)
 
-        self.pos_button_generate = QPushButton()
-        self.pos_button_generate.setText("⚙")
+        self.pos_button_generate = Button(self.tm, 'generate')
+        self.pos_button_generate.setFixedHeight(22)
         self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_generate)
 
@@ -78,33 +81,33 @@ class TestTableWidget(QWidget):
         neg_buttons_layout.addWidget(label := QLabel("Негативные тесты"))
         self.labels.append(label)
 
-        self.neg_add_button = QPushButton()
-        self.neg_add_button.setText("+")
+        self.neg_add_button = Button(self.tm, 'plus')
+        self.neg_add_button.setFixedHeight(22)
         self.neg_add_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_add_button)
 
-        self.neg_delete_button = QPushButton()
-        self.neg_delete_button.setText("✕")
+        self.neg_delete_button = Button(self.tm, 'delete')
+        self.neg_delete_button.setFixedHeight(22)
         self.neg_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_delete_button)
 
-        self.neg_button_up = QPushButton()
-        self.neg_button_up.setText("▲")
+        self.neg_button_up = Button(self.tm, 'button_up')
+        self.neg_button_up.setFixedHeight(22)
         self.neg_button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_up)
 
-        self.neg_button_down = QPushButton()
-        self.neg_button_down.setText("▼")
+        self.neg_button_down = Button(self.tm, 'button_down')
+        self.neg_button_down.setFixedHeight(22)
         self.neg_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_down)
 
-        self.neg_button_copy = QPushButton()
-        self.neg_button_copy.setText("📑")
+        self.neg_button_copy = Button(self.tm, 'copy')
+        self.neg_button_copy.setFixedHeight(22)
         self.neg_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_copy)
 
-        self.neg_button_generate = QPushButton()
-        self.neg_button_generate.setText("⚙")
+        self.neg_button_generate = Button(self.tm, 'generate')
+        self.neg_button_generate.setFixedHeight(22)
         self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_generate)
 

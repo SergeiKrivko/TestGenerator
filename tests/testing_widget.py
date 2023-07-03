@@ -400,6 +400,7 @@ class TestingWidget(QWidget):
             self.enable_ui()
 
     def enable_ui(self):
+        self.testing_end.emit()
         self.lab_widget.setDisabled(False)
         self.ui_disable_func(False)
         self.button.setText("Тестировать")

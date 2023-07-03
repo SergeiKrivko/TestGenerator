@@ -2,11 +2,13 @@ import os
 import shutil
 
 from PyQt5.QtCore import pyqtSignal, Qt, QThread
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
     QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
 
 from ui.message_box import MessageBox
 from language.languages import languages
+from ui.resources import resources
 
 
 class FilesWidget(QWidget):
@@ -193,27 +195,31 @@ class FileListWidgetItem(QListWidgetItem):
 
         if path == '..':
             self.name = '..'
-            self.setText('▲ ..')
+            self.setText(self.name)
+            self.setIcon(QIcon(self.tm.get_image('parent_dir')))
+            # self.setText('▲ ..')
             self.file_type = 'dir'
             self.priority = 0
         else:
             self.name = os.path.basename(path)
+            self.setText(self.name)
             if os.path.isdir(self.path):
-                self.setText(f"▼ {self.name}")
+                # self.setText(f"▼ {self.name}")
                 self.file_type = 'dir'
+                self.setIcon(QIcon(self.tm.get_image('directory')))
                 self.priority = 1
             elif self.path.endswith(f"main{language.get('files')[0]}"):
-                self.setText(f"◆ {self.name}")
+                # self.setText(f"◆ {self.name}")
                 self.file_type = 'main'
                 self.priority = 2
             elif self.path.endswith(language.get('files')[0]):
-                self.setText(f"◆ {self.name}")
+                # self.setText(f"◆ {self.name}")
                 self.file_type = 'code'
                 self.priority = 3
             else:
                 for elem in language.get('files'):
                     if self.path.endswith(elem):
-                        self.setText(f"◆ {self.name}")
+                        # self.setText(f"◆ {self.name}")
                         self.file_type = 'header'
                         self.priority = 3
                         break
@@ -222,14 +228,14 @@ class FileListWidgetItem(QListWidgetItem):
                         flag = False
                         for el in item.get('files', []):
                             if self.path.endswith(el):
-                                self.setText(f" ●  {self.name}")
+                                # self.setText(f" ●  {self.name}")
                                 self.file_type = 'text'
                                 self.priority = 4
                                 flag = True
                         if flag:
                             break
                     else:
-                        self.setText(f" ?  {self.name}")
+                        # self.setText(f" ?  {self.name}")
 
                         self.file_type = 'unknown'
                         self.priority = 5
@@ -237,16 +243,31 @@ class FileListWidgetItem(QListWidgetItem):
         self.set_theme()
 
     def set_theme(self):
+        color = None
         if self.file_type == 'dir':
-            self.setForeground(self.tm['Directory'])
+            color = self.tm['Directory']
         elif self.file_type == 'main':
-            self.setForeground(self.tm['MainC'])
+            color = self.tm['MainC']
         elif self.file_type == 'code':
-            self.setForeground(self.tm['CFile'])
+            color = self.tm['CFile']
         elif self.file_type == 'header':
-            self.setForeground(self.tm['HFile'])
+            color = self.tm['HFile']
         elif self.file_type == 'text':
-            self.setForeground(self.tm['TxtFile'])
+            color = self.tm['TxtFile']
+        else:
+            self.setForeground(QColor(self.tm['TextColor']))
+        if color:
+            self.setForeground(color)
+
+        if self.file_type == 'dir':
+            if self.name == '..':
+                self.setIcon(QIcon(self.tm.get_image('parent_dir', color=color)))
+            else:
+                self.setIcon(QIcon(self.tm.get_image('directory', color=color)))
+        elif '.' in self.name:
+            self.setIcon(QIcon(self.tm.get_image(self.name.split('.')[1], 'unknown_file', color=color)))
+        else:
+            self.setIcon(QIcon(self.tm.get_image('unknown_file', color=color)))
         self.setFont(self.tm.font_small)
 
 
