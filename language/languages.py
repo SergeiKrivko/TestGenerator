@@ -1,5 +1,5 @@
 from PyQt5.Qsci import QsciLexerCPP, QsciLexerPython, QsciLexerBash, QsciLexerBatch, QsciLexerCSharp, QsciLexerJava, \
-    QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON
+    QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON, QsciLexerXML
 from language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 from language.autocomplition.c import CodeAutocompletionManager as AcMC
 from language.autocomplition.python import CodeAutocompletionManager as AcMPython
@@ -123,4 +123,5 @@ languages = {
     'c#': {'lexer': QsciLexerCSharp},
     'java': {'lexer': QsciLexerJava},
     'javascript': {'lexer': QsciLexerJavaScript, 'files': ['.js'], 'autocompletion': AcMAbstract},
+    'XML': {'lexer': QsciLexerXML, 'files': ['.xml'], 'autocompletion': AcMAbstract},
 }

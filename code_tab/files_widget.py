@@ -9,13 +9,12 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLin
 from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
-from ui.resources import resources
 
 
 class FilesWidget(QWidget):
     renameFile = pyqtSignal(str)
     openFile = pyqtSignal(str)
-    ignore_files = [".exe", ".o", "temp.txt"]
+    ignore_files = []
 
     def __init__(self, sm, cm, tm):
         super(FilesWidget, self).__init__()
@@ -25,6 +24,7 @@ class FilesWidget(QWidget):
 
         self.setMaximumWidth(175)
         files_layout = QVBoxLayout()
+        files_layout.setSpacing(3)
         files_layout.setContentsMargins(0, 5, 0, 0)
         self.setLayout(files_layout)
         self.path = ''
@@ -191,6 +191,9 @@ class FilesWidget(QWidget):
                 self.openFile.emit('')
             else:
                 self.openFile.emit(item.path)
+                if item.path.endswith('.exe'):
+                    self.button_run.setDisabled(False)
+                    return
                 for language in languages.values():
                     if language.get('fast_run', False):
                         for el in language['files']:
@@ -200,26 +203,31 @@ class FilesWidget(QWidget):
             self.button_run.setDisabled(True)
 
     def run_file(self):
+        def run_file(func):
+            old_dir = os.getcwd()
+            os.chdir(self.current_path)
+            looper = FileRunner(func, self.files_list.currentItem().path, self.sm, self.cm)
+            dialog = RunDialog(self.tm, os.path.basename(self.files_list.currentItem().path))
+            dialog.rejected.connect(looper.terminate)
+            looper.finished.connect(dialog.accept)
+            looper.start()
+            if dialog.exec() and looper.res:
+                if looper.res.stderr:
+                    MessageBox(MessageBox.Information, "STDERR", looper.res.stderr, self.tm)
+                if looper.res.stdout:
+                    MessageBox(MessageBox.Information, "STDOUT", looper.res.stdout, self.tm)
+
+            os.chdir(old_dir)
+
         if not self.files_list.currentItem():
             return
+        if self.files_list.currentItem().path.endswith('.exe'):
+            run_file(lambda path, sm, cm, **kwargs: cm.cmd_command(f"{path}", shell=True, input=''))
         for language in languages.values():
             if language.get('fast_run', False):
                 for el in language['files']:
                     if self.files_list.currentItem().path.endswith(el):
-                        old_dir = os.getcwd()
-                        os.chdir(self.current_path)
-                        looper = FileRunner(language['run'], self.files_list.currentItem().path, self.sm, self.cm)
-                        dialog = RunDialog(self.tm, os.path.basename(self.files_list.currentItem().path))
-                        dialog.rejected.connect(looper.terminate)
-                        looper.finished.connect(dialog.accept)
-                        looper.start()
-                        if dialog.exec() and looper.res:
-                            if looper.res.stderr:
-                                MessageBox(MessageBox.Information, "STDERR", looper.res.stderr, self.tm)
-                            if looper.res.stdout:
-                                MessageBox(MessageBox.Information, "STDOUT", looper.res.stdout, self.tm)
-
-                        os.chdir(old_dir)
+                        run_file(language['run'])
                         return
 
     def set_theme(self):
@@ -244,7 +252,7 @@ class FileListWidgetItem(QListWidgetItem):
         if path == '..':
             self.name = '..'
             self.setText(self.name)
-            self.setIcon(QIcon(self.tm.get_image('parent_dir')))
+            self.setIcon(QIcon(self.tm.get_image('directory')))
             # self.setText('▲ ..')
             self.file_type = 'dir'
             self.priority = 0
@@ -291,7 +299,6 @@ class FileListWidgetItem(QListWidgetItem):
         self.set_theme()
 
     def set_theme(self):
-        color = None
         if self.file_type == 'dir':
             color = self.tm['Directory']
         elif self.file_type == 'main':
@@ -303,9 +310,8 @@ class FileListWidgetItem(QListWidgetItem):
         elif self.file_type == 'text':
             color = self.tm['TxtFile']
         else:
-            self.setForeground(QColor(self.tm['TextColor']))
-        if color:
-            self.setForeground(color)
+            color = QColor(self.tm['TextColor'])
+        self.setForeground(color)
 
         if self.file_type == 'dir':
             self.setIcon(QIcon(self.tm.get_image('directory', color=color)))
