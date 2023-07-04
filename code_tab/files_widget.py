@@ -47,8 +47,44 @@ class FilesWidget(QWidget):
         buttons_layout.addWidget(self.button_run)
 
         self.button_search = Button(self.tm, 'search')
+        self.button_search.setCheckable(True)
+        self.button_search.clicked.connect(self.show_search)
         self.button_search.setFixedHeight(22)
         buttons_layout.addWidget(self.button_search)
+
+        search_layout = QHBoxLayout()
+        search_layout.setSpacing(2)
+
+        self.search_line = QLineEdit()
+        search_layout.addWidget(self.search_line)
+
+        self.button_up = Button(self.tm, 'button_up')
+        self.button_up.setFixedSize(22, 22)
+        search_layout.addWidget(self.button_up)
+
+        self.button_down = Button(self.tm, 'button_down')
+        self.button_down.setFixedSize(22, 22)
+        search_layout.addWidget(self.button_down)
+
+        files_layout.addLayout(search_layout)
+
+        replace_layout = QHBoxLayout()
+        replace_layout.setSpacing(2)
+
+        self.replace_line = QLineEdit()
+        replace_layout.addWidget(self.replace_line)
+
+        self.button_replace = Button(self.tm, 'replace')
+        self.button_replace.setFixedSize(22, 22)
+        replace_layout.addWidget(self.button_replace)
+
+        self.button_replace_all = Button(self.tm, 'replace_all')
+        self.button_replace_all.setFixedSize(22, 22)
+        replace_layout.addWidget(self.button_replace_all)
+
+        files_layout.addLayout(replace_layout)
+
+        self.show_search(False)
 
         self.files_list = QListWidget()
         files_layout.addWidget(self.files_list)
@@ -61,6 +97,14 @@ class FilesWidget(QWidget):
         self.button_run.setDisabled(True)
 
         self.dialog = None
+
+    def show_search(self, show):
+        for el in [self.search_line, self.replace_line,self.button_up, self.button_down,
+                   self.button_replace, self.button_replace_all]:
+            if show:
+                el.show()
+            else:
+                el.hide()
 
     def update_files_list(self):
         self.files_list.clear()
@@ -179,7 +223,9 @@ class FilesWidget(QWidget):
                         return
 
     def set_theme(self):
-        for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search]:
+        for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search,
+                   self.button_up, self.button_down, self.search_line, self.replace_line,
+                   self.button_replace, self.button_replace_all]:
             self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
         for i in range(self.files_list.count()):
@@ -262,10 +308,7 @@ class FileListWidgetItem(QListWidgetItem):
             self.setForeground(color)
 
         if self.file_type == 'dir':
-            if self.name == '..':
-                self.setIcon(QIcon(self.tm.get_image('parent_dir', color=color)))
-            else:
-                self.setIcon(QIcon(self.tm.get_image('directory', color=color)))
+            self.setIcon(QIcon(self.tm.get_image('directory', color=color)))
         elif '.' in self.name:
             self.setIcon(QIcon(self.tm.get_image(self.name.split('.')[1], 'unknown_file', color=color)))
         else:

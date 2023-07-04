@@ -420,6 +420,7 @@ class ThemeManager:
                 }),
         }
 
+        self._image_colors = dict()
         self.theme_name = ''
         self.theme = None
         self.style_sheet = ''
@@ -695,6 +696,9 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
             color: {self['BgColor']};
             border-color: {self['MainColor']};
         }}
+        QPushButton::checked {{
+            background-color: {self['ColorSelected']};
+        }}
         """
         self.combo_box_style_sheet = f"""
         QComboBox {{
@@ -848,16 +852,17 @@ QCheckBox::indicator:checked:pressed {{
         if name not in resources and default is not None:
             name = default
 
-        path = f"{self.sm.app_data_dir}/images/{name}.png"
-        if color is not None or not os.path.isfile(path):
-            if color is None:
-                color = self['ImageColor']
-            elif isinstance(color, str):
-                color = QColor(color)
-                color = color.red(), color.green(), color.blue()
-            elif isinstance(color, QColor):
-                color = color.red(), color.green(), color.blue()
+        if color is None:
+            color = self['ImageColor']
+        elif isinstance(color, str):
+            color = QColor(color)
+            color = color.red(), color.green(), color.blue()
+        elif isinstance(color, QColor):
+            color = color.red(), color.green(), color.blue()
 
+        path = f"{self.sm.app_data_dir}/images/{name}.png"
+        if not os.path.isfile(path) or color != self._image_colors.get(name):
+            self._image_colors[name] = color
             os.makedirs(f"{self.sm.app_data_dir}/images", exist_ok=True)
             image = Image.frombytes(*resources[name])
 
@@ -878,6 +883,7 @@ QCheckBox::indicator:checked:pressed {{
         return path
 
     def clear_images(self):
+        self._image_colors.clear()
         if os.path.isdir(path := f"{self.sm.app_data_dir}/images"):
             shutil.rmtree(path)
 

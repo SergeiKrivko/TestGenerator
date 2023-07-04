@@ -1,5 +1,6 @@
 from sys import argv
 
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
 
 from tests.macros_converter import background_process_manager
@@ -24,6 +25,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
+        self.setMinimumSize(800, 360)
 
         self.sm = SettingsManager()
 
@@ -115,6 +117,11 @@ class MainWindow(QMainWindow):
         QMenuBar {{
         color: {self.tm['TextColor']};
         background-color: {self.tm['BgColor']};
+        padding: 3px 3px;
+        }}
+        QMenuBar::item {{
+        padding: 2px 6px;
+        border-radius: 5px;
         }}
         QMenuBar::item::selected {{
         background-color: {self.tm['MainColor']};

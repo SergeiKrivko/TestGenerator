@@ -1,6 +1,4 @@
-from PyQt5.QtGui import QIcon, QImage
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QLabel, \
-    QComboBox
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox
 
 from ui.button import Button
 
@@ -62,6 +60,7 @@ class TestTableWidget(QWidget):
 
         pos_comparator_layout = QHBoxLayout()
         pos_comparator_layout.addWidget(label := QLabel('Компаратор:'))
+        self.pos_comparator_label = label
         self.labels.append(label)
         self.pos_comparator_widget = QComboBox()
         self.pos_comparator_widget.addItems(['По умолчанию', 'Числа', 'Числа как текст', 'Текст после подстроки',
@@ -116,6 +115,7 @@ class TestTableWidget(QWidget):
 
         neg_comparator_layout = QHBoxLayout()
         neg_comparator_layout.addWidget(label := QLabel('Компаратор:'))
+        self.neg_comparator_label = label
         self.labels.append(label)
         self.neg_comparator_widget = QComboBox()
         self.neg_comparator_widget.addItems(

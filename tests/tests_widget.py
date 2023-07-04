@@ -40,8 +40,6 @@ class TestsWidget(QWidget):
         self.generator_window.complete.connect(self.open_tests_after_generation)
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm)
-        self.test_list_widget.setMinimumWidth(400)
-        self.test_list_widget.setMinimumHeight(150)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
         self.test_list_widget.pos_delete_button.clicked.connect(self.delete_pos_test)
         self.test_list_widget.neg_add_button.clicked.connect(self.add_neg_test)
@@ -59,7 +57,6 @@ class TestsWidget(QWidget):
         layout.addWidget(self.test_list_widget)
 
         self.test_edit_widget = TestEditWidget(self.tm)
-        self.test_edit_widget.setMinimumHeight(300)
         self.test_edit_widget.test_edited.connect(self.set_tests_changed)
         self.test_edit_widget.preprocessor_line.textEdited.connect(self.set_preprocessor)
         self.test_edit_widget.postprocessor_line.textEdited.connect(self.set_postprocessor)
@@ -449,6 +446,32 @@ class TestsWidget(QWidget):
         self.test_edit_widget.set_theme()
         self.tm.css_to_options_widget(self.options_widget)
         self.generator_window.set_theme()
+
+    def resizeEvent(self, a0) -> None:
+        if self.height() < 530:
+            self.options_widget.hide()
+        else:
+            self.options_widget.show()
+        if self.height() < 560:
+            self.test_edit_widget.preprocessor_line.hide()
+            self.test_edit_widget.preprocessor_label.hide()
+            self.test_edit_widget.postprocessor_line.hide()
+            self.test_edit_widget.postprocessor_label.hide()
+        else:
+            self.test_edit_widget.preprocessor_line.show()
+            self.test_edit_widget.preprocessor_label.show()
+            self.test_edit_widget.postprocessor_line.show()
+            self.test_edit_widget.postprocessor_label.show()
+        if self.height() < 500:
+            self.test_list_widget.pos_comparator_widget.hide()
+            self.test_list_widget.pos_comparator_label.hide()
+            self.test_list_widget.neg_comparator_widget.hide()
+            self.test_list_widget.neg_comparator_label.hide()
+        else:
+            self.test_list_widget.pos_comparator_widget.show()
+            self.test_list_widget.pos_comparator_label.show()
+            self.test_list_widget.neg_comparator_widget.show()
+            self.test_list_widget.neg_comparator_label.show()
 
     def show(self):
         if self.isHidden():

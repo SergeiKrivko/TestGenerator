@@ -1,6 +1,7 @@
 import os
 
 from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget, QPushButton
 
 from code_tab.files_widget import FilesWidget
@@ -37,6 +38,10 @@ class CodeWidget(QWidget):
 
         self.files_widget = FilesWidget(self.sm, self.cm, self.tm)
         self.files_widget.setMaximumWidth(200)
+        self.files_widget.button_down.clicked.connect(self.search_next)
+        self.files_widget.button_up.clicked.connect(self.search_previous)
+        self.files_widget.button_replace.clicked.connect(self.replace)
+        self.files_widget.button_replace_all.clicked.connect(self.replace_all)
 
         self.files_widget.openFile.connect(self.open_code)
         self.files_widget.renameFile.connect(self.rename_file)
@@ -132,17 +137,22 @@ class CodeWidget(QWidget):
             item = QListWidgetItem(test)
             item.setForeground(self.tm['TestInProgress'])
             item.setFont(self.tm.code_font)
+            item.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestInProgress'])))
             self.test_res_widget.addItem(item)
 
     def add_test(self, text, color):
         self.test_res_widget.item(self.test_count).setText(text)
         self.test_res_widget.item(self.test_count).setForeground(color)
+        self.test_res_widget.item(self.test_count).setIcon(QIcon(self.tm.get_image(
+            'passed' if text.endswith('PASSED') else 'failed', color=color)))
         self.test_count += 1
 
-    def end_testing(self):
+    def end_testing(self, open_files=False):
         self.parse_gcov_file()
         self.lab_widget.setDisabled(False)
         self.button.setDisabled(False)
+        if open_files:
+            self.tab_widget.setCurrentIndex(0)
 
     def parse_gcov_file(self):
         path = self.current_file + '.gcov'
@@ -156,9 +166,56 @@ class CodeWidget(QWidget):
                     i += 1
                     if line[0].startswith('#'):
                         line[0] = '0'
-                    print(f"{line[0].strip():3} {line[1].strip():3}")
                     self.code_edit.setMarginLineNumbers(i, False)
                     self.code_edit.setMarginText(i, f"{line[0].strip():3} {line[1].strip():3}", 0)
+
+    def search_next(self):
+        try:
+            if word := self.files_widget.search_line.text():
+                current_line, current_symbol = self.code_edit.getCursorPosition()
+                text = self.code_edit.text().split('\n')
+                if word in text[current_line][current_symbol:]:
+                    index = text[current_line][current_symbol:].index(word) + current_symbol
+                    self.code_edit.setSelection(current_line, index, current_line, index + len(word))
+                    return True
+                else:
+                    for i in range(current_line + 1, len(text)):
+                        if word in text[i]:
+                            index = text[i].index(word)
+                            self.code_edit.setSelection(i, index, i, index + len(word))
+                            return True
+        except Exception as ex:
+            print(f"{ex.__class__.__name__}: {ex}")
+        return False
+
+    def search_previous(self):
+        try:
+            if word := self.files_widget.search_line.text():
+                current_line, current_symbol = self.code_edit.getCursorPosition()
+                text = self.code_edit.text().split('\n')
+                if word in text[current_line][:current_symbol - 1]:
+                    index = text[current_line][:current_symbol - 1].rindex(word)
+                    self.code_edit.setSelection(current_line, index, current_line, index + len(word))
+                    return True
+                else:
+                    for i in range(current_line - 1, -1, -1):
+                        if word in text[i]:
+                            index = text[i].rindex(word)
+                            self.code_edit.setSelection(i, index, i, index + len(word))
+                            return True
+        except Exception as ex:
+            print(f"{ex.__class__.__name__}: {ex}")
+        return False
+
+    def replace(self):
+        if self.code_edit.selectedText() == self.files_widget.search_line.text():
+            self.code_edit.replaceSelectedText(self.files_widget.replace_line.text())
+            if not self.search_next():
+                self.search_previous()
+
+    def replace_all(self):
+        self.code_edit.setText(self.code_edit.text().replace(self.files_widget.search_line.text(),
+                                                             self.files_widget.replace_line.text()))
 
     def set_theme(self):
         self.tm.set_theme_to_list_widget(self.test_res_widget)

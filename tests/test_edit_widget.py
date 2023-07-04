@@ -43,11 +43,13 @@ class TestEditWidget(QWidget):
         layout.addLayout(h_layout3)
 
         h_layout3.addWidget(label := QLabel("Препроцессор:"))
+        self.preprocessor_label = label
         self.labels.append(label)
         self.preprocessor_line = QLineEdit()
         h_layout3.addWidget(self.preprocessor_line)
 
         h_layout3.addWidget(label := QLabel("Постпроцессор:"))
+        self.postprocessor_label = label
         self.labels.append(label)
         self.postprocessor_line = QLineEdit()
         h_layout3.addWidget(self.postprocessor_line)

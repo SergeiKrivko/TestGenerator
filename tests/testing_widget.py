@@ -2,7 +2,7 @@ import json
 import os
 
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont, QColor, QIcon
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox, QLineEdit
 
@@ -15,7 +15,7 @@ class TestingWidget(QWidget):
     testing_start = pyqtSignal(list)
     add_test = pyqtSignal(str, QColor)
     clear_tests = pyqtSignal()
-    testing_end = pyqtSignal()
+    testing_end = pyqtSignal(bool)
     jump_to_code = pyqtSignal(str, int, int)
 
     def __init__(self, sm, cm, tm):
@@ -333,7 +333,7 @@ class TestingWidget(QWidget):
             self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get_smart('memory_testing', False),
                             self.sm.get_smart('coverage', False))
         except FileNotFoundError:
-            self.enable_ui()
+            self.enable_ui(False)
             return
 
         self.cm.looper.test_complete.connect(self.add_list_item)
@@ -361,10 +361,10 @@ class TestingWidget(QWidget):
             command = ''
         if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(self.enable_ui)
+            self.looper.finished.connect(lambda: self.enable_ui(True))
             self.looper.start()
         else:
-            self.enable_ui()
+            self.enable_ui(True)
 
     def testing_is_terminated(self, errors=''):
         self.progress_bar.hide()
@@ -394,13 +394,13 @@ class TestingWidget(QWidget):
             command = ''
         if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(self.enable_ui)
+            self.looper.finished.connect(lambda: self.enable_ui(False))
             self.looper.start()
         else:
-            self.enable_ui()
+            self.enable_ui(False)
 
-    def enable_ui(self):
-        self.testing_end.emit()
+    def enable_ui(self, success=True):
+        self.testing_end.emit(not success)
         self.lab_widget.setDisabled(False)
         self.ui_disable_func(False)
         self.button.setText("Тестировать")
@@ -554,6 +554,7 @@ class TestingListWidgetItem(QListWidgetItem):
         self.exit_code = 0
         self.setFont(self.tm.code_font)
         self.memory_testing = memory_testing
+        self.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestInProgress'])))
 
     def load(self):
         try:
@@ -588,7 +589,8 @@ class TestingListWidgetItem(QListWidgetItem):
             self.setToolTip(valgrind_out)
         else:
             self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
-        self.setForeground(self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
+        self.setForeground(color := (self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed']))
+        self.setIcon(QIcon(self.tm.get_image('passed' if res and memory_res else 'failed', color=color)))
 
     def set_crashed(self, prog_out, exit_code, prog_errors):
         self.status = TestingListWidgetItem.crashed
@@ -597,13 +599,16 @@ class TestingListWidgetItem(QListWidgetItem):
         self.setText(f"{self.name:6}  CRASHED   exit: {exit_code:<5} ")
         self.setToolTip(prog_errors)
         self.setForeground(self.tm['TestCrashed'])
+        self.setIcon(QIcon(self.tm.get_image('failed', color=self.tm['TestCrashed'])))
 
     def set_timeout(self):
         self.status = TestingListWidgetItem.failed
         self.setText(f"{self.name:6}  TIMEOUT")
         self.setForeground(self.tm['TestFailed'])
+        self.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestFailed'])))
 
     def set_terminated(self, message="terminated"):
         self.status = TestingListWidgetItem.terminated
         self.setText(f"{self.name:6}  {message}")
         self.setForeground(self.tm['TestInProgress'])
+        self.setIcon(QIcon(self.tm.get_image('failed', color=self.tm['TestInProgress'])))
