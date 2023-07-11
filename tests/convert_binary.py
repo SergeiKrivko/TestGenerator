@@ -89,7 +89,7 @@ class BinaryConverter:
         for i, line in enumerate(lst):
             if '//' in line:
                 line = line[:line.index('//')]
-            
+
             if not line:
                 continue
 

@@ -214,25 +214,25 @@ class TestingLooper(QThread):
                         if file.get('type', 'txt') == 'txt':
                             text = CommandManager.read_file(f"{path}temp_{j + 1}.txt", '')
                             comparator_res = comparator_res and file.text == text
-                            prog_out[f"out_file_{i}.txt"] = text
+                            prog_out[f"out_file_{j}.txt"] = text
                         else:
                             text = CommandManager.read_binary(f"{path}temp_{j + 1}.bin", b'')
                             comparator_res = comparator_res and bytes_comparator(
                                 text, file['text'],
                                 CommandManager.read_binary(self.sm.test_out_file_path(pos, i, j, True), b''))
-                            prog_out[f"out_file_{i}.bin"], _ = decode(file['text'], text)
+                            prog_out[f"out_file_{j}.bin"], _ = decode(file['text'], text)
 
                     for j, file in dct.get('check_files', dict()).items():
                         if file.get('type', 'txt') == 'txt':
                             text = CommandManager.read_file(self.sm.test_in_file_path(pos, i, j, False), '')
                             comparator_res = comparator_res and file['text'] == text
-                            prog_out[f"in_file_{i}.txt"] = text
+                            prog_out[f"in_file_{j}.txt"] = text
                         else:
                             text = CommandManager.read_binary(self.sm.test_in_file_path(pos, i, j, True), b'')
                             comparator_res = comparator_res and bytes_comparator(
                                 text, file['text'], CommandManager.read_binary(
                                     self.sm.test_check_file_path(pos, i, j, True), b''))
-                            prog_out[f"in_file_{i}.bin"], _ = decode(file['text'], text)
+                            prog_out[f"in_file_{j}.bin"], _ = decode(file['text'], text)
 
 
                     if self.memory_testing:
