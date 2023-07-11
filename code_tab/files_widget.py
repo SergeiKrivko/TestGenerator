@@ -211,11 +211,13 @@ class FilesWidget(QWidget):
             dialog.rejected.connect(looper.terminate)
             looper.finished.connect(dialog.accept)
             looper.start()
-            if dialog.exec() and looper.res:
-                if looper.res.stderr:
-                    MessageBox(MessageBox.Information, "STDERR", looper.res.stderr, self.tm)
-                if looper.res.stdout:
-                    MessageBox(MessageBox.Information, "STDOUT", looper.res.stdout, self.tm)
+            if dialog.exec():
+                if looper.res:
+                    if looper.res.stderr:
+                        MessageBox(MessageBox.Information, "STDERR", looper.res.stderr, self.tm)
+                    if looper.res.stdout:
+                        MessageBox(MessageBox.Information, "STDOUT", looper.res.stdout, self.tm)
+                self.update_files_list()
 
             os.chdir(old_dir)
 

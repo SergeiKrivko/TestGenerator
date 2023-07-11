@@ -2,7 +2,6 @@ from PyQt5.Qsci import QsciScintilla
 from PyQt5.QtGui import QColor
 
 from binary_redactor.lexer import LexerBin
-from tests.convert_binary import get_defines
 
 
 class BinaryRedactor(QsciScintilla):
@@ -41,8 +40,6 @@ class BinaryRedactor(QsciScintilla):
         self.__lexer = LexerBin(self)
         self.setLexer(self.__lexer)
 
-        self.textChanged.connect(lambda: self.__lexer.set_defines(get_defines(self.text())))
-
     def open_text(self, text: str, bin_code=False):
         self.__lexer.bin_code = bin_code
         if bin_code:
@@ -67,6 +64,8 @@ class BinaryRedactor(QsciScintilla):
         self.__lexer.setPaper(self.tm['CaretLineBackgroundColor'], LexerBin.InvalidMask)
         self.__lexer.setColor(self.tm['String'], LexerBin.InvalidValue)
         self.__lexer.setPaper(self.tm['CaretLineBackgroundColor'], LexerBin.InvalidValue)
+        self.__lexer.setColor(self.tm['Comment'], LexerBin.Comment)
+        self.__lexer.setPaper(QColor(self.tm['MainColor']), LexerBin.Comment)
         self.__lexer.setColor(QColor(self.tm['TextColor']), LexerBin.Default)
         self.__lexer.setPaper(QColor(self.tm['MainColor']), LexerBin.Default)
 

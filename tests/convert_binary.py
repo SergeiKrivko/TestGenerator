@@ -1,3 +1,4 @@
+import os.path
 import struct
 import sys
 from sys import argv
@@ -49,57 +50,6 @@ class BinaryConverterError(Exception):
         return f"Строка {self.line + 1}: {errors[self.error_type]}\n{self.text}\n{message}"
 
 
-def preprocessor(text: str):
-    defines = []
-    lst = text.split('\n')
-    for i, line in enumerate(lst):
-        if not line:
-            continue
-
-        words = line.split()
-        for j, el in enumerate(words):
-            for define in defines:
-                if el == define[0]:
-                    words[j] = define[1]
-                    break
-        line = ' '.join(words)
-
-        if line.startswith("#define "):
-            words = line.split()
-            defines.append((words[1], words[2]))
-        else:
-            yield line
-
-
-def get_defines(text: str):
-    defines = dict()
-    lst = text.split('\n')
-    for i, line in enumerate(lst):
-        if line.startswith("#define ") and len(words := line.split()) == 3:
-            defines[words[1]] = words[2]
-    return defines
-
-
-def convert(text: str, path):
-    file = open(path, 'bw')
-    for i, line in enumerate(preprocessor(text)):
-        if not line.strip():
-            continue
-
-        try:
-            n = len(get_expected_values(line.split()[0]))
-        except BinaryConverterError as ex:
-            raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
-
-        if n != (found := len(line.split()) - 1):
-            raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT, i, line, expected=n, found=found)
-
-        try:
-            file.write(convert_line(line))
-        except BinaryConverterError as ex:
-            raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
-
-
 class StructFormat:
     def __init__(self, literal: str, size: int, value_type, name='',
                  minimum: int | float = 0, maximum: int | float = 0):
@@ -127,68 +77,142 @@ FORMATS = {
 }
 
 
-def convert_line(line: str):
-    lst = line.split()
-    numbers = []
-    i = 1
-    for count, literal in parse_mask(lst[0]):
-        if literal == 'x':
-            continue
-        if i == len(lst):
-            raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
-        if literal == 's':
-            byte_str = lst[i].encode('utf-8')
-            if len(byte_str) >= count:
-                byte_str = byte_str[:count - 1]
-            byte_str += b'\0' * (count - len(byte_str))
-            numbers.append(byte_str)
-            i += 1
-        else:
-            for j in range(count):
-                try:
-                    numbers.append(FORMATS[literal].value_type(lst[i]))
-                except ValueError:
-                    raise BinaryConverterError(BinaryConverterError.INVALID_TYPE, expected=FORMATS[literal].value_type)
-                if numbers[-1] > FORMATS[literal].max:
-                    raise BinaryConverterError(BinaryConverterError.TOO_BIG_VALUE, max=FORMATS[literal].max)
-                if numbers[-1] < FORMATS[literal].min:
-                    raise BinaryConverterError(BinaryConverterError.TOO_SMALL_VALUE, min=FORMATS[literal].min)
+class BinaryConverter:
+    def __init__(self, text: str, path=''):
+        self.text = text
+        self.path = path
+        self.encoding = 'utf-8'
+
+    def preprocessor(self):
+        defines = []
+        lst = self.text.split('\n')
+        for i, line in enumerate(lst):
+            if '//' in line:
+                line = line[:line.index('//')]
+            
+            if not line:
+                continue
+
+            words = line.split()
+            for j, el in enumerate(words):
+                for define in defines:
+                    if el == define[0]:
+                        words[j] = define[1]
+                        break
+            line = ' '.join(words)
+
+            if line.startswith('#define '):
+                words = line.split()
+                defines.append((words[1], words[2]))
+            elif line.startswith('#encoding '):
+                self.encoding = line.split()[1]
+            elif line.startswith('#'):
+                pass
+            else:
+                yield line
+
+    def get_defines(self):
+        defines = dict()
+        lst = self.text.split('\n')
+        for i, line in enumerate(lst):
+            if line.startswith("#define ") and len(words := line.split()) == 3:
+                defines[words[1]] = words[2]
+        return defines
+
+    def convert(self):
+        file = open(self.path, 'bw')
+        for i, line in enumerate(self.preprocessor()):
+            if not line.strip():
+                continue
+
+            try:
+                n = len(self.get_expected_values(line.split()[0]))
+            except BinaryConverterError as ex:
+                raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
+
+            if n != (found := len(line.split()) - 1):
+                raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT, i, line, expected=n, found=found)
+
+            try:
+                file.write(self.convert_line(line))
+            except BinaryConverterError as ex:
+                raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
+
+    def convert_line(self, line: str):
+        lst = line.split()
+        numbers = []
+        i = 1
+        for count, literal in self.parse_mask(lst[0]):
+            if literal == 'x':
+                continue
+            if i == len(lst):
+                raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
+            if literal == 's':
+                byte_str = lst[i].encode(self.encoding)
+                if len(byte_str) >= count:
+                    byte_str = byte_str[:count - 1]
+                byte_str += b'\0' * (count - len(byte_str))
+                numbers.append(byte_str)
                 i += 1
-    if i != len(lst):
-        raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
-    return struct.pack(lst[0], *numbers)
+            else:
+                for j in range(count):
+                    try:
+                        numbers.append(FORMATS[literal].value_type(lst[i]))
+                    except ValueError:
+                        raise BinaryConverterError(BinaryConverterError.INVALID_TYPE, expected=FORMATS[literal].value_type)
+                    if numbers[-1] > FORMATS[literal].max:
+                        raise BinaryConverterError(BinaryConverterError.TOO_BIG_VALUE, max=FORMATS[literal].max)
+                    if numbers[-1] < FORMATS[literal].min:
+                        raise BinaryConverterError(BinaryConverterError.TOO_SMALL_VALUE, min=FORMATS[literal].min)
+                    i += 1
+        if i != len(lst):
+            raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
+        return struct.pack(lst[0], *numbers)
+
+    @staticmethod
+    def parse_mask(mask: str):
+        while mask:
+            num, literal, mask = BinaryConverter._get_number(mask)
+            yield num, literal
+
+    @staticmethod
+    def get_expected_values(mask: str):
+        res = []
+        while mask:
+            num, literal, mask = BinaryConverter._get_number(mask)
+            if literal == 's':
+                res.append((str, 0, num - 1))
+            elif literal != 'x':
+                if literal not in FORMATS:
+                    raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
+                for _ in range(num):
+                    res.append((FORMATS[literal].value_type, FORMATS[literal].min, FORMATS[literal].max))
+        return res
+
+    @staticmethod
+    def _get_number(mask: str):
+        i = 0
+        try:
+            while mask[i].isdigit():
+                i += 1
+            if i == 0:
+                return 1, mask[0], mask[1:]
+            return int(mask[:i]), mask[i], mask[i + 1:]
+        except IndexError:
+            raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
 
 
-def parse_mask(mask: str):
-    while mask:
-        num, literal, mask = get_number(mask)
-        yield num, literal
-
-
-def get_expected_values(mask: str):
-    res = []
-    while mask:
-        num, literal, mask = get_number(mask)
-        if literal == 's':
-            res.append((str, 0, num - 1))
-        elif literal != 'x':
-            if literal not in FORMATS:
-                raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
-            for _ in range(num):
-                res.append((FORMATS[literal].value_type, FORMATS[literal].min, FORMATS[literal].max))
-    return res
-
-
-def get_number(mask: str):
-    i = 0
-    try:
-        while mask[i].isdigit():
-            i += 1
-        if i == 0:
-            return 1, mask[0], mask[1:]
-        return int(mask[:i]), mask[i], mask[i + 1:]
-    except IndexError:
-        raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
+def convert(text='', path='', in_path=''):
+    if in_path:
+        with open(in_path, encoding='utf-8') as f:
+            path, name = os.path.split(in_path)
+            if '.' in name and (ind := name.rindex('.')) != 0:
+                path = os.path.join(path, name[:ind] + '.bin')
+            encoder = BinaryConverter(f.read(), path)
+            encoder.convert()
+    else:
+        encoder = BinaryConverter(text, path)
+        encoder.convert()
 
 
 if __name__ == '__main__':

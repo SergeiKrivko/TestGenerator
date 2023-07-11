@@ -1,14 +1,15 @@
 import struct
-from tests.convert_binary import preprocessor
+from tests.convert_binary import BinaryConverter
 
 
 def decode(text: str, byte_str):
     res = []
-    for line in preprocessor(text):
+    encoder = BinaryConverter(text)
+    for line in encoder.preprocessor():
         try:
             mask = line.split()[0]
             res.append(mask + ' ' + ' '.join(map(
-                lambda s: s.split(b'\0')[0].decode('utf-8') if isinstance(s, bytes) else str(s),
+                lambda s: s.split(b'\0')[0].decode(encoder.encoding) if isinstance(s, bytes) else str(s),
                 struct.unpack(mask, byte_str[:struct.calcsize(mask)]))))
             byte_str = byte_str[struct.calcsize(mask):]
         except UnicodeDecodeError:
@@ -24,11 +25,12 @@ def decode(text: str, byte_str):
 
 def comparator(prog_out: bytes, out: str, out_bytes: bytes):
     try:
+        encoder = BinaryConverter(out)
         prog_res, code = decode(out, prog_out)
         if code == 1:
             return prog_out == out_bytes
         prog_res = prog_res.split('\n')
-        out = tuple(preprocessor(out))
+        out = tuple(encoder.preprocessor())
         i, j = 0, 0
         while i < len(prog_res) and j < len(out):
             while not prog_res[i].strip():

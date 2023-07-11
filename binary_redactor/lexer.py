@@ -1,11 +1,8 @@
-import sys
-
 from PyQt5.Qsci import QsciLexerCustom
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QFrame, QApplication, QStyleFactory, QMainWindow
 
-from tests.convert_binary import get_expected_values
+from tests.convert_binary import BinaryConverter
 
 
 class LexerBin(QsciLexerCustom):
@@ -15,6 +12,7 @@ class LexerBin(QsciLexerCustom):
     InvalidMask = 3
     InvalidValue = 4
     Default = 5
+    Comment = 6
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -32,12 +30,14 @@ class LexerBin(QsciLexerCustom):
         self.setColor(QColor(Qt.red), LexerBin.InvalidMask)
         self.setColor(QColor(Qt.red), LexerBin.InvalidValue)
         self.setColor(QColor(Qt.black), LexerBin.Default)
+        self.setColor(QColor(Qt.gray), LexerBin.Comment)
 
         self.defines = dict()
-        self.bin_code = False
+        self.bin_code = True
+        self.encoder = BinaryConverter('')
 
     def language(self):
-        return "ConverBinaryLanguage"
+        return "ConvertBinaryLanguage"
 
     def description(self, style):
         if style == 0:
@@ -50,9 +50,12 @@ class LexerBin(QsciLexerCustom):
             return "invalid_mask"
         elif style == 4:
             return "invalid_value"
+        elif style == 6:
+            return "comment"
         return ""
 
     def styleText(self, start, end):
+        self.set_defines()
         self.startStyling(start)
         if not self.bin_code:
             self.startStyling(end - start, LexerBin.Default)
@@ -60,10 +63,15 @@ class LexerBin(QsciLexerCustom):
 
         text = self.parent().text()[start:end]
         for line in text.split('\n'):
+            if '//' in line:
+                comment_len = len(line) - (ind := line.rindex('//'))
+                line = line[:ind]
+            else:
+                comment_len = 0
+
             split_line = line.split()
             if line.startswith('#'):
                 self.setStyling(len(line), LexerBin.PreProcessor)
-                self.setStyling(1, LexerBin.Value)
             elif line.strip():
                 self.setStyling(len(line) - len(line := line.lstrip()), LexerBin.Value)
                 mask = split_line[0]
@@ -72,9 +80,10 @@ class LexerBin(QsciLexerCustom):
                     mask = self.defines[mask]
 
                 try:
-                    expected_values = get_expected_values(mask)
+                    expected_values = BinaryConverter.get_expected_values(mask)
                 except Exception:
-                    self.setStyling(len(line) + 1, LexerBin.Value)
+                    self.setStyling(len(split_line[0]), LexerBin.InvalidMask)
+                    self.setStyling(len(line), LexerBin.Value)
                     continue
 
                 if len(expected_values) != len(split_line) - 1:
@@ -87,7 +96,7 @@ class LexerBin(QsciLexerCustom):
                     line = line.lstrip(split_line[i])
                     try:
                         value_type, minimum, maximum = expected_values[i - 1]
-                        if value_type == str and len(split_line[i].encode('utf-8')) > maximum:
+                        if value_type == str and len(split_line[i].encode(self.encoder.encoding)) > maximum:
                             raise ValueError
                         elif value_type != str and not(minimum <= value_type(split_line[i]) <= maximum):
                             raise ValueError
@@ -96,7 +105,10 @@ class LexerBin(QsciLexerCustom):
                         self.setStyling(len(split_line[i]), LexerBin.InvalidValue)
                     except IndexError:
                         self.setStyling(len(split_line[i]), LexerBin.InvalidValue)
-                self.setStyling(len(line) + 1, LexerBin.Value)
+                self.setStyling(len(line), LexerBin.Value)
 
-    def set_defines(self, dct):
-        self.defines = dct
+            self.setStyling(comment_len + 1, LexerBin.Comment)
+
+    def set_defines(self):
+        self.encoder.text = self.parent().text()
+        self.defines = self.encoder.get_defines()

@@ -100,14 +100,15 @@ class CodeEditor(QsciScintilla):
 
     def set_lexer(self, data: dict):
         if data.get('lexer') is None:
-            self._lexer = QsciLexerCPP(None)
+            self._lexer = QsciLexerCPP(self)
             self._lexer.setDefaultFont(self.tm.code_font_std)
             for key in languages['C']['colors'].keys():
                 self._lexer.setColor(self.tm['Identifier'], key)
                 self._lexer.setFont(self.tm.code_font, key)
         else:
-            self._lexer = data['lexer'](None)
+            self._lexer = data['lexer'](self)
             self._lexer.setDefaultFont(self.tm.code_font_std)
+            self._lexer.setDefaultPaper(self.tm['Paper'])
             for key, item in data.get('colors', dict()).items():
                 self._lexer.setColor(self.tm[item], key)
                 self._lexer.setFont(self.tm.code_font, key)
@@ -120,7 +121,7 @@ class CodeEditor(QsciScintilla):
         self.current_file = file_name
 
         for language, data in languages.items():
-            for f in data['files']:
+            for f in data.get('files', []):
                 if file_name.endswith(f):
                     self.set_lexer(data)
 
@@ -128,6 +129,8 @@ class CodeEditor(QsciScintilla):
                     self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
                     self.update_api(self.getCursorPosition())
                     return
+
+        self.set_lexer(dict())
 
         self.am.dir = path
         self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())

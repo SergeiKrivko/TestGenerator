@@ -6,6 +6,8 @@ from language.autocomplition.python import CodeAutocompletionManager as AcMPytho
 import language.testing.c
 import language.testing.python
 import language.testing.shell
+from binary_redactor.lexer import LexerBin
+from tests.convert_binary import convert as convert_binary
 
 languages = {
     'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
@@ -118,10 +120,26 @@ languages = {
         QsciLexerMarkdown.Link: 'String',
         QsciLexerMarkdown.Default: 'Identifier'
     }},
-    'html': {'lexer': QsciLexerHTML, 'files': ['.html'], 'autocompletion': AcMAbstract},
+    'HTML': {'lexer': QsciLexerHTML, 'files': ['.html'], 'autocompletion': AcMAbstract},
     'json': {'lexer': QsciLexerJSON, 'files': ['.json'], 'autocompletion': AcMAbstract},
-    'c#': {'lexer': QsciLexerCSharp},
-    'java': {'lexer': QsciLexerJava},
+    'c#': {'lexer': QsciLexerCSharp, 'files': ['.cs']},
+    'java': {'lexer': QsciLexerJava, 'files': []},
     'javascript': {'lexer': QsciLexerJavaScript, 'files': ['.js'], 'autocompletion': AcMAbstract},
     'XML': {'lexer': QsciLexerXML, 'files': ['.xml'], 'autocompletion': AcMAbstract},
+    'image': {'files': ['.bmp', '.png', '.jpg']},
+    'Binary': {
+        'lexer': LexerBin,
+        'files': ['.t2b'],
+        'autocompletion': AcMAbstract,
+        'colors': {
+            LexerBin.Value: 'Identifier',
+            LexerBin.Mask: 'Keyword',
+            LexerBin.Default: 'Identifier',
+            LexerBin.PreProcessor: 'Preprocessor',
+            LexerBin.InvalidValue: 'String',
+            LexerBin.InvalidMask: 'String',
+            LexerBin.Comment: 'Comment'
+        },
+        'run': lambda path, *args, **kwargs: convert_binary(in_path=path),
+        'fast_run': True},
 }
