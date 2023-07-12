@@ -46,6 +46,12 @@ class FilesWidget(QWidget):
         self.button_run.setFixedHeight(22)
         buttons_layout.addWidget(self.button_run)
 
+        self.button_preview = Button(self.tm, 'button_preview')
+        self.button_preview.setFixedHeight(22)
+        self.button_preview.hide()
+        self.button_preview.setCheckable(True)
+        buttons_layout.addWidget(self.button_preview)
+
         self.button_search = Button(self.tm, 'search')
         self.button_search.setCheckable(True)
         self.button_search.clicked.connect(self.show_search)
@@ -225,6 +231,7 @@ class FilesWidget(QWidget):
             return
         if self.files_list.currentItem().path.endswith('.exe'):
             run_file(lambda path, sm, cm, **kwargs: cm.cmd_command(f"{path}", shell=True, input=''))
+            return
         for language in languages.values():
             if language.get('fast_run', False):
                 for el in language['files']:
@@ -235,7 +242,7 @@ class FilesWidget(QWidget):
     def set_theme(self):
         for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search,
                    self.button_up, self.button_down, self.search_line, self.replace_line,
-                   self.button_replace, self.button_replace_all]:
+                   self.button_replace, self.button_replace_all, self.button_preview]:
             self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
         for i in range(self.files_list.count()):

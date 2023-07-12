@@ -9,6 +9,7 @@ import language.testing.shell
 from binary_redactor.lexer import LexerBin
 from tests.convert_binary import convert as convert_binary
 
+
 languages = {
     'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
     'C': {
@@ -119,14 +120,14 @@ languages = {
         QsciLexerMarkdown.Header6: 'Keyword',
         QsciLexerMarkdown.Link: 'String',
         QsciLexerMarkdown.Default: 'Identifier'
-    }},
-    'HTML': {'lexer': QsciLexerHTML, 'files': ['.html'], 'autocompletion': AcMAbstract},
+    }, 'preview': True},
+    'HTML': {'lexer': QsciLexerHTML, 'files': ['.html'], 'autocompletion': AcMAbstract, 'preview': True},
     'json': {'lexer': QsciLexerJSON, 'files': ['.json'], 'autocompletion': AcMAbstract},
     'c#': {'lexer': QsciLexerCSharp, 'files': ['.cs']},
     'java': {'lexer': QsciLexerJava, 'files': []},
     'javascript': {'lexer': QsciLexerJavaScript, 'files': ['.js'], 'autocompletion': AcMAbstract},
     'XML': {'lexer': QsciLexerXML, 'files': ['.xml'], 'autocompletion': AcMAbstract},
-    'image': {'files': ['.bmp', '.png', '.jpg']},
+    'image': {'files': ['.bmp', '.png', '.jpg'], 'preview': True},
     'Binary': {
         'lexer': LexerBin,
         'files': ['.t2b'],

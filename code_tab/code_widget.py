@@ -5,6 +5,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QTabWidget, QPushButton
 
 from code_tab.files_widget import FilesWidget
+from code_tab.preview_widgets import PreviewWidget
+from language.languages import languages
 from settings.lab_widget import LabWidget
 from code_tab.syntax_highlighter import CodeEditor
 
@@ -61,6 +63,12 @@ class CodeWidget(QWidget):
         self.code_edit.textChanged.connect(self.save_code)
         self.code_edit.cursorPositionChanged.connect(self.check_if_code_changed)
         layout.addWidget(self.code_edit)
+
+        self.preview_widget = PreviewWidget(self.sm, self.tm)
+        self.preview_widget.hide()
+        self.files_widget.button_preview.clicked.connect(self.show_preview)
+        layout.addWidget(self.preview_widget)
+
         self.path = ''
         self.test_count = 0
         self.file_update_time = 0
@@ -104,14 +112,55 @@ class CodeWidget(QWidget):
                 raise Exception
 
             self.current_file = path
-            self.file_update_time = os.path.getmtime(self.current_file)
-            self.code_edit.open_file(*os.path.split(self.current_file))
-            self.update_todo()
-            self.code_edit.setDisabled(False)
-            self.set_theme()
-            self.parse_gcov_file()
-        except Exception:
+
+            if self.open_preview() != 1:
+                self.preview_widget.hide()
+                self.code_edit.show()
+                self.file_update_time = os.path.getmtime(self.current_file)
+                self.code_edit.open_file(*os.path.split(self.current_file))
+                self.update_todo()
+                self.code_edit.setDisabled(False)
+                self.set_theme()
+                self.parse_gcov_file()
+            else:
+                self.code_edit.hide()
+                self.preview_widget.show()
+        except Exception as ex:
+            self.preview_widget.hide()
+            self.code_edit.show()
             self.code_edit.setDisabled(True)
+
+    def open_preview(self):
+        for language in languages.values():
+            if not language.get('preview', False):
+                continue
+            for el in language.get('files', []):
+                if self.current_file.endswith(el):
+                    self.preview_widget.open(self.current_file)
+                    self.files_widget.button_run.hide()
+                    self.files_widget.button_preview.show()
+
+                    self.files_widget.button_preview.setChecked(False)
+
+                    if language.get('lexer'):
+                        self.files_widget.button_preview.setDisabled(False)
+                        return 0
+                    else:
+                        self.files_widget.button_preview.setDisabled(True)
+                        return 1
+
+        self.files_widget.button_preview.hide()
+        self.files_widget.button_run.show()
+        return 2
+
+    def show_preview(self, flag):
+        if flag:
+            self.code_edit.hide()
+            self.preview_widget.open(self.current_file)
+            self.preview_widget.show()
+        else:
+            self.preview_widget.hide()
+            self.code_edit.show()
 
     def save_code(self):
         code = self.code_edit.text()
@@ -222,6 +271,7 @@ class CodeWidget(QWidget):
         self.tm.set_theme_to_list_widget(self.todo_widget)
         self.tm.auto_css(self.tab_widget)
         self.code_edit.set_theme()
+        self.preview_widget.set_theme()
         self.files_widget.set_theme()
         self.lab_widget.set_theme()
         self.tm.auto_css(self.button)
