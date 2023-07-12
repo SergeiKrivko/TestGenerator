@@ -93,6 +93,7 @@ class FilesWidget(QWidget):
         self.show_search(False)
 
         self.files_list = QListWidget()
+        self.files_list.setFocusPolicy(False)
         files_layout.addWidget(self.files_list)
 
         self.files_list.currentItemChanged.connect(self.open_file)

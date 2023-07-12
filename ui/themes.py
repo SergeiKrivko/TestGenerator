@@ -437,6 +437,7 @@ class ThemeManager:
         return self.theme.code_colors(lexer)
 
     def set_theme_to_list_widget(self, widget, font=None):
+        widget.setFocusPolicy(False)
         widget.setStyleSheet(self.list_widget_style_sheet)
         for i in range(widget.count()):
             widget.item(i).setFont(font if font else self.font_small)
@@ -505,7 +506,7 @@ class ThemeManager:
                 {self.style_sheet}
             }}
             QsciScintilla QScrollBar:vertical {{
-                background: rgba{self['Paper'].getRgb()};
+                background: {self['Paper'].name()};
                 border-top-right-radius: 5px;
                 border-bottom-right-radius: 5px;
                 width: 12px;
@@ -539,12 +540,10 @@ class ThemeManager:
         }}
         QListWidget::item:hover {{
             background-color: {self['ColorHover']};
-            border: none;
         }}
         QListWidget::item:selected {{
             color: {self['TextColor']};
             background-color: {self['ColorSelected']};
-            border: none;
             border-radius: 6px;
         }}
         QListWidget QScrollBar:vertical {{
