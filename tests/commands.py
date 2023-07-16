@@ -9,6 +9,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from tests.binary_decoder import decode, comparator as bytes_comparator
 from tests.macros_converter import MacrosConverter, background_process_manager
+import pyte
 from language.languages import languages
 
 

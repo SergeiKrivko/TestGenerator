@@ -260,7 +260,7 @@ class OptionsWidget(QWidget):
             for el in item.get('values', []):
                 widget.addItem(str(el))
             widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+                                item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
             widget.currentIndexChanged.connect(lambda value: self.set_dict_value(key, value))
             value = item.get('initial', 0)
             widget.setCurrentIndex(int(value))
@@ -269,25 +269,11 @@ class OptionsWidget(QWidget):
         return widget, value
 
     def file_widget(self, key, item):
-        widget = QWidget()
-        widget.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        widget1 = QLineEdit()
-        value = item.get('initial', 'select file')
-        widget1.setText(value)
-        widget2 = QPushButton()
-        widget2.setText('Files')
-        widget2.setFixedSize(40, item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
-        layout.addWidget(widget1)
-        layout.addWidget(widget2)
-        widget.setLayout(layout)
-        self.connect_file_dialog(key, widget, widget1, widget2, self.dct[key].get('mode', 'save'),
-                                 self.dct[key].get('caption', ''), self.dct[key].get('directory', ''),
-                                 self.dct[key].get('filter', ''))
-        return widget, value
+
+        widget = FileWidget(item)
+
+        widget.path_changed.connect(lambda path: self.set_dict_value(key, path))
+        return widget, item.get('initial', 'select file')
 
     def button(self, key, item):
         widget = QPushButton()
@@ -347,22 +333,6 @@ class OptionsWidget(QWidget):
         self.set_widgets_width(width)
         self.set_widgets_height(height)
 
-    def connect_file_dialog(self, key, widget, widget1, widget2, type, caption, directory, filter):
-        def triggerd(*args):
-            if type == 'save':
-                file = QFileDialog.getSaveFileName(None, caption, directory, filter)[0]
-            elif type == 'open':
-                file = QFileDialog.getOpenFileName(None, caption, directory, filter)[0]
-            elif type == 'dir':
-                file = QFileDialog.getExistingDirectory(None, caption, directory)
-            else:
-                raise TypeError('Unknown mode')
-            if file:
-                widget.widget_1.setText(file)
-                self.set_dict_value(key, file)
-        widget1.textChanged.connect(lambda value: self.set_dict_value(key, value))
-        widget2.clicked.connect(triggerd)
-
 
 class SuperComboBox(QWidget):
     currentIndexChanged = pyqtSignal(int)
@@ -374,7 +344,7 @@ class SuperComboBox(QWidget):
         self.setLayout(layout)
         self.main_combo_box = QComboBox()
         self.main_combo_box.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
-                            item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+                                         item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
         layout.addWidget(self.main_combo_box)
         value = item.get('initial', 0)
 
@@ -405,6 +375,53 @@ class SuperComboBox(QWidget):
 
     def setMaxVisibleItems(self, count):
         self.main_combo_box.setMaxVisibleItems(count)
+
+
+class FileWidget(QWidget):
+    path_changed = pyqtSignal(str)
+
+    def __init__(self, item):
+        super().__init__()
+        self.item = item
+        self.setFixedSize(item.get('width', OptionsWindow.INITIAL_WIDGET_WIDTH),
+                          item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        self.line_edit = QLineEdit()
+        value = item.get('initial', 'select file')
+        self.line_edit.setText(value)
+        self.line_edit.setFixedHeight(item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        self.line_edit.editingFinished.connect(lambda: self.path_changed.emit(self.line_edit.text()))
+
+        self.button = QPushButton()
+        self.button.setText('Обзор')
+        self.button.setFixedSize(50, item.get('height', OptionsWindow.INITIAL_WIDGET_HEIGHT))
+        self.button.clicked.connect(self.select_path)
+
+        layout.addWidget(self.line_edit)
+        layout.addWidget(self.button)
+        self.setLayout(layout)
+
+    def set_path(self, path):
+        self.line_edit.setText(path)
+        self.path_changed.emit(path)
+
+    def select_path(self):
+        if self.item.get('mode', 'save') == 'save':
+            file = QFileDialog.getSaveFileName(None, self.item.get('caption', ''), self.item.get('directory', ''),
+                                               self.item.get('filter', ''))[0]
+        elif self.item.get('mode', 'save') == 'open':
+            file = QFileDialog.getOpenFileName(None, self.item.get('caption', ''), self.item.get('directory', ''),
+                                               self.item.get('filter', ''))[0]
+        elif self.item.get('mode', 'save') == 'dir':
+            file = QFileDialog.getExistingDirectory(None, self.item.get('caption', ''), self.item.get('directory', ''))
+        else:
+            raise TypeError('Unknown mode')
+        if file:
+            self.line_edit.setText(file)
+            self.path_changed.emit(file)
 
 
 def main():

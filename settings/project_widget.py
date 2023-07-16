@@ -13,7 +13,6 @@ from settings.testing_settings_widget import TestingSettingsWidget
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 
-
 LANGUAGES = ['C', 'Python']
 
 
@@ -70,6 +69,7 @@ class ProjectWidget(QWidget):
         self.tab_widget = QTabWidget()
 
         self.main_settings_widget = OptionsWidget({
+            "Папка проекта:": {'type': 'file', 'mode': 'dir', 'width': 400, 'initial': ''},
             'Язык': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'values': LANGUAGES}
         }, margins=(25, 25, 25, 25))
         self.main_settings_widget.clicked.connect(self.save_settings)
@@ -167,7 +167,7 @@ class ProjectWidget(QWidget):
                 self.update_projects()
 
     def delete_project(self, forced=False):
-        self.dialog = DeleteProjectDialog(self.sm.data_path, self.tm)
+        self.dialog = DeleteProjectDialog(self.sm.path, self.tm)
         if forced or self.dialog.exec():
             try:
                 if not forced and os.path.isdir(self.sm.path) and self.dialog.check_box.isChecked():
@@ -185,9 +185,23 @@ class ProjectWidget(QWidget):
             self.disable_menu_func(True)
 
     def new_project(self):
-        path = QFileDialog.getExistingDirectory(directory=self.sm.path)
-        if path:
+        dialog = NewProjectDialog(self.sm, self.tm)
+        if dialog.exec():
+            project = dialog.options_widget['Название проекта:']
+            path = dialog.dir_edit.text()
+            if not dialog.checkbox.isChecked():
+                path = os.path.join(path, project)
+                os.makedirs(path, exist_ok=True)
+
+            os.makedirs(f"{path}/.TestGenerator", exist_ok=True)
+            with open(f"{path}/.TestGenerator/.gitignore", 'w', encoding='utf-8') as f:
+                f.write('# Created by TestGenerator\n*\n')
+
             self.sm.projects[os.path.basename(path)] = path
+            self.sm.set('language', dialog.options_widget.widgets["Язык:"].currentText(), project=project)
+            self.sm.set('struct', dialog.options_widget["Структура проекта:"], project=project)
+            self.sm.set('func_tests_in_project', dialog.options_widget["Сохранять тесты в папке проекта"],
+                        project=project)
             self.update_projects()
             self.disable_menu_func(False)
 
@@ -204,6 +218,7 @@ class ProjectWidget(QWidget):
         self.sm.repair_settings()
         self.testing_settings_widget.open()
 
+        self.main_settings_widget.widgets['Папка проекта:'].set_path(self.sm.path)
         self.main_settings_widget.widgets['Язык'].setCurrentText(str(self.sm.get('language', 'C')))
 
         self.struct_settings_widget.apply_values()
@@ -387,11 +402,11 @@ class DeleteProjectDialog(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
         buttons_layout.setAlignment(Qt.AlignRight)
-        self.button_yes = QPushButton("Ok")
+        self.button_yes = QPushButton("Да")
         self.button_yes.setFixedSize(80, 24)
         buttons_layout.addWidget(self.button_yes)
         self.button_yes.clicked.connect(self.accept)
-        self.button_no = QPushButton("Cancel")
+        self.button_no = QPushButton("Нет")
         self.button_no.setFixedSize(80, 24)
         buttons_layout.addWidget(self.button_no)
         self.button_no.clicked.connect(self.reject)
@@ -581,3 +596,77 @@ class OpenAsProjectDialog(QDialog):
                                                                f" как проект с таким названием уже существует", self.tm)
         else:
             self.accept()
+
+
+class NewProjectDialog(QDialog):
+    def __init__(self, sm, tm):
+        super().__init__()
+        self.sm = sm
+        self.tm = tm
+        self.setWindowTitle("Новый проект")
+
+        main_layout = QVBoxLayout()
+        self.labels = []
+
+        layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignLeft)
+        self.checkbox = QCheckBox()
+        layout.addWidget(self.checkbox)
+        label = QLabel("Из существующей папки")
+        self.labels.append(label)
+        layout.addWidget(label)
+        main_layout.addLayout(layout)
+
+        layout = QHBoxLayout()
+        layout.setSpacing(2)
+        self.dir_edit = QLineEdit()
+        self.dir_edit.setFixedHeight(22)
+        layout.addWidget(self.dir_edit)
+        self.dir_button = QPushButton("Обзор")
+        self.dir_button.clicked.connect(self.set_path)
+        self.dir_button.setFixedSize(50, 22)
+        layout.addWidget(self.dir_button)
+        main_layout.addLayout(layout)
+
+        self.options_widget = OptionsWidget({
+            "Название проекта:": {'type': str, 'width': 300},
+            "Язык:": {'type': 'combo', 'values': ['C', 'Python'], 'name': OptionsWidget.NAME_LEFT},
+            "Структура проекта:": {'type': 'combo', 'values': ['Лаба - задание - вариант', 'Без структуры'],
+                                   'name': OptionsWidget.NAME_LEFT, 'width': 220},
+            "Сохранять тесты в папке проекта": {'type': bool, 'name': OptionsWidget.NAME_RIGHT}
+        })
+        main_layout.addWidget(self.options_widget)
+
+        button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(0, 10, 0, 0)
+        button_layout.setAlignment(Qt.AlignRight)
+        main_layout.addLayout(button_layout)
+
+        self.button_ok = QPushButton("Ок")
+        self.button_ok.setDisabled(True)
+        self.dir_edit.textChanged.connect(lambda: self.button_ok.setDisabled(not os.path.isdir(self.dir_edit.text())))
+        self.button_ok.setFixedSize(70, 24)
+        self.button_ok.clicked.connect(self.accept)
+        button_layout.addWidget(self.button_ok)
+
+        self.button_cancel = QPushButton("Отмена")
+        self.button_cancel.setFixedSize(70, 24)
+        self.button_cancel.clicked.connect(self.reject)
+        button_layout.addWidget(self.button_cancel)
+
+        self.setLayout(main_layout)
+        self.set_theme()
+
+    def set_path(self):
+        path = QFileDialog.getExistingDirectory(directory=self.dir_edit.text() if os.path.isdir(
+            self.dir_edit.text()) else self.sm.path)
+        self.dir_edit.setText(path)
+        if self.checkbox.isChecked():
+            self.options_widget.set_value("Название проекта:", os.path.basename(path))
+
+    def set_theme(self):
+        for el in [self.checkbox, self.dir_edit, self.dir_button, self.button_ok, self.button_cancel]:
+            self.tm.auto_css(el)
+        for el in self.labels:
+            self.tm.auto_css(el)
+        self.tm.css_to_options_widget(self.options_widget)

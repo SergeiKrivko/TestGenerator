@@ -9,6 +9,7 @@ import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
 from ui.button import Button
+from ui.options_window import FileWidget
 from ui.resources import resources
 
 basic_theme = {
@@ -480,6 +481,9 @@ class ThemeManager:
         for el in widget.widgets.values():
             if isinstance(el, ProgramComboBox):
                 el.set_theme(self)
+            elif isinstance(el, FileWidget):
+                self.auto_css(el.line_edit)
+                self.auto_css(el.button)
             self.auto_css(el)
         for el in widget.labels.values():
             self.auto_css(el)

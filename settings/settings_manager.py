@@ -1,4 +1,6 @@
 import os
+import shutil
+
 from PyQt5.QtCore import QSettings, pyqtSignal, QObject
 from json import dumps, loads, JSONDecodeError
 import appdirs
@@ -25,6 +27,7 @@ class SettingsManager(QObject):
             self.projects = dict()
         self.path = ''
         self.data_path = ''
+        self.data_path_old = ''
         self.project_settings = dict()
         self.set_project(self.get_general('project'))
 
@@ -38,11 +41,22 @@ class SettingsManager(QObject):
         return self.q_settings.value(key, default)
 
     def get(self, key, default=None, project=None):
-        if project is None:
+        if project is None or project == self.project:
             dct = self.project_settings
         else:
+            path = self.projects.get(project)
+            data_path = f"{path}/.TestGenerator"
+            data_path_old = f"{self.app_data_dir}/projects/{project}"
+            if not os.path.isdir(data_path) and os.path.isdir(data_path_old):
+                try:
+                    os.rename(data_path_old, data_path)
+                    with open(f"{data_path}/.gitignore", 'w', encoding='utf-8') as f:
+                        f.write('# Created by TestGenerator\n*\n')
+                except Exception as ex:
+                    print(f"{ex.__class__.__name__}: {ex}")
+
             try:
-                with open(f"{self.data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                with open(f"{path}/TestGeneratorSettings.json", encoding='utf-8') as f:
                     dct = loads(f.read())
             except FileNotFoundError:
                 return default
@@ -74,7 +88,22 @@ class SettingsManager(QObject):
         self.project = project
 
         self.path = self.projects.get(self.project)
-        self.data_path = f"{self.app_data_dir}/projects/{self.project}"
+        self.data_path = f"{self.path}/.TestGenerator"
+        self.data_path_old = f"{self.app_data_dir}/projects/{self.project}"
+
+        if not os.path.isdir(self.data_path) and os.path.isdir(self.data_path_old):
+            try:
+                os.rename(self.data_path_old, self.data_path)
+                with open(f"{self.data_path}/.gitignore", 'w', encoding='utf-8') as f:
+                    f.write('# Created by TestGenerator\n*\n')
+            except Exception as ex:
+                print(f"{ex.__class__.__name__}: {ex}")
+        elif os.path.isdir(self.data_path_old):
+            try:
+                shutil.rmtree(self.data_path_old)
+            except Exception as ex:
+                print(f"{ex.__class__.__name__}: {ex}")
+
         try:
             with open(f"{self.data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
                 self.project_settings = loads(text := f.read())
@@ -85,7 +114,7 @@ class SettingsManager(QObject):
             self.project_settings = dict()
 
     def lab_path(self, lab=None, task=None, var=None, project=None):
-        if self.get('struct') == 1:
+        if self.get('struct', project=project) == 1:
             return self.path
         if lab is None:
             lab = self.get('lab', project=project)
@@ -123,16 +152,27 @@ class SettingsManager(QObject):
         if project is None or project == self.project:
             self.project_settings[key] = value
         else:
+            path = self.projects.get(project)
+            data_path = f"{path}/.TestGenerator"
+            data_path_old = f"{self.app_data_dir}/projects/{project}"
+            if not os.path.isdir(data_path) and os.path.isdir(data_path_old):
+                try:
+                    os.rename(data_path_old, data_path)
+                    with open(f"{data_path}/.gitignore", 'w', encoding='utf-8') as f:
+                        f.write('# Created by TestGenerator\n*\n')
+                except Exception as ex:
+                    print(f"{ex.__class__.__name__}: {ex}")
+
             try:
-                with open(f"{self.app_data_dir}/projects/{project}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                with open(f"{data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
                     dct = loads(f.read())
             except FileNotFoundError:
                 dct = dict()
             except JSONDecodeError:
                 dct = dict()
             dct[key] = value
-            os.makedirs(f"{self.app_data_dir}/projects/{project}", exist_ok=True)
-            with open(f"{self.app_data_dir}/projects/{project}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
+            os.makedirs(data_path, exist_ok=True)
+            with open(f"{data_path}/TestGeneratorSettings.json", 'w', encoding='utf-8') as f:
                 # print(f"write \"{dumps(dct)}\" to {self.app_data_dir}/projects/{project}/TestGeneratorSettings.json")
                 f.write(dumps(dct))
 
@@ -168,7 +208,8 @@ class SettingsManager(QObject):
                f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
                f"{'bin' if binary else 'txt'}"
 
-    def test_check_file_path(self, test_type, number, file_number=1, binary=False, lab=(None, None, None), project=None):
+    def test_check_file_path(self, test_type, number, file_number=1, binary=False, lab=(None, None, None),
+                             project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.app_data_dir}/temp_files/{test_type}_{number}_fcheck{file_number}.{'bin' if binary else 'txt'}"
         return f"{self.lab_path(*lab, project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_check" \
