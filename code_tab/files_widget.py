@@ -6,6 +6,7 @@ from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
     QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
 
+from tests.console import Console
 from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
@@ -210,34 +211,25 @@ class FilesWidget(QWidget):
             self.button_run.setDisabled(True)
 
     def run_file(self):
-        def run_file(func):
+        def run_file(command):
             old_dir = os.getcwd()
             os.chdir(self.current_path)
-            looper = FileRunner(func, self.files_list.currentItem().path, self.sm, self.cm)
-            dialog = RunDialog(self.tm, os.path.basename(self.files_list.currentItem().path))
-            dialog.rejected.connect(looper.terminate)
-            looper.finished.connect(dialog.accept)
-            looper.start()
-            if dialog.exec():
-                if looper.res:
-                    if looper.res.stderr:
-                        MessageBox(MessageBox.Information, "STDERR", looper.res.stderr, self.tm)
-                    if looper.res.stdout:
-                        MessageBox(MessageBox.Information, "STDOUT", looper.res.stdout, self.tm)
-                self.update_files_list()
+            self.console = Console(self.sm, self.tm, command)
+            self.console.show()
 
             os.chdir(old_dir)
 
+        path = self.files_list.currentItem().path
         if not self.files_list.currentItem():
             return
         if self.files_list.currentItem().path.endswith('.exe'):
-            run_file(lambda path, sm, cm, **kwargs: cm.cmd_command(f"{path}", shell=True, input=''))
+            run_file(path)
             return
         for language in languages.values():
             if language.get('fast_run', False):
                 for el in language['files']:
                     if self.files_list.currentItem().path.endswith(el):
-                        run_file(language['run'])
+                        run_file(language['run'](path, self.sm, coverage=False))
                         return
 
     def set_theme(self):

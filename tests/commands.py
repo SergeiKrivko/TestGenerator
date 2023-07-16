@@ -9,7 +9,6 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from tests.binary_decoder import decode, comparator as bytes_comparator
 from tests.macros_converter import MacrosConverter, background_process_manager
-import pyte
 from language.languages import languages
 
 
@@ -30,6 +29,16 @@ class CommandManager:
     def cmd_command_looper(self, args, **kwargs):
         return Looper(lambda: self.cmd_command(args, **kwargs))
 
+    def run_code(self, path, args='', in_data=None, coverage=False, scip_timeout=False):
+        for language in languages:
+            for el in language.get('files', []):
+                if path.endswith(el):
+                    timeout = None if scip_timeout else float(self.sm.get_smart('time_limit', 3))
+                    if in_data is not None:
+                        return self.cmd_command(language['run'](path, self, args, coverage),
+                                                input=in_data, timeout=timeout, shell=True)
+                    return self.cmd_command(language['run'](path, self, args, coverage), timeout=timeout, shell=True)
+
     def update_path(self):
         self.path = self.sm.lab_path()
 
@@ -38,7 +47,7 @@ class CommandManager:
         return languages[self.sm.get('language', 'C')].get(
             'compile', lambda *args: (False, 'Can\'t compile this file'))(self.path, self, self.sm, coverage)
 
-    def run_code(self, args='', in_data='', file='', coverage=False):
+    def run_main_code(self, args='', in_data='', file='', coverage=False):
         return languages[self.sm.get('language', 'C')].get('run')(f"{self.path}/{file}", self.sm, self, args, in_data,
                                                                   coverage)
 
@@ -199,7 +208,7 @@ class TestingLooper(QThread):
                             self.convert_test_files('in', dct, pos, i)
                             self.convert_test_files('out', dct, pos, i)
                             self.convert_test_files('check', dct, pos, i)
-                        res = self.cm.run_code(args, dct.get('in', ''), coverage=self.coverage)
+                        res = self.cm.run_main_code(args, dct.get('in', ''), coverage=self.coverage)
                     except TimeoutExpired:
                         self.test_timeout.emit()
                         continue

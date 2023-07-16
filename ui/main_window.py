@@ -1,6 +1,5 @@
 from sys import argv
 
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
 
 from tests.macros_converter import background_process_manager
