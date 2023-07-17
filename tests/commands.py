@@ -47,9 +47,13 @@ class CommandManager:
         return languages[self.sm.get('language', 'C')].get(
             'compile', lambda *args: (False, 'Can\'t compile this file'))(self.path, self, self.sm, coverage)
 
-    def run_main_code(self, args='', in_data='', file='', coverage=False):
-        return languages[self.sm.get('language', 'C')].get('run')(f"{self.path}/{file}", self.sm, self, args, in_data,
-                                                                  coverage)
+    def run_main_code(self, args='', in_data=None, file='', coverage=False):
+        if in_data is not None:
+            return self.cmd_command(languages[self.sm.get('language', 'C')].get('run')(
+                f"{self.path}/{file}", self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)),
+                shell=True, input=in_data)
+        return self.cmd_command(languages[self.sm.get('language', 'C')].get('run')(
+            f"{self.path}/{file}", self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)), shell=True)
 
     def collect_coverage(self):
         res = languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)

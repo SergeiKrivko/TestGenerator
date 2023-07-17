@@ -8,7 +8,7 @@ from PyQt5.QtGui import QColor
 
 
 class Console(QsciScintilla):
-    def __init__(self, sm, tm, command):
+    def __init__(self, sm, tm, command, path):
         super().__init__(None)
         self.sm = sm
         self.tm = tm
@@ -29,10 +29,11 @@ class Console(QsciScintilla):
                    f"while True:\n    print(file.read(), end='')\n    sleep(0.1)"
             f.write(code)
 
-        self.reader = subprocess.Popen([self.sm.get('python', 'python'), f"{self.sm.app_data_dir}/console/reader.py"],
+        self.reader = subprocess.Popen([self.sm.get_general('python', 'python'),
+                                        f"{self.sm.app_data_dir}/console/reader.py"], cwd=path,
                                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=True)
         self.program = subprocess.Popen(command, stdin=self.reader.stdout, stdout=self.program_output,
-                                        stderr=subprocess.STDOUT, shell=True)
+                                        stderr=subprocess.STDOUT, shell=True, cwd=path)
 
         self.reader.stdout.close()
 
@@ -81,12 +82,20 @@ class Console(QsciScintilla):
     def stop(self):
         self.output_looper.stop = True
         self.setReadOnly(True)
+        self.write_text(f"\nProcess finished with exit code {self.program.returncode}\n")
 
     def set_theme(self):
         self.setStyleSheet(self.tm.scintilla_style_sheet)
         self.setFont(self.tm.code_font)
         self.setPaper(QColor(self.tm['MainColor']))
         self.setMarginsBackgroundColor(QColor(self.tm['MainColor']))
+        
+    def closeEvent(self, *args, **kwargs):
+        if not self.program_looper.isFinished():
+            self.program_looper.terminate()
+        if not self.output_looper.isFinished():
+            self.output_looper.terminate()
+        super().closeEvent(*args, **kwargs)
 
 
 class ProgramLooper(QThread):
@@ -96,6 +105,10 @@ class ProgramLooper(QThread):
 
     def run(self):
         self.process.communicate()
+    
+    def terminate(self) -> None:
+        self.process.terminate()
+        super().terminate()
 
 
 class OutputLooper(QThread):

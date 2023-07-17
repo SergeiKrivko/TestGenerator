@@ -212,12 +212,8 @@ class FilesWidget(QWidget):
 
     def run_file(self):
         def run_file(command):
-            old_dir = os.getcwd()
-            os.chdir(self.current_path)
-            self.console = Console(self.sm, self.tm, command)
+            self.console = Console(self.sm, self.tm, command, self.current_path)
             self.console.show()
-
-            os.chdir(old_dir)
 
         path = self.files_list.currentItem().path
         if not self.files_list.currentItem():
@@ -229,6 +225,8 @@ class FilesWidget(QWidget):
             if language.get('fast_run', False):
                 for el in language['files']:
                     if self.files_list.currentItem().path.endswith(el):
+                        if 'compile' in language:
+                            language['compile'](os.path.split(path)[0], self.cm, self.sm, coverage=False)
                         run_file(language['run'](path, self.sm, coverage=False))
                         return
 

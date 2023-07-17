@@ -30,7 +30,8 @@ languages = {
         'compile': language.testing.c.c_compile,
         'run': language.testing.c.c_run,
         'coverage': language.testing.c.c_collect_coverage,
-        'clear_coverage': language.testing.c.c_clear_coverage_files
+        'clear_coverage': language.testing.c.c_clear_coverage_files,
+        'fast_run': True
     },
     'Python': {
         'lexer': QsciLexerPython,

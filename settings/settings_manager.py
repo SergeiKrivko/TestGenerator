@@ -10,6 +10,7 @@ from settings.search import Searcher
 
 class SettingsManager(QObject):
     searching_complete = pyqtSignal()
+    project_changed = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -112,6 +113,8 @@ class SettingsManager(QObject):
             self.project_settings = dict()
         except JSONDecodeError:
             self.project_settings = dict()
+
+        self.project_changed.emit()
 
     def lab_path(self, lab=None, task=None, var=None, project=None):
         if self.get('struct', project=project) == 1:

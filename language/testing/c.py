@@ -33,6 +33,8 @@ def c_compile(path, cm, sm, coverage=False):
 
 def c_run(path, sm, args='', coverage=False):
     if os.path.isfile(path):
+        if path.endswith('.c') or path.endswith('.h'):
+            return f"{os.path.split(path)[0]}/app.exe {args}"
         return f"{path} {args}"
     return f"{path}/app.exe {args}"
 

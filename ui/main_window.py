@@ -2,6 +2,7 @@ from sys import argv
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
 
+from code_tab.terminal_tab import TerminalTab
 from tests.macros_converter import background_process_manager
 from ui.themes import ThemeManager
 from code_tab.code_widget import CodeWidget
@@ -42,6 +43,7 @@ class MainWindow(QMainWindow):
             'Код': (lambda: self.show_tab('code_widget'), None),
             'Тесты': (lambda: self.show_tab('tests_widget'), None),
             'Тестирование': (lambda: self.show_tab('testing_widget'), None),
+            'Терминал': (lambda: self.show_tab('terminal'), None),
             'TODO': (lambda: self.show_tab('todo_widget'), None),
             'Git': (lambda: self.show_tab('git_widget'), None),
             'Настройки': (lambda: self.show_tab('settings_widget'), None)
@@ -70,6 +72,10 @@ class MainWindow(QMainWindow):
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
         self.code_widget.test_res_widget.doubleClicked.connect(self.open_test_from_code)
         self.code_widget.hide()
+
+        self.terminal = TerminalTab(self.sm, self.tm)
+        self.terminal.hide()
+        layout.addWidget(self.terminal)
 
         self.git_widget = GitWidget(self.sm, self.cm, self.tm)
         layout.addWidget(self.git_widget)
@@ -108,6 +114,7 @@ class MainWindow(QMainWindow):
         self.tests_widget.set_theme()
         self.code_widget.set_theme()
         self.testing_widget.set_theme()
+        self.terminal.set_theme()
         self.todo_widget.set_theme()
         self.git_widget.set_theme()
         self.settings_widget.set_theme()
@@ -179,11 +186,12 @@ class MainWindow(QMainWindow):
         self.code_widget.hide()
         self.tests_widget.hide()
         self.testing_widget.hide()
+        self.terminal.hide()
         self.todo_widget.hide()
         self.git_widget.hide()
         self.settings_widget.hide()
         try:
-            self.__dict__[tab].show()
+            getattr(self, tab).show()
         except KeyError:
             self.project_widget.show()
 
@@ -200,6 +208,8 @@ class MainWindow(QMainWindow):
         self.code_widget.hide()
         self.tests_widget.hide()
         self.testing_widget.hide()
+        self.terminal.hide()
+        self.terminal.stop_loopers()
         self.git_widget.hide()
         self.settings_widget.hide()
         self.sm.store()
