@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit
 
 from ui.button import Button
 
@@ -20,40 +20,48 @@ class TestTableWidget(QWidget):
         pos_layout = QVBoxLayout()
         layout.addLayout(pos_layout)
 
+        in_data_layout = QHBoxLayout()
+        pos_layout.addLayout(in_data_layout)
+        in_data_layout.addWidget(label := QLabel("Вход:"))
+        self.labels.append(label)
+
+        self.in_data_edit = QLineEdit()
+        in_data_layout.addWidget(self.in_data_edit)
+
         pos_buttons_layout = QHBoxLayout()
         pos_layout.addLayout(pos_buttons_layout)
         pos_buttons_layout.addWidget(label := QLabel("Позитивные тесты"))
         self.labels.append(label)
 
-        self.pos_add_button = Button(self.tm, 'plus')
+        self.pos_add_button = Button(self.tm, 'plus', css='Bg')
         self.pos_add_button.setFixedHeight(22)
         self.pos_add_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_add_button)
 
-        self.pos_delete_button = Button(self.tm, 'delete')
+        self.pos_delete_button = Button(self.tm, 'delete', css='Bg')
         self.pos_delete_button.setFixedHeight(22)
         self.pos_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_delete_button)
 
-        self.pos_button_up = Button(self.tm, 'button_up')
+        self.pos_button_up = Button(self.tm, 'button_up', css='Bg')
         self.pos_button_up.setFixedHeight(22)
         self.pos_button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_up)
 
-        self.pos_button_down = Button(self.tm, 'button_down')
+        self.pos_button_down = Button(self.tm, 'button_down', css='Bg')
         self.pos_button_down.setFixedHeight(22)
         self.pos_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_down)
 
-        self.pos_button_copy = Button(self.tm, 'copy')
+        self.pos_button_copy = Button(self.tm, 'copy', css='Bg')
         self.pos_button_copy.setFixedHeight(22)
         self.pos_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         pos_buttons_layout.addWidget(self.pos_button_copy)
 
-        self.pos_button_generate = Button(self.tm, 'generate')
-        self.pos_button_generate.setFixedHeight(22)
-        self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        pos_buttons_layout.addWidget(self.pos_button_generate)
+        # self.pos_button_generate = Button(self.tm, 'generate')
+        # self.pos_button_generate.setFixedHeight(22)
+        # self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        # pos_buttons_layout.addWidget(self.pos_button_generate)
 
         self.pos_test_list = QListWidget()
         pos_layout.addWidget(self.pos_test_list)
@@ -75,40 +83,48 @@ class TestTableWidget(QWidget):
         neg_layout = QVBoxLayout()
         layout.addLayout(neg_layout)
 
+        out_data_layout = QHBoxLayout()
+        neg_layout.addLayout(out_data_layout)
+        out_data_layout.addWidget(label := QLabel("Выход:"))
+        self.labels.append(label)
+
+        self.out_data_edit = QLineEdit()
+        out_data_layout.addWidget(self.out_data_edit)
+
         neg_buttons_layout = QHBoxLayout()
         neg_layout.addLayout(neg_buttons_layout)
         neg_buttons_layout.addWidget(label := QLabel("Негативные тесты"))
         self.labels.append(label)
 
-        self.neg_add_button = Button(self.tm, 'plus')
+        self.neg_add_button = Button(self.tm, 'plus', css='Bg')
         self.neg_add_button.setFixedHeight(22)
         self.neg_add_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_add_button)
 
-        self.neg_delete_button = Button(self.tm, 'delete')
+        self.neg_delete_button = Button(self.tm, 'delete', css='Bg')
         self.neg_delete_button.setFixedHeight(22)
         self.neg_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_delete_button)
 
-        self.neg_button_up = Button(self.tm, 'button_up')
+        self.neg_button_up = Button(self.tm, 'button_up', css='Bg')
         self.neg_button_up.setFixedHeight(22)
         self.neg_button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_up)
 
-        self.neg_button_down = Button(self.tm, 'button_down')
+        self.neg_button_down = Button(self.tm, 'button_down', css='Bg')
         self.neg_button_down.setFixedHeight(22)
         self.neg_button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_down)
 
-        self.neg_button_copy = Button(self.tm, 'copy')
+        self.neg_button_copy = Button(self.tm, 'copy', css='Bg')
         self.neg_button_copy.setFixedHeight(22)
         self.neg_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_copy)
 
-        self.neg_button_generate = Button(self.tm, 'generate')
-        self.neg_button_generate.setFixedHeight(22)
-        self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        neg_buttons_layout.addWidget(self.neg_button_generate)
+        # self.neg_button_generate = Button(self.tm, 'generate')
+        # self.neg_button_generate.setFixedHeight(22)
+        # self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        # neg_buttons_layout.addWidget(self.neg_button_generate)
 
         self.neg_test_list = QListWidget()
         neg_layout.addWidget(self.neg_test_list)
@@ -146,8 +162,8 @@ class TestTableWidget(QWidget):
         self.tm.set_theme_to_list_widget(self.pos_test_list)
         self.tm.set_theme_to_list_widget(self.neg_test_list)
         for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
-                   self.pos_button_copy, self.pos_button_generate, self.neg_add_button, self.neg_delete_button,
-                   self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_generate,
+                   self.pos_button_copy, self.in_data_edit, self.neg_add_button, self.neg_delete_button,
+                   self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.out_data_edit,
                    self.pos_comparator_widget, self.neg_comparator_widget]:
             self.tm.auto_css(el)
         for label in self.labels:

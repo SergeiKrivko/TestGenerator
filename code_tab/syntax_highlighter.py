@@ -114,6 +114,8 @@ class CodeEditor(QsciScintilla):
                 self._lexer.setFont(self.tm.code_font, key)
 
         self.setLexer(self._lexer)
+        if hasattr(self.am, 'terminate'):
+            self.am.terminate()
         self.am = data.get('autocompletion', CodeAutocompletionManager)(self.sm, self.path)
 
     def open_file(self, path, file_name: str):

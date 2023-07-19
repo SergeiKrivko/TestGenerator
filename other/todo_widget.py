@@ -55,11 +55,11 @@ class TODOWidget(QWidget):
         self.options_widget.setFont(self.tm.font_small)
         self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
         self.list_widget.setFont(self.tm.font_small)
-        self.button_add.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_add.setStyleSheet(self.tm.button_css())
         self.button_add.setFont(self.tm.font_small)
-        self.button_addc.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_addc.setStyleSheet(self.tm.button_css())
         self.button_addc.setFont(self.tm.font_small)
-        self.button_delete.setStyleSheet(self.tm.buttons_style_sheet)
+        self.button_delete.setStyleSheet(self.tm.button_css())
         self.button_delete.setFont(self.tm.font_small)
 
     def option_changed(self, key):

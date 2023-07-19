@@ -35,14 +35,7 @@ class GitWidget(QWidget):
 
     def set_theme(self):
         self.tm.set_theme_to_list_widget(self.files_list_widget)
-        self.options_widget.setFont(self.tm.font_small)
-        self.options_widget.set_widget_style_sheet('Номер лабы:', self.tm.spin_box_style_sheet)
-        self.options_widget.set_widget_style_sheet('add_code', self.tm.buttons_style_sheet)
-        self.options_widget.set_widget_style_sheet('add_tests', self.tm.buttons_style_sheet)
-        self.options_widget.set_widget_style_sheet('git_reset', self.tm.buttons_style_sheet)
-        self.options_widget.set_widget_style_sheet('Описание коммита:', self.tm.style_sheet)
-        self.options_widget.set_widget_style_sheet('Commit', self.tm.buttons_style_sheet)
-        self.options_widget.set_widget_style_sheet('Push', self.tm.buttons_style_sheet)
+        self.tm.auto_css(self.options_widget)
 
     def options_changed(self, key):
         if key == 'Номер лабы:':

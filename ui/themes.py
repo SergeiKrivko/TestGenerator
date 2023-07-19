@@ -23,12 +23,18 @@ basic_theme = {
     'Paper': QColor(Qt.white),
     'CaretLineBackgroundColor': QColor('#E5F3FF'),
     'BraceColor': QColor('#373EF0'),
+
     'MainColor': '#FFFFFF',
+    'MainHoverColor': '#E5F3FF',
+    'MainSelectedColor': '#CCE8FF',
     'BgColor': '#F0F0F0',
+    'BgHoverColor': '#E3E3E3',
+    'BgSelectedColor': '#B8E3E3',
     'BorderColor': '#A0A0A0',
+    'BorderHoverColor': '#8F8F8F',
+    'BorderSelectedColor': '#658F8B',
     'TextColor': '#000000',
-    'ColorSelected': '#CCE8FF',
-    'ColorHover': '#E5F3FF',
+
     'ImageColor': (0, 0, 0),
     'TestPassed': QColor('#12A013'),
     'TestFailed': QColor('#F82525'),
@@ -49,7 +55,7 @@ class Theme:
         self.theme_data = theme_data
 
     def get(self, key):
-        return self.theme_data.get(key, basic_theme[key])
+        return self.theme_data.get(key, basic_theme.get(key))
 
     def __getitem__(self, item):
         return self.get(item)
@@ -81,12 +87,17 @@ class ThemeManager:
                     'Paper': QColor('#2B2B2B'),
                     'CaretLineBackgroundColor': QColor('#323232'),
                     'BraceColor': QColor('#F0DA4A'),
+
                     'MainColor': '#606060',
+                    'MainHoverColor': '#777777',
+                    'MainSelectedColor': '#909090',
                     'BgColor': '#303030',
+                    'BgHoverColor': '#474747',
+                    'BgSelectedColor': '#575757',
                     'BorderColor': '#101010',
+                    'BorderHoverColor': '#292929',
+                    'BorderSelectedColor': '#424242',
                     'TextColor': '#F0F0F0',
-                    'ColorSelected': '#909090',
-                    'ColorHover': '#777777',
                     'ImageColor': (250, 250, 250),
 
                     'TestPassed': QColor('#CBF742'),
@@ -111,13 +122,19 @@ class ThemeManager:
                     'Paper': QColor('#E7F6F2'),
                     'CaretLineBackgroundColor': QColor('#C1EDF5'),
                     'BraceColor': QColor('#EB6BD3'),
+
                     'MainColor': '#E7F6F2',
+                    'MainHoverColor': '#C1EDF5',
+                    'MainSelectedColor': '#A2D7E5',
                     'BgColor': '#A5C9CA',
-                    'BorderColor': '#395B64',
+                    'BgHoverColor': '#98B9BA',
+                    'BgSelectedColor': '#93A3A3',
+                    'BorderColor': '#4D7B87',
+                    'BorderHoverColor': '#446D78',
+                    'BorderSelectedColor': '#3A5D66',
                     'TextColor': '#2C3333',
-                    'ColorSelected': '#A2D7E5',
-                    'ColorHover': '#C1EDF5',
                     'ImageColor': (44, 51, 51),
+
                     'TestPassed': QColor('#449C38'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -140,13 +157,19 @@ class ThemeManager:
                     'Paper': QColor('#D2D79F'),
                     'CaretLineBackgroundColor': QColor('#BAD78C'),
                     'BraceColor': QColor('#FF8831'),
+
                     'MainColor': '#D2D79F',
+                    'MainHoverColor': '#BAD78C',
+                    'MainSelectedColor': '#A3CF63',
                     'BgColor': '#90B77D',
-                    'BorderColor': '#42855B',
+                    'BgHoverColor': '#9FC98A',
+                    'BgSelectedColor': '#73C978',
+                    'BorderColor': '#539667',
+                    'BorderHoverColor': '#4C8A5F',
+                    'BorderSelectedColor': '#4D8A51',
                     'TextColor': '#483838',
-                    'ColorSelected': '#A3CF63',
-                    'ColorHover': '#BAD78C',
                     'ImageColor': (72, 56, 56),
+
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -169,13 +192,19 @@ class ThemeManager:
                     'Paper': QColor('#F9FFD0'),
                     'CaretLineBackgroundColor': QColor('#EEC1F0'),
                     'BraceColor': QColor('#E61B1B'),
+
                     'MainColor': '#F9FFD0',
+                    'MainHoverColor': '#EEC1F0',
+                    'MainSelectedColor': '#CFA0D9',
                     'BgColor': '#F5EA5A',
+                    'BgHoverColor': '#E8DE55',
+                    'BgSelectedColor': '#D4CA4E',
                     'BorderColor': '#39B5E0',
+                    'BorderHoverColor': '#3CA9E0',
+                    'BorderSelectedColor': '#3A82E0',
                     'TextColor': '#A31ACB',
-                    'ColorSelected': '#CFA0D9',
-                    'ColorHover': '#EEC1F0',
                     'ImageColor': (166, 23, 203),
+
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -198,13 +227,19 @@ class ThemeManager:
                     'Paper': QColor('#FFDCC5'),
                     'CaretLineBackgroundColor': QColor('#F2CEB1'),
                     'BraceColor': QColor('#FC8817'),
+
                     'MainColor': '#D9B28D',
+                    'MainHoverColor': '#E0BB9D',
+                    'MainSelectedColor': '#E8C3B0',
                     'BgColor': '#D7B19D',
+                    'BgHoverColor': '#CCA895',
+                    'BgSelectedColor': '#BD9A8A',
                     'BorderColor': '#865439',
+                    'BorderHoverColor': '#9C6242',
+                    'BorderSelectedColor': '#AB6B49',
                     'TextColor': '#402218',
-                    'ColorSelected': '#E8C3B0',
-                    'ColorHover': '#E0BB9D',
                     'ImageColor': (64, 34, 24),
+
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -227,13 +262,19 @@ class ThemeManager:
                     'Paper': QColor('#B23925'),
                     'CaretLineBackgroundColor': QColor('#B24E26'),
                     'BraceColor': QColor('#FC8817'),
+
                     'MainColor': '#B22222',
+                    'MainHoverColor': '#DB4016',
+                    'MainSelectedColor': '#CF0E04',
                     'BgColor': '#7C0A02',
+                    'BgHoverColor': '#8F0C02',
+                    'BgSelectedColor': '#A30D03',
                     'BorderColor': '#E25822',
+                    'BorderHoverColor': '#D45220',
+                    'BorderSelectedColor': '#BF4A1D',
                     'TextColor': '#F1BC31',
-                    'ColorSelected': '#CF0E04',
-                    'ColorHover': '#DB4016',
                     'ImageColor': (241, 188, 49),
+
                     'TestPassed': QColor('#2496C9'),
                     'TestFailed': QColor('#ED8029'),
                     'TestInProgress': QColor('#B8BD65'),
@@ -256,13 +297,19 @@ class ThemeManager:
                     'Paper': QColor('#42324A'),
                     'CaretLineBackgroundColor': QColor('#574261'),
                     'BraceColor': QColor('#F0DA4A'),
+
                     'MainColor': '#634378',
+                    'MainHoverColor': '#4E4378',
+                    'MainSelectedColor': '#3E5378',
                     'BgColor': '#250230',
-                    'BorderColor': '#8B33A8',
+                    'BgHoverColor': '#330342',
+                    'BgSelectedColor': '#47045C',
+                    'BorderColor': '#470246',
+                    'BorderHoverColor': '#570355',
+                    'BorderSelectedColor': '#70046E',
                     'TextColor': '#EDBFF2',
-                    'ColorSelected': '#3E5378',
-                    'ColorHover': '#4E4378',
                     'ImageColor': (237, 191, 242),
+
                     'TestPassed': QColor('#62DB26'),
                     'TestFailed': QColor('#E54E13'),
                     'TestInProgress': QColor('#DEABDC'),
@@ -285,13 +332,19 @@ class ThemeManager:
                     'Paper': QColor('#F0DEC4'),
                     'CaretLineBackgroundColor': QColor('#F0D6B4'),
                     'BraceColor': QColor('#FF8831'),
+
                     'MainColor': '#F2D7AD',
+                    'MainHoverColor': '#F2CE9C',
+                    'MainSelectedColor': '#FFCB99',
                     'BgColor': '#F0F0F0',
+                    'BgHoverColor': '#E3D2C8',
+                    'BgSelectedColor': '#E3C3AE',
                     'BorderColor': '#F27317',
+                    'BorderHoverColor': '#F28818',
+                    'BorderSelectedColor': '#F2A115',
                     'TextColor': '#000000',
-                    'ColorSelected': '#FFCB99',
-                    'ColorHover': '#F2CE9C',
                     'ImageColor': (217, 126, 29),
+
                     'TestPassed': QColor('#3BA126'),
                     'TestFailed': QColor('#F82525'),
                     'TestInProgress': QColor('#A0A0A0'),
@@ -460,7 +513,7 @@ class ThemeManager:
         elif isinstance(widget, Button):
             widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
-            widget.setStyleSheet(self.buttons_style_sheet)
+            widget.setStyleSheet(self.button_css())
         elif isinstance(widget, QSpinBox):
             widget.setStyleSheet(self.spin_box_style_sheet)
         elif isinstance(widget, QDoubleSpinBox):
@@ -470,11 +523,11 @@ class ThemeManager:
         elif isinstance(widget, QProgressBar):
             widget.setStyleSheet(self.progress_bar_style_sheet)
         elif isinstance(widget, QTabWidget):
-            widget.setStyleSheet(self.tab_widget_style_sheet)
+            widget.setStyleSheet(self.tab_widget_css())
         elif isinstance(widget, QListWidget):
             self.set_theme_to_list_widget(widget)
         elif isinstance(widget, QCheckBox):
-            widget.setStyleSheet(self.checkbox_style_sheet)
+            widget.setStyleSheet(self.checkbox_css())
 
     def css_to_options_widget(self, widget):
         widget.setFont(self.font_small)
@@ -507,7 +560,7 @@ class ThemeManager:
                            f"border-radius: 4px;"
         self.scintilla_style_sheet = f"""
             QsciScintilla {{
-                {self.style_sheet}
+                border: 0px solid black;
             }}
             QsciScintilla QScrollBar:vertical {{
                 background: {self['Paper'].name()};
@@ -543,11 +596,11 @@ class ThemeManager:
             border-radius: 6px;
         }}
         QListWidget::item:hover {{
-            background-color: {self['ColorHover']};
+            background-color: {self['MainHoverColor']};
         }}
         QListWidget::item:selected {{
             color: {self['TextColor']};
-            background-color: {self['ColorSelected']};
+            background-color: {self['MainSelectedColor']};
             border-radius: 6px;
         }}
         QListWidget QScrollBar:vertical {{
@@ -690,19 +743,6 @@ QScrollArea QScrollBar::sub-line, QScrollBar::add-line {{
             subcontrol-origin: margin;
         }}
         """
-        self.buttons_style_sheet = f"""
-        QPushButton {{ {self.style_sheet} }}
-        QPushButton::hover {{
-            background-color: {self['ColorHover']};
-        }}
-        QPushButton::disabled {{
-            color: {self['BgColor']};
-            border-color: {self['MainColor']};
-        }}
-        QPushButton::checked {{
-            background-color: {self['ColorSelected']};
-        }}
-        """
         self.combo_box_style_sheet = f"""
         QComboBox {{
             {self.style_sheet}
@@ -806,7 +846,28 @@ background-color: {self['MainColor']};
 }}
 """
 
-        self.tab_widget_style_sheet = f"""
+    def button_css(self, palette='Bg'):
+        return f"""
+QPushButton {{
+    color: {self['TextColor']};
+    background-color: {self[f'{palette}Color']};
+    border: 0px solid black;
+    border-radius: 5px;
+}}
+QPushButton::hover {{
+    background-color: {self[f'{palette}HoverColor']};
+}}
+QPushButton::disabled {{
+    color: {self['BgColor']};
+    border-color: {self['MainColor']};
+}}
+QPushButton::checked {{
+    background-color: {self[f'{palette}SelectedColor']};
+}}
+"""
+
+    def tab_widget_css(self, palette='Main'):
+        return f"""
 QTabWidget::pane {{
     color: {self['BgColor']};
 }}
@@ -827,7 +888,9 @@ QTabBar::tab:selected {{
     background-color: {self['ColorSelected']};
 }}
 """
-        self.checkbox_style_sheet = f"""
+
+    def checkbox_css(self, palette='Main'):
+        return f"""
 QCheckBox::indicator {{
     width: 13px;
     height: 13px;

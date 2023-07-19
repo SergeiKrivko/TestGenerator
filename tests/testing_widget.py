@@ -2,35 +2,31 @@ import json
 import os
 
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QFont, QColor, QIcon
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox, QLineEdit
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
-from settings.lab_widget import LabWidget
 from ui.message_box import MessageBox
 
 
 class TestingWidget(QWidget):
-    testing_start = pyqtSignal(list)
-    add_test = pyqtSignal(str, QColor)
-    clear_tests = pyqtSignal()
-    testing_end = pyqtSignal(bool)
     jump_to_code = pyqtSignal(str, int, int)
 
-    def __init__(self, sm, cm, tm):
+    def __init__(self, sm, cm, tm, side_panel):
         super(TestingWidget, self).__init__()
         self.sm = sm
         self.cm = cm
         self.tm = tm
+        self.side_panel = side_panel
         self.labels = []
+
+        self.side_list = side_panel.tabs['tests']
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.lab_widget = LabWidget(tm, sm)
-        self.lab_widget.finish_change_task.connect(self.open_task)
-        layout.addWidget(self.lab_widget)
+        self.sm.finish_change_task.connect(self.open_task)
 
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -135,6 +131,7 @@ class TestingWidget(QWidget):
         self.old_dir = os.getcwd()
         self.ui_disable_func = None
         self.test_count = 0
+        self.side_list.jump_to_testing.connect(self.tests_list.setCurrentRow)
 
         self.current_item = None
 
@@ -147,7 +144,6 @@ class TestingWidget(QWidget):
         for label in self.labels:
             label.setFont(self.tm.font_small)
         self.tm.set_theme_to_list_widget(self.tests_list)
-        self.lab_widget.set_theme()
 
     def open_task(self):
         self.get_path()
@@ -162,6 +158,7 @@ class TestingWidget(QWidget):
             self.out_data.setText("")
             self.prog_out.setText("")
             self.tests_list.clear()
+            self.side_list.clear()
             self.current_task = task
 
     def open_test_info(self):
@@ -203,8 +200,8 @@ class TestingWidget(QWidget):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
         self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], res and memory_res)
-        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  {'PASSED' if res else 'FAILED'}",
-                           self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed'])
+        self.side_list.set_status(self.tests_list.item(self.test_count).name,
+                                  TestingListWidgetItem.passed if res else TestingListWidgetItem.failed)
         self.test_count += 1
         self.open_test_info()
 
@@ -212,7 +209,7 @@ class TestingWidget(QWidget):
         self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.tests_list.item(self.test_count).set_crashed(prog_out, exit_code, prog_errors)
         self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], False)
-        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  CRASHED", self.tm['TestCrashed'])
+        self.side_list.set_status(self.tests_list.item(self.test_count).name, TestingListWidgetItem.crashed)
         self.test_count += 1
         self.open_test_info()
 
@@ -220,7 +217,7 @@ class TestingWidget(QWidget):
         self.tests_list.item(self.test_count).set_timeout()
         self.progress_bar.setValue(self.progress_bar.value() + 1)
         self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], False)
-        self.add_test.emit(f"{self.tests_list.item(self.test_count).name:6}  TIMEOUT", self.tm['TestFailed'])
+        self.side_list.set_status(self.tests_list.item(self.test_count).name, TestingListWidgetItem.terminated)
         self.test_count += 1
         self.open_test_info()
 
@@ -255,8 +252,8 @@ class TestingWidget(QWidget):
                        "Папки с данным заданием не существует. Тестирование невозможно", self.tm)
             return
 
-        self.lab_widget.setDisabled(True)
         self.ui_disable_func(True)
+        self.side_list.buttons['run'].setDisabled(True)
         self.button.setText("Прервать")
 
         self.coverage_bar.hide()
@@ -311,7 +308,9 @@ class TestingWidget(QWidget):
         self.progress_bar.setMaximum(len(tests_list))
         self.progress_bar.setValue(0)
 
-        self.testing_start.emit(tests_list)
+        self.side_list.clear()
+        for el in tests_list:
+            self.side_list.add_item(el)
 
         try:
             with open(f"{self.sm.data_lab_path()}/settings.json") as f:
@@ -400,9 +399,8 @@ class TestingWidget(QWidget):
             self.enable_ui(False)
 
     def enable_ui(self, success=True):
-        self.testing_end.emit(not success)
-        self.lab_widget.setDisabled(False)
         self.ui_disable_func(False)
+        self.side_list.buttons['run'].setDisabled(False)
         self.button.setText("Тестировать")
         self.button.setDisabled(False)
         os.chdir(self.old_dir)
@@ -446,7 +444,6 @@ class TestingWidget(QWidget):
             return comparator6(str1, str2)
 
     def show(self) -> None:
-        self.lab_widget.open_task()
         self.open_task()
         super(TestingWidget, self).show()
 

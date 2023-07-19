@@ -19,7 +19,8 @@ class BackgroundProcessManager(QObject):
         process.finished.connect(lambda: self.process_finished(key))
 
     def process_finished(self, key):
-        self.dict.pop(key)
+        if key in self.dict:
+            self.dict.pop(key)
         if len(self.dict) == 0:
             self.all_finished.emit()
 

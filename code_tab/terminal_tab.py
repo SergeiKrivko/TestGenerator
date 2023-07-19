@@ -1,11 +1,56 @@
 import os
 import subprocess
+from time import sleep
 
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTextEdit, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QTextEdit, QVBoxLayout
 
-from tests.console import ProgramLooper, OutputLooper
+from ui.side_panel_widget import SidePanelWidget
+
+
+class ProgramLooper(QThread):
+    def __init__(self, process: subprocess.Popen):
+        super().__init__()
+        self.process = process
+
+    def run(self):
+        self.process.communicate()
+
+    def terminate(self) -> None:
+        self.process.terminate()
+        super().terminate()
+
+
+class OutputLooper(QThread):
+    output = pyqtSignal(str)
+
+    def __init__(self, file):
+        super().__init__()
+        self.file = file
+        self.pos = 0
+        self.stop = False
+
+    def run(self):
+        while not self.stop:
+            try:
+                text = self.file.read()
+                if text:
+                    self.output.emit(text)
+            except EOFError:
+                pass
+            except UnicodeDecodeError:
+                pass
+            sleep(0.1)
+        sleep(0.1)
+        try:
+            text = self.file.read()
+            if text:
+                self.output.emit(text)
+        except EOFError:
+            pass
+        except UnicodeDecodeError:
+            pass
 
 
 class Terminal(QTextEdit):
@@ -42,6 +87,7 @@ class Terminal(QTextEdit):
         self.output_looper = None
         self.errors_looper = None
         self.looper = None
+        self.return_code = 0
 
         self.textChanged.connect(self.check_changes)
         self.write_prompt()
@@ -128,6 +174,7 @@ class Terminal(QTextEdit):
 
     def end_process(self):
         self.output_looper.stop = True
+        self.return_code = self.program.returncode
         self.program = None
         self.output_looper.finished.connect(self.write_prompt)
 
@@ -167,15 +214,18 @@ class Terminal(QTextEdit):
                 el.terminate()
 
 
-class TerminalTab(QWidget):
+class TerminalTab(SidePanelWidget):
     def __init__(self, sm, tm):
-        super().__init__()
+        super().__init__(sm, tm, 'Терминал', ['minimize'])
         layout = QVBoxLayout()
+        self.setMinimumWidth(600)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.terminal = Terminal(sm, tm)
         layout.addWidget(self.terminal)
         self.setLayout(layout)
 
     def set_theme(self):
+        super().set_theme()
         self.terminal.set_theme()
 
     def stop_loopers(self):

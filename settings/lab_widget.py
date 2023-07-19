@@ -1,13 +1,10 @@
 import os.path
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox
 
 
 class LabWidget(QWidget):
-    start_change_task = pyqtSignal()
-    finish_change_task = pyqtSignal()
-
     def __init__(self, tm, sm, vertical=False):
         super().__init__()
         self.tm = tm
@@ -18,35 +15,35 @@ class LabWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         self.labels = []
 
-        main_layout.addWidget(label := QLabel("Номер лабы:"))
+        main_layout.addWidget(label := QLabel("Лаба:"))
         self.labels.append(label)
 
         self.lab_spin_box = QSpinBox()
         self.lab_spin_box.setMinimum(1)
         self.lab_spin_box.setMaximum(10000)
-        self.lab_spin_box.setMaximumWidth(120)
+        self.lab_spin_box.setFixedWidth(50)
         self.lab_spin_box.setValue(self.sm.get('lab', 1))
         self.lab_spin_box.valueChanged.connect(self.lab_changed)
         main_layout.addWidget(self.lab_spin_box)
 
-        main_layout.addWidget(label := QLabel("Номер задания:"))
+        main_layout.addWidget(label := QLabel("Задание:"))
         self.labels.append(label)
 
         self.task_spin_box = QSpinBox()
         self.task_spin_box.setMinimum(1)
         self.task_spin_box.setMaximum(10000)
-        self.task_spin_box.setMaximumWidth(120)
+        self.task_spin_box.setFixedWidth(50)
         self.task_spin_box.setValue(self.sm.get('task', 1))
         self.task_spin_box.valueChanged.connect(self.task_changed)
         main_layout.addWidget(self.task_spin_box)
 
-        main_layout.addWidget(label := QLabel("Номер варианта:"))
+        main_layout.addWidget(label := QLabel("Вариант:"))
         self.labels.append(label)
 
         self.var_spin_box = QSpinBox()
         self.var_spin_box.setMinimum(-1)
         self.var_spin_box.setMaximum(10000)
-        self.var_spin_box.setMaximumWidth(120)
+        self.var_spin_box.setFixedWidth(50)
         self.var_spin_box.setValue(self.sm.get('var', 0))
         self.var_spin_box.valueChanged.connect(self.var_changed)
         main_layout.addWidget(self.var_spin_box)
@@ -57,32 +54,32 @@ class LabWidget(QWidget):
 
     def lab_changed(self):
         if signals := self.signals:
-            self.start_change_task.emit()
+            self.sm.start_change_task.emit()
             self.signals = False
         self.sm.set('lab', self.lab_spin_box.value())
         if signals:
             self.find_variant()
             self.signals = True
-            self.finish_change_task.emit()
+            self.sm.finish_change_task.emit()
 
     def task_changed(self):
         if signals := self.signals:
-            self.start_change_task.emit()
+            self.sm.start_change_task.emit()
             self.signals = False
         self.sm.set('task', self.task_spin_box.value())
         if signals:
             self.find_variant()
             self.signals = True
-            self.finish_change_task.emit()
+            self.sm.finish_change_task.emit()
 
     def var_changed(self):
         if signals := self.signals:
-            self.start_change_task.emit()
+            self.sm.start_change_task.emit()
             self.signals = False
         self.sm.set('var', self.var_spin_box.value())
         if signals:
             self.signals = True
-            self.finish_change_task.emit()
+            self.sm.finish_change_task.emit()
 
     def find_variant(self):
         for i in range(-1, 100):
@@ -97,14 +94,14 @@ class LabWidget(QWidget):
             self.show()
 
         if signals := self.signals:
-            self.start_change_task.emit()
+            self.sm.start_change_task.emit()
             self.signals = False
         self.lab_spin_box.setValue(self.sm.get('lab', 1))
         self.task_spin_box.setValue(self.sm.get('task', 1))
         self.var_spin_box.setValue(self.sm.get('var', 0))
         if signals:
             self.signals = True
-            self.finish_change_task.emit()
+            self.sm.finish_change_task.emit()
 
     def set_theme(self):
         for label in self.labels:

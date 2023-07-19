@@ -11,6 +11,8 @@ from settings.search import Searcher
 class SettingsManager(QObject):
     searching_complete = pyqtSignal()
     project_changed = pyqtSignal()
+    start_change_task = pyqtSignal()
+    finish_change_task = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -57,7 +59,7 @@ class SettingsManager(QObject):
                     print(f"{ex.__class__.__name__}: {ex}")
 
             try:
-                with open(f"{path}/TestGeneratorSettings.json", encoding='utf-8') as f:
+                with open(f"{data_path}/TestGeneratorSettings.json", encoding='utf-8') as f:
                     dct = loads(f.read())
             except FileNotFoundError:
                 return default
@@ -81,6 +83,7 @@ class SettingsManager(QObject):
             self.project_settings.pop(key)
 
     def set_project(self, project):
+        self.start_change_task.emit()
         if project is None:
             self.project = ''
             self.set_general('projects', dumps(self.projects))
@@ -115,6 +118,7 @@ class SettingsManager(QObject):
             self.project_settings = dict()
 
         self.project_changed.emit()
+        self.finish_change_task.emit()
 
     def lab_path(self, lab=None, task=None, var=None, project=None):
         if self.get('struct', project=project) == 1:

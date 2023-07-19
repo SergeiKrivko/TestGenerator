@@ -1,9 +1,10 @@
 from sys import argv
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
-from code_tab.terminal_tab import TerminalTab
 from tests.macros_converter import background_process_manager
+from ui.main_menu import MainMenu
+from ui.side_bar import SideBar, SidePanel
 from ui.themes import ThemeManager
 from code_tab.code_widget import CodeWidget
 from settings.project_widget import ProjectWidget
@@ -11,7 +12,6 @@ from settings.settings_widget import SettingsWidget
 from tests.testing_widget import TestingWidget
 from tests.tests_widget import TestsWidget
 from other.git_widget import GitWidget
-from ui.menu_bar import MenuBar
 from tests.commands import CommandManager
 from other.todo_widget import TODOWidget
 from settings.settings_manager import SettingsManager
@@ -31,69 +31,62 @@ class MainWindow(QMainWindow):
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.central_widget.setLayout(layout)
+
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(0)
+        main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.cm = CommandManager(self.sm)
         self.tm = ThemeManager(self.sm, self.sm.get_general('theme'))
 
-        self.menu_bar = MenuBar({
-            'Проект': (lambda: self.show_tab('project_widget'), None),
-            'Код': (lambda: self.show_tab('code_widget'), None),
-            'Тесты': (lambda: self.show_tab('tests_widget'), None),
-            'Тестирование': (lambda: self.show_tab('testing_widget'), None),
-            'Терминал': (lambda: self.show_tab('terminal'), None),
-            'TODO': (lambda: self.show_tab('todo_widget'), None),
-            'Git': (lambda: self.show_tab('git_widget'), None),
-            'Настройки': (lambda: self.show_tab('settings_widget'), None)
-        })
-        self.setMenuBar(self.menu_bar)
+        self.menu_bar = MainMenu(self.sm, self.tm)
+        self.menu_bar.tab_changed.connect(self.show_tab)
+        main_layout.addWidget(self.menu_bar)
+
+        layout = QHBoxLayout()
+        main_layout.addLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.central_widget.setLayout(main_layout)
+
+        self.side_panel = SidePanel(self.sm, self.tm, self.cm)
+        self.side_bar = SideBar(self.sm, self.tm, self.side_panel)
+        layout.addWidget(self.side_bar)
+        layout.addWidget(self.side_panel)
 
         self.project_widget = ProjectWidget(self.sm, self.tm, self.menu_bar.setDisabled)
         self.project_widget.hide()
         self.project_widget.jump_to_code.connect(self.jump_to_code_from_project)
-        layout.addWidget(self.project_widget)
 
         self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
         self.tests_widget.hide()
-        layout.addWidget(self.tests_widget)
+        layout.addWidget(self.tests_widget, 100)
 
-        self.testing_widget = TestingWidget(self.sm, self.cm, self.tm)
-        layout.addWidget(self.testing_widget)
+        self.testing_widget = TestingWidget(self.sm, self.cm, self.tm, self.side_panel)
+        layout.addWidget(self.testing_widget, 100)
         self.testing_widget.jump_to_code.connect(self.jump_to_code_from_testing)
         self.testing_widget.hide()
+        self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
+        self.side_panel.tabs['tests'].jump_to_testing.connect(lambda *args: self.show_tab(MainMenu.TAB_TESTING))
 
-        self.code_widget = CodeWidget(self.sm, self.cm, self.tm)
-        layout.addWidget(self.code_widget)
-        self.testing_widget.testing_start.connect(self.code_widget.testing_start)
-        self.testing_widget.add_test.connect(self.code_widget.add_test)
-        self.testing_widget.testing_end.connect(self.code_widget.end_testing)
+        self.code_widget = CodeWidget(self.sm, self.cm, self.tm, self.side_panel)
+        layout.addWidget(self.code_widget, 100)
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
-        self.code_widget.test_res_widget.doubleClicked.connect(self.open_test_from_code)
         self.code_widget.hide()
 
-        self.terminal = TerminalTab(self.sm, self.tm)
-        self.terminal.hide()
-        layout.addWidget(self.terminal)
-
         self.git_widget = GitWidget(self.sm, self.cm, self.tm)
-        layout.addWidget(self.git_widget)
         self.git_widget.hide()
 
         self.todo_widget = TODOWidget(self.sm, self.cm, self.tm)
-        layout.addWidget(self.todo_widget)
         self.todo_widget.jumpToCode.connect(self.jump_to_code_from_todo)
         self.todo_widget.hide(save_data=False)
 
         self.settings_widget = SettingsWidget(self.sm, self.tm)
-        layout.addWidget(self.settings_widget)
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide(save_settings=False)
 
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
 
-        self.resize(800, 600)
+        self.resize(1000, 600)
 
         if not os.path.isdir(self.sm.project) or not self.project_widget.list_widget.count():
             self.show_tab('project_widget')
@@ -107,32 +100,20 @@ class MainWindow(QMainWindow):
         else:
             self.project_widget.open_project(forced=True)
 
+        self.show_tab(MainMenu.TAB_CODE)
+
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
-        self.menu_bar.setStyleSheet(self.tm.bg_style_sheet)
         self.project_widget.set_theme()
         self.tests_widget.set_theme()
         self.code_widget.set_theme()
         self.testing_widget.set_theme()
-        self.terminal.set_theme()
         self.todo_widget.set_theme()
         self.git_widget.set_theme()
         self.settings_widget.set_theme()
-        self.menu_bar.setFont(self.tm.font_small)
-        self.menu_bar.setStyleSheet(f"""
-        QMenuBar {{
-        color: {self.tm['TextColor']};
-        background-color: {self.tm['BgColor']};
-        padding: 3px 3px;
-        }}
-        QMenuBar::item {{
-        padding: 2px 6px;
-        border-radius: 5px;
-        }}
-        QMenuBar::item::selected {{
-        background-color: {self.tm['MainColor']};
-        }}
-        """)
+        self.menu_bar.set_theme()
+        self.side_bar.set_theme()
+        self.side_panel.set_theme()
 
     def jump_to_code_from_project(self, path):
         path = os.path.abspath(path)
@@ -181,22 +162,28 @@ class MainWindow(QMainWindow):
                 self.code_widget.code_edit.setCursorPosition(line, 0)
                 break
 
-    def show_tab(self, tab):
-        self.project_widget.hide()
+    def show_tab(self, index):
         self.code_widget.hide()
         self.tests_widget.hide()
         self.testing_widget.hide()
-        self.terminal.hide()
-        self.todo_widget.hide()
-        self.git_widget.hide()
-        self.settings_widget.hide()
-        try:
-            getattr(self, tab).show()
-        except KeyError:
-            self.project_widget.show()
+        if index == MainMenu.TAB_CODE:
+            self.code_widget.show()
+            self.menu_bar.button_code.setChecked(True)
+        else:
+            self.menu_bar.button_code.setChecked(False)
+        if index == MainMenu.TAB_TESTS:
+            self.tests_widget.show()
+            self.menu_bar.button_tests.setChecked(True)
+        else:
+            self.menu_bar.button_tests.setChecked(False)
+        if index == MainMenu.TAB_TESTING:
+            self.testing_widget.show()
+            self.menu_bar.button_testing.setChecked(True)
+        else:
+            self.menu_bar.button_testing.setChecked(False)
 
     def open_test_from_code(self):
-        index = self.code_widget.test_res_widget.currentRow()
+        index = 0
         self.testing_widget.get_path()
         self.testing_widget.tests_list.setCurrentRow(index)
         self.testing_widget.open_test_info()
@@ -208,8 +195,6 @@ class MainWindow(QMainWindow):
         self.code_widget.hide()
         self.tests_widget.hide()
         self.testing_widget.hide()
-        self.terminal.hide()
-        self.terminal.stop_loopers()
         self.git_widget.hide()
         self.settings_widget.hide()
         self.sm.store()
@@ -247,9 +232,9 @@ class ExitDialog(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.button(QDialogButtonBox.Close).clicked.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Close).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Close).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Close).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         layout.addWidget(label)

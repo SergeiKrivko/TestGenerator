@@ -185,6 +185,8 @@ class PythonModule(PythonObject):
         self.modules = dict()
 
         self.re = re.compile(r"[*]\/|\/[*]|\s+|\w+|\W")
+        self.terminate = False
+        self.current_module = None
 
         if not main:
             self.parse_file()
@@ -248,7 +250,6 @@ class PythonModule(PythonObject):
         return self.get_object_type(line[2:])
 
     def parse_file(self):
-        print(self.name)
         if self.main:
             self.variables = self.builtins.copy()
         else:
@@ -259,6 +260,8 @@ class PythonModule(PythonObject):
         current_function = None
         function_indent = 0
         for i, indent, line in self._get_lines():
+            if self.terminate:
+                return
             if not current_function or indent <= function_indent:
                 current_function = None
                 if len(line) > 2 and line[1] == '=':
@@ -298,8 +301,9 @@ class PythonModule(PythonObject):
                                     break
                                 elif os.path.isfile(path):
                                     with open(path, encoding='utf-8') as f:
-                                        self.modules[name] = PythonModule(name, f.read(), self.libs, self.builtins,
-                                                                          self.imported_modules, self.recursion + 1)
+                                        self.current_module = PythonModule(name, f.read(), self.libs, self.builtins,
+                                                                           self.imported_modules, self.recursion + 1)
+                                        self.modules[name] = self.current_module
                                         self.imported_modules[path] = self.modules[name]
                                     break
 
@@ -328,8 +332,9 @@ class PythonModule(PythonObject):
                                                 self.variables[el] = self.imported_variables[el]
                                             else:
                                                 if module is None:
-                                                    module = PythonModule('', f.read(), self.libs, self.builtins,
+                                                    self.current_module = PythonModule('', f.read(), self.libs, self.builtins,
                                                                           self.imported_modules, self.recursion + 1)
+                                                    module = self.current_module
                                                 self.variables[el] = module.get(el, UNKNOWN_CLASS)
                                                 self.imported_variables[el] = self.variables[el]
             else:
@@ -345,11 +350,20 @@ class PythonModule(PythonObject):
 
         if self.main:
             for func in self.functions.values():
+                if self.terminate:
+                    return
                 func.parse_header()
                 func.parse()
 
         for func in self.classes.values():
+            if self.terminate:
+                return
             func.parse_fields()
+
+    def stop(self):
+        self.terminate = True
+        if self.current_module:
+            self.current_module.stop()
 
     def get(self, key, default=None):
         return self.functions.get(key, self.classes.get(key, self.variables.get(
@@ -415,12 +429,16 @@ class CodeAutocompletionManager(QThread):
         time.sleep(0.01)
         self.main.parse_file()
 
-    def __del__(self):
+    def terminate(self):
         if not self.isFinished():
-            self.terminate()
+            self.stop()
+            super().terminate()
 
     def update_libs(self):
         pass
+
+    def stop(self):
+        self.main.stop()
 
     def full_update(self, text, current_pos):
         self.main.text = text
@@ -487,4 +505,5 @@ class CodeAutocompletionManager(QThread):
             for cls in self.main.classes.values():
                 if cls.start <= self._current_line <= cls.stop + 1:
                     lst = list(cls.get_all(self._current_line))
-        return [*self.builtins.get_all(self._current_line), *self.main.get_all(self._current_line), *self.keywords, *lst], 0
+        return [*self.builtins.get_all(self._current_line), *self.main.get_all(self._current_line), *self.keywords,
+                *lst], 0

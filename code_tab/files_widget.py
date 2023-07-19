@@ -3,25 +3,24 @@ import shutil
 
 from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
     QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
 
 from tests.console import Console
 from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
+from ui.side_panel_widget import SidePanelWidget
 
 
-class FilesWidget(QWidget):
+class FilesWidget(SidePanelWidget):
     renameFile = pyqtSignal(str)
     openFile = pyqtSignal(str)
     ignore_files = []
 
     def __init__(self, sm, cm, tm):
-        super(FilesWidget, self).__init__()
-        self.sm = sm
+        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename'])
         self.cm = cm
-        self.tm = tm
 
         self.setMaximumWidth(175)
         files_layout = QVBoxLayout()
@@ -215,9 +214,9 @@ class FilesWidget(QWidget):
             self.console = Console(self.sm, self.tm, command, self.current_path)
             self.console.show()
 
-        path = self.files_list.currentItem().path
         if not self.files_list.currentItem():
             return
+        path = self.files_list.currentItem().path
         if self.files_list.currentItem().path.endswith('.exe'):
             run_file(path)
             return
@@ -231,6 +230,7 @@ class FilesWidget(QWidget):
                         return
 
     def set_theme(self):
+        super().set_theme()
         for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search,
                    self.button_up, self.button_down, self.search_line, self.replace_line,
                    self.button_replace, self.button_replace_all, self.button_preview]:
