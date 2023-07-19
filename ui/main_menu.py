@@ -53,7 +53,7 @@ class MainMenu(QWidget):
         self.lab_widget = LabWidget(self.tm, self.sm)
         layout.addWidget(self.lab_widget)
 
-        self.button_settings = Button(self.tm, 'generate', css='Border')
+        self.button_settings = Button(self.tm, 'generate', css='Menu')
         self.button_settings.setFixedSize(30, 30)
         layout.addWidget(self.button_settings)
 
@@ -75,10 +75,11 @@ class MainMenu(QWidget):
         self.tab_changed.emit(index)
 
     def set_theme(self):
-        self.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
+        self.setStyleSheet(f"background-color: {self.tm['MenuColor']}; "
+                           f"border-bottom: 1px solid {self.tm['BorderColor']};")
         # self.tm.auto_css(self.project_widget)
         for el in [self.button_code, self.button_tests, self.button_testing]:
-            el.setStyleSheet(self.tm.button_css('Border'))
+            el.setStyleSheet(self.tm.button_css('Menu'))
             el.setFont(self.tm.font_small)
         self.lab_widget.set_theme()
         self.button_settings.set_theme(self.tm)

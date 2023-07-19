@@ -252,7 +252,7 @@ class TestingWidget(QWidget):
                        "Папки с данным заданием не существует. Тестирование невозможно", self.tm)
             return
 
-        self.ui_disable_func(True)
+        # self.ui_disable_func(True)
         self.side_list.buttons['run'].setDisabled(True)
         self.button.setText("Прервать")
 

@@ -105,13 +105,13 @@ class SideBar(QWidget):
         return lambda flag: self.button_clicked(button.image_name[7:], flag)
 
     def set_theme(self):
-        self.setStyleSheet(f"background-color: {self.tm['BorderColor']};")
+        self.setStyleSheet(f"background-color: {self.tm['MenuColor']};")
         for el in self.buttons.values():
             el.set_theme(self.tm)
 
 
 class SideBarButton(Button):
     def __init__(self, tm, image):
-        super().__init__(tm, image, css='Border', color='TextColor')
+        super().__init__(tm, image, css='Menu', color='TextColor')
         self.setFixedSize(30, 30)
         self.setCheckable(True)

@@ -4,7 +4,7 @@ import shutil
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel
 import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
@@ -94,9 +94,10 @@ class ThemeManager:
                     'BgColor': '#303030',
                     'BgHoverColor': '#474747',
                     'BgSelectedColor': '#575757',
+                    'MenuColor': '#1F1F1F',
+                    'MenuHoverColor': '#2E2E2E',
+                    'MenuSelectedColor': '#3D3D3D',
                     'BorderColor': '#101010',
-                    'BorderHoverColor': '#292929',
-                    'BorderSelectedColor': '#424242',
                     'TextColor': '#F0F0F0',
                     'ImageColor': (250, 250, 250),
 
@@ -514,6 +515,8 @@ class ThemeManager:
             widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
             widget.setStyleSheet(self.button_css())
+        elif isinstance(widget, QLabel):
+            widget.setStyleSheet('border: none;')
         elif isinstance(widget, QSpinBox):
             widget.setStyleSheet(self.spin_box_style_sheet)
         elif isinstance(widget, QDoubleSpinBox):

@@ -45,7 +45,7 @@ class TestingPanel(SidePanelWidget):
 
 
 class TestingPanelItem(QListWidgetItem):
-    texts = {TestingListWidgetItem.in_progress: 'in progress…',
+    texts = {TestingListWidgetItem.in_progress: '',
              TestingListWidgetItem.passed: 'PASSED',
              TestingListWidgetItem.failed: 'FAILED',
              TestingListWidgetItem.crashed: 'CRASHED',
