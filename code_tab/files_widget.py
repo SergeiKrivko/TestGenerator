@@ -235,7 +235,7 @@ class FilesWidget(SidePanelWidget):
                    self.button_up, self.button_down, self.search_line, self.replace_line,
                    self.button_replace, self.button_replace_all, self.button_preview]:
             self.tm.auto_css(el)
-        self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.files_list.setStyleSheet(self.tm.list_widget_css('Main'))
         for i in range(self.files_list.count()):
             self.files_list.item(i).set_theme()
 

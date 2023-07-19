@@ -49,7 +49,7 @@ class BinaryRedactor(QsciScintilla):
         self.setText(text)
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.scintilla_style_sheet.replace(self.tm['Paper'].name(), self.tm['MainColor']))
+        self.setStyleSheet(self.tm.scintilla_css(True).replace(self.tm['Paper'].name(), self.tm['MainColor']))
         self.setCaretForegroundColor(QColor(self.tm['TextColor']))
         self.setCaretLineBackgroundColor(QColor(self.tm['MainColor']))
         self.__lexer.setDefaultFont(self.tm.code_font)

@@ -39,7 +39,7 @@ class TestingPanel(SidePanelWidget):
 
     def set_theme(self):
         super().set_theme()
-        self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.list_widget.setStyleSheet(self.tm.list_widget_css('Main'))
         for el in self.items.values():
             el.set_theme()
 

@@ -1,4 +1,5 @@
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton
 
 from settings.lab_widget import LabWidget
@@ -53,9 +54,14 @@ class MainMenu(QWidget):
         self.lab_widget = LabWidget(self.tm, self.sm)
         layout.addWidget(self.lab_widget)
 
-        self.button_settings = Button(self.tm, 'generate', css='Menu')
+        right_layout = QHBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setAlignment(Qt.AlignRight)
+        layout.addLayout(right_layout)
+
+        self.button_settings = Button(self.tm, 'generate', css='Menu', color='TextColor')
         self.button_settings.setFixedSize(30, 30)
-        layout.addWidget(self.button_settings)
+        right_layout.addWidget(self.button_settings)
 
         self.current_tab = self.TAB_CODE
 

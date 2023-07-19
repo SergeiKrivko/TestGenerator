@@ -53,10 +53,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.side_bar)
         layout.addWidget(self.side_panel)
 
-        self.project_widget = ProjectWidget(self.sm, self.tm, self.menu_bar.setDisabled)
-        self.project_widget.hide()
-        self.project_widget.jump_to_code.connect(self.jump_to_code_from_project)
-
         self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
         self.tests_widget.hide()
         layout.addWidget(self.tests_widget, 100)
@@ -73,43 +69,34 @@ class MainWindow(QMainWindow):
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
         self.code_widget.hide()
 
-        self.git_widget = GitWidget(self.sm, self.cm, self.tm)
-        self.git_widget.hide()
-
-        self.todo_widget = TODOWidget(self.sm, self.cm, self.tm)
-        self.todo_widget.jumpToCode.connect(self.jump_to_code_from_todo)
-        self.todo_widget.hide(save_data=False)
-
         self.settings_widget = SettingsWidget(self.sm, self.tm)
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide(save_settings=False)
+        self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)
 
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
 
         self.resize(1000, 600)
 
-        if not os.path.isdir(self.sm.project) or not self.project_widget.list_widget.count():
+        if not os.path.isdir(self.sm.project) or not self.side_panel.tabs['projects'].list_widget.count():
             self.show_tab('project_widget')
         else:
             self.show_tab('project_widget')
         if len(argv) == 2 and os.path.isfile(argv[1]):
             if argv[1].endswith('.7z'):
-                self.project_widget.project_from_zip(argv[1])
+                self.side_panel.tabs['projects'].project_from_zip(argv[1])
             else:
-                self.project_widget.open_as_project(argv[1])
+                self.side_panel.tabs['projects'].open_as_project(argv[1])
         else:
-            self.project_widget.open_project(forced=True)
+            self.side_panel.tabs['projects'].open_project(forced=True)
 
         self.show_tab(MainMenu.TAB_CODE)
 
     def set_theme(self):
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
-        self.project_widget.set_theme()
         self.tests_widget.set_theme()
         self.code_widget.set_theme()
         self.testing_widget.set_theme()
-        self.todo_widget.set_theme()
-        self.git_widget.set_theme()
         self.settings_widget.set_theme()
         self.menu_bar.set_theme()
         self.side_bar.set_theme()
@@ -190,12 +177,9 @@ class MainWindow(QMainWindow):
         self.show_tab('testing_widget')
 
     def closeEvent(self, a0):
-        self.project_widget.hide()
-        self.todo_widget.hide()
         self.code_widget.hide()
         self.tests_widget.hide()
         self.testing_widget.hide()
-        self.git_widget.hide()
         self.settings_widget.hide()
         self.sm.store()
         if len(background_process_manager.dict):
@@ -204,13 +188,12 @@ class MainWindow(QMainWindow):
             if dialog.exec():
                 for process in background_process_manager.dict.values():
                     process.close()
-                self.project_widget.remove_temp_projects()
+                self.side_panel.tabs['projects'].remove_temp_projects()
                 super(MainWindow, self).close()
             else:
                 a0.ignore()
-                self.project_widget.show()
         else:
-            self.project_widget.remove_temp_projects()
+            self.side_panel.tabs['projects'].remove_temp_projects()
             super(MainWindow, self).close()
 
 

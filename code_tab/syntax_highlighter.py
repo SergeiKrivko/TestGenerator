@@ -72,7 +72,7 @@ class CodeEditor(QsciScintilla):
         self.text_changed = True
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.scintilla_style_sheet)
+        self.setStyleSheet(self.tm.scintilla_css())
 
         self.setFont(self.tm.code_font)
         self.setMarginsFont(self.tm.code_font)

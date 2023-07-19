@@ -199,7 +199,7 @@ class Terminal(QTextEdit):
         self.write_text('$ ')
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.text_edit_style_sheet)
+        self.setStyleSheet(self.tm.text_edit_css('Main'))
         self.setFont(self.tm.code_font)
 
     def select_project(self):

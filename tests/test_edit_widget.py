@@ -328,9 +328,9 @@ class NewInFileDialog(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         layout = QVBoxLayout()
@@ -341,7 +341,7 @@ class NewInFileDialog(QDialog):
 
         self.combo_box = QComboBox()
         self.combo_box.addItems(['Текстовый', 'Бинарный'])
-        self.combo_box.setStyleSheet(tm.combo_box_style_sheet)
+        self.combo_box.setStyleSheet(tm.combobox_css('Main'))
         self.combo_box.setFont(tm.font_small)
 
         layout.addWidget(self.combo_box)

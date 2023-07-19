@@ -51,6 +51,7 @@ class LabWidget(QWidget):
         self.setLayout(main_layout)
 
         self.signals = True
+        self.sm.project_changed.connect(self.open_task)
 
     def lab_changed(self):
         if signals := self.signals:
@@ -107,4 +108,4 @@ class LabWidget(QWidget):
         for label in self.labels:
             self.tm.auto_css(label)
         for label in [self.lab_spin_box, self.task_spin_box, self.var_spin_box]:
-            self.tm.auto_css(label)
+            self.tm.auto_css(label, palette='Bg')

@@ -1,5 +1,5 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget, QDialog, QVBoxLayout, QPushButton
 
 from settings.lib_dialog import LibWidget
 from ui.options_window import OptionsWidget
@@ -8,7 +8,7 @@ line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 
 
-class SettingsWidget(QWidget):
+class SettingsWidget(QDialog):
     change_theme = pyqtSignal()
 
     def __init__(self, sm, tm):
@@ -16,7 +16,11 @@ class SettingsWidget(QWidget):
         self.sm = sm
         self.tm = tm
 
+        main_layout = QVBoxLayout()
         layout = QHBoxLayout()
+        main_layout.addLayout(layout)
+
+        self.setFixedSize(800, 480)
 
         self.list_widget = QListWidget()
         self.list_widget.addItems(['Основные', 'C', 'Python', 'Тестирование', 'Библиотеки'])
@@ -89,11 +93,26 @@ class SettingsWidget(QWidget):
         self.libs_widget.hide()
         layout.addWidget(self.libs_widget)
 
-        self.setLayout(layout)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setAlignment(Qt.AlignRight)
+        main_layout.addLayout(buttons_layout)
+
+        # self.button_cancel = QPushButton("Отмена")
+        # self.button_cancel.setFixedSize(120, 24)
+        # buttons_layout.addWidget(self.button_cancel)
+
+        self.button_ok = QPushButton("Ок")
+        self.button_ok.setFixedSize(120, 24)
+        self.button_ok.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.button_ok)
+
+        self.setLayout(main_layout)
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
-        self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        self.button_ok.setStyleSheet(self.tm.button_css('Main'))
+        self.button_ok.setFont(self.tm.font_small)
+        self.list_widget.setStyleSheet(self.tm.list_widget_css('Main'))
         self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
         self.main_options_widget.setFont(self.tm.font_small)
         self.testing_widget.setFont(self.tm.font_small)
