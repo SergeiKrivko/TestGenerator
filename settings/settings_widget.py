@@ -114,7 +114,6 @@ class SettingsWidget(QDialog):
         self.setLayout(main_layout)
 
     def set_theme(self):
-        print(1)
         self.setStyleSheet(self.tm.bg_style_sheet)
         # self.button_ok.setStyleSheet(self.tm.button_css('Main'))
         # self.button_ok.setFont(self.tm.font_small)

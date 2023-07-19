@@ -44,7 +44,7 @@ class CodeWidget(QWidget):
 
         self.preview_widget = PreviewWidget(self.sm, self.tm)
         self.preview_widget.hide()
-        self.files_widget.button_preview.clicked.connect(self.show_preview)
+        self.files_widget.buttons['preview'].clicked.connect(self.show_preview)
         layout.addWidget(self.preview_widget)
 
         self.path = ''
@@ -111,20 +111,20 @@ class CodeWidget(QWidget):
             for el in language.get('files', []):
                 if self.current_file.endswith(el):
                     self.preview_widget.open(self.current_file)
-                    self.files_widget.button_run.hide()
-                    self.files_widget.button_preview.show()
+                    self.files_widget.buttons['run'].hide()
+                    self.files_widget.buttons['preview'].show()
 
-                    self.files_widget.button_preview.setChecked(False)
+                    self.files_widget.buttons['preview'].setChecked(False)
 
                     if language.get('lexer'):
-                        self.files_widget.button_preview.setDisabled(False)
+                        self.files_widget.buttons['preview'].setDisabled(False)
                         return 0
                     else:
-                        self.files_widget.button_preview.setDisabled(True)
+                        self.files_widget.buttons['preview'].setDisabled(True)
                         return 1
 
-        self.files_widget.button_preview.hide()
-        self.files_widget.button_run.show()
+        self.files_widget.buttons['preview'].hide()
+        self.files_widget.buttons['run'].show()
         return 2
 
     def show_preview(self, flag):

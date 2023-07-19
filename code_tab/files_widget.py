@@ -19,7 +19,7 @@ class FilesWidget(SidePanelWidget):
     ignore_files = []
 
     def __init__(self, sm, cm, tm):
-        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename'])
+        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'run', 'preview'])
         self.cm = cm
 
         self.setMaximumWidth(175)
@@ -30,33 +30,9 @@ class FilesWidget(SidePanelWidget):
         self.path = ''
         self.current_path = ''
 
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(3)
-        files_layout.addLayout(buttons_layout)
-
-        self.button_add_file = Button(self.tm, 'plus')
-        self.button_add_file.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_add_file)
-
-        self.button_delete_file = Button(self.tm, 'delete')
-        self.button_delete_file.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_delete_file)
-
-        self.button_run = Button(self.tm, 'run')
-        self.button_run.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_run)
-
-        self.button_preview = Button(self.tm, 'button_preview')
-        self.button_preview.setFixedHeight(22)
-        self.button_preview.hide()
-        self.button_preview.setCheckable(True)
-        buttons_layout.addWidget(self.button_preview)
-
-        self.button_search = Button(self.tm, 'search')
-        self.button_search.setCheckable(True)
-        self.button_search.clicked.connect(self.show_search)
-        self.button_search.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_search)
+        self.buttons['preview'].hide()
+        self.buttons['preview'].setCheckable(True)
+        self.buttons['rename'].clicked.connect(lambda: self.rename_file(True))
 
         search_layout = QHBoxLayout()
         search_layout.setSpacing(2)
@@ -97,11 +73,11 @@ class FilesWidget(SidePanelWidget):
         files_layout.addWidget(self.files_list)
 
         self.files_list.currentItemChanged.connect(self.open_file)
-        self.button_add_file.clicked.connect(self.create_file)
-        self.button_delete_file.clicked.connect(self.delete_file)
+        self.buttons['add'].clicked.connect(self.create_file)
+        self.buttons['delete'].clicked.connect(self.delete_file)
         self.files_list.doubleClicked.connect(self.rename_file)
-        self.button_run.clicked.connect(self.run_file)
-        self.button_run.setDisabled(True)
+        self.buttons['run'].clicked.connect(self.run_file)
+        self.buttons['run'].setDisabled(True)
 
         self.dialog = None
 
@@ -133,10 +109,10 @@ class FilesWidget(SidePanelWidget):
         for item in items:
             self.files_list.addItem(item)
 
-    def rename_file(self):
+    def rename_file(self, flag=False):
         if self.files_list.currentItem() is None:
             return
-        if (item := self.files_list.currentItem()).file_type == 'dir':
+        if (item := self.files_list.currentItem()).file_type == 'dir' and not flag:
             if item.name == '..':
                 self.current_path = os.path.split(self.current_path)[0]
             else:
@@ -199,15 +175,15 @@ class FilesWidget(SidePanelWidget):
             else:
                 self.openFile.emit(item.path)
                 if item.path.endswith('.exe'):
-                    self.button_run.setDisabled(False)
+                    self.buttons['run'].setDisabled(False)
                     return
                 for language in languages.values():
                     if language.get('fast_run', False):
                         for el in language['files']:
                             if item.path.endswith(el):
-                                self.button_run.setDisabled(False)
+                                self.buttons['run'].setDisabled(False)
                                 return
-            self.button_run.setDisabled(True)
+            self.buttons['run'].setDisabled(True)
 
     def run_file(self):
         def run_file(command):
@@ -231,9 +207,8 @@ class FilesWidget(SidePanelWidget):
 
     def set_theme(self):
         super().set_theme()
-        for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search,
-                   self.button_up, self.button_down, self.search_line, self.replace_line,
-                   self.button_replace, self.button_replace_all, self.button_preview]:
+        for el in [self.button_up, self.button_down, self.search_line, self.replace_line,
+                   self.button_replace, self.button_replace_all]:
             self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.list_widget_css('Main'))
         for i in range(self.files_list.count()):
@@ -350,10 +325,8 @@ class DeleteFileDialog(QDialog):
         self.setLayout(self.layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
-        self.button_ok.setFont(tm.font_small)
-        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
-        self.button_cancel.setFont(tm.font_small)
+        for el in [self.button_cancel, self.button_ok]:
+            tm.auto_css(el)
 
 
 class RenameFileDialog(QDialog):
@@ -390,12 +363,8 @@ class RenameFileDialog(QDialog):
         self.setLayout(self.layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
-        self.button_ok.setFont(tm.font_small)
-        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
-        self.button_cancel.setFont(tm.font_small)
-        self.line_edit.setStyleSheet(tm.style_sheet)
-        self.line_edit.setFont(tm.font_small)
+        for el in [self.button_ok, self.button_cancel, self.line_edit]:
+             tm.auto_css(el)
 
         self.resize(280, 50)
 

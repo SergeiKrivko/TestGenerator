@@ -17,7 +17,7 @@ class ProjectStructWidget(QWidget):
         main_layout.addWidget(label := QLabel("Файлы с входными данными"))
         self.labels.append(label)
         self.struct_combo_box = QComboBox()
-        self.struct_combo_box.addItems(['Лаба - задание - вариант', 'Без структуры'])
+        self.struct_combo_box.addItems(['Лаба - задание - вариант', 'Без структуры', 'Своя структура'])
         self.struct_combo_box.setFixedSize(300, 24)
         self.struct_combo_box.currentIndexChanged.connect(lambda value: self.sm.set('struct', value))
         main_layout.addWidget(self.struct_combo_box)

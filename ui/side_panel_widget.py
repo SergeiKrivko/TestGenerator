@@ -11,6 +11,7 @@ class SidePanelWidget(QWidget):
         'to_zip': lambda tm: SidePanelButton(tm, 'button_to_zip', tooltip='Сжать в zip'),
         'from_zip': lambda tm: SidePanelButton(tm, 'button_from_zip', tooltip='Распаковать из zip'),
         'run': lambda tm: SidePanelButton(tm, 'run', tooltip='Запустить'),
+        'preview': lambda tm: SidePanelButton(tm, 'button_preview', tooltip='Предпросмотр'),
         'pull': lambda tm: SidePanelButton(tm, 'button_pull', tooltip='Pull'),
         'commit': lambda tm: SidePanelButton(tm, 'button_commit', tooltip='Commit'),
         'push': lambda tm: SidePanelButton(tm, 'button_push', tooltip='Push'),

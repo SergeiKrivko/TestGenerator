@@ -121,8 +121,20 @@ class SettingsManager(QObject):
         self.finish_change_task.emit()
 
     def lab_path(self, lab=None, task=None, var=None, project=None):
-        if self.get('struct', project=project) == 1:
+        struct = self.get('struct', project=project)
+        if struct == 1:
             return self.path
+
+        elif struct == 2:
+            if lab is None:
+                lab = self.get('lab', project=project)
+            try:
+                return f"{self.path}/{self.get('subprojects', [])[lab]}"
+            except IndexError:
+                return self.path
+            except TypeError:
+                return self.path
+
         if lab is None:
             lab = self.get('lab', project=project)
         if task is None:
