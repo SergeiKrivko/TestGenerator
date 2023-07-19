@@ -934,23 +934,23 @@ QPushButton::checked {{
     def tab_widget_css(self, palette='Main'):
         return f"""
 QTabWidget::pane {{
-    color: {self['BgColor']};
+    color: {self[f'{self.shift(palette)}Color']};
 }}
 QTabBar::tab {{
     color: {self['TextColor']};
-    background-color: {self['MainColor']};
+    background-color: {self[f'{palette}Color']};
     border-bottom-color: {self['TextColor']};
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     border: 1px solid {self['BorderColor']};
-    width: 50px;
+    width: 125px;
     padding: 4px;
 }}
 QTabBar::tab:hover {{
-    background-color: {self['ColorHover']};
+    background-color: {self[f'{palette}HoverColor']};
 }}
 QTabBar::tab:selected {{
-    background-color: {self['ColorSelected']};
+    background-color: {self[f'{palette}SelectedColor']};
 }}
 """
 

@@ -6,11 +6,9 @@ import sys
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QCheckBox, QTabWidget, QGridLayout, QMessageBox
+    QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox
 import py7zr
 
-from settings.project_struct_widget import ProjectStructWidget
-from settings.testing_settings_widget import TestingSettingsWidget
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 from ui.side_panel_widget import SidePanelWidget
@@ -47,50 +45,6 @@ class ProjectWidget(SidePanelWidget):
         self.buttons['to_zip'].clicked.connect(self.project_to_zip)
         self.buttons['from_zip'].clicked.connect(self.project_from_zip)
 
-        # buttons_layout = QGridLayout()
-        # buttons_layout.setColumnMinimumWidth(0, 110)
-        # buttons_layout.setColumnMinimumWidth(1, 110)
-        #
-        # self.button_rename_project = QPushButton("Переименовать")
-        # self.button_rename_project.setFixedSize(110, 24)
-        # self.button_rename_project.clicked.connect(self.rename_project)
-        # buttons_layout.addWidget(self.button_rename_project)
-        #
-        # self.button_delete_project = QPushButton("Удалить")
-        # self.button_delete_project.setFixedSize(110, 24)
-        # self.button_delete_project.clicked.connect(self.delete_project)
-        # buttons_layout.addWidget(self.button_delete_project)
-        #
-        # self.button_to_zip = QPushButton("В zip")
-        # self.button_to_zip.setFixedSize(110, 24)
-        # self.button_to_zip.clicked.connect(self.project_to_zip)
-        # buttons_layout.addWidget(self.button_to_zip)
-        #
-        # self.button_from_zip = QPushButton("Из zip")
-        # self.button_from_zip.setFixedSize(110, 24)
-        # self.button_from_zip.clicked.connect(self.project_from_zip)
-        # buttons_layout.addWidget(self.button_from_zip)
-
-        # left_layout.addLayout(buttons_layout)
-        # layout.addLayout(left_layout)
-
-        self.tab_widget = QTabWidget()
-
-        self.main_settings_widget = OptionsWidget({
-            "Папка проекта:": {'type': 'file', 'mode': 'dir', 'width': 400, 'initial': ''},
-            'Язык': {'type': 'combo', 'name': OptionsWidget.NAME_LEFT, 'values': LANGUAGES}
-        }, margins=(25, 25, 25, 25))
-        self.main_settings_widget.clicked.connect(self.save_settings)
-        self.tab_widget.addTab(self.main_settings_widget, 'Основные')
-
-        self.struct_settings_widget = ProjectStructWidget(self.sm, self.tm)
-        self.tab_widget.addTab(self.struct_settings_widget, 'Структура проекта')
-
-        self.testing_settings_widget = TestingSettingsWidget(self.sm, self.tm)
-        self.tab_widget.addTab(self.testing_settings_widget, 'Тестирование')
-
-        layout.addWidget(self.tab_widget)
-        # self.setLayout(layout)
         self.setLayout(left_layout)
 
         self.opening_project = False
@@ -217,21 +171,13 @@ class ProjectWidget(SidePanelWidget):
 
     def open_project(self, forced=False):
         if self.list_widget.currentItem() is None:
-            self.testing_settings_widget.setDisabled(True)
             return
         project = self.list_widget.currentItem().text()
         if project == self.sm.project and not forced:
             return
         self.opening_project = True
-        self.testing_settings_widget.setDisabled(False)
         self.sm.set_project(project)
         self.sm.repair_settings()
-        self.testing_settings_widget.open()
-
-        self.main_settings_widget.widgets['Папка проекта:'].set_path(self.sm.path)
-        self.main_settings_widget.widgets['Язык'].setCurrentText(str(self.sm.get('language', 'C')))
-
-        self.struct_settings_widget.apply_values()
 
         self.opening_project = False
         self.disable_menu_func(False)
@@ -298,24 +244,9 @@ class ProjectWidget(SidePanelWidget):
                 # os.rename(f"{self.sm.app_data_dir}/temp/data", data_path)
                 # shutil.rmtree(f"{self.sm.app_data_dir}/temp")
 
-    def save_settings(self):
-        if self.opening_project:
-            return
-
-        dct = self.main_settings_widget.values
-        self.sm.set('language', LANGUAGES[dct['Язык']])
-
     def set_theme(self):
         super().set_theme()
         self.tm.auto_css(self.list_widget)
-
-        self.tab_widget.setStyleSheet(self.tm.tab_widget_css().replace('width: 50px', 'width: 120px'))
-        self.tab_widget.setFont(self.tm.font_small)
-
-        for widget in [self.main_settings_widget]:
-            self.tm.css_to_options_widget(widget)
-        self.struct_settings_widget.set_theme()
-        self.testing_settings_widget.set_theme()
 
     def remove_temp_projects(self):
         project = self.sm.project

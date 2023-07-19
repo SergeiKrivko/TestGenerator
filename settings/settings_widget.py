@@ -2,6 +2,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget, QDialog, QVBoxLayout, QPushButton
 
 from settings.lib_dialog import LibWidget
+from settings.project_settings_widget import ProjectSettingsWidget
 from ui.options_window import OptionsWidget
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
@@ -20,10 +21,10 @@ class SettingsWidget(QDialog):
         layout = QHBoxLayout()
         main_layout.addLayout(layout)
 
-        self.setFixedSize(800, 480)
+        self.setFixedSize(800, 500)
 
         self.list_widget = QListWidget()
-        self.list_widget.addItems(['Основные', 'C', 'Python', 'Тестирование', 'Библиотеки'])
+        self.list_widget.addItems(['Основные', 'Проект', 'C', 'Python', 'Тестирование', 'Библиотеки'])
         self.list_widget.setFixedWidth(175)
         self.list_widget.currentItemChanged.connect(self.select_tab)
         layout.addWidget(self.list_widget)
@@ -41,6 +42,10 @@ class SettingsWidget(QDialog):
         }, margins=(20, 20, 20, 20))
         self.main_options_widget.clicked.connect(self.save_main_settings)
         layout.addWidget(self.main_options_widget)
+
+        self.project_settings_widget = ProjectSettingsWidget(self.sm, self.tm)
+        self.project_settings_widget.hide()
+        layout.addWidget(self.project_settings_widget)
 
         self.c_options_widget = OptionsWidget({
             "Компилятор": {'type': 'program', 'width': 500, 'sm': self.sm, 'file': 'gcc.exe', 'key': 'gcc',
@@ -101,17 +106,18 @@ class SettingsWidget(QDialog):
         # self.button_cancel.setFixedSize(120, 24)
         # buttons_layout.addWidget(self.button_cancel)
 
-        self.button_ok = QPushButton("Ок")
-        self.button_ok.setFixedSize(120, 24)
-        self.button_ok.clicked.connect(self.accept)
-        buttons_layout.addWidget(self.button_ok)
+        # self.button_ok = QPushButton("Ок")
+        # self.button_ok.setFixedSize(120, 24)
+        # self.button_ok.clicked.connect(self.accept)
+        # buttons_layout.addWidget(self.button_ok)
 
         self.setLayout(main_layout)
 
     def set_theme(self):
+        print(1)
         self.setStyleSheet(self.tm.bg_style_sheet)
-        self.button_ok.setStyleSheet(self.tm.button_css('Main'))
-        self.button_ok.setFont(self.tm.font_small)
+        # self.button_ok.setStyleSheet(self.tm.button_css('Main'))
+        # self.button_ok.setFont(self.tm.font_small)
         self.list_widget.setStyleSheet(self.tm.list_widget_css('Main'))
         self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
         self.main_options_widget.setFont(self.tm.font_small)
@@ -121,6 +127,7 @@ class SettingsWidget(QDialog):
         self.tm.css_to_options_widget(self.python_options_widget)
         self.tm.css_to_options_widget(self.testing_widget)
         self.libs_widget.set_theme()
+        self.project_settings_widget.set_theme()
 
     def save_main_settings(self):
         dct = self.main_options_widget.values
@@ -151,6 +158,10 @@ class SettingsWidget(QDialog):
         self.sm.set_general('neg_substring', dct['Подстрока для негативных тестов'])
         self.sm.set_general('time_limit', float(dct['Ограничение по времени:']))
 
+    def exec(self) -> int:
+        self.set_theme()
+        return super().exec()
+
     def hide(self, save_settings=True):
         if not self.isHidden() and save_settings:
             self.save_main_settings()
@@ -160,6 +171,7 @@ class SettingsWidget(QDialog):
     def select_tab(self, item):
         if item is not None:
             self.main_options_widget.hide()
+            self.project_settings_widget.hide()
             self.c_options_widget.hide()
             self.python_options_widget.hide()
             self.testing_widget.hide()
@@ -167,6 +179,8 @@ class SettingsWidget(QDialog):
             tab = item.text()
             if tab == 'Основные':
                 self.main_options_widget.show()
+            if tab == 'Проект':
+                self.project_settings_widget.show()
             if tab == 'C':
                 self.c_options_widget.show()
             if tab == 'Python':

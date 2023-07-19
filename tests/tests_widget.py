@@ -593,9 +593,9 @@ class TestCopyWindow(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         self.layout = QVBoxLayout()
@@ -617,11 +617,7 @@ class TestCopyWindow(QDialog):
                 'Негативные': {'type': bool, 'name': OptionsWidget.NAME_RIGHT, 'initial': False}
             },
         })
-        self.options_widget.widgets['Проект'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.options_widget.widgets['Номер лабы:'].setStyleSheet(self.tm.spin_box_style_sheet)
-        self.options_widget.widgets['Номер задания:'].setStyleSheet(self.tm.spin_box_style_sheet)
-        self.options_widget.widgets['Номер варианта:'].setStyleSheet(self.tm.spin_box_style_sheet)
-        self.options_widget.setFont(self.tm.font_small)
+        self.tm.css_to_options_widget(self.options_widget)
         self.layout.addWidget(self.options_widget)
         self.options_widget.clicked.connect(self.options_changed)
 
@@ -634,7 +630,7 @@ class TestCopyWindow(QDialog):
         self.scroll_area.setWidget(self.widget)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFixedSize(480, 320)
-        self.scroll_area.setStyleSheet(self.tm.scroll_area_style_sheet)
+        self.tm.button_css(self.scroll_area)
         self.layout.addWidget(self.scroll_area)
 
         self.layout.addWidget(self.buttonBox)
