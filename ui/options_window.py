@@ -152,7 +152,9 @@ class OptionsWidget(QWidget):
 
     def set_value(self, item, value):
         self.values[item] = value
-        if isinstance(self.widgets[item], (QSpinBox, QDoubleSpinBox)):
+        if isinstance(self.widgets[item], QSpinBox):
+            self.widgets[item].setValue(int(value))
+        if isinstance(self.widgets[item], QDoubleSpinBox):
             self.widgets[item].setValue(float(value))
         elif isinstance(self.widgets[item], QLineEdit):
             self.widgets[item].setText(value)

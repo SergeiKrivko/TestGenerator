@@ -1,11 +1,13 @@
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
 from code_tab.files_widget import FilesWidget
 from code_tab.terminal_tab import TerminalTab
 from other.git_panel import GitPanel
 from settings.project_widget import ProjectWidget
-from tests.console import ConsolePanel
+from code_tab.console import ConsolePanel
+from tests.generator_window import GeneratorTab
 from tests.testing_panel import TestingPanel
 from ui.button import Button
 from ui.side_panel_widget import SidePanelWidget
@@ -18,13 +20,13 @@ class SidePanel(QWidget):
         self.tm = tm
         self.cm = cm
 
-        strange_layout = QVBoxLayout()
+        strange_layout = QHBoxLayout()
         strange_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(strange_layout)
         strange_widget = QWidget()
         strange_layout.addWidget(strange_widget)
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
         layout.setSpacing(5)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setAlignment(Qt.AlignTop)
@@ -37,22 +39,54 @@ class SidePanel(QWidget):
             'search': SidePanelWidget(self.sm, self.tm, "Поиск", []),
             'todo': SidePanelWidget(self.sm, self.tm, "TODO", []),
             'git': GitPanel(self.sm, self.cm, self.tm),
+            'generator': GeneratorTab(self.sm, self.cm, self.tm),
             'terminal': TerminalTab(self.sm, self.tm),
             'run': ConsolePanel(self.sm, self.tm, self.cm)
         }
+        self.tabs['search'].setFixedWidth(200)
+        self.tabs['todo'].setFixedWidth(200)
+        self.tab_width = dict()
 
-        for el in self.tabs.values():
+        for key, el in self.tabs.items():
             if isinstance(el, SidePanelWidget):
                 el.hide()
+                button = el.get_button('resize')
+                if button:
+                    button.pressed.connect(self.start_resizing)
+                else:
+                    self.tab_width[key] = el.width() + 10
                 layout.addWidget(el)
 
+        self.resizing = False
+        self.current_tab = None
+        self.current_tab_key = None
+        self.mouse_x = None
+
         self.hide()
+
+    def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
+        if self.resizing and isinstance(self.current_tab, QWidget):
+            if self.mouse_x is not None:
+                self.setMaximumWidth(max(200, self.width() + a0.x() - self.mouse_x))
+                self.tab_width[self.current_tab_key] = self.maximumWidth()
+            self.mouse_x = a0.x()
+
+    def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
+        self.resizing = False
+        self.mouse_x = None
+
+    def start_resizing(self):
+        self.resizing = True
 
     def show_tab(self, key):
         self.show()
         for el in self.tabs.values():
             el.hide()
-        self.tabs[key].show()
+        self.current_tab_key = key
+        self.current_tab = self.tabs[key]
+        self.current_tab.show()
+        if key in self.tab_width:
+            self.setMaximumWidth(self.tab_width[key])
 
     def set_theme(self):
         self.setStyleSheet(f"background-color: {self.tm['MainColor']}; border: 0px solid black;"
@@ -84,8 +118,8 @@ class SideBar(QWidget):
         layout.setAlignment(Qt.AlignTop)
         strange_widget.setLayout(layout)
 
-        self.buttons = {el: SideBarButton(self.tm, f'button_{el}') for el in ['projects', 'files', 'tests', 'search',
-                                                                              'git', 'todo', 'terminal', 'run']}
+        self.buttons = {el: SideBarButton(self.tm, f'button_{el}') for el in [
+            'projects', 'files', 'tests', 'search', 'git', 'todo', 'generator', 'terminal', 'run']}
         for el in self.buttons.values():
             layout.addWidget(el)
             el.clicked.connect(self.connect_button(el))

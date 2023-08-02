@@ -21,6 +21,7 @@ class Console(Terminal):
         
     def start_process(self, command):
         self.command_clear()
+        self.write_text(command + '\n')
         self.setReadOnly(False)
         super().start_process(command)
 
@@ -40,11 +41,10 @@ class Console(Terminal):
 
 class ConsolePanel(SidePanelWidget):
     def __init__(self, sm, tm, cm):
-        super().__init__(sm, tm, 'Выполнение', ['run'])
+        super().__init__(sm, tm, 'Выполнение', ['run', 'resize'])
         self.cm = cm
 
         layout = QVBoxLayout()
-        self.setMinimumWidth(600)
         layout.setContentsMargins(0, 0, 0, 0)
         self.terminal = Console(sm, tm, cm)
         layout.addWidget(self.terminal)
@@ -55,7 +55,7 @@ class ConsolePanel(SidePanelWidget):
     def run_main(self):
         self.cm.compile()
         self.terminal.start_process(languages[self.sm.get('language', 'C')]['run'](
-            self.sm.path, self.sm, coverage=False))
+            self.sm.lab_path(), self.sm, coverage=False))
 
     def set_theme(self):
         super().set_theme()

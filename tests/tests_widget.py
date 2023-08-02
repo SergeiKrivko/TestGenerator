@@ -5,7 +5,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
 
-from tests.generator_window import GeneratorWindow
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 from tests.test_table_widget import TestTableWidget
@@ -24,10 +23,6 @@ class TestsWidget(QWidget):
 
         self.sm.start_change_task.connect(self.save_tests)
         self.sm.finish_change_task.connect(self.open_tests)
-
-        self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
-        self.generator_window.hide()
-        self.generator_window.complete.connect(self.open_tests_after_generation)
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
@@ -378,7 +373,7 @@ class TestsWidget(QWidget):
     def save_tests(self):
         if self.path == '':
             return
-        if not (self.test_list_widget.pos_test_list.count() and self.test_list_widget.neg_test_list.count()):
+        if not (self.test_list_widget.pos_test_list.count() or self.test_list_widget.neg_test_list.count()):
             return
 
         self.task_settings['in_data'] = self.test_list_widget.in_data_edit.text()
@@ -395,6 +390,16 @@ class TestsWidget(QWidget):
         if item:
             item.store()
 
+        for i in range(self.test_list_widget.pos_test_list.count()):
+            item = self.test_list_widget.pos_test_list.item(i)
+            if not item.path.endswith(f"{i}.json"):
+                item.rename_file(f"{self.data_dir}/pos/{i}.json")
+
+        for i in range(self.test_list_widget.neg_test_list.count()):
+            item = self.test_list_widget.neg_test_list.item(i)
+            if not item.path.endswith(f"{i}.json"):
+                item.rename_file(f"{self.data_dir}/neg/{i}.json")
+
         if self.sm.get('func_tests_in_project', False):
             os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
             os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
@@ -405,16 +410,6 @@ class TestsWidget(QWidget):
                          f"{self.sm.get('task'):0>2}\n\n"
                          f"## Входные данные\n{self.test_list_widget.in_data_edit.text()}\n\n"
                          f"## Выходные данные\n{self.test_list_widget.out_data_edit.text()}\n")
-
-            for i in range(self.test_list_widget.pos_test_list.count()):
-                item = self.test_list_widget.pos_test_list.item(i)
-                if not item.path.endswith(f"{i}.json"):
-                    item.rename_file(f"{self.data_dir}/pos/{i}.json")
-
-            for i in range(self.test_list_widget.neg_test_list.count()):
-                item = self.test_list_widget.neg_test_list.item(i)
-                if not item.path.endswith(f"{i}.json"):
-                    item.rename_file(f"{self.data_dir}/neg/{i}.json")
 
             if self.data_dir in background_process_manager.dict:
                 background_process_manager.dict[self.data_dir].close()
@@ -436,7 +431,6 @@ class TestsWidget(QWidget):
     def set_theme(self):
         self.test_list_widget.set_theme()
         self.test_edit_widget.set_theme()
-        self.generator_window.set_theme()
 
     def resizeEvent(self, a0) -> None:
         # if self.height() < 530:

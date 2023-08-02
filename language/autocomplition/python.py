@@ -266,11 +266,11 @@ class PythonModule(PythonObject):
                 current_function = None
                 if len(line) > 2 and line[1] == '=':
                     self.variables[line[0]] = self._parse_variable(line)
-                elif line[0] == 'def' and len(line) > 2:
+                elif len(line) > 3 and line[0] == 'def':
                     current_function = PythonFunction(self, line[1], line[2:], i)
                     function_indent = indent
                     self.functions[line[1]] = current_function
-                elif line[0] == 'class' and len(line) >= 3:
+                elif len(line) >= 3 and line[0] == 'class':
                     if len(line) >= 5 and line[3].isidentifier():
                         parent = self.get(line[3], UNKNOWN_CLASS)
                         if not isinstance(parent, PythonClass):

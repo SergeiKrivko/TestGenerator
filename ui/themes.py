@@ -608,8 +608,6 @@ QsciScintilla {{
 }}
 QsciScintilla QScrollBar:vertical {{
     background: {self['Paper'].name()};
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
     width: 12px;
     margin: 0px;
 }}

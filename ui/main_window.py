@@ -51,21 +51,21 @@ class MainWindow(QMainWindow):
         self.side_panel = SidePanel(self.sm, self.tm, self.cm)
         self.side_bar = SideBar(self.sm, self.tm, self.side_panel)
         layout.addWidget(self.side_bar)
-        layout.addWidget(self.side_panel)
+        layout.addWidget(self.side_panel, 100)
 
         self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
         self.tests_widget.hide()
-        layout.addWidget(self.tests_widget, 100)
+        layout.addWidget(self.tests_widget, 1)
 
         self.testing_widget = TestingWidget(self.sm, self.cm, self.tm, self.side_panel)
-        layout.addWidget(self.testing_widget, 100)
+        layout.addWidget(self.testing_widget, 1)
         self.testing_widget.jump_to_code.connect(self.jump_to_code_from_testing)
         self.testing_widget.hide()
         self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
         self.side_panel.tabs['tests'].jump_to_testing.connect(lambda *args: self.show_tab(MainMenu.TAB_TESTING))
 
         self.code_widget = CodeWidget(self.sm, self.cm, self.tm, self.side_panel)
-        layout.addWidget(self.code_widget, 100)
+        layout.addWidget(self.code_widget, 1)
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
         self.code_widget.hide()
 

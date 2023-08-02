@@ -1,3 +1,4 @@
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout
 
 from ui.button import Button
@@ -15,7 +16,10 @@ class SidePanelWidget(QWidget):
         'pull': lambda tm: SidePanelButton(tm, 'button_pull', tooltip='Pull'),
         'commit': lambda tm: SidePanelButton(tm, 'button_commit', tooltip='Commit'),
         'push': lambda tm: SidePanelButton(tm, 'button_push', tooltip='Push'),
-        'minimize': lambda tm: SidePanelButton(tm, 'delete'),
+        'save': lambda tm: SidePanelButton(tm, 'button_save', tooltip='Сохранить'),
+        'load': lambda tm: SidePanelButton(tm, 'button_load', tooltip='Открыть'),
+        'resize': lambda tm: ResizeButton(tm),
+        'close': lambda tm: SidePanelButton(tm, 'delete', tooltip='Закрыть'),
     }
 
     def __init__(self, sm, tm, name, buttons):
@@ -52,8 +56,22 @@ class SidePanelWidget(QWidget):
         for el in self.buttons.values():
             el.set_theme()
 
+    def get_button(self, key):
+        return self.buttons.get(key)
+
 
 class SidePanelButton(Button):
     def __init__(self, tm, image, tooltip=''):
         super().__init__(tm, image, css='Main', tooltip=tooltip)
         self.setFixedSize(24, 24)
+
+
+class ResizeButton(SidePanelButton):
+    pressed = pyqtSignal()
+
+    def __init__(self, tm):
+        super().__init__(tm, 'button_resize', 'Изменить размер')
+
+    def mousePressEvent(self, e) -> None:
+        if e.button() == Qt.MouseButton.LeftButton:
+            self.pressed.emit()

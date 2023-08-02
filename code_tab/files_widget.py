@@ -6,7 +6,7 @@ from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
     QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
 
-from tests.console import Console
+from code_tab.console import Console
 from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
@@ -32,7 +32,7 @@ class FilesWidget(SidePanelWidget):
 
         self.buttons['preview'].hide()
         self.buttons['preview'].setCheckable(True)
-        self.buttons['rename'].clicked.connect(lambda: self.rename_file(True))
+        self.buttons['rename'].clicked.connect(lambda: self.rename_file(False))
 
         search_layout = QHBoxLayout()
         search_layout.setSpacing(2)
@@ -109,10 +109,10 @@ class FilesWidget(SidePanelWidget):
         for item in items:
             self.files_list.addItem(item)
 
-    def rename_file(self, flag=False):
+    def rename_file(self, flag=True):
         if self.files_list.currentItem() is None:
             return
-        if (item := self.files_list.currentItem()).file_type == 'dir' and not flag:
+        if (item := self.files_list.currentItem()).file_type == 'dir' and flag:
             if item.name == '..':
                 self.current_path = os.path.split(self.current_path)[0]
             else:

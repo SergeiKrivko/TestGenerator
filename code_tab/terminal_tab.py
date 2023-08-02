@@ -216,9 +216,9 @@ class Terminal(QTextEdit):
 
 class TerminalTab(SidePanelWidget):
     def __init__(self, sm, tm):
-        super().__init__(sm, tm, 'Терминал', ['minimize'])
+        super().__init__(sm, tm, 'Терминал', ['resize'])
         layout = QVBoxLayout()
-        self.setMinimumWidth(600)
+        self.setMinimumWidth(175)
         layout.setContentsMargins(0, 0, 0, 0)
         self.terminal = Terminal(sm, tm)
         layout.addWidget(self.terminal)

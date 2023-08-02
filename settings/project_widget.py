@@ -24,6 +24,8 @@ class ProjectWidget(SidePanelWidget):
         super(ProjectWidget, self).__init__(sm, tm, 'Проекты', ['add', 'delete', 'rename', 'to_zip', 'from_zip'])
         self.disable_menu_func = disable_menu_func
 
+        self.setFixedWidth(210)
+
         layout = QHBoxLayout()
 
         left_layout = QVBoxLayout()
@@ -35,7 +37,6 @@ class ProjectWidget(SidePanelWidget):
         # left_layout.addWidget(self.button_new_project)
 
         self.list_widget = QListWidget()
-        self.list_widget.setFixedWidth(210)
         self.list_widget.currentRowChanged.connect(self.open_project)
         left_layout.addWidget(self.list_widget)
 

@@ -7,11 +7,12 @@ from language.languages import languages
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm, tm, border=False):
         super(CodeEditor, self).__init__(None)
 
         self.sm = sm
         self.tm = tm
+        self.border = border
 
         # Set the default font
         self.setFont(self.tm.code_font_std)
@@ -72,7 +73,7 @@ class CodeEditor(QsciScintilla):
         self.text_changed = True
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.scintilla_css())
+        self.setStyleSheet(self.tm.scintilla_css(border=self.border))
 
         self.setFont(self.tm.code_font)
         self.setMarginsFont(self.tm.code_font)
