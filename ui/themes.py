@@ -631,7 +631,6 @@ QsciScintilla QScrollBar::sub-line, QScrollBar::add-line {{
     subcontrol-origin: margin;
 }}"""
 
-
     def list_widget_css(self, palette):
         return f"""
 QListWidget {{
@@ -686,6 +685,67 @@ QListWidget QScrollBar::sub-page, QScrollBar::add-page {{
     background: none;
 }}
 QListWidget QScrollBar::sub-line, QScrollBar::add-line {{
+    background: none;
+    height: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}}
+"""
+
+    def tree_widget_css(self, palette):
+        return f"""
+QTreeWidget {{
+    {self.base_css(palette)}
+}}
+QTreeWidget::item {{
+    border-radius: 6px;
+}}
+QTreeWidget::item:hover {{
+    background-color: {self[f'{palette}HoverColor']};
+}}
+QTreeWidget::item:selected {{
+    color: {self['TextColor']};
+    background-color: {self[f'{palette}SelectedColor']};
+    border-radius: 6px;
+}}
+QTreeWidget QScrollBar:vertical {{
+    background: {self[f'{palette}Color']};
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    width: 12px;
+    margin: 0px;
+}}
+QTreeWidget QScrollBar:horizontal {{
+    background: {self[f'{palette}Color']};
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    height: 12px;
+    margin: 0px;
+}}
+QTreeWidget QScrollBar::handle::vertical {{
+    background-color: {self['BorderColor']};
+    margin: 2px 2px 2px 6px;
+    border-radius: 2px;
+    min-height: 20px;
+}}
+QTreeWidget QScrollBar::handle::vertical:hover {{
+    margin: 2px;
+    border-radius: 4px;
+}}
+QTreeWidget QScrollBar::handle::horizontal {{
+    background-color: {self['BorderColor']};
+    margin: 6px 2px 2px 2px;
+    border-radius: 2px;
+    min-width: 20px;
+}}
+QTreeWidget QScrollBar::handle::horizontal:hover {{
+    margin: 2px;
+    border-radius: 4px;
+}}
+QTreeWidget QScrollBar::sub-page, QScrollBar::add-page {{
+    background: none;
+}}
+QTreeWidget QScrollBar::sub-line, QScrollBar::add-line {{
     background: none;
     height: 0px;
     subcontrol-position: left;

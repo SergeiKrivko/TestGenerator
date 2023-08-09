@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from code_tab.files_widget import FilesWidget
 from code_tab.terminal_tab import TerminalTab
 from other.git_panel import GitPanel
+from other.todo_panel import TODOPanel
 from settings.project_widget import ProjectWidget
 from code_tab.console import ConsolePanel
 from tests.generator_window import GeneratorTab
@@ -37,14 +38,13 @@ class SidePanel(QWidget):
             'files': FilesWidget(self.sm, self.cm, self.tm),
             'tests': TestingPanel(self.sm, self.tm),
             'search': SidePanelWidget(self.sm, self.tm, "Поиск", []),
-            'todo': SidePanelWidget(self.sm, self.tm, "TODO", []),
+            'todo': TODOPanel(self.sm, self.cm, self.tm),
             'git': GitPanel(self.sm, self.cm, self.tm),
             'generator': GeneratorTab(self.sm, self.cm, self.tm),
             'terminal': TerminalTab(self.sm, self.tm),
             'run': ConsolePanel(self.sm, self.tm, self.cm)
         }
         self.tabs['search'].setFixedWidth(200)
-        self.tabs['todo'].setFixedWidth(200)
         self.tab_width = dict()
 
         for key, el in self.tabs.items():

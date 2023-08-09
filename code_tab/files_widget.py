@@ -3,14 +3,51 @@ import shutil
 
 from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
+    QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox, QTreeWidget, QTreeWidgetItem
 
 from code_tab.console import Console
 from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
 from ui.side_panel_widget import SidePanelWidget
+
+
+class TreeFile(QTreeWidgetItem):
+    def __init__(self, path: str, tm):
+        self.tm = tm
+        self.path = path
+        self.name = os.path.basename(self.path)
+        if '.' not in self.name or (ind := self.name.rindex('.')) == 0:
+            self.file_type = 'unknown_file'
+        else:
+            self.file_type = self.name[ind:]
+
+        super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
+
+        self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
+        self.setFont(0, self.tm.font_small)
+
+
+class TreeDirectory(QTreeWidgetItem):
+    def __init__(self, path, tm):
+        super().__init__()
+        self.tm = tm
+        self.path = path
+        self.name = os.path.basename(self.path)
+        self.file_type = 'directory'
+
+        super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
+
+        self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
+        self.setFont(0, self.tm.font_small)
+
+        for el in os.listdir(self.path):
+            if os.path.isdir(path := os.path.join(self.path, el)):
+                self.addChild(TreeDirectory(path, self.tm))
+        for el in os.listdir(self.path):
+            if os.path.isfile(path := os.path.join(self.path, el)):
+                self.addChild(TreeFile(path, self.tm))
 
 
 class FilesWidget(SidePanelWidget):
@@ -22,7 +59,7 @@ class FilesWidget(SidePanelWidget):
         super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'run', 'preview'])
         self.cm = cm
 
-        self.setMaximumWidth(175)
+        self.setFixedWidth(225)
         files_layout = QVBoxLayout()
         files_layout.setSpacing(3)
         files_layout.setContentsMargins(0, 5, 0, 0)
@@ -68,14 +105,15 @@ class FilesWidget(SidePanelWidget):
 
         self.show_search(False)
 
-        self.files_list = QListWidget()
+        self.files_list = QTreeWidget()
         self.files_list.setFocusPolicy(False)
+        self.files_list.setHeaderHidden(True)
         files_layout.addWidget(self.files_list)
 
         self.files_list.currentItemChanged.connect(self.open_file)
         self.buttons['add'].clicked.connect(self.create_file)
         self.buttons['delete'].clicked.connect(self.delete_file)
-        self.files_list.doubleClicked.connect(self.rename_file)
+        # self.files_list.doubleClicked.connect(self.rename_file)
         self.buttons['run'].clicked.connect(self.run_file)
         self.buttons['run'].setDisabled(True)
 
@@ -94,20 +132,12 @@ class FilesWidget(SidePanelWidget):
         if not self.current_path or not os.path.isdir(self.current_path):
             return
 
-        items = []
-        if self.current_path != self.path:
-            items.append(FileListWidgetItem('..', self.tm, self.sm))
-
-        for file in os.listdir(self.current_path):
-            for el in FilesWidget.ignore_files:
-                if file.endswith(el):
-                    break
-            else:
-                items.append(FileListWidgetItem(f"{self.current_path}/{file}", self.tm, self.sm))
-
-        items.sort(key=lambda it: it.priority)
-        for item in items:
-            self.files_list.addItem(item)
+        for el in os.listdir(self.path):
+            if os.path.isdir(path := os.path.join(self.path, el)):
+                self.files_list.addTopLevelItem(TreeDirectory(path, self.tm))
+        for el in os.listdir(self.path):
+            if os.path.isfile(path := os.path.join(self.path, el)):
+                self.files_list.addTopLevelItem(TreeFile(path, self.tm))
 
     def rename_file(self, flag=True):
         if self.files_list.currentItem() is None:
@@ -169,8 +199,8 @@ class FilesWidget(SidePanelWidget):
 
     def open_file(self):
         item = self.files_list.currentItem()
-        if isinstance(item, FileListWidgetItem):
-            if item.file_type == 'dir':
+        if isinstance(item, (TreeFile, TreeDirectory)):
+            if item.file_type == 'directory':
                 self.openFile.emit('')
             else:
                 self.openFile.emit(item.path)
@@ -210,9 +240,8 @@ class FilesWidget(SidePanelWidget):
         for el in [self.button_up, self.button_down, self.search_line, self.replace_line,
                    self.button_replace, self.button_replace_all]:
             self.tm.auto_css(el)
-        self.files_list.setStyleSheet(self.tm.list_widget_css('Main'))
-        for i in range(self.files_list.count()):
-            self.files_list.item(i).set_theme()
+        self.files_list.setStyleSheet(self.tm.tree_widget_css('Main'))
+        self.update_files_list()
 
 
 class FileListWidgetItem(QListWidgetItem):

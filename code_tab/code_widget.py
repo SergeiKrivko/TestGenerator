@@ -62,10 +62,10 @@ class CodeWidget(QWidget):
             return
         self.files_widget.open_task()
         self.open_code('')
-        for i in range(self.files_widget.files_list.count()):
-            if self.files_widget.files_list.item(i) == 'main.c':
-                self.files_widget.files_list.setCurrentRow(i)
-                return
+        # for i in range(self.files_widget.files_list.count()):
+        #     if self.files_widget.files_list.item(i) == 'main.c':
+        #         self.files_widget.files_list.setCurrentRow(i)
+        #         return
 
     def update_todo(self):
         pass

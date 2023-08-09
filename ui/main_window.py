@@ -1,4 +1,5 @@
 from sys import argv
+from time import sleep
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
@@ -82,6 +83,7 @@ class MainWindow(QMainWindow):
             self.show_tab('project_widget')
         else:
             self.show_tab('project_widget')
+
         if len(argv) == 2 and os.path.isfile(argv[1]):
             if argv[1].endswith('.7z'):
                 self.side_panel.tabs['projects'].project_from_zip(argv[1])
