@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtGui import QColor, QFontMetrics
 from PyQt5.Qsci import QsciScintilla, QsciAPIs, QsciLexerCPP, QsciLexerBash
 from language.autocomplition.abstract import CodeAutocompletionManager
@@ -68,11 +70,16 @@ class CodeEditor(QsciScintilla):
         self.textChanged.connect(self.set_text_changed)
         self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
         self.text_changed = False
+        self.language_data = dict()
+        self.theme_apply = False
 
     def set_text_changed(self):
         self.text_changed = True
 
     def set_theme(self):
+        if self.isHidden():
+            return
+        self.theme_apply = True
         self.setStyleSheet(self.tm.scintilla_css(border=self.border))
 
         self.setFont(self.tm.code_font)
@@ -92,6 +99,10 @@ class CodeEditor(QsciScintilla):
         self.setUnmatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setUnmatchedBraceForegroundColor(self.tm['BraceColor'])
 
+        for key, item in self.language_data.get('colors', dict()).items():
+            self._lexer.setColor(self.tm[item], key)
+            self._lexer.setFont(self.tm.code_font, key)
+
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
         if self.markersAtLine(nline) != 0:
@@ -100,6 +111,7 @@ class CodeEditor(QsciScintilla):
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
     def set_lexer(self, data: dict):
+        self.language_data = data
         if data.get('lexer') is None:
             self._lexer = QsciLexerCPP(self)
             self._lexer.setDefaultFont(self.tm.code_font_std)
@@ -119,24 +131,27 @@ class CodeEditor(QsciScintilla):
             self.am.terminate()
         self.am = data.get('autocompletion', CodeAutocompletionManager)(self.sm, self.path)
 
-    def open_file(self, path, file_name: str):
-        self.path = path
-        self.current_file = file_name
+    def open_file(self, path):
+        self.path, self.current_file = os.path.split(path)
 
         for language, data in languages.items():
             for f in data.get('files', []):
-                if file_name.endswith(f):
+                if self.current_file.endswith(f):
                     self.set_lexer(data)
 
-                    self.am.dir = path
+                    self.am.dir = self.path
                     self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
                     self.update_api(self.getCursorPosition())
                     return
 
         self.set_lexer(dict())
 
-        self.am.dir = path
-        self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
+        self.am.dir = self.path
+        try:
+            self.setText(open(f"{self.path}/{self.current_file}", encoding='utf-8').read())
+        except UnicodeDecodeError:
+            self.setText("")
+            self.setDisabled(True)
         self.update_api(self.getCursorPosition())
 
     def set_text(self, text):
@@ -160,3 +175,14 @@ class CodeEditor(QsciScintilla):
             pass
         self._api.prepare()
         self._lexer.setAPIs(self._api)
+
+    def show(self) -> None:
+        super().show()
+        self.set_theme()
+        try:
+            with open(os.path.join(self.path, self.current_file), encoding='utf-8') as f:
+                self.setText(f.read())
+        except FileNotFoundError:
+            pass
+        except UnicodeDecodeError:
+            pass

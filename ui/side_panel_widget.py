@@ -52,6 +52,7 @@ class SidePanelWidget(QWidget):
         self.__main_widget.setLayout(a0)
 
     def set_theme(self):
+        self.setStyleSheet(f"border: none;")
         self.tm.auto_css(self.__name_label)
         for el in self.buttons.values():
             el.set_theme()

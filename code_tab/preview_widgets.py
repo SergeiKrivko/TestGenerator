@@ -27,11 +27,14 @@ class PreviewWidget(QWidget):
         layout.addWidget(self.web_engine)
 
         self.setLayout(layout)
+        self.theme_apply = False
+        self.file = ''
 
     def open(self, file: str):
         self.text_edit.hide()
         self.web_engine.hide()
         self.label.hide()
+        self.file = file
 
         try:
             if file.endswith('.md'):
@@ -49,6 +52,14 @@ class PreviewWidget(QWidget):
             print(f"{ex.__class__.__name__}: {ex}")
 
     def set_theme(self):
+        if self.isHidden():
+            return
+        self.theme_apply = True
         for widget in [self.text_edit]:
             self.tm.auto_css(widget)
         self.label.setStyleSheet(self.tm.style_sheet)
+
+    def show(self) -> None:
+        super().show()
+        self.set_theme()
+        self.open(self.file)

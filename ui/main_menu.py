@@ -17,6 +17,8 @@ class MainMenu(QWidget):
         self.sm = sm
         self.tm = tm
 
+        self.setFixedHeight(44)
+
         strange_layout = QHBoxLayout()
         strange_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(strange_layout)

@@ -21,7 +21,7 @@ class TreeFile(QTreeWidgetItem):
         if '.' not in self.name or (ind := self.name.rindex('.')) == 0:
             self.file_type = 'unknown_file'
         else:
-            self.file_type = self.name[ind:]
+            self.file_type = self.name[ind + 1:]
 
         super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
 
@@ -110,7 +110,7 @@ class FilesWidget(SidePanelWidget):
         self.files_list.setHeaderHidden(True)
         files_layout.addWidget(self.files_list)
 
-        self.files_list.currentItemChanged.connect(self.open_file)
+        self.files_list.doubleClicked.connect(self.open_file)
         self.buttons['add'].clicked.connect(self.create_file)
         self.buttons['delete'].clicked.connect(self.delete_file)
         # self.files_list.doubleClicked.connect(self.rename_file)
@@ -187,7 +187,7 @@ class FilesWidget(SidePanelWidget):
             self.update_files_list()
 
     def delete_file(self, *args):
-        if self.files_list.currentRow() == -1:
+        if self.files_list.currentItem() is None:
             return
         dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().name}?", self.tm)
         if dlg.exec():

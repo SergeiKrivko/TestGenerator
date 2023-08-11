@@ -89,8 +89,8 @@ class SidePanel(QWidget):
             self.setMaximumWidth(self.tab_width[key])
 
     def set_theme(self):
-        self.setStyleSheet(f"background-color: {self.tm['MainColor']}; border: 0px solid black;"
-                           f"border-top-right-radius: 10px; border-bottom-right-radius: 10px;")
+        self.setStyleSheet(f"background-color: {self.tm['MainColor']}; "
+                           f"border-right: 1px solid {self.tm['BorderColor']};")
         for el in self.tabs.values():
             if hasattr(el, 'set_theme'):
                 el.set_theme()

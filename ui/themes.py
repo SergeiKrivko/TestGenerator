@@ -509,7 +509,6 @@ class ThemeManager:
                 }),
         }
 
-        self._image_colors = dict()
         self.theme_name = ''
         self.theme = None
         self.style_sheet = ''
@@ -1049,9 +1048,8 @@ QCheckBox::indicator:checked:pressed {{
         elif isinstance(color, QColor):
             color = color.red(), color.green(), color.blue()
 
-        path = f"{self.sm.app_data_dir}/images/{name}.png"
-        if not os.path.isfile(path) or color != self._image_colors.get(name):
-            self._image_colors[name] = color
+        path = f"{self.sm.app_data_dir}/images/{name}_{QColor(*color).name()}.png"
+        if not os.path.isfile(path):
             os.makedirs(f"{self.sm.app_data_dir}/images", exist_ok=True)
             image = Image.frombytes(*resources[name])
 
@@ -1072,7 +1070,6 @@ QCheckBox::indicator:checked:pressed {{
         return path
 
     def clear_images(self):
-        self._image_colors.clear()
         if os.path.isdir(path := f"{self.sm.app_data_dir}/images"):
             shutil.rmtree(path)
 
