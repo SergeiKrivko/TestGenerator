@@ -173,6 +173,7 @@ class CodeWidget(QWidget):
         self.get_path()
         self.files.append(path)
         self.save_files_list()
+        self.buttons[path] = 0
 
         for language in languages.values():
             for el in language['files']:
@@ -194,8 +195,6 @@ class CodeWidget(QWidget):
                         self.buttons[path] = 2 if 'lexer' in language else 0
                     elif language.get('fast_run', False):
                         self.buttons[path] = 1
-                    else:
-                        self.buttons[path] = 0
                     self.top_panel.open_tab(path)
                     return
         code_edit = CodeEditor(self.sm, self.tm)
