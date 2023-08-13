@@ -1,5 +1,4 @@
 from sys import argv
-from time import sleep
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
@@ -8,13 +7,10 @@ from ui.main_menu import MainMenu
 from ui.side_bar import SideBar, SidePanel
 from ui.themes import ThemeManager
 from code_tab.code_widget import CodeWidget
-from settings.project_widget import ProjectWidget
 from settings.settings_widget import SettingsWidget
 from tests.testing_widget import TestingWidget
 from tests.tests_widget import TestsWidget
-from other.git_widget import GitWidget
 from tests.commands import CommandManager
-from other.todo_widget import TODOWidget
 from settings.settings_manager import SettingsManager
 import os
 
@@ -51,6 +47,7 @@ class MainWindow(QMainWindow):
 
         self.side_panel = SidePanel(self.sm, self.tm, self.cm)
         self.side_bar = SideBar(self.sm, self.tm, self.side_panel)
+        self.side_panel.tabs['projects'].jump_to_code.connect(self.jump_to_code)
         layout.addWidget(self.side_bar)
         layout.addWidget(self.side_panel, 100)
 
@@ -60,7 +57,7 @@ class MainWindow(QMainWindow):
 
         self.testing_widget = TestingWidget(self.sm, self.cm, self.tm, self.side_panel)
         layout.addWidget(self.testing_widget, 1)
-        self.testing_widget.jump_to_code.connect(self.jump_to_code_from_testing)
+        self.testing_widget.jump_to_code.connect(self.jump_to_code)
         self.testing_widget.hide()
         self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
         self.side_panel.tabs['tests'].jump_to_testing.connect(lambda *args: self.show_tab(MainMenu.TAB_TESTING))
@@ -104,52 +101,25 @@ class MainWindow(QMainWindow):
         self.side_bar.set_theme()
         self.side_panel.set_theme()
 
-    def jump_to_code_from_project(self, path):
+    def jump_to_code(self, path, line=None, pos=None):
         path = os.path.abspath(path)
-        self.show_tab('code_widget')
+        self.show_tab(MainMenu.TAB_CODE)
         if self.sm.get('struct', 0) == 1:
-            self.code_widget.files_widget.current_path, name = os.path.split(path)
-            self.code_widget.files_widget.update_files_list()
-            for i in range(self.code_widget.files_widget.files_list.count()):
-                if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == name:
-                    self.code_widget.files_widget.files_list.setCurrentRow(i)
-                    break
+            self.code_widget.open_code(path)
             return
-        if not os.path.isdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}"):
+        if not os.path.isdir(self.sm.data_path):
             return
-        for dir1 in os.listdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}"):
+        for dir1 in os.listdir(self.sm.data_path):
             if not dir1.isdigit():
                 continue
-            for dir2 in os.listdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}/{dir1}"):
-                for dir3 in os.listdir(f"{self.sm.app_data_dir}/projects/{self.sm.project}/{dir1}/{dir2}"):
+            for dir2 in os.listdir(f"{self.sm.data_path}/{dir1}"):
+                for dir3 in os.listdir(f"{self.sm.data_path}/{dir1}/{dir2}"):
                     lab_path = os.path.abspath(self.sm.lab_path(int(dir1), int(dir2), int(dir3)))
                     if path.startswith(lab_path):
-                        self.sm.set('lab', int(dir1))
-                        self.sm.set('task', int(dir2))
-                        self.sm.set('var', int(dir3))
-                        self.show_tab('code_widget')
-                        self.code_widget.files_widget.current_path, name = os.path.split(path)
-                        self.code_widget.files_widget.update_files_list()
-                        for i in range(self.code_widget.files_widget.files_list.count()):
-                            if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == name:
-                                self.code_widget.files_widget.files_list.setCurrentRow(i)
-                                return
-
-    def jump_to_code_from_testing(self, file_name, line, pos):
-        self.show_tab('code_widget')
-        for i in range(self.code_widget.files_widget.files_list.count()):
-            if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == file_name:
-                self.code_widget.files_widget.files_list.setCurrentRow(i)
-                self.code_widget.code_edit.setCursorPosition(line, pos)
-                break
-
-    def jump_to_code_from_todo(self, file_name, line):
-        self.show_tab('code_widget')
-        for i in range(self.code_widget.files_widget.files_list.count()):
-            if os.path.basename(self.code_widget.files_widget.files_list.item(i).path) == file_name:
-                self.code_widget.files_widget.files_list.setCurrentRow(i)
-                self.code_widget.code_edit.setCursorPosition(line, 0)
-                break
+                        self.menu_bar.lab_widget.lab_spin_box.setValue(int(dir1))
+                        self.menu_bar.lab_widget.task_spin_box.setValue(int(dir2))
+                        self.menu_bar.lab_widget.var_spin_box.setValue(int(dir3))
+                        self.code_widget.open_code(path)
 
     def show_tab(self, index):
         self.code_widget.hide()

@@ -64,7 +64,10 @@ class ProjectWidget(SidePanelWidget):
     def select_project(self, project):
         for i in range(self.list_widget.count()):
             if self.list_widget.item(i).text() == project:
-                self.list_widget.setCurrentRow(i)
+                if self.list_widget.item(i).text() == self.sm.project:
+                    self.open_project(forced=True)
+                else:
+                    self.list_widget.setCurrentRow(i)
                 break
 
     def find_project(self, path):
