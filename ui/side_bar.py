@@ -135,6 +135,14 @@ class SideBar(QWidget):
             else:
                 self.side_panel.hide()
 
+    def select_tab(self, key):
+        for _key, item in self.buttons.items():
+            if _key != key:
+                item.setChecked(False)
+            else:
+                item.setChecked(True)
+        self.side_panel.show_tab(key)
+
     def connect_button(self, button):
         return lambda flag: self.button_clicked(button.image_name[7:], flag)
 

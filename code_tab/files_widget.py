@@ -56,7 +56,7 @@ class FilesWidget(SidePanelWidget):
     ignore_files = []
 
     def __init__(self, sm, cm, tm):
-        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'run', 'preview'])
+        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'update'])
         self.cm = cm
 
         self.setFixedWidth(225)
@@ -67,9 +67,8 @@ class FilesWidget(SidePanelWidget):
         self.path = ''
         self.current_path = ''
 
-        self.buttons['preview'].hide()
-        self.buttons['preview'].setCheckable(True)
         self.buttons['rename'].clicked.connect(lambda: self.rename_file(False))
+        self.buttons['update'].clicked.connect(self.update_files_list)
 
         search_layout = QHBoxLayout()
         search_layout.setSpacing(2)
@@ -113,9 +112,6 @@ class FilesWidget(SidePanelWidget):
         self.files_list.doubleClicked.connect(self.open_file)
         self.buttons['add'].clicked.connect(self.create_file)
         self.buttons['delete'].clicked.connect(self.delete_file)
-        # self.files_list.doubleClicked.connect(self.rename_file)
-        self.buttons['run'].clicked.connect(self.run_file)
-        self.buttons['run'].setDisabled(True)
 
         self.dialog = None
 
@@ -204,36 +200,6 @@ class FilesWidget(SidePanelWidget):
                 self.openFile.emit('')
             else:
                 self.openFile.emit(item.path)
-                if item.path.endswith('.exe'):
-                    self.buttons['run'].setDisabled(False)
-                    return
-                for language in languages.values():
-                    if language.get('fast_run', False):
-                        for el in language['files']:
-                            if item.path.endswith(el):
-                                self.buttons['run'].setDisabled(False)
-                                return
-            self.buttons['run'].setDisabled(True)
-
-    def run_file(self):
-        def run_file(command):
-            self.console = Console(self.sm, self.tm, command, self.current_path)
-            self.console.show()
-
-        if not self.files_list.currentItem():
-            return
-        path = self.files_list.currentItem().path
-        if self.files_list.currentItem().path.endswith('.exe'):
-            run_file(path)
-            return
-        for language in languages.values():
-            if language.get('fast_run', False):
-                for el in language['files']:
-                    if self.files_list.currentItem().path.endswith(el):
-                        if 'compile' in language:
-                            language['compile'](os.path.split(path)[0], self.cm, self.sm, coverage=False)
-                        run_file(language['run'](path, self.sm, coverage=False))
-                        return
 
     def set_theme(self):
         super().set_theme()
@@ -396,41 +362,3 @@ class RenameFileDialog(QDialog):
              tm.auto_css(el)
 
         self.resize(280, 50)
-
-
-class FileRunner(QThread):
-    def __init__(self, func, path, sm, cm):
-        super().__init__()
-        self.func = func
-        self.path = path
-        self.sm = sm
-        self.cm = cm
-        self.res = None
-
-    def run(self):
-        self.res = self.func(self.path, self.sm, self.cm, scip_timeout=True)
-
-
-class RunDialog(QDialog):
-    def __init__(self, tm, path):
-        super().__init__()
-        self.tm = tm
-
-        self.setWindowTitle(path)
-
-        layout = QVBoxLayout()
-        label = QLabel(f"Идет выполнение скрипта \"{path}\"")
-        label.setWordWrap(True)
-        label.setFont(self.tm.font_small)
-
-        QBtn = QDialogButtonBox.Cancel
-
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
-
-        layout.addWidget(label)
-        layout.addWidget(self.buttonBox)
-        self.setLayout(layout)
-

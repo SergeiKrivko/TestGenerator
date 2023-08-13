@@ -36,19 +36,19 @@ class MainMenu(QWidget):
         layout.addLayout(buttons_layout)
 
         self.button_code = QPushButton("Код")
-        self.button_code.setFixedSize(40, 24)
+        self.button_code.setFixedSize(50, 24)
         self.button_code.setCheckable(True)
         self.button_code.clicked.connect(lambda flag: self.select_tab(self.TAB_CODE, flag))
         buttons_layout.addWidget(self.button_code)
 
         self.button_tests = QPushButton("Тесты")
-        self.button_tests.setFixedSize(50, 24)
+        self.button_tests.setFixedSize(60, 24)
         self.button_tests.setCheckable(True)
         self.button_tests.clicked.connect(lambda flag: self.select_tab(self.TAB_TESTS, flag))
         buttons_layout.addWidget(self.button_tests)
 
         self.button_testing = QPushButton("Тестирование")
-        self.button_testing.setFixedSize(100, 24)
+        self.button_testing.setFixedSize(115, 24)
         self.button_testing.setCheckable(True)
         self.button_testing.clicked.connect(lambda flag: self.select_tab(self.TAB_TESTING, flag))
         buttons_layout.addWidget(self.button_testing)

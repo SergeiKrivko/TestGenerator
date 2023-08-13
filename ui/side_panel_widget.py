@@ -18,6 +18,7 @@ class SidePanelWidget(QWidget):
         'push': lambda tm: SidePanelButton(tm, 'button_push', tooltip='Push'),
         'save': lambda tm: SidePanelButton(tm, 'button_save', tooltip='Сохранить'),
         'load': lambda tm: SidePanelButton(tm, 'button_load', tooltip='Открыть'),
+        'update': lambda tm: SidePanelButton(tm, 'update', tooltip='Обновить'),
         'resize': lambda tm: ResizeButton(tm),
         'close': lambda tm: SidePanelButton(tm, 'delete', tooltip='Закрыть'),
     }
@@ -31,6 +32,7 @@ class SidePanelWidget(QWidget):
         __main_layout.setContentsMargins(0, 0, 0, 0)
 
         __top_layout = QHBoxLayout()
+        __top_layout.setSpacing(2)
 
         self.__name_label = QLabel(name)
         __top_layout.addWidget(self.__name_label)

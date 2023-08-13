@@ -68,6 +68,7 @@ class CodeEditor(QsciScintilla):
         self.current_row = 0
         self.am = CodeAutocompletionManager(self.sm, self.path)
         self.textChanged.connect(self.set_text_changed)
+        self.textChanged.connect(self.save_file)
         self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
         self.text_changed = False
         self.language_data = dict()
@@ -153,6 +154,17 @@ class CodeEditor(QsciScintilla):
             self.setText("")
             self.setDisabled(True)
         self.update_api(self.getCursorPosition())
+
+    def save_file(self):
+        path = os.path.join(self.path, self.current_file)
+        if os.path.isfile(path):
+            try:
+                with open(path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep', '\n')) as f:
+                    f.write(self.text())
+            except FileNotFoundError:
+                pass
+            except PermissionError:
+                pass
 
     def set_text(self, text):
         self.setText(text)

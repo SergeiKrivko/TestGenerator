@@ -183,11 +183,12 @@ class Terminal(QTextEdit):
         self.write_prompt()
 
     def command_cd(self, command: str):
-        old_dir = os.getcwd()
-        os.chdir(self.current_dir)
-        self.current_dir = os.path.abspath(command[3:].strip())
-        self.write_prompt()
-        os.chdir(old_dir)
+        if os.path.isdir(command[3:].strip()):
+            old_dir = os.getcwd()
+            os.chdir(self.current_dir)
+            self.current_dir = os.path.abspath(command[3:].strip())
+            self.write_prompt()
+            os.chdir(old_dir)
 
     def command_clear(self):
         self.fixed_html = ''

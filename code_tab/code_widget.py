@@ -3,23 +3,25 @@ import os
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidgetItem, QVBoxLayout, QScrollArea, QTabBar
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar
 
 from code_tab.preview_widgets import PreviewWidget
 from language.languages import languages
 from code_tab.syntax_highlighter import CodeEditor
 from ui.button import Button
-from ui.side_bar import SidePanel
+from ui.side_bar import SidePanel, SideBar
+from tests.convert_binary import convert
 
 
 class CodeWidget(QWidget):
     testing_signal = pyqtSignal()
 
-    def __init__(self, sm, cm, tm, side_panel: SidePanel):
+    def __init__(self, sm, cm, tm, side_bar: SideBar, side_panel: SidePanel):
         super(CodeWidget, self).__init__()
         self.sm = sm
         self.cm = cm
         self.tm = tm
+        self.side_bar = side_bar
         self.side_panel = side_panel
         self.current_file = ''
 
@@ -34,6 +36,7 @@ class CodeWidget(QWidget):
         self.top_panel.tabSelected.connect(self.select_tab)
         self.top_panel.tabClosed.connect(self.close_tab)
         self.top_panel.tab_bar.tabMoved.connect(self.move_tab)
+        self.top_panel.button_run.clicked.connect(self.run_file)
         self.top_panel.button_preview.clicked.connect(self.show_preview)
         main_layout.addWidget(self.top_panel)
 
@@ -205,53 +208,6 @@ class CodeWidget(QWidget):
         self.code_widgets[path] = code_edit
         self.top_panel.open_tab(path)
 
-        # self.code_edit.setText("")
-        # try:
-        #     if not os.path.isfile(path):
-        #         raise Exception
-        #
-        #     self.current_file = path
-        #
-        #     if self.open_preview() != 1:
-        #         self.preview_widget.hide()
-        #         self.code_edit.show()
-        #         self.file_update_time = os.path.getmtime(self.current_file)
-        #         self.code_edit.open_file(*os.path.split(self.current_file))
-        #         self.update_todo()
-        #         self.code_edit.setDisabled(False)
-        #         self.set_theme()
-        #         self.parse_gcov_file()
-        #     else:
-        #         self.code_edit.hide()
-        #         self.preview_widget.show()
-        # except Exception as ex:
-        #     self.preview_widget.hide()
-        #     self.code_edit.show()
-        #     self.code_edit.setDisabled(True)
-
-    def open_preview(self):
-        for language in languages.values():
-            if not language.get('preview', False):
-                continue
-            for el in language.get('files', []):
-                if self.current_file.endswith(el):
-                    self.preview_widget.open(self.current_file)
-                    self.files_widget.buttons['run'].hide()
-                    self.files_widget.buttons['preview'].show()
-
-                    self.files_widget.buttons['preview'].setChecked(False)
-
-                    if language.get('lexer'):
-                        self.files_widget.buttons['preview'].setDisabled(False)
-                        return 0
-                    else:
-                        self.files_widget.buttons['preview'].setDisabled(True)
-                        return 1
-
-        self.files_widget.buttons['preview'].hide()
-        self.files_widget.buttons['run'].show()
-        return 2
-
     def show_preview(self, flag):
         if flag:
             self.code_widgets[self.current_file].hide()
@@ -260,19 +216,13 @@ class CodeWidget(QWidget):
             self.code_widgets[self.current_file].show()
             self.preview_widgets[self.current_file].hide()
 
-    def save_code(self):
-        code = self.code_edit.text()
-        if code and self.path:
-            os.makedirs(self.path, exist_ok=True)
-            file = open(f"{self.current_file}", 'w', encoding='utf=8', newline=self.sm['line_sep'])
-            file.write(code)
-            file.close()
-            self.file_update_time = os.path.getmtime(f"{self.current_file}")
-
-    def check_if_code_changed(self):
-        if os.path.isfile(self.current_file) and self.file_update_time != os.path.getmtime(self.current_file):
-            pos = self.code_edit.getCursorPosition()
-            self.code_edit.setCursorPosition(*pos)
+    def run_file(self):
+        if self.current_file.endswith('.t2b'):
+            convert(in_path=self.current_file)
+            self.files_widget.update_files_list()
+        else:
+            self.side_panel.tabs['run'].run_file(self.current_file)
+            self.side_bar.select_tab('run')
 
     def parse_gcov_file(self):
         path = self.current_file + '.gcov'

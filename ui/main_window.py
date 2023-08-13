@@ -62,7 +62,7 @@ class MainWindow(QMainWindow):
         self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
         self.side_panel.tabs['tests'].jump_to_testing.connect(lambda *args: self.show_tab(MainMenu.TAB_TESTING))
 
-        self.code_widget = CodeWidget(self.sm, self.cm, self.tm, self.side_panel)
+        self.code_widget = CodeWidget(self.sm, self.cm, self.tm, self.side_bar, self.side_panel)
         layout.addWidget(self.code_widget, 1)
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
         self.code_widget.hide()
