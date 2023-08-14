@@ -41,7 +41,7 @@ class Console(Terminal):
 
 class ConsolePanel(SidePanelWidget):
     def __init__(self, sm, tm, cm):
-        super().__init__(sm, tm, 'Выполнение', ['run', 'resize'])
+        super().__init__(sm, tm, 'Выполнение', ['run', 'cancel', 'resize'])
         self.cm = cm
 
         layout = QVBoxLayout()
@@ -51,6 +51,7 @@ class ConsolePanel(SidePanelWidget):
         self.setLayout(layout)
 
         self.buttons['run'].clicked.connect(self.run_main)
+        self.buttons['cancel'].clicked.connect(self.terminal.terminate_process)
 
     def run_main(self):
         self.cm.compile()

@@ -19,6 +19,7 @@ class SidePanelWidget(QWidget):
         'save': lambda tm: SidePanelButton(tm, 'button_save', tooltip='Сохранить'),
         'load': lambda tm: SidePanelButton(tm, 'button_load', tooltip='Открыть'),
         'update': lambda tm: SidePanelButton(tm, 'update', tooltip='Обновить'),
+        'cancel': lambda tm: SidePanelButton(tm, 'button_cancel', tooltip='Отменить'),
         'resize': lambda tm: ResizeButton(tm),
         'close': lambda tm: SidePanelButton(tm, 'delete', tooltip='Закрыть'),
     }

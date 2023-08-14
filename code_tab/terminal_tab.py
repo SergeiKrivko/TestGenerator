@@ -75,12 +75,6 @@ class Terminal(QTextEdit):
         self.program_errors = None
         self.errors_file = None
 
-        with open(f"{self.sm.app_data_dir}/console/reader.py", 'w', encoding='utf-8') as f:
-            code = f"from time import sleep\n" \
-                   f"file = open('{self.sm.app_data_dir}/console/terminal_input.txt', encoding='utf-8')\n" \
-                   f"while True:\n    print(file.read(), end='')\n    sleep(0.1)"
-            f.write(code)
-
         self.reader = None
         self.program = None
         self.program_looper = None
@@ -88,9 +82,21 @@ class Terminal(QTextEdit):
         self.errors_looper = None
         self.looper = None
         self.return_code = 0
+        self.current_process_id = 0
 
         self.textChanged.connect(self.check_changes)
         self.write_prompt()
+
+    def write_python_file(self, process_id: int):
+        with open(f"{self.sm.app_data_dir}/console/reader_{process_id}.py", 'w', encoding='utf-8') as f:
+            f.write(f"from time import sleep\n"
+                    f"file = open('{self.sm.app_data_dir}/console/input_{process_id}.txt', encoding='utf-8')\n"
+                    f"while True:\n"
+                    f"    text = file.read()\n"
+                    f"    if text == '!!!TestGenerator:process_{process_id}:terminate!!!':\n"
+                    f"        break\n"
+                    f"    print(text, end='')\n"
+                    f"    sleep(0.1)\n")
 
     def check_changes(self):
         if self.not_check:
@@ -143,14 +149,22 @@ class Terminal(QTextEdit):
             self.start_process(command)
 
     def start_process(self, command):
-        self.input_file = open(f"{self.sm.app_data_dir}/console/terminal_input.txt", 'w', encoding='utf-8')
-        self.program_output = open(f"{self.sm.app_data_dir}/console/terminal_output.txt", 'w', encoding='utf-8')
-        self.output_file = open(f"{self.sm.app_data_dir}/console/terminal_output.txt", encoding='utf-8')
-        self.program_errors = open(f"{self.sm.app_data_dir}/console/terminal_errors.txt", 'w', encoding='utf-8')
-        self.errors_file = open(f"{self.sm.app_data_dir}/console/terminal_errors.txt", encoding='utf-8')
+        process_id = self.sm.get_general('process_id', 0)
+        if not isinstance(process_id, int) or process_id < 0 or process_id > 10000000:
+            process_id = 0
+        self.sm.set_general('process_id', process_id + 1)
+        self.current_process_id = process_id
 
+        self.input_file = open(f"{self.sm.app_data_dir}/console/input_{process_id}.txt", 'w', encoding='utf-8')
+        self.program_output = open(f"{self.sm.app_data_dir}/console/output_{process_id}.txt", 'w', encoding='utf-8')
+        self.output_file = open(f"{self.sm.app_data_dir}/console/output_{process_id}.txt", encoding='utf-8')
+        self.program_errors = open(f"{self.sm.app_data_dir}/console/errors_{process_id}.txt", 'w', encoding='utf-8')
+        self.errors_file = open(f"{self.sm.app_data_dir}/console/errors_{process_id}.txt", encoding='utf-8')
+
+        self.write_python_file(process_id)
         self.reader = subprocess.Popen([self.sm.get_general('python', 'python'),
-                                        f"{self.sm.app_data_dir}/console/reader.py"], stdout=subprocess.PIPE,
+                                        f"{self.sm.app_data_dir}/console/reader_{process_id}.py"],
+                                       stdout=subprocess.PIPE,
                                        stderr=subprocess.DEVNULL, shell=True, cwd=self.current_dir)
         self.program = subprocess.Popen(command, stdin=self.reader.stdout, stdout=self.program_output,
                                         stderr=self.program_errors, shell=True, cwd=self.current_dir)
@@ -174,9 +188,52 @@ class Terminal(QTextEdit):
 
     def end_process(self):
         self.output_looper.stop = True
-        self.return_code = self.program.returncode
+        self.errors_looper.stop = True
+        self.input_file.write(f"!!!TestGenerator:process_{self.current_process_id}:terminate!!!")
+        self.input_file.flush()
+        if hasattr(self.program, 'returncode'):
+            self.return_code = self.program.returncode
         self.program = None
+        self.output_looper.finished.connect(self.delete_files)
+        self.errors_looper.finished.connect(self.delete_errors_files)
         self.output_looper.finished.connect(self.write_prompt)
+
+    def terminate_process(self):
+        if isinstance(self.program, subprocess.Popen) and isinstance(self.program_looper, ProgramLooper):
+            self.program_looper.terminate()
+
+    def delete_files(self):
+        self.input_file.close()
+        self.output_file.close()
+        self.program_output.close()
+        try:
+            os.remove(f"{self.sm.app_data_dir}/console/reader_{self.current_process_id}.py")
+        except PermissionError:
+            pass
+        except FileNotFoundError:
+            pass
+        try:
+            os.remove(f"{self.sm.app_data_dir}/console/input_{self.current_process_id}.txt")
+        except PermissionError:
+            pass
+        except FileNotFoundError:
+            pass
+        try:
+            os.remove(f"{self.sm.app_data_dir}/console/output_{self.current_process_id}.txt")
+        except PermissionError:
+            pass
+        except FileNotFoundError:
+            pass
+
+    def delete_errors_files(self):
+        self.errors_file.close()
+        self.program_errors.close()
+        try:
+            os.remove(f"{self.sm.app_data_dir}/console/errors_{self.current_process_id}.txt")
+        except PermissionError:
+            pass
+        except FileNotFoundError:
+            pass
 
     def command_ls(self):
         self.write_text('\n'.join(os.listdir(self.current_dir.replace('"', ''))) + "\n")
@@ -217,13 +274,15 @@ class Terminal(QTextEdit):
 
 class TerminalTab(SidePanelWidget):
     def __init__(self, sm, tm):
-        super().__init__(sm, tm, 'Терминал', ['resize'])
+        super().__init__(sm, tm, 'Терминал', ['cancel', 'resize'])
         layout = QVBoxLayout()
         self.setMinimumWidth(175)
         layout.setContentsMargins(0, 0, 0, 0)
         self.terminal = Terminal(sm, tm)
         layout.addWidget(self.terminal)
         self.setLayout(layout)
+
+        self.buttons['cancel'].clicked.connect(self.terminal.terminate_process)
 
     def set_theme(self):
         super().set_theme()
