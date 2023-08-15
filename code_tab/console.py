@@ -1,8 +1,8 @@
 import os
 from PyQt5.QtWidgets import QVBoxLayout
 
-from code_tab.terminal_tab import Terminal
 from language.languages import languages
+from other.terminal import Terminal
 from ui.side_panel_widget import SidePanelWidget
 
 
