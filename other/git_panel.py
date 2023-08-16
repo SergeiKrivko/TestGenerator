@@ -1,5 +1,6 @@
 import os.path
 
+from PyQt5.QtCore import QProcess
 from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QLineEdit
 
 from tests.commands import CommandManager
@@ -15,6 +16,9 @@ class TreeElement(TreeWidgetItemCheckable):
         self.path = path
         self.status = status
 
+        self.process = QProcess()
+        self.process.setWorkingDirectory(self.sm.path)
+
         self.stateChanged.connect(lambda flag: self.git_add() if flag else self.git_reset())
         self.check_status()
 
@@ -24,10 +28,10 @@ class TreeElement(TreeWidgetItemCheckable):
         self._checkbox.setChecked(flag)
 
     def git_add(self):
-        CommandManager.cmd_command(['git', 'add', self.path], cwd=self.sm.path)
+        self.process.start('git', ['add', self.path])
 
     def git_reset(self):
-        CommandManager.cmd_command(['git', 'reset', self.path], cwd=self.sm.path)
+        self.process.start('git', ['reset', self.path])
 
     def check_status(self):
         if self.status == '??':
@@ -76,22 +80,31 @@ class GitPanel(SidePanelWidget):
 
         self.sm.project_changed.connect(self.update_tree)
 
+        self.git_status_process = QProcess()
+        self.git_status_process.finished.connect(self.parse_git_status)
+
     def update_tree(self):
         self.commit_edit.setText('')
         self.tree.clear()
-        self.parse_git_status()
-        self.set_theme()
+        self.run_git_status()
+
+    def run_git_status(self):
+        self.git_status_process.kill()
+        self.git_status_process.setWorkingDirectory(self.sm.path)
+        self.git_status_process.start('git', ['status', '--porcelain', '-uall'])
 
     def parse_git_status(self):
-        git_status = self.cm.cmd_command(['git', 'status', '--porcelain', '-uall'], cwd=self.sm.path)
-        if git_status.returncode:
+        try:
+            git_status = self.git_status_process.readAllStandardOutput().data().decode(encoding='utf-8').rstrip()
+        except Exception as ex:
+            MessageBox(MessageBox.Warning, 'Ошибра', f"{ex.__class__.__name__}: {ex}", self.tm)
             return
-        git_status = git_status.stdout.rstrip()
         for el in git_status.split('\n'):
             status = el[:2]
             path = el[3:]
             lst = path.replace('\\', '/').split('/')[:-1]
             self.tree.add_item(TreeElement(self.sm, self.tm, path, status), key=lst)
+        self.set_theme()
 
     def commit(self):
         res = self.cm.cmd_command(['git', 'commit', '-m', self.commit_edit.text()])
