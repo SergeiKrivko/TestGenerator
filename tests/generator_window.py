@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QDialog, QLis
     QLineEdit
 
 from code_tab.console import Console
+from language.languages import languages
 from ui.message_box import MessageBox
 from code_tab.syntax_highlighter import CodeEditor
 from ui.side_panel_widget import SidePanelWidget
@@ -25,6 +26,7 @@ class GeneratorTab(SidePanelWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
 
         self.code_edit = CodeEditor(self.sm, self.tm, border=True)
+        self.code_edit.set_lexer(languages['Python'])
         main_layout.addWidget(self.code_edit)
 
         self.console = Console(self.sm, self.tm, self.cm)
@@ -36,6 +38,7 @@ class GeneratorTab(SidePanelWidget):
         self.buttons['load'].clicked.connect(self.open_code)
         self.buttons['save'].clicked.connect(self.save_code)
         # self.buttons['documentation'].clicked.connect(self.show_info)
+        self.buttons['close'].clicked.connect(self.close_console)
         self.buttons['run'].clicked.connect(self.run_code)
 
         self.set_autocompletion()
@@ -52,7 +55,7 @@ class GeneratorTab(SidePanelWidget):
         self.dialog = FileDialog(self.tm, 'open', self.scripts_dir)
         if self.dialog.exec():
             try:
-                self.code_edit.open_file(self.scripts_dir, self.dialog.list_widget.currentItem().text())
+                self.code_edit.open_file(os.path.join(self.scripts_dir, self.dialog.list_widget.currentItem().text()))
             except:
                 pass
 
@@ -101,16 +104,13 @@ class GeneratorTab(SidePanelWidget):
         # self.looper.complete.connect(self.run_complete)
         # self.looper.run()
 
-    def run_complete(self, res):
-        if res.stdout:
-            MessageBox(MessageBox.Information, 'STDOUT', res.stdout, self.tm)
-        if res.stderr:
-            MessageBox(MessageBox.Information, 'STDERR', res.stderr, self.tm)
-        if os.path.isfile(f'{self.sm.app_data_dir}/temp.py'):
-            os.remove(f'{self.sm.app_data_dir}/temp.py')
-        self.complete.emit()
-        if res.returncode == 0:
-            self.hide()
+    def close_console(self):
+        self.console.hide()
+        self.code_edit.show()
+        self.buttons['close'].hide()
+        self.buttons['load'].show()
+        self.buttons['save'].show()
+        self.buttons['run'].show()
 
     def show_info(self):
         MessageBox(MessageBox.Information, "Генерация тестов",

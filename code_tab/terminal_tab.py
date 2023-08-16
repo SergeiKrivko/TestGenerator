@@ -14,7 +14,7 @@ class TerminalTab(SidePanelWidget):
         layout.addWidget(self.terminal)
         self.setLayout(layout)
 
-        self.buttons['cancel'].clicked.connect(self.terminal.terminate_process)
+        self.buttons['cancel'].clicked.connect(lambda: self.terminal.terminate_process())
 
     def set_theme(self):
         super().set_theme()

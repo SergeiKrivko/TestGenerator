@@ -99,7 +99,7 @@ class Terminal(QTextEdit):
         os.chdir(self.current_dir)
         csi = shlex.split(command, posix=False)
         program = csi[0]
-        if os.path.exists(program):
+        if os.path.isfile(program):
             program = os.path.abspath(program)
         os.chdir(old_dir)
         csi.pop(0)
@@ -117,7 +117,7 @@ class Terminal(QTextEdit):
                                 f"файла сценария или выполняемой программы. Проверьте правильность написания имени, "
                                 f"а также наличие и правильность пути, после чего повторите попытку.\n",
                                 color=self.tm['TestFailed'])
-        self.process.terminate()
+        self.process.kill()
         self.end_process()
 
     def command_ls(self):
