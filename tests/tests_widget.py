@@ -207,6 +207,7 @@ class TestsWidget(QWidget):
         self.get_path()
         self.test_list_widget.pos_test_list.clear()
         self.test_list_widget.neg_test_list.clear()
+        self.test_edit_widget.set_disabled()
         try:
             self.test_list_widget.pos_comparator_widget.setCurrentIndex(self.sm.get('pos_comparators', dict()).get(
                 f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1) + 1)

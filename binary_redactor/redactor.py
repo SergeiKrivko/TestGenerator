@@ -1,7 +1,7 @@
 from PyQt5.Qsci import QsciScintilla
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTabBar, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QTabBar, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
 
 from binary_redactor.lexer import LexerBin
 from ui.button import Button
@@ -109,8 +109,13 @@ class RedactorWidget(QWidget):
         self._redactors_layout = QHBoxLayout()
         main_layout.addLayout(self._redactors_layout)
 
+        self._empty_widget = QTextEdit()
+        self._empty_widget.setReadOnly(True)
+        self._redactors_layout.addWidget(self._empty_widget)
+
         self.redactors = dict()
         self.current_tab = ''
+        self._disabled = False
 
     def add_tab(self, name, text=''):
         redactor = BinaryRedactor(self.tm)
@@ -146,6 +151,9 @@ class RedactorWidget(QWidget):
     def _on_tab_selected(self):
         index = self._tab_bar.currentIndex()
         name = self._tab_bar.tabText(index)
+        if not self._disabled:
+            self._empty_widget.hide()
+            self._button.show()
         for el in self.redactors.values():
             el.hide()
         if name in self.redactors:
@@ -171,6 +179,18 @@ class RedactorWidget(QWidget):
         for i in range(self._tab_bar.count()):
             if self._tab_bar.tabText(i) == name:
                 return i
+
+    def setDisabled(self, a0: bool) -> None:
+        self._disabled = a0
+        if a0:
+            for el in self.redactors.values():
+                el.hide()
+            self._empty_widget.show()
+            self._button.hide()
+        else:
+            self._empty_widget.hide()
+            self._button.show()
+        super().setDisabled(a0)
 
     def set_theme(self):
         self._button.set_theme()
@@ -214,3 +234,4 @@ QTabBar::close-button:hover {{
 """
         self._tab_bar.setFont(self.tm.font_small)
         self._tab_bar.setStyleSheet(css)
+        self._empty_widget.setStyleSheet(self.tm.text_edit_css('Main'))

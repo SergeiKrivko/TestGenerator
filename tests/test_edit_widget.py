@@ -116,6 +116,8 @@ class TestEditWidget(QWidget):
         self.test_out_edit.tabCloseRequested.connect(self.delete_out)
         self.test_out_edit.currentChanged.connect(self.test_out_selected)
 
+        self.set_disabled()
+
     def exit_code_edit_triggered(self):
         if not self.exit_code_edit.text().strip():
             self.exit_code_edit.setText("")
@@ -200,9 +202,11 @@ class TestEditWidget(QWidget):
 
     def test_in_selected(self, index):
         self.data['current_in'] = index
+        self.test_edited.emit()
 
     def test_out_selected(self, index):
         self.data['current_out'] = index
+        self.test_edited.emit()
 
     def set_test_in(self, name, text):
         if name == 'STDIN':
@@ -247,7 +251,6 @@ class TestEditWidget(QWidget):
         if index <= 0:
             return
         name = self.test_out_edit.tab_text(index)
-        print(name)
         if name.startswith('check_file_'):
             try:
                 index = int(name.lstrip('check_file_').rstrip('.txt.bin'))
