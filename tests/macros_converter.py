@@ -15,6 +15,8 @@ class BackgroundProcessManager(QObject):
         self.dict = dict()
 
     def add_process(self, key, process):
+        if key in self.dict:
+            self.dict[key].terminate()
         self.dict[key] = process
         process.finished.connect(lambda: self.process_finished(key))
 
@@ -103,7 +105,6 @@ class MacrosConverter(QThread):
 
             in_files = dict()
             out_files = dict()
-            check_files = dict()
 
             for i, el in enumerate(data.get('in_files', [])):
                 if el.get('type', 'txt') == 'txt':
@@ -111,10 +112,16 @@ class MacrosConverter(QThread):
                                      s := self.sm.test_in_file_path(tests_type, index, i, False, project=self.project),
                                      self.line_sep)
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
+                    if 'check' in el:
+                        self.convert_txt(el['check'], self.sm.test_check_file_path(tests_type, index, i, False,
+                                                                                   project=self.project), self.line_sep)
                 else:
                     self.convert_bin(el['text'],
                                      s := self.sm.test_in_file_path(tests_type, index, i, True, project=self.project))
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
+                    if 'check' in el:
+                        self.convert_bin(el['check'], self.sm.test_check_file_path(tests_type, index, i, True,
+                                                                                   project=self.project))
 
             for i, el in enumerate(data.get('out_files', [])):
                 if el.get('type', 'txt') == 'txt':
@@ -126,16 +133,6 @@ class MacrosConverter(QThread):
                     self.convert_bin(el['text'],
                                      s := self.sm.test_out_file_path(tests_type, index, i, True, project=self.project))
                     out_files[i + 1] = os.path.relpath(s, self.dst_dir)
-
-            for i, el in data.get('check_files', dict()).items():
-                if el.get('type', 'txt') == 'txt':
-                    self.convert_txt(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, False,
-                                                                                   project=self.project), self.line_sep)
-                    check_files[i] = os.path.relpath(s, self.dst_dir)
-                else:
-                    self.convert_bin(el['text'], s := self.sm.test_check_file_path(tests_type, index, i, True,
-                                                                                   project=self.project))
-                    check_files[i] = os.path.relpath(s, self.dst_dir)
 
             if data.get('args', ''):
                 self.convert_args(data.get('args', ''), self.sm.test_args_path(tests_type, index, project=self.project),

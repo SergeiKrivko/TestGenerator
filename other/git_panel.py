@@ -97,7 +97,7 @@ class GitPanel(SidePanelWidget):
         try:
             git_status = self.git_status_process.readAllStandardOutput().data().decode(encoding='utf-8').rstrip()
         except Exception as ex:
-            MessageBox(MessageBox.Warning, 'Ошибра', f"{ex.__class__.__name__}: {ex}", self.tm)
+            MessageBox(MessageBox.Warning, 'Ошибка', f"{ex.__class__.__name__}: {ex}", self.tm)
             return
         for el in git_status.split('\n'):
             status = el[:2]

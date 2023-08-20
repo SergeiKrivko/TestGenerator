@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QDialog, QLis
     QLineEdit
 
 from code_tab.console import Console
-from language.languages import languages
 from ui.message_box import MessageBox
 from code_tab.syntax_highlighter import CodeEditor
 from ui.side_panel_widget import SidePanelWidget
@@ -25,8 +24,7 @@ class GeneratorTab(SidePanelWidget):
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.code_edit = CodeEditor(self.sm, self.tm, border=True)
-        self.code_edit.set_lexer(languages['Python'])
+        self.code_edit = CodeEditor(self.sm, self.tm, language='Python', border=True)
         main_layout.addWidget(self.code_edit)
 
         self.console = Console(self.sm, self.tm, self.cm)

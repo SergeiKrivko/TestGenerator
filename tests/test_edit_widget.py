@@ -1,8 +1,8 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QTextEdit, QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QComboBox, \
+from PyQt5.QtWidgets import  QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, \
     QDialog, QDialogButtonBox
 
-from binary_redactor.redactor import BinaryRedactor
+from binary_redactor.redactor import RedactorWidget
 from ui.button import Button
 
 
@@ -59,48 +59,48 @@ class TestEditWidget(QWidget):
 
         layout1 = QVBoxLayout()
         h_layout.addLayout(layout1, 1)
-        layout_h1 = QHBoxLayout()
-        layout_h1.addWidget(label := QLabel("Входные данные"))
-        self.labels.append(label)
-
-        self.in_combo_box = QComboBox()
-        self.in_combo_box.addItems(['STDIN'])
-        self.in_combo_box.setFixedHeight(20)
-        layout_h1.addWidget(self.in_combo_box)
-
-        self.button_add_in = Button(self.tm, 'plus')
-        self.button_add_in.setFixedSize(22, 22)
-        layout_h1.addWidget(self.button_add_in)
-
-        self.button_delete_in = Button(self.tm, 'delete')
-        self.button_delete_in.setFixedSize(22, 22)
-        layout_h1.addWidget(self.button_delete_in)
-
-        layout1.addLayout(layout_h1)
-        self.test_in_edit = BinaryRedactor(self.tm)
+        # layout_h1 = QHBoxLayout()
+        # layout_h1.addWidget(label := QLabel("Входные данные"))
+        # self.labels.append(label)
+        # 
+        # self.in_combo_box = QComboBox()
+        # self.in_combo_box.addItems(['STDIN'])
+        # self.in_combo_box.setFixedHeight(20)
+        # layout_h1.addWidget(self.in_combo_box)
+        # 
+        # self.button_add_in = Button(self.tm, 'plus')
+        # self.button_add_in.setFixedSize(22, 22)
+        # layout_h1.addWidget(self.button_add_in)
+        # 
+        # self.button_delete_in = Button(self.tm, 'delete')
+        # self.button_delete_in.setFixedSize(22, 22)
+        # layout_h1.addWidget(self.button_delete_in)
+        # 
+        # layout1.addLayout(layout_h1)
+        self.test_in_edit = RedactorWidget(self.tm)
         layout1.addWidget(self.test_in_edit)
 
         layout2 = QVBoxLayout()
         h_layout.addLayout(layout2, 1)
-        layout_h2 = QHBoxLayout()
-        layout2.addLayout(layout_h2)
-        layout_h2.addWidget(label := QLabel("Выходные данные"))
-        self.labels.append(label)
+        # layout_h2 = QHBoxLayout()
+        # layout2.addLayout(layout_h2)
+        # layout_h2.addWidget(label := QLabel("Выходные данные"))
+        # self.labels.append(label)
+        # 
+        # self.out_combo_box = QComboBox()
+        # self.out_combo_box.addItems(['STDOUT'])
+        # self.out_combo_box.setFixedHeight(20)
+        # layout_h2.addWidget(self.out_combo_box)
+        # 
+        # self.button_add_out = Button(self.tm, 'plus')
+        # self.button_add_out.setFixedSize(22, 22)
+        # layout_h2.addWidget(self.button_add_out)
+        # 
+        # self.button_delete_out = Button(self.tm, 'delete')
+        # self.button_delete_out.setFixedSize(22, 22)
+        # layout_h2.addWidget(self.button_delete_out)
 
-        self.out_combo_box = QComboBox()
-        self.out_combo_box.addItems(['STDOUT'])
-        self.out_combo_box.setFixedHeight(20)
-        layout_h2.addWidget(self.out_combo_box)
-
-        self.button_add_out = Button(self.tm, 'plus')
-        self.button_add_out.setFixedSize(22, 22)
-        layout_h2.addWidget(self.button_add_out)
-
-        self.button_delete_out = Button(self.tm, 'delete')
-        self.button_delete_out.setFixedSize(22, 22)
-        layout_h2.addWidget(self.button_delete_out)
-
-        self.test_out_edit = BinaryRedactor(self.tm)
+        self.test_out_edit = RedactorWidget(self.tm)
         layout2.addWidget(self.test_out_edit)
 
         self.data = dict()
@@ -109,13 +109,12 @@ class TestEditWidget(QWidget):
         self.test_out_edit.textChanged.connect(self.set_test_out)
         self.cmd_args_edit.textEdited.connect(self.set_test_args)
         self.exit_code_edit.textEdited.connect(self.set_test_exit)
-        self.in_combo_box.currentIndexChanged.connect(self.select_in_file)
-        self.button_add_in.clicked.connect(self.add_in_file)
-        self.button_delete_in.clicked.connect(self.delete_in)
-        self.out_combo_box.currentIndexChanged.connect(self.select_out_file)
-        self.button_add_out.clicked.connect(self.add_out_file)
-        self.button_delete_out.clicked.connect(self.delete_out)
-        self.in_files = []
+        self.test_in_edit.addTab.connect(self.add_in_file)
+        self.test_in_edit.tabCloseRequested.connect(self.delete_in)
+        self.test_in_edit.currentChanged.connect(self.test_in_selected)
+        self.test_out_edit.addTab.connect(self.add_out_file)
+        self.test_out_edit.tabCloseRequested.connect(self.delete_out)
+        self.test_out_edit.currentChanged.connect(self.test_out_selected)
 
     def exit_code_edit_triggered(self):
         if not self.exit_code_edit.text().strip():
@@ -132,40 +131,45 @@ class TestEditWidget(QWidget):
     def open_test(self, data: dict):
         self.data = data
         current_in, current_out = data.get('current_in', 0), data.get('current_out', 0)
-        self.in_files.clear()
         self.test_name_edit.setText(data.get('desc', '-'))
         self.cmd_args_edit.setText(data.get('args', ''))
         self.exit_code_edit.setText(str(data.get('exit', '')))
-        self.in_combo_box.clear()
-        self.in_combo_box.addItems(['STDIN'])
+        self.test_in_edit.clear()
+        self.test_in_edit.add_tab('STDIN', data['in'])
+        self.test_out_edit.clear()
+        self.test_out_edit.add_tab('STDOUT', data['out'])
+        
         if not isinstance(data.get('in_files'), list):
             data['in_files'] = []
-        for i, el in enumerate(data['in_files']):
-            self.in_combo_box.addItems([s := f"in_file_{i + 1}.{el['type']}"])
-            self.in_files.append(s)
-
-        self.out_combo_box.clear()
-        self.out_combo_box.addItems(['STDOUT'])
         if not isinstance(data.get('out_files'), list):
             data['out_files'] = []
+        try:
+            for key, item in data['check_files'].items():
+                data['in_files'][int(key) - 1]['check'] = item['text']
+            data.pop('check_files')
+        except KeyError:
+            pass
+        except ValueError:
+            pass
+        except IndexError:
+            pass
+            
+        for i, el in enumerate(data['in_files']):
+            self.test_in_edit.add_tab(f"in_file_{i + 1}.{el['type']}", el['text'])
+            if 'check' in el:
+                self.test_out_edit.add_tab(f"check_file_{i + 1}.{el['type']}", el['check'])
+
         for i, el in enumerate(data['out_files']):
-            self.out_combo_box.addItems([f"out_file_{i + 1}.{el['type']}"])
+            self.test_out_edit.add_tab(f"out_file_{i + 1}.{el['type']}", el['text'])
 
-        if not isinstance(data.get('check_files'), dict):
-            data['check_files'] = dict()
-        for i, el in data['check_files'].items():
-            self.out_combo_box.addItems([f"check_file_{i}.{el['type']}"])
-
-        self.in_combo_box.setCurrentIndex(current_in)
-        self.out_combo_box.setCurrentIndex(current_out)
+        self.test_in_edit.select_tab(current_in)
+        self.test_out_edit.select_tab(current_out)
 
         self.test_in_edit.setDisabled(False)
         self.test_out_edit.setDisabled(False)
         self.test_name_edit.setDisabled(False)
         self.cmd_args_edit.setDisabled(False)
         self.exit_code_edit.setDisabled(False)
-        self.in_combo_box.setDisabled(False)
-        self.out_combo_box.setDisabled(False)
 
     def set_disabled(self):
         self.test_in_edit.setDisabled(True)
@@ -173,22 +177,15 @@ class TestEditWidget(QWidget):
         self.test_name_edit.setDisabled(True)
         self.cmd_args_edit.setDisabled(True)
         self.exit_code_edit.setDisabled(True)
-        self.in_combo_box.setDisabled(True)
-        self.button_add_in.setDisabled(True)
-        self.button_delete_in.setDisabled(True)
-        self.out_combo_box.setDisabled(True)
-        self.button_add_out.setDisabled(True)
-        self.button_delete_out.setDisabled(True)
-        self.test_in_edit.open_text("", False)
-        self.test_out_edit.open_text("", False)
+        self.test_in_edit.clear()
+        self.test_out_edit.clear()
         self.test_name_edit.setText("")
         self.preprocessor_line.setText("")
         self.postprocessor_line.setText("")
         self.exit_code_edit.setText("")
 
     def set_theme(self):
-        for el in [self.test_name_edit, self.in_combo_box, self.out_combo_box, self.button_add_in,
-                   self.button_delete_in, self.button_add_out, self.button_delete_out, self.exit_code_edit]:
+        for el in [self.test_name_edit, self.exit_code_edit]:
             self.tm.auto_css(el)
         for el in [self.cmd_args_edit, self.preprocessor_line, self.postprocessor_line]:
             self.tm.auto_css(el, code_font=True)
@@ -201,83 +198,72 @@ class TestEditWidget(QWidget):
         self.data['desc'] = name
         self.test_edited.emit()
 
-    def select_in_file(self):
-        index = self.in_combo_box.currentIndex()
-        self.button_add_in.setDisabled(False)
-        if index < 0:
-            pass
-        elif index == 0:
-            self.button_delete_in.setDisabled(True)
-            self.test_in_edit.open_text(self.data['in'], False)
-            self.data['current_in'] = index
-        else:
-            self.button_delete_in.setDisabled(False)
-            data = self.data['in_files'][index - 1]
-            self.test_in_edit.open_text(data['text'], data['type'] == 'bin')
-            self.data['current_in'] = index
+    def test_in_selected(self, index):
+        self.data['current_in'] = index
 
-    def select_out_file(self):
-        index = self.out_combo_box.currentIndex()
-        self.button_add_out.setDisabled(False)
-        self.button_delete_out.setDisabled(False)
-        if index < 0:
-            pass
-        elif index == 0:
-            self.button_delete_out.setDisabled(True)
-            self.test_out_edit.open_text(self.data['out'], False)
-            self.data['current_out'] = index
-        elif self.out_combo_box.currentText().startswith('check'):
-            index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
-            data = self.data['check_files'][index]
-            self.test_out_edit.open_text(data['text'], data['type'] == 'bin')
-            self.data['current_out'] = self.out_combo_box.currentIndex()
-        else:
-            index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
-            data = self.data['out_files'][index - 1]
-            self.test_out_edit.open_text(data['text'], data['type'] == 'bin')
-            self.data['current_out'] = self.out_combo_box.currentIndex()
+    def test_out_selected(self, index):
+        self.data['current_out'] = index
 
-    def set_test_in(self):
-        index = self.in_combo_box.currentIndex()
-        if index == 0:
-            self.data['in'] = self.test_in_edit.text()
+    def set_test_in(self, name, text):
+        if name == 'STDIN':
+            self.data['in'] = text
         else:
-            self.data['in_files'][index - 1]['text'] = self.test_in_edit.text()
+            try:
+                index = int(name.lstrip('in_file_').rstrip('.txt.bin'))
+            except ValueError:
+                return 
+            self.data['in_files'][index - 1]['text'] = text
         self.test_edited.emit()
 
-    def set_test_out(self):
-        index = self.out_combo_box.currentIndex()
-        if index < 0:
-            pass
-        elif index == 0:
-            self.data['out'] = self.test_out_edit.text()
-        elif self.out_combo_box.currentText().startswith('check'):
-            index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
-            self.data['check_files'][index]['text'] = self.test_out_edit.text()
+    def set_test_out(self, name, text):
+        if name == 'STDOUT':
+            self.data['out'] = text
+        elif name.startswith('out_file_'):
+            try:
+                index = int(name.lstrip('out_file_').rstrip('.txt.bin'))
+                self.data['out_files'][index - 1]['text'] = text
+            except ValueError:
+                return
+        elif name.startswith('check_file_'):
+            try:
+                index = int(name.lstrip('check_file_').rstrip('.txt.bin'))
+                self.data['in_files'][index - 1]['check'] = text
+            except ValueError:
+                return
         else:
-            index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
-            self.data['out_files'][index - 1]['text'] = self.test_out_edit.text()
+            return
         self.test_edited.emit()
 
-    def delete_in(self):
-        index = self.in_combo_box.currentIndex()
+    def delete_in(self, index):
         if index <= 0:
             pass
         else:
             self.data['in_files'].pop(index - 1)
             self.open_test(self.data)
-        self.test_edited.emit()
 
-    def delete_out(self):
-        index = self.out_combo_box.currentIndex()
+            self.test_edited.emit()
+
+    def delete_out(self, index):
         if index <= 0:
             return
-        elif self.out_combo_box.currentText().startswith('check'):
-            index = self.out_combo_box.currentText().lstrip('check_file_').split('.')[0]
-            self.data['check_files'].pop(index)
+        name = self.test_out_edit.tab_text(index)
+        print(name)
+        if name.startswith('check_file_'):
+            try:
+                index = int(name.lstrip('check_file_').rstrip('.txt.bin'))
+                self.data['in_files'][index - 1].pop('check')
+            except Exception as ex:
+                print(f"{ex.__class__.__name__}: {ex}")
+                return
+        elif name.startswith('out_file_'):
+            try:
+                index = int(name.lstrip('out_file_').rstrip('.txt.bin'))
+                self.data['out_files'].pop(index - 1)
+            except Exception as ex:
+                print(f"{ex.__class__.__name__}: {ex}")
+                return
         else:
-            index = int(self.out_combo_box.currentText().lstrip('out_file_').split('.')[0])
-            self.data['out_files'].pop(index - 1)
+            return
         self.open_test(self.data)
         self.test_edited.emit()
 
@@ -294,25 +280,20 @@ class TestEditWidget(QWidget):
         if dialog.exec():
             file_type = 'txt' if dialog.combo_box.currentIndex() == 0 else 'bin'
             self.data['in_files'].append({'type': file_type, 'text': ''})
-            self.in_combo_box.addItems([s := f"in_file_{self.in_combo_box.count()}.{file_type}"])
-            self.in_files.append(s)
-            self.in_combo_box.setCurrentIndex(self.in_combo_box.count() - 1)
+            self.test_in_edit.add_tab(f"in_file_{self.test_in_edit.count()}.{file_type}", "")
         self.test_edited.emit()
 
     def add_out_file(self):
-        dialog = NewOutFileDialog(self.tm, self.in_files)
+        dialog = NewOutFileDialog(self.tm, self.data['in_files'])
         if dialog.exec():
             if dialog.combo_box.currentIndex() == 0:
                 file_type = 'txt' if dialog.type_combo_box.currentIndex() == 0 else 'bin'
                 self.data['out_files'].append({'type': file_type, 'text': ''})
-                self.out_combo_box.addItems([f"out_file_{self.out_combo_box.count()}.{file_type}"])
-                self.out_combo_box.setCurrentIndex(self.out_combo_box.count() - 1)
+                self.test_out_edit.add_tab(f"out_file_{self.test_out_edit.count()}.{file_type}")
             else:
                 index = dialog.file_combo_box.currentIndex()
-                self.data['check_files'][str(index + 1)] = {'type': self.data['in_files'][index]['type'],
-                                                            'text': self.data['in_files'][index]['text']}
-                self.out_combo_box.addItems([dialog.file_combo_box.currentText().replace('in', 'check', 1)])
-                self.out_combo_box.setCurrentIndex(self.out_combo_box.count() - 1)
+                self.data['in_files'][index]['check'] = ""
+                self.test_out_edit.add_tab(dialog.file_combo_box.currentText().replace('in', 'check', 1))
         self.test_edited.emit()
 
 
@@ -361,17 +342,16 @@ class NewOutFileDialog(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.tm.auto_css(self.buttonBox.button(QDialogButtonBox.Ok))
         self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.tm.auto_css(self.buttonBox.button(QDialogButtonBox.Cancel))
         self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         layout = QVBoxLayout()
 
         self.combo_box = QComboBox()
         self.combo_box.addItems(['Выходной файл', 'Проверка состояния входного файла'])
-        self.combo_box.setStyleSheet(tm.combo_box_style_sheet)
-        self.combo_box.setFont(tm.font_small)
+        self.tm.auto_css(self.combo_box)
         self.combo_box.currentIndexChanged.connect(self.combo_box_triggered)
         layout.addWidget(self.combo_box)
 
@@ -381,8 +361,7 @@ class NewOutFileDialog(QDialog):
 
         self.type_combo_box = QComboBox()
         self.type_combo_box.addItems(['Текстовый', 'Бинарный'])
-        self.type_combo_box.setStyleSheet(tm.combo_box_style_sheet)
-        self.type_combo_box.setFont(tm.font_small)
+        self.tm.auto_css(self.type_combo_box)
         layout.addWidget(self.type_combo_box)
 
         self.file_label = QLabel("Проверяемый файл:")
@@ -391,9 +370,9 @@ class NewOutFileDialog(QDialog):
         self.file_label.hide()
 
         self.file_combo_box = QComboBox()
-        self.file_combo_box.addItems(files)
-        self.file_combo_box.setStyleSheet(tm.combo_box_style_sheet)
-        self.file_combo_box.setFont(tm.font_small)
+        self.file_combo_box.addItems([f"in_file_{i + 1}.{el['type']}"
+                                      for i, el in enumerate(files)])
+        self.tm.auto_css(self.file_combo_box)
         layout.addWidget(self.file_combo_box)
         self.file_combo_box.hide()
 

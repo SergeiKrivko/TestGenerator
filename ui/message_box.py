@@ -13,8 +13,7 @@ class MessageBox(QMessageBox):
         self.setStyleSheet(tm.bg_style_sheet)
         self.addButton(QMessageBox.Ok)
         button = self.button(QMessageBox.Ok)
-        button.setFont(tm.font_small)
-        button.setStyleSheet(tm.buttons_style_sheet)
+        tm.auto_css(button)
         button.setFixedSize(70, 24)
         self.exec()
 

@@ -182,8 +182,7 @@ class CodeWidget(QWidget):
             for el in language['files']:
                 if path.endswith(el):
                     if 'lexer' in language:
-                        code_edit = CodeEditor(self.sm, self.tm)
-                        code_edit.open_file(path)
+                        code_edit = CodeEditor(self.sm, self.tm, path=path)
                         code_edit.hide()
                         self.layout.addWidget(code_edit)
                         code_edit.set_theme()
@@ -200,8 +199,7 @@ class CodeWidget(QWidget):
                         self.buttons[path] = 1
                     self.top_panel.open_tab(path)
                     return
-        code_edit = CodeEditor(self.sm, self.tm)
-        code_edit.open_file(path)
+        code_edit = CodeEditor(self.sm, self.tm, path=path)
         code_edit.hide()
         self.layout.addWidget(code_edit)
         code_edit.set_theme()

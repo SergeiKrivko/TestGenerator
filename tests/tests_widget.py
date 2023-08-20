@@ -537,6 +537,9 @@ class Test(QListWidgetItem):
         if key == 'desc':
             self.update_name()
 
+    def pop(self, key):
+        self._dict.pop(key)
+
 
 def read_file(path, default=None):
     if default is not None:
