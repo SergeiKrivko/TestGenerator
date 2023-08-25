@@ -604,6 +604,7 @@ class ThemeManager:
         return f"""
 QsciScintilla {{
     border: {'1' if border else '0'}px solid {self['BorderColor']};
+    background-color: {self['Paper'].name()};
 }}
 QsciScintilla QScrollBar:vertical {{
     background: {self['Paper'].name()};

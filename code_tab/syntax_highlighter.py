@@ -141,7 +141,7 @@ class CodeEditor(QsciScintilla):
     def save_file(self):
         if os.path.isfile(self.path):
             try:
-                with open(self.path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep', '\n')) as f:
+                with open(self.path, 'w', encoding='utf-8', newline=self.sm.line_sep) as f:
                     f.write(self.text())
             except FileNotFoundError:
                 pass

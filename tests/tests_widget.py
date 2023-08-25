@@ -406,7 +406,7 @@ class TestsWidget(QWidget):
             os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
 
             os.makedirs(os.path.split(self.sm.readme_path())[0], exist_ok=True)
-            readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+            readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.line_sep)
             readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
                          f"{self.sm.get('task'):0>2}\n\n"
                          f"## Входные данные\n{self.test_list_widget.in_data_edit.text()}\n\n"
@@ -420,7 +420,7 @@ class TestsWidget(QWidget):
             looper.start()
 
     def write_file(self, path, data=''):
-        file = open(path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep'))
+        file = open(path, 'w', encoding='utf-8', newline=self.sm.line_sep)
         file.write(data)
         file.close()
 

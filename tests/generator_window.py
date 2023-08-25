@@ -65,7 +65,7 @@ class GeneratorTab(SidePanelWidget):
                 if not name.endswith('.py'):
                     name += '.py'
                 file = open(f"{self.scripts_dir}/{name}", 'w', encoding='utf-8',
-                            newline=self.sm.get_general('line_sep', '\n'))
+                            newline=self.sm.line_sep)
                 file.write(self.code_edit.text())
                 file.close()
             except:
@@ -85,7 +85,7 @@ class GeneratorTab(SidePanelWidget):
 
     def run_code(self):
         os.makedirs(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}", exist_ok=True)
-        file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
+        file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm.line_sep)
         file.write(self.previous_code())
         file.write(self.code_edit.text())
         file.close()

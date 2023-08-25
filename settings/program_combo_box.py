@@ -1,12 +1,12 @@
 import os
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton, QVBoxLayout, QLabel
 
 from ui.button import Button
 
 
 class ProgramComboBox(QWidget):
-    def __init__(self, sm, file, key, general=True):
+    def __init__(self, sm, file, key, general=True, desc=None):
         super().__init__()
         self.sm = sm
         self.file = file
@@ -14,9 +14,20 @@ class ProgramComboBox(QWidget):
         self.general = general
         self.items = []
 
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(main_layout)
+
+        if desc:
+            self.label = QLabel(desc)
+            main_layout.addWidget(self.label)
+        else:
+            self.label = None
+
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
+        main_layout.addLayout(layout)
 
         self.combo_box = QComboBox()
         layout.addWidget(self.combo_box)
@@ -30,8 +41,6 @@ class ProgramComboBox(QWidget):
         self.button_add = Button(None, 'plus')
         layout.addWidget(self.button_add)
         self.button_add.setFixedSize(24, 22)
-
-        self.setLayout(layout)
 
         self.sm.searching_complete.connect(self.update_items)
 
@@ -71,3 +80,18 @@ class ProgramComboBox(QWidget):
         tm.auto_css(self.combo_box)
         tm.auto_css(self.button_add)
         tm.auto_css(self.button_update)
+        if self.label:
+            tm.auto_css(self.label)
+
+
+class ProgramBox(ProgramComboBox):
+    def __init__(self, sm, tm, file, key, general=True, desc=None):
+        super().__init__(sm, file, key, general, desc)
+        self.tm = tm
+        if general:
+            self.set_value(self.sm.get_general(self.key, self.file))
+        else:
+            self.set_value(self.sm.get(self.key, self.file))
+
+    def set_theme(self):
+        super().set_theme(self.tm)

@@ -41,7 +41,7 @@ class MacrosConverter(QThread):
         self.readme = readme
         self.closed = False
 
-        self.line_sep = sm.get_general('line_sep', '\n')
+        self.line_sep = sm.line_sep
         self.lab_path = sm.lab_path()
         self.data_path = sm.data_lab_path()
         background_process_manager.add_process(src_dir, self)

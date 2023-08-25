@@ -291,7 +291,7 @@ class TestingLooper(QThread):
         for j, file in iterator:
             if file.get('type', 'txt') == 'txt':
                 MacrosConverter.convert_txt(file['text'], self.sm.test_in_file_path(pos, i, j, False),
-                                            self.sm.get('line_sep'))
+                                            self.sm.line_sep)
             else:
                 MacrosConverter.convert_bin(file['text'], self.sm.test_in_file_path(pos, i, j, True))
 

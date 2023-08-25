@@ -31,6 +31,10 @@ class SettingsManager(QObject):
         self.path = ''
         self.data_path = ''
         self.data_path_old = ''
+        line_sep = self.get_general('line_sep')
+        if line_sep not in [0, 1, 2]:
+            line_sep= 0
+        self.line_sep = ['\n', '\r\n', '\r'][line_sep]
         self.project_settings = dict()
         self.set_project(self.get_general('project'))
 
@@ -165,6 +169,8 @@ class SettingsManager(QObject):
         return f"{project}/{lab}/{task}/{var}"
 
     def set_general(self, key, value):
+        if key == 'line_sep':
+            self.line_sep = ['\n', '\r\n', '\r'][value]
         self.q_settings.setValue(key, value)
 
     def set(self, key, value, project=None):
@@ -265,8 +271,8 @@ class SettingsManager(QObject):
                     self.set_general('pos_substring', 'Result:')
                 if not isinstance(self.get_general('neg_substring'), str):
                     self.set_general('neg_substring', 'Result:')
-                if not isinstance(self.get_general('line_sep'), str):
-                    self.set_general('line_sep', '\n')
+                if not isinstance(self.get_general('line_sep'), int):
+                    self.set_general('line_sep', 0)
                 if not isinstance(self.get_general('memory_testing'), int):
                     self.set_general('memory_testing', 0)
                 if not isinstance(self.get_general('coverage'), int):
@@ -306,8 +312,6 @@ class SettingsManager(QObject):
                     self.set('pos_substring', self.get_general('pos_substring', 'Result:'))
                 if not isinstance(self.get('neg_substring'), str):
                     self.set('neg_substring', self.get_general('neg_substring', 'Result:'))
-                if not isinstance(self.get('line_sep'), str):
-                    self.set('line_sep', self.get_general('line_sep', '\n'))
                 if not isinstance(self.get('memory_testing'), int):
                     self.set('memory_testing', self.get_general('memory_testing', 0))
                 if not isinstance(self.get('coverage'), int):

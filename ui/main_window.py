@@ -7,7 +7,7 @@ from ui.main_menu import MainMenu
 from ui.side_bar import SideBar, SidePanel
 from ui.themes import ThemeManager
 from code_tab.code_widget import CodeWidget
-from settings.settings_widget import SettingsWidget
+from settings.settings_window import SettingsWindow
 from tests.testing_widget import TestingWidget
 from tests.tests_widget import TestsWidget
 from tests.commands import CommandManager
@@ -67,9 +67,9 @@ class MainWindow(QMainWindow):
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
         self.code_widget.hide()
 
-        self.settings_widget = SettingsWidget(self.sm, self.tm)
+        self.settings_widget = SettingsWindow(self.sm, self.tm)
         self.settings_widget.change_theme.connect(self.set_theme)
-        self.settings_widget.hide(save_settings=False)
+        self.settings_widget.hide()
         self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)
 
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
@@ -92,6 +92,7 @@ class MainWindow(QMainWindow):
         self.show_tab(MainMenu.TAB_CODE)
 
     def set_theme(self):
+        self.tm.set_theme(self.sm.get_general('theme', 'basic'))
         self.central_widget.setStyleSheet(self.tm.bg_style_sheet)
         self.tests_widget.set_theme()
         self.code_widget.set_theme()
