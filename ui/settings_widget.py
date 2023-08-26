@@ -2,7 +2,7 @@ import os.path
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
-    QDoubleSpinBox, QPushButton, QFileDialog
+    QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
 
 from ui.message_box import MessageBox
 
@@ -83,6 +83,9 @@ class _Widget(QWidget):
     def load_value(self):
         self.set_value(self._get())
         self.show_children()
+        self.load_children()
+
+    def load_children(self):
         for item in self._children.values():
             for el in item:
                 if el.isHidden():
@@ -207,15 +210,22 @@ class ComboBox(_Widget):
     STD_WIDTH = 150
 
     def __init__(self, name: str, values: list[str], key=None, key_type=None, width=None, text_mode=False,
-                 on_state_changed=None):
-        super().__init__(key, key_type, 0)
+                 on_state_changed=None, children: dict = None):
+        super().__init__(key, key_type=None, default=0)
         self._text_mode = text_mode
         self._on_state_changed = on_state_changed
 
-        layout = QHBoxLayout() if width is None or width <= ComboBox.STD_WIDTH else QVBoxLayout()
-        self.setLayout(layout)
-        layout.setAlignment(Qt.AlignLeft)
+        layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignLeft)
+
+        if children is not None:
+            main_layout = QVBoxLayout()
+            main_layout.setContentsMargins(0, 0, 0, 0)
+            self.setLayout(main_layout)
+            main_layout.addLayout(layout)
+        else:
+            self.setLayout(layout)
 
         self._label = QLabel(name)
         layout.addWidget(self._label)
@@ -226,6 +236,30 @@ class ComboBox(_Widget):
         self._combo_box.setFixedWidth(width if width is not None else ComboBox.STD_WIDTH)
         layout.addWidget(self._combo_box)
 
+        if children is not None:
+            children_layout = QVBoxLayout()
+            children_layout.setContentsMargins(20, 0, 0, 0)
+            main_layout.addLayout(children_layout)
+            for key, item in children.items():
+                self._children[key] = []
+                if isinstance(item, list):
+                    for el in item:
+                        self._children[key].append(el)
+                        children_layout.addWidget(el)
+                else:
+                    self._children[key].append(item)
+                    children_layout.addWidget(item)
+        if key_type is not None:
+            self.set_key_type(key_type)
+
+    def show_children(self):
+        for key, item in self._children.items():
+            for el in item:
+                if key == (self._combo_box.currentText() if self._text_mode else self._combo_box.currentIndex()):
+                    el.show()
+                else:
+                    el.hide()
+
     def _on_index_changed(self, index):
         if self._text_mode:
             self._set(self._combo_box.currentText())
@@ -233,6 +267,8 @@ class ComboBox(_Widget):
             self._set(index)
         if self._on_state_changed:
             self._on_state_changed()
+        self.show_children()
+        self.load_children()
 
     def set_value(self, value):
         if self._text_mode:
@@ -248,6 +284,9 @@ class ComboBox(_Widget):
     def set_theme(self):
         self._tm.auto_css(self._combo_box)
         self._tm.auto_css(self._label)
+        for item in self._children.values():
+            for el in item:
+                el.set_theme()
 
 
 class SpinBox(_Widget):
@@ -387,16 +426,20 @@ class SwitchBox(_Widget):
                 el.set_theme()
 
 
-class SettingsWidget(QWidget):
+class SettingsWidget(QScrollArea):
     def __init__(self, sm, tm, *args, key_type=None):
         super().__init__()
         self._sm = sm
         self._tm = tm
         self._widgets = []
 
+        scroll_widget = QWidget()
+        self.setWidget(scroll_widget)
+        self.setWidgetResizable(True)
+
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
-        self.setLayout(layout)
+        scroll_widget.setLayout(layout)
 
         for el in args:
             self._widgets.append(el)
@@ -417,6 +460,7 @@ class SettingsWidget(QWidget):
                 el.load_value()
 
     def set_theme(self):
+        self.setStyleSheet(self._tm.scroll_area_css('Bg', False))
         for el in self._widgets:
             if hasattr(el, 'set_theme'):
                 el.set_theme()

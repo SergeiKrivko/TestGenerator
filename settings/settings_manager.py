@@ -33,7 +33,7 @@ class SettingsManager(QObject):
         self.data_path_old = ''
         line_sep = self.get_general('line_sep')
         if line_sep not in [0, 1, 2]:
-            line_sep= 0
+            line_sep = 0
         self.line_sep = ['\n', '\r\n', '\r'][line_sep]
         self.project_settings = dict()
         self.set_project(self.get_general('project'))
@@ -146,12 +146,15 @@ class SettingsManager(QObject):
         if var is None:
             var = self.get('var', project=project)
         if project is None:
-            if var == -1:
-                return f"{self.path}/lab_{lab:0>2}_{task:0>2}"
-            return f"{self.path}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
+            path = self.path
+        else:
+            path = self.projects[project]
+
         if var == -1:
-            return f"{self.projects[project]}/lab_{lab:0>2}_{task:0>2}"
-        return f"{self.projects[project]}/lab_{lab:0>2}_{task:0>2}_{var:0>2}"
+            return os.path.join(path, self.get('dir_no_var_pattern', 'lab_{lab:0>2}_{task:0>2}').format(
+                lab=lab, task=task))
+        return os.path.join(path, self.get('dir_pattern', 'lab_{lab:0>2}_{task:0>2}_{var:0>2}').format(
+            lab=lab, task=task, var=var))
 
     def data_lab_path(self, lab=None, task=None, var=None, project=None):
         if self.get('struct', project=project) == 1:
@@ -207,44 +210,50 @@ class SettingsManager(QObject):
     def test_in_path(self, test_type, number, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.data_lab_path(*lab, project=project)}/func_tests_data/{test_type}_{number}_in.txt"
-        return f"{self.lab_path(project=project)}/func_tests/data/{test_type}_{number + 1:0>2}_in.txt"
+        return os.path.join(self.lab_path(*lab, project=project), self.get(
+            'stdin_pattern', "func_tests/data/{test_type}_{number:0>2}_in.txt").format(
+            test_type=test_type, number=number + 1))
 
     def test_out_path(self, test_type, number, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.data_lab_path(*lab, project=project)}/func_tests_data/{test_type}_{number}_out.txt"
-        return f"{self.lab_path(project=project)}/func_tests/data/{test_type}_{number + 1:0>2}_out.txt"
+        return os.path.join(self.lab_path(*lab, project=project), self.get(
+            'stdout_pattern', "func_tests/data/{test_type}_{number:0>2}_out.txt").format(
+            test_type=test_type, number=number + 1))
 
     def test_args_path(self, test_type, number, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.data_lab_path(*lab, project=project)}/func_tests_data/{test_type}_{number}_args.txt"
-        return f"{self.lab_path(project=project)}/func_tests/data/{test_type}_{number + 1:0>2}_args.txt"
+        return os.path.join(self.lab_path(*lab, project=project), self.get(
+            'args_pattern', "func_tests/data/{test_type}_{number:0>2}_args.txt").format(
+            test_type=test_type, number=number + 1))
 
     def test_in_file_path(self, test_type, number, file_number=1, binary=False, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.app_data_dir}/temp_files/{test_type}_{number}_fin{file_number}.{'bin' if binary else 'txt'}"
-        return f"{self.lab_path(*lab, project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_in" \
-               f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
-               f"{'bin' if binary else 'txt'}"
+        return os.path.join(self.lab_path(*lab, project=project), self.get(
+            'fin_pattern', "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}").format(
+            test_type=test_type, number=number + 1, index=file_number + 1, extension=('bin' if binary else 'txt')))
 
     def test_out_file_path(self, test_type, number, file_number=1, binary=False, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.app_data_dir}/temp_files/{test_type}_{number}_fout{file_number}.{'bin' if binary else 'txt'}"
-        return f"{self.lab_path(*lab, project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_out" \
-               f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
-               f"{'bin' if binary else 'txt'}"
+        return os.path.join(self.lab_path(*lab, project=project), self.get(
+            'fout_pattern', "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}").format(
+            test_type=test_type, number=number + 1, index=file_number + 1, extension=('bin' if binary else 'txt')))
 
     def test_check_file_path(self, test_type, number, file_number=1, binary=False, lab=(None, None, None),
                              project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.app_data_dir}/temp_files/{test_type}_{number}_fcheck{file_number}.{'bin' if binary else 'txt'}"
-        return f"{self.lab_path(*lab, project=project)}/func_tests/data_files/{test_type}_{number + 1:0>2}_check" \
-               f"{file_number + 1 if isinstance(file_number, int) else file_number}." \
-               f"{'bin' if binary else 'txt'}"
+        return os.path.join(self.lab_path(*lab, project=project), self.get(
+            'fcheck_pattern', "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}").format(
+            test_type=test_type, number=number + 1, index=file_number + 1, extension=('bin' if binary else 'txt')))
 
     def readme_path(self, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
             return f"{self.data_lab_path(*lab, project=project)}/func_tests_readme.md"
-        return f"{self.lab_path(*lab, project=project)}/func_tests/readme.md"
+        return os.path.join(self.lab_path(*lab, project=project), self.get('readme_pattern', "func_tests/readme.md"))
 
     def repair_settings(self):
         if self.data_path:

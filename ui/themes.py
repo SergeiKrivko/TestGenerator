@@ -753,16 +753,16 @@ QTreeWidget QScrollBar::sub-line, QScrollBar::add-line {{
 }}
 """
 
-    def base_css(self, palette='Bg'):
+    def base_css(self, palette='Bg', border=True):
         return f"color: {self['TextColor']};\n" \
                f"background-color: {self[f'{palette}Color']};\n" \
-               f"border: 1px solid {self['BorderColor']};\n" \
+               f"border: {'1' if border else '0'}px solid {self['BorderColor']};\n" \
                f"border-radius: 4px;"
 
-    def scroll_area_css(self, palette):
+    def scroll_area_css(self, palette, border=True):
         return f"""
 QScrollArea {{
-    {self.base_css(palette)}
+    {self.base_css(palette, border)}
 }}
 QScrollArea QScrollBar:vertical {{
     background: {self[f'{palette}Color']};

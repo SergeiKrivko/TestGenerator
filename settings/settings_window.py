@@ -53,8 +53,30 @@ class SettingsWindow(QDialog):
 
         self.project_struct_widget = SettingsWidget(
             self.sm, self.tm,
-            ComboBox("Структура проекта", ['Лаба - задание - вариант', 'Без структуры'], key='struct', width=250),
-            CheckBox("Сохранять тесты в папке проекта", state=False, key='func_tests_in_project'),
+            ComboBox("Структура проекта", ['Лаба - задание - вариант', 'Без структуры'], key='struct', width=250,
+                     children={0: [
+                         LineEdit("Шаблон имени папки с лабой:", "lab_{lab:0>2}_{task:0>2}_{var:0>2}",
+                                  key='dir_pattern', width=300),
+                         LineEdit("Шаблон имени папки с лабой при отсутствии варианта:", "lab_{lab:0>2}_{task:0>2}",
+                                  key='dir_no_var_pattern', width=300)
+                     ]}),
+            CheckBox("Сохранять тесты в папке проекта", state=False, key='func_tests_in_project', children={True: [
+                LineEdit("Файл с входными данными:", "func_tests/data/{test_type}_{number:0>2}_in.txt",
+                         key='stdin_pattern', width=500),
+                LineEdit("Файл с выходными данными:", "func_tests/data/{test_type}_{number:0>2}_out.txt",
+                         key='stdout_pattern', width=500),
+                LineEdit("Файл с аргументами:", "func_tests/data/{test_type}_{number:0>2}_args.txt",
+                         key='args_pattern', width=500),
+                LineEdit("Входные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}",
+                         key='fin_pattern', width=500),
+                LineEdit("Выходные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}",
+                         key='fout_pattern', width=500),
+                LineEdit("Файлы проверки состояния входных:",
+                         "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}",
+                         key='fcheck_pattern', width=500),
+                LineEdit("Информация о тестах", "func_tests/readme.md",
+                         key='readme_pattern', width=500)
+            ]}),
             key_type=KEY_LOCAL
         )
         self.project_struct_widget.hide()
@@ -75,7 +97,7 @@ class SettingsWindow(QDialog):
                         ProgramBox(self.sm, self.tm, 'coverage.exe', 'python_coverage', True, "Python coverage:"),
                     ],
                 })
-                }),
+            }),
             CheckBox("Глобальные настройки тестирования", key='default_testing_settings', children={False: [
                 ComboBox("Компаратор для позитивных тестов:", ['Числа', 'Числа как текст', 'Текст после подстроки',
                                                                'Слова после подстроки', 'Текст', 'Слова'],
