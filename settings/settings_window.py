@@ -1,5 +1,5 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QHBoxLayout, QListWidget, QDialog, QVBoxLayout
+from PyQt5.QtWidgets import QHBoxLayout, QListWidget, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from settings.lib_dialog import LibWidget
 from ui.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
@@ -17,20 +17,37 @@ class SettingsWindow(QDialog):
         self.sm = sm
         self.tm = tm
 
+        self.setWindowTitle("TestGenerator - настройки")
+
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
+        layout.setSpacing(20)
         layout.setContentsMargins(10, 10, 0, 10)
         main_layout.addLayout(layout)
 
         self.setFixedSize(800, 500)
 
-        self.list_widget = QListWidget()
-        self.list_widget.addItems(['Основные', 'Проект', 'Проект - структура', 'Проект - тестирование', 'C',
-                                   'Python', 'Тестирование', 'Библиотеки'])
-        self.list_widget.setFixedWidth(175)
-        self.list_widget.currentItemChanged.connect(self.select_tab)
-        layout.addWidget(self.list_widget)
+        self.tree_widget = QTreeWidget()
+        self.tree_widget.setHeaderHidden(True)
+        self.tree_widget.setFocusPolicy(False)
+        self.tree_widget.setFixedWidth(200)
+
+        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Основные']))
+
+        self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Проект']))
+        item.addChild(QTreeWidgetItem(['Структура']))
+        item.addChild(QTreeWidgetItem(['Тестирование']))
+
+        self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Языки']))
+        item.addChild(QTreeWidgetItem(['C']))
+        item.addChild(QTreeWidgetItem(['Python']))
+
+        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Тестирование ']))
+        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Библиотеки']))
+
+        self.tree_widget.currentItemChanged.connect(self.select_tab)
+        layout.addWidget(self.tree_widget)
 
         self.main_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -210,8 +227,8 @@ class SettingsWindow(QDialog):
         self.setStyleSheet(self.tm.bg_style_sheet)
         # self.button_ok.setStyleSheet(self.tm.button_css('Main'))
         # self.button_ok.setFont(self.tm.font_small)
-        self.list_widget.setStyleSheet(self.tm.list_widget_css('Main'))
-        self.tm.set_theme_to_list_widget(self.list_widget, self.tm.font_medium)
+        self.tree_widget.setStyleSheet(self.tm.tree_widget_css('Bg', border=False))
+        self.tree_widget.setFont(self.tm.font_medium)
         self.libs_widget.set_theme()
         self.project_settings_widget.set_theme()
         self.main_settings_widget.set_theme()
@@ -228,8 +245,12 @@ class SettingsWindow(QDialog):
                 el.load_values()
         return super().exec()
 
-    def select_tab(self, item):
+    def select_tab(self, item: QTreeWidgetItem):
         if item is not None:
+            tab = item.text(0)
+            if tab == 'Языки':
+                return
+
             self.main_settings_widget.hide()
             self.project_settings_widget.hide()
             self.project_struct_widget.hide()
@@ -238,20 +259,20 @@ class SettingsWindow(QDialog):
             self.python_settings_widget.hide()
             self.testing_settings_widget.hide()
             self.libs_widget.hide()
-            tab = item.text()
+
             if tab == 'Основные':
                 self.main_settings_widget.show()
             if tab == 'Проект':
                 self.project_settings_widget.show()
-            if tab == 'Проект - структура':
+            if tab == 'Структура':
                 self.project_struct_widget.show()
-            if tab == 'Проект - тестирование':
+            if tab == 'Тестирование':
                 self.project_testing_widget.show()
             if tab == 'C':
                 self.c_settings_widget.show()
             if tab == 'Python':
                 self.python_settings_widget.show()
-            if tab == 'Тестирование':
+            if tab == 'Тестирование ':
                 self.testing_settings_widget.show()
             if tab == 'Библиотеки':
                 self.libs_widget.show()

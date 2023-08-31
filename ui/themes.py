@@ -692,10 +692,10 @@ QListWidget QScrollBar::sub-line, QScrollBar::add-line {{
 }}
 """
 
-    def tree_widget_css(self, palette):
+    def tree_widget_css(self, palette, border=True, border_radius=True):
         return f"""
 QTreeWidget {{
-    {self.base_css(palette)}
+    {self.base_css(palette, border, border_radius)}
 }}
 QTreeWidget::item {{
     border-radius: 6px;

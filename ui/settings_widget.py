@@ -1,6 +1,7 @@
 import os.path
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
 
@@ -508,13 +509,13 @@ class SettingsWidget(QScrollArea):
         self._tm = tm
         self._widgets = []
 
-        scroll_widget = QWidget()
-        self.setWidget(scroll_widget)
+        self.__scroll_widget = QWidget()
+        self.setWidget(self.__scroll_widget)
         self.setWidgetResizable(True)
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
-        scroll_widget.setLayout(layout)
+        self.__scroll_widget.setLayout(layout)
 
         for el in args:
             self._widgets.append(el)
@@ -528,6 +529,10 @@ class SettingsWidget(QScrollArea):
                 if hasattr(el, 'set_key_type'):
                     el.set_key_type(key_type)
         self.load_values()
+        
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        self.__scroll_widget.setMaximumWidth(a0.size().width())
+        super().resizeEvent(a0)
 
     def load_values(self):
         for el in self._widgets:
