@@ -15,5 +15,5 @@ class Button(QPushButton):
     def set_theme(self, tm=None):
         if tm is not None:
             self.tm = tm
-        self.setStyleSheet(self.tm.button_css(self.css))
+        self.setStyleSheet(self.tm.button_css(self.css, False))
         self.setIcon(QIcon(self.tm.get_image(self.image_name, color=self.tm.get(self.color))))

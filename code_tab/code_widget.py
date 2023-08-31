@@ -6,6 +6,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar
 
 from code_tab.preview_widgets import PreviewWidget
+from code_tab.search_panel import SearchPanel
 from language.languages import languages
 from code_tab.syntax_highlighter import CodeEditor
 from ui.button import Button
@@ -40,16 +41,20 @@ class CodeWidget(QWidget):
         self.top_panel.button_preview.clicked.connect(self.show_preview)
         main_layout.addWidget(self.top_panel)
 
+        self.search_panel = SearchPanel(self.sm, self.tm)
+        self.search_panel.hide()
+        self.top_panel.button_search.clicked.connect(lambda flag:
+                                                     self.search_panel.show() if flag else self.search_panel.hide())
+        self.search_panel.selectText.connect(self.select_text)
+        self.search_panel.button_replace.clicked.connect(self.replace)
+        self.search_panel.button_replace_all.clicked.connect(self.replace_all)
+        main_layout.addWidget(self.search_panel)
+
         self.layout = QHBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(self.layout)
 
         self.files_widget = self.side_panel.tabs['files']
-        self.files_widget.setMaximumWidth(200)
-        self.files_widget.button_down.clicked.connect(self.search_next)
-        self.files_widget.button_up.clicked.connect(self.search_previous)
-        self.files_widget.button_replace.clicked.connect(self.replace)
-        self.files_widget.button_replace_all.clicked.connect(self.replace_all)
 
         self.files_widget.openFile.connect(self.open_code)
         self.files_widget.renameFile.connect(self.rename_file)
@@ -135,6 +140,7 @@ class CodeWidget(QWidget):
         else:
             self.empty_widget.show()
         self.current_file = path
+        self._on_text_changed()
 
         if self.buttons[path] == 1:
             self.top_panel.button_preview.hide()
@@ -184,6 +190,8 @@ class CodeWidget(QWidget):
                     if 'lexer' in language:
                         code_edit = CodeEditor(self.sm, self.tm, path=path)
                         code_edit.hide()
+                        code_edit.textChanged.connect(self._on_text_changed)
+                        code_edit.cursorPositionChanged.connect(self._on_pos_changed)
                         self.layout.addWidget(code_edit)
                         code_edit.set_theme()
                         self.code_widgets[path] = code_edit
@@ -237,59 +245,38 @@ class CodeWidget(QWidget):
                     self.code_edit.setMarginLineNumbers(i, False)
                     self.code_edit.setMarginText(i, f"{line[0].strip():3} {line[1].strip():3}", 0)
 
-    def search_next(self):
-        try:
-            if word := self.files_widget.search_line.text():
-                current_line, current_symbol = self.code_edit.getCursorPosition()
-                text = self.code_edit.text().split('\n')
-                if word in text[current_line][current_symbol:]:
-                    index = text[current_line][current_symbol:].index(word) + current_symbol
-                    self.code_edit.setSelection(current_line, index, current_line, index + len(word))
-                    return True
-                else:
-                    for i in range(current_line + 1, len(text)):
-                        if word in text[i]:
-                            index = text[i].index(word)
-                            self.code_edit.setSelection(i, index, i, index + len(word))
-                            return True
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
-        return False
+    def select_text(self, a, b, c, d):
+        if self.current_file in self.code_widgets:
+            self.code_widgets[self.current_file].setSelection(a, b, c, d)
 
-    def search_previous(self):
-        try:
-            if word := self.files_widget.search_line.text():
-                current_line, current_symbol = self.code_edit.getCursorPosition()
-                text = self.code_edit.text().split('\n')
-                if word in text[current_line][:current_symbol - 1]:
-                    index = text[current_line][:current_symbol - 1].rindex(word)
-                    self.code_edit.setSelection(current_line, index, current_line, index + len(word))
-                    return True
-                else:
-                    for i in range(current_line - 1, -1, -1):
-                        if word in text[i]:
-                            index = text[i].rindex(word)
-                            self.code_edit.setSelection(i, index, i, index + len(word))
-                            return True
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
-        return False
+    def _on_text_changed(self):
+        if self.current_file in self.code_widgets:
+            self.search_panel.text = self.code_widgets[self.current_file].text()
+
+    def _on_pos_changed(self):
+        if self.current_file in self.code_widgets:
+            self.search_panel.pos = self.code_widgets[self.current_file].getCursorPosition()
 
     def replace(self):
-        if self.code_edit.selectedText() == self.files_widget.search_line.text():
-            self.code_edit.replaceSelectedText(self.files_widget.replace_line.text())
-            if not self.search_next():
-                self.search_previous()
+        if self.current_file in self.code_widgets:
+            code_edit = self.code_widgets[self.current_file]
+            if code_edit.selectedText() == self.search_panel.search_line_edit.text():
+                code_edit.replaceSelectedText(self.search_panel.replace_line_edit.text())
+                if not self.search_panel.search_next():
+                    self.search_panel.search_previous()
 
     def replace_all(self):
-        self.code_edit.setText(self.code_edit.text().replace(self.files_widget.search_line.text(),
-                                                             self.files_widget.replace_line.text()))
+        if self.current_file in self.code_widgets:
+            code_edit = self.code_widgets[self.current_file]
+            code_edit.setText(code_edit.text().replace(self.search_panel.search_line_edit.text(),
+                                                       self.search_panel.replace_line_edit.text()))
 
     def set_theme(self):
         for el in self.code_widgets.values():
             el.set_theme()
         for el in self.preview_widgets.values():
             el.set_theme()
+        self.search_panel.set_theme()
         self.top_panel.set_theme()
 
 
@@ -322,6 +309,11 @@ class TopPanelWidget(QWidget):
         self.tab_bar.setMovable(True)
         self.tab_bar.setTabsClosable(True)
         main_layout.addWidget(self.tab_bar, 100, Qt.AlignLeft)
+
+        self.button_search = Button(self.tm, 'search', css='Bg', tooltip='Поиск')
+        self.button_search.setFixedSize(20, 20)
+        self.button_search.setCheckable(True)
+        main_layout.addWidget(self.button_search, 1, Qt.AlignRight)
 
         self.button_run = Button(self.tm, 'run', css='Bg', tooltip='Запустить')
         self.button_run.setFixedSize(20, 20)
@@ -399,6 +391,7 @@ QTabBar::close-button:hover {{
 """)
         self.button_run.set_theme()
         self.button_preview.set_theme()
+        self.button_search.set_theme()
         for i, el in enumerate(self.tabs):
             name = os.path.basename(el)
             if '.' in name and (ind := name.rindex('.')):

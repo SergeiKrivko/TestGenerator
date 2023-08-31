@@ -539,7 +539,7 @@ class ThemeManager:
         for i in range(widget.count()):
             widget.item(i).setFont(font if font else self.font_small)
 
-    def auto_css(self, widget: QWidget, code_font=False, palette='Main'):
+    def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True):
         if code_font:
             widget.setFont(self.code_font)
         else:
@@ -550,7 +550,7 @@ class ThemeManager:
         elif isinstance(widget, QComboBox):
             widget.setStyleSheet(self.combobox_css(palette))
         elif isinstance(widget, QLineEdit):
-            widget.setStyleSheet(self.base_css(palette))
+            widget.setStyleSheet(self.base_css(palette, border, border_radius))
         elif isinstance(widget, QTextEdit):
             widget.setStyleSheet(self.text_edit_css(palette))
         elif isinstance(widget, QScrollArea):
@@ -558,7 +558,7 @@ class ThemeManager:
         elif isinstance(widget, Button):
             widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
-            widget.setStyleSheet(self.button_css(palette))
+            widget.setStyleSheet(self.button_css(palette, border, border_radius))
         elif isinstance(widget, QLabel):
             widget.setStyleSheet('border: none;')
         elif isinstance(widget, QSpinBox):
@@ -753,11 +753,11 @@ QTreeWidget QScrollBar::sub-line, QScrollBar::add-line {{
 }}
 """
 
-    def base_css(self, palette='Bg', border=True):
+    def base_css(self, palette='Bg', border=True, border_radius=True):
         return f"color: {self['TextColor']};\n" \
                f"background-color: {self[f'{palette}Color']};\n" \
                f"border: {'1' if border else '0'}px solid {self['BorderColor']};\n" \
-               f"border-radius: 4px;"
+               f"border-radius: {'4' if border_radius else '0'}px;"
 
     def scroll_area_css(self, palette, border=True):
         return f"""
@@ -969,13 +969,14 @@ QSpinBox::disabled {{
     def double_spinbox_css(self, palette='Bg'):
         return self.spinbox_css(palette=palette).replace('QSpinBox', 'QDoubleSpinBox')
 
-    def button_css(self, palette='Bg'):
+    def button_css(self, palette='Bg', border=True, border_radius=True):
         return f"""
 QPushButton {{
     color: {self['TextColor']};
     background-color: {self[f'{palette}Color']};
-    border: 0px solid black;
-    border-radius: 5px;
+    border: {'1' if border else '0'}px solid {self['BorderColor']};
+    border-radius: {'5' if border_radius else '0'}px;
+    padding: 1px 4px 1px 4px;
 }}
 QPushButton::hover {{
     background-color: {self[f'{palette}HoverColor']};
