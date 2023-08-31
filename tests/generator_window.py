@@ -53,9 +53,11 @@ class GeneratorTab(SidePanelWidget):
         self.dialog = FileDialog(self.tm, 'open', self.scripts_dir)
         if self.dialog.exec():
             try:
-                self.code_edit.open_file(os.path.join(self.scripts_dir, self.dialog.list_widget.currentItem().text()))
-            except:
-                pass
+                with open(os.path.join(self.scripts_dir, self.dialog.list_widget.currentItem().text()),
+                          encoding='utf-8') as f:
+                    self.code_edit.set_text(f.read())
+            except Exception as ex:
+                print(f"{ex.__class__.__name__}: {ex}")
 
     def save_code(self):
         self.dialog = FileDialog(self.tm, 'save', self.scripts_dir)
@@ -68,8 +70,8 @@ class GeneratorTab(SidePanelWidget):
                             newline=self.sm.line_sep)
                 file.write(self.code_edit.text())
                 file.close()
-            except:
-                pass
+            except Exception as ex:
+                print(f"{ex.__class__.__name__}: {ex}")
 
     def set_autocompletion(self):
         self.code_edit.autocomplitions = ["open_in_file(test_num, mode='w', **kwargs)",

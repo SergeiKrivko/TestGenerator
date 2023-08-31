@@ -84,12 +84,14 @@ class SearchPanel(QWidget):
                 if word in text[current_line][current_symbol:]:
                     index = text[current_line][current_symbol:].index(word) + current_symbol
                     self.selectText.emit(current_line, index, current_line, index + len(word))
+                    self.update_label(text)
                     return True
                 else:
                     for i in range(current_line + 1, len(text)):
                         if word in text[i]:
                             index = text[i].index(word)
                             self.selectText.emit(i, index, i, index + len(word))
+                            self.update_label(text)
                             return True
         except Exception as ex:
             print(f"{ex.__class__.__name__}: {ex}")
@@ -100,16 +102,17 @@ class SearchPanel(QWidget):
             if word := self.search_line_edit.text():
                 current_line, current_symbol = self.pos
                 text = self.text.split('\n')
-                self.update_label(text)
                 if word in text[current_line][:current_symbol - 1]:
                     index = text[current_line][:current_symbol - 1].rindex(word)
                     self.selectText.emit(current_line, index, current_line, index + len(word))
+                    self.update_label(text)
                     return True
                 else:
                     for i in range(current_line - 1, -1, -1):
                         if word in text[i]:
                             index = text[i].rindex(word)
                             self.selectText.emit(i, index, i, index + len(word))
+                            self.update_label(text)
                             return True
         except Exception as ex:
             print(f"{ex.__class__.__name__}: {ex}")
@@ -126,6 +129,7 @@ class SearchPanel(QWidget):
                     line = text[i][:self.pos[1] + len(word)]
                 except IndexError:
                     line = text[i]
+                print(count, line.count(word), repr(line))
                 count += line.count(word)
                 break
         self.label.setText(f"{count}/{self.text.count(word)}")
