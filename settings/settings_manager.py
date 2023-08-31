@@ -152,7 +152,7 @@ class SettingsManager(QObject):
 
         if var == -1:
             return os.path.join(path, self.get('dir_no_var_pattern', 'lab_{lab:0>2}_{task:0>2}').format(
-                lab=lab, task=task))
+                lab=lab, task=task, var=var))
         return os.path.join(path, self.get('dir_pattern', 'lab_{lab:0>2}_{task:0>2}_{var:0>2}').format(
             lab=lab, task=task, var=var))
 

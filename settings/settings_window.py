@@ -1,12 +1,9 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget, QDialog, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QHBoxLayout, QListWidget, QDialog, QVBoxLayout
 
 from settings.lib_dialog import LibWidget
-from settings.program_combo_box import ProgramBox
-from settings.project_settings_widget import ProjectSettingsWidget
-from ui.options_window import OptionsWidget
 from ui.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
-    KEY_SMART, SwitchBox
+    KEY_SMART, SwitchBox, ProgramEdit
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
@@ -21,7 +18,9 @@ class SettingsWindow(QDialog):
         self.tm = tm
 
         main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
         layout = QHBoxLayout()
+        layout.setContentsMargins(10, 10, 0, 10)
         main_layout.addLayout(layout)
 
         self.setFixedSize(800, 500)
@@ -56,26 +55,26 @@ class SettingsWindow(QDialog):
             ComboBox("Структура проекта", ['Лаба - задание - вариант', 'Без структуры'], key='struct', width=250,
                      children={0: [
                          LineEdit("Шаблон имени папки с лабой:", "lab_{lab:0>2}_{task:0>2}_{var:0>2}",
-                                  key='dir_pattern', width=300),
+                                  key='dir_pattern', width=300, check_func=SettingsWindow.check_dir_pattern),
                          LineEdit("Шаблон имени папки с лабой при отсутствии варианта:", "lab_{lab:0>2}_{task:0>2}",
-                                  key='dir_no_var_pattern', width=300)
+                                  key='dir_no_var_pattern', width=300, check_func=SettingsWindow.check_dir_pattern)
                      ]}),
             CheckBox("Сохранять тесты в папке проекта", state=False, key='func_tests_in_project', children={True: [
                 LineEdit("Файл с входными данными:", "func_tests/data/{test_type}_{number:0>2}_in.txt",
-                         key='stdin_pattern', width=500),
+                         key='stdin_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
                 LineEdit("Файл с выходными данными:", "func_tests/data/{test_type}_{number:0>2}_out.txt",
-                         key='stdout_pattern', width=500),
+                         key='stdout_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
                 LineEdit("Файл с аргументами:", "func_tests/data/{test_type}_{number:0>2}_args.txt",
-                         key='args_pattern', width=500),
+                         key='args_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
                 LineEdit("Входные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}",
-                         key='fin_pattern', width=500),
+                         key='fin_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
                 LineEdit("Выходные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}",
-                         key='fout_pattern', width=500),
+                         key='fout_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
                 LineEdit("Файлы проверки состояния входных:",
                          "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}",
-                         key='fcheck_pattern', width=500),
+                         key='fcheck_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
                 LineEdit("Информация о тестах", "func_tests/readme.md",
-                         key='readme_pattern', width=500)
+                         key='readme_pattern', width=500, check_func=SettingsWindow.check_path)
             ]}),
             key_type=KEY_LOCAL
         )
@@ -87,14 +86,14 @@ class SettingsWindow(QDialog):
             CheckBox("Глобальные настройки компилятора/интерпретатора", key='default_compiler_settings', children={
                 False: SwitchBox(lambda: self.sm.get('language'), {
                     'C': [
-                        ProgramBox(self.sm, self.tm, 'gcc.exe', 'gcc', True, "Компилятор:"),
+                        ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
                         LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
                         CheckBox("Ключ -lm", True, key='-lm'),
-                        ProgramBox(self.sm, self.tm, 'gcov.exe', 'gcov', True, "Coverage:"),
+                        ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
                     ],
                     'Python': [
-                        ProgramBox(self.sm, self.tm, 'python.exe', 'python', True, "Python:"),
-                        ProgramBox(self.sm, self.tm, 'coverage.exe', 'python_coverage', True, "Python coverage:"),
+                        ProgramEdit("Python:", 'python.exe', 'python'),
+                        ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
                     ],
                 })
             }),
@@ -120,10 +119,10 @@ class SettingsWindow(QDialog):
 
         self.c_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            ProgramBox(self.sm, self.tm, 'gcc.exe', 'gcc', True, "Компилятор:"),
+            ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
             LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
             CheckBox("Ключ -lm", True, key='-lm'),
-            ProgramBox(self.sm, self.tm, 'gcov.exe', 'gcov', True, "Coverage:"),
+            ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
             key_type=KEY_GLOBAL
         )
         self.c_settings_widget.hide()
@@ -131,8 +130,8 @@ class SettingsWindow(QDialog):
 
         self.python_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            ProgramBox(self.sm, self.tm, 'python.exe', 'python', True, "Python:"),
-            ProgramBox(self.sm, self.tm, 'coverage.exe', 'python_coverage', True, "Python coverage:"),
+            ProgramEdit("Python:", 'python.exe', 'python'),
+            ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
             key_type=KEY_GLOBAL
         )
         self.python_settings_widget.hide()
@@ -175,6 +174,37 @@ class SettingsWindow(QDialog):
         # buttons_layout.addWidget(self.button_ok)
 
         self.setLayout(main_layout)
+
+    @staticmethod
+    def check_path(path: str):
+        for el in "\"'!?:;":
+            if el in path:
+                return False
+        return True
+
+    @staticmethod
+    def check_std_pattern(pattern: str):
+        try:
+            path = pattern.format(test_type='pos', number=1)
+            return SettingsWindow.check_path(path)
+        except Exception:
+            return False
+
+    @staticmethod
+    def check_file_name_pattern(pattern: str):
+        try:
+            path = pattern.format(test_type='pos', number=1, index=1, extension='txt')
+            return SettingsWindow.check_path(path)
+        except Exception:
+            return False
+
+    @staticmethod
+    def check_dir_pattern(pattern: str):
+        try:
+            path = pattern.format(lab=1, task=1, var=0)
+            return SettingsWindow.check_path(path)
+        except Exception:
+            return False
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)

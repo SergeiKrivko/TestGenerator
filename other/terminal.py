@@ -95,6 +95,9 @@ class Terminal(QTextEdit):
             self.start_process(command)
 
     def start_process(self, command):
+        if not command.strip():
+            self.write_prompt()
+            return
         old_dir = os.getcwd()
         os.chdir(self.current_dir)
         csi = shlex.split(command, posix=False)

@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
 
+from ui.button import Button
 from ui.message_box import MessageBox
 
 KEY_GLOBAL = 0
@@ -424,6 +425,80 @@ class SwitchBox(_Widget):
         for item in self._children.values():
             for el in item:
                 el.set_theme()
+
+
+class ProgramEdit(_Widget):
+    def __init__(self, desc, file, key=None, key_type=None):
+        super().__init__(key, key_type, file)
+        self._file = file
+        self._items = []
+
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(main_layout)
+
+        self.label = QLabel(desc)
+        main_layout.addWidget(self.label)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        main_layout.addLayout(layout)
+
+        self.combo_box = QComboBox()
+        layout.addWidget(self.combo_box)
+        self.combo_box.currentTextChanged.connect(self._on_index_changed)
+
+        self.button_update = Button(None, 'update')
+        layout.addWidget(self.button_update)
+        self.button_update.setFixedSize(24, 22)
+
+        self.button_add = Button(None, 'plus')
+        layout.addWidget(self.button_add)
+        self.button_add.setFixedSize(24, 22)
+
+    def set_sm(self, sm):
+        super().set_sm(sm)
+
+        self.button_update.clicked.connect(self._sm.start_search)
+        self._sm.searching_complete.connect(self.update_items)
+        if os.name != 'nt':
+            self.setDisabled(True)
+        else:
+            self.update_items()
+
+    def set_items(self, items: list, delete_current=False):
+        text = self.combo_box.currentText()
+        if not delete_current and text not in items and text.strip():
+            items.append(text)
+        else:
+            text = self._get()
+        self._items = items
+        self.combo_box.clear()
+        self.combo_box.addItems(items)
+        self.combo_box.setCurrentText(text)
+
+    def add_item(self, item: str):
+        self._items.append(item)
+        self.combo_box.addItem(item, None)
+
+    def update_items(self, forced=True):
+        self.set_items(self._sm.programs.get(self._file, []), delete_current=forced)
+
+    def set_value(self, text: str):
+        if text not in self._items:
+            self.add_item(text)
+        self.combo_box.setCurrentText(text)
+
+    def _on_index_changed(self, text):
+        self._set(text)
+
+    def set_theme(self):
+        self._tm.auto_css(self.combo_box)
+        self._tm.auto_css(self.button_add)
+        self._tm.auto_css(self.button_update)
+        if self.label:
+            self._tm.auto_css(self.label)
 
 
 class SettingsWidget(QScrollArea):
