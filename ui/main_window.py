@@ -13,6 +13,7 @@ from tests.tests_widget import TestsWidget
 from tests.commands import CommandManager
 from settings.settings_manager import SettingsManager
 import os
+import math
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}

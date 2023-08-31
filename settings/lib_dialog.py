@@ -82,7 +82,7 @@ class LibWidget(QWidget):
         self.open_lib()
 
     def set_theme(self):
-        for el in [self.lib_list_widget, self.button_add_lib,self.text_edit, self.delete_button, self.button_update,
+        for el in [self.lib_list_widget, self.button_add_lib, self.text_edit, self.delete_button, self.button_update,
                    self.lib_name_edit, self.new_lib_dialog]:
             self.tm.auto_css(el)
         for i in range(self.lib_list_widget.count()):
@@ -219,6 +219,7 @@ class NewLibDialog(QDialog):
         self.remote_files_list_reader.complete.connect(self.set_files_list)
         self.remote_files_list_reader.error.connect(lambda: QMessageBox.warning(
             self, "Ошибка", "Не удалось загрузить список библиотек. Проверьте подключение к интернету"))
+        self.set_theme()
 
     def change_mode(self):
         if self.mode_combo_box.currentIndex() == CustomLib.LOCAL:
@@ -240,11 +241,9 @@ class NewLibDialog(QDialog):
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
-        self.mode_combo_box.setStyleSheet(self.tm.combo_box_style_sheet)
-        self.local_line_edit.setStyleSheet(self.tm.style_sheet)
-        self.global_list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
-
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        for el in [self.mode_combo_box, self.local_line_edit, self.global_list_widget,
+                   self.buttonBox.button(QDialogButtonBox.Ok)]:
+            self.tm.auto_css(el)
 
     def exec(self) -> int:
         self.global_list_widget.clear()
@@ -285,9 +284,9 @@ class CustomDialog(QDialog):
         self.setLayout(layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.buttonBox.button(QDialogButtonBox.Yes).setStyleSheet(tm.buttons_style_sheet)
+        tm.auto_css(self.buttonBox.button(QDialogButtonBox.Yes))
         self.buttonBox.button(QDialogButtonBox.Yes).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.No).setStyleSheet(tm.buttons_style_sheet)
+        tm.auto_css(self.buttonBox.button(QDialogButtonBox.No))
         self.buttonBox.button(QDialogButtonBox.No).setFixedSize(80, 24)
 
 
@@ -307,5 +306,5 @@ class LoadFileDialog(QDialog):
         self.setModal(False)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(tm.buttons_style_sheet)
+        tm.auto_css(self.buttonBox.button(QDialogButtonBox.Cancel))
         self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
