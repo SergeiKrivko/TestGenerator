@@ -56,10 +56,11 @@ class LexerBin(QsciLexerCustom):
 
     def styleText(self, start, end):
         self.set_defines()
-        self.startStyling(start)
         if not self.bin_code:
-            self.startStyling(end - start, LexerBin.Default)
+            self.startStyling(end, LexerBin.Default)
             return
+
+        self.startStyling(start)
 
         text = self.parent().text()[start:end]
         for line in text.split('\n'):

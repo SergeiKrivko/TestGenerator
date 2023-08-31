@@ -253,19 +253,14 @@ class ProjectWidget(SidePanelWidget):
         self.tm.auto_css(self.list_widget)
 
     def remove_temp_projects(self):
-        project = self.sm.project
+        # project = self.sm.project
         for el in self.temp_project:
             if el in self.sm.projects:
                 self.select_project(el)
                 self.delete_project(forced=True)
-        self.select_project(project)
+        # self.select_project(project)
         self.temp_project.clear()
         self.sm.set_general('temp_projects', '[]')
-
-    def show(self) -> None:
-        if self.isHidden():
-            self.open_project()
-        super(ProjectWidget, self).show()
 
 
 class ProjectListWidgetItem(QListWidgetItem):

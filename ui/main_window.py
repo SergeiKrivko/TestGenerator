@@ -150,11 +150,7 @@ class MainWindow(QMainWindow):
         self.show_tab('testing_widget')
 
     def closeEvent(self, a0):
-        # self.code_widget.hide()
         self.tests_widget.save_tests()
-        # self.tests_widget.hide()
-        # self.testing_widget.hide()
-        # self.settings_widget.hide()
         self.sm.store()
         if len(background_process_manager.dict):
             dialog = ExitDialog(self.tm)

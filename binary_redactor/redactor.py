@@ -57,7 +57,8 @@ class BinaryRedactor(QsciScintilla):
         self.setCaretLineBackgroundColor(QColor(self.tm['MainColor']))
         self.__lexer.setDefaultFont(self.tm.code_font)
         self.__lexer.setDefaultPaper(QColor(self.tm['MainColor']))
-        self.__lexer.setColor(self.tm['Keyword'], LexerBin.Mask)
+        self.__lexer.setColor(QColor(self.tm['Keyword']) if self.__lexer.bin_code else QColor(self.tm['TextColor']),
+                              LexerBin.Mask)
         self.__lexer.setPaper(QColor(self.tm['MainColor']), LexerBin.Mask)
         self.__lexer.setColor(self.tm['Identifier'], LexerBin.Value)
         self.__lexer.setPaper(QColor(self.tm['MainColor']), LexerBin.Value)
