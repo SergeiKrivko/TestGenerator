@@ -40,6 +40,8 @@ def c_run(path, sm, args='', coverage=False):
 
 
 def c_clear_coverage_files(path):
+    if not os.path.isdir(path):
+        return
     for file in os.listdir(path):
         if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
             os.remove(f"{path}/{file}")

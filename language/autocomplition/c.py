@@ -177,7 +177,7 @@ class CodeAutocompletionManager:
         current_struct = ""
         i = 0
         self._function_definitions.clear()
-        for line in text.split(self._sm.get('line_sep', '\n')):
+        for line in text.split(self._sm.line_sep):
             try:
                 if current_func:
                     if line.startswith('}'):
@@ -224,7 +224,7 @@ class CodeAutocompletionManager:
             pass
 
         try:
-            for line in self.text.split(self._sm.get('line_sep', '\n'))[func.start + 2:func.stop]:
+            for line in self.text.split(self._sm.line_sep)[func.start + 2:func.stop]:
                 line = line.strip()
                 if r := self._parse_struct_variable(line):
                     func.struct_variables.append(r)

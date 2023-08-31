@@ -1,44 +1,43 @@
 import os
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QMainWindow, QDialog, QListWidget, \
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QDialog, QListWidget, \
     QLineEdit
 
-from ui.menu_bar import MenuBar
+from code_tab.console import Console
 from ui.message_box import MessageBox
 from code_tab.syntax_highlighter import CodeEditor
+from ui.side_panel_widget import SidePanelWidget
 
 
-class GeneratorWindow(QMainWindow):
+class GeneratorTab(SidePanelWidget):
     complete = pyqtSignal()
 
     def __init__(self, sm, cm, tm):
-        super(GeneratorWindow, self).__init__()
+        super().__init__(sm, tm, 'Генерация тестов', ['load', 'save', 'run', 'close', 'resize'])
         self.setWindowTitle("TestGenerator")
         self.resize(600, 400)
 
-        self.sm = sm
         self.cm = cm
-        self.tm = tm
         self.test_type = 'pos'
 
-        central_widget = QWidget()
         main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.menu_bar = MenuBar({
-            'Открыть': (self.open_code, None),
-            'Сохранить': (self.save_code, None),
-            'Документация': (self.show_info, None),
-            'Протестировать': (lambda: print('test'), None),
-            'Запустить': (self.run_code, None)
-        })
-        self.setMenuBar(self.menu_bar)
-
-        self.code_edit = CodeEditor(self.sm, self.tm)
-
+        self.code_edit = CodeEditor(self.sm, self.tm, language='Python', border=True)
         main_layout.addWidget(self.code_edit)
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+
+        self.console = Console(self.sm, self.tm, self.cm)
+        self.console.hide()
+        main_layout.addWidget(self.console)
+
+        self.setLayout(main_layout)
+
+        self.buttons['load'].clicked.connect(self.open_code)
+        self.buttons['save'].clicked.connect(self.save_code)
+        # self.buttons['documentation'].clicked.connect(self.show_info)
+        self.buttons['close'].clicked.connect(self.close_console)
+        self.buttons['run'].clicked.connect(self.run_code)
 
         self.set_autocompletion()
 
@@ -46,23 +45,15 @@ class GeneratorWindow(QMainWindow):
         self.scripts_dir = f"{self.sm.app_data_dir}/scripts"
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.bg_style_sheet)
-        self.menu_bar.setStyleSheet(f"""
-        QMenuBar {{
-            color: {self.tm['TextColor']};
-            background-color: {self.tm['BgColor']};
-        }}
-        QMenuBar::item::selected {{
-            background-color: {self.tm['MainColor']};
-        }}""")
-        self.menu_bar.setFont(self.tm.font_small)
+        super().set_theme()
         self.code_edit.set_theme()
+        self.console.set_theme()
 
     def open_code(self):
         self.dialog = FileDialog(self.tm, 'open', self.scripts_dir)
         if self.dialog.exec():
             try:
-                self.code_edit.open_file(self.scripts_dir, self.dialog.list_widget.currentItem().text())
+                self.code_edit.open_file(os.path.join(self.scripts_dir, self.dialog.list_widget.currentItem().text()))
             except:
                 pass
 
@@ -74,7 +65,7 @@ class GeneratorWindow(QMainWindow):
                 if not name.endswith('.py'):
                     name += '.py'
                 file = open(f"{self.scripts_dir}/{name}", 'w', encoding='utf-8',
-                            newline=self.sm.get_general('line_sep', '\n'))
+                            newline=self.sm.line_sep)
                 file.write(self.code_edit.text())
                 file.close()
             except:
@@ -94,28 +85,30 @@ class GeneratorWindow(QMainWindow):
 
     def run_code(self):
         os.makedirs(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}", exist_ok=True)
-        file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm['line_sep'])
+        file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm.line_sep)
         file.write(self.previous_code())
         file.write(self.code_edit.text())
         file.close()
 
-        self.menu_bar.setDisabled(True)
+        self.code_edit.hide()
+        self.buttons['load'].hide()
+        self.buttons['save'].hide()
+        self.buttons['run'].hide()
+        self.buttons['close'].show()
+        self.console.show()
+        self.console.run_file(f'{self.sm.app_data_dir}/temp.py')
 
-        self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), f'{self.sm.app_data_dir}/temp.py'])
-        self.looper.complete.connect(self.run_complete)
-        self.looper.run()
+        # self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), f'{self.sm.app_data_dir}/temp.py'])
+        # self.looper.complete.connect(self.run_complete)
+        # self.looper.run()
 
-    def run_complete(self, res):
-        self.menu_bar.setDisabled(False)
-        if res.stdout:
-            MessageBox(MessageBox.Information, 'STDOUT', res.stdout, self.tm)
-        if res.stderr:
-            MessageBox(MessageBox.Information, 'STDERR', res.stderr, self.tm)
-        if os.path.isfile(f'{self.sm.app_data_dir}/temp.py'):
-            os.remove(f'{self.sm.app_data_dir}/temp.py')
-        self.complete.emit()
-        if res.returncode == 0:
-            self.hide()
+    def close_console(self):
+        self.console.hide()
+        self.code_edit.show()
+        self.buttons['close'].hide()
+        self.buttons['load'].show()
+        self.buttons['save'].show()
+        self.buttons['run'].show()
 
     def show_info(self):
         MessageBox(MessageBox.Information, "Генерация тестов",
@@ -205,7 +198,7 @@ def add_test(test: Test, index=None):
 
     def show(self) -> None:
         self.setDisabled(False)
-        super(GeneratorWindow, self).show()
+        super().show()
 
 
 class FileDialog(QDialog):
@@ -248,9 +241,7 @@ class FileDialog(QDialog):
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
-        self.button_cancel.setStyleSheet(self.tm.buttons_style_sheet)
-        self.button_ok.setStyleSheet(self.tm.buttons_style_sheet)
-        self.list_widget.setStyleSheet(self.tm.list_widget_style_sheet)
+        for el in [self.button_cancel, self.button_ok, self.list_widget]:
+            self.tm.auto_css(el)
         if self.mode == 'save':
-            self.line_edit.setStyleSheet(self.tm.style_sheet)
-
+            self.tm.auto_css(self.line_edit)

@@ -5,8 +5,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
 
-from settings.lab_widget import LabWidget
-from tests.generator_window import GeneratorWindow
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 from tests.test_table_widget import TestTableWidget
@@ -23,21 +21,8 @@ class TestsWidget(QWidget):
 
         layout = QVBoxLayout()
 
-        self.lab_widget = LabWidget(tm, sm)
-        layout.addWidget(self.lab_widget)
-        self.lab_widget.start_change_task.connect(self.save_tests)
-        self.lab_widget.finish_change_task.connect(self.open_tests)
-        self.options_widget = OptionsWidget({
-            'h_line2': {
-                'Вход:': {'type': str, 'width': 300, 'name': OptionsWidget.NAME_LEFT},
-                'Выход:': {'type': str, 'width': 300, 'name': OptionsWidget.NAME_LEFT}
-            }
-        }, margins=(0, 0, 0, 0))
-        layout.addWidget(self.options_widget)
-
-        self.generator_window = GeneratorWindow(self.sm, self.cm, self.tm)
-        self.generator_window.hide()
-        self.generator_window.complete.connect(self.open_tests_after_generation)
+        self.sm.start_change_task.connect(self.save_tests)
+        self.sm.finish_change_task.connect(self.open_tests)
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
@@ -50,8 +35,8 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
         self.test_list_widget.pos_button_copy.clicked.connect(lambda: self.copy_tests('pos'))
         self.test_list_widget.neg_button_copy.clicked.connect(lambda: self.copy_tests('neg'))
-        self.test_list_widget.pos_button_generate.clicked.connect(self.open_pos_generator_window)
-        self.test_list_widget.neg_button_generate.clicked.connect(self.open_neg_generator_window)
+        # self.test_list_widget.pos_button_generate.clicked.connect(self.open_pos_generator_window)
+        # self.test_list_widget.neg_button_generate.clicked.connect(self.open_neg_generator_window)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)
@@ -222,6 +207,7 @@ class TestsWidget(QWidget):
         self.get_path()
         self.test_list_widget.pos_test_list.clear()
         self.test_list_widget.neg_test_list.clear()
+        self.test_edit_widget.set_disabled()
         try:
             self.test_list_widget.pos_comparator_widget.setCurrentIndex(self.sm.get('pos_comparators', dict()).get(
                 f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1) + 1)
@@ -235,24 +221,25 @@ class TestsWidget(QWidget):
         path = f"{self.sm.data_lab_path()}/func_tests/postprocessor.txt"
         self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
 
-        self.options_widget.set_value("Вход:", "-")
-        self.options_widget.set_value("Выход:", "-")
+        self.test_list_widget.in_data_edit.setText('-')
+        self.test_list_widget.out_data_edit.setText('-')
 
         self.data_dir = f"{self.sm.data_lab_path()}/func_tests"
         if not os.path.isdir(self.data_dir):
-            self.open_tests_from_readme()
+            try:
+                self.open_tests_from_readme()
+            except Exception:
+                pass
         else:
             try:
                 self.task_settings = json.loads(read_file(f"{self.sm.data_lab_path()}/settings.json", '{}'))
                 self.test_edit_widget.preprocessor_line.setText(self.task_settings.get('preprocessor', ''))
                 self.test_edit_widget.postprocessor_line.setText(self.task_settings.get('postprocessor', ''))
-                self.options_widget.set_value('Вход:', self.task_settings.get('in_data', '-'))
-                self.options_widget.set_value('Выход:', self.task_settings.get('out_data', '-'))
+                self.test_list_widget.in_data_edit.setText(self.task_settings.get('in_data', '-'))
+                self.test_list_widget.out_data_edit.setText(self.task_settings.get('out_data', '-'))
             except json.JSONDecodeError:
                 self.test_edit_widget.preprocessor_line.setText('')
                 self.test_edit_widget.postprocessor_line.setText('')
-                self.options_widget.set_value('Вход:', '-')
-                self.options_widget.set_value('Выход:', '-')
 
             if os.path.isdir(f"{self.data_dir}/pos"):
                 lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/pos")))
@@ -316,10 +303,10 @@ class TestsWidget(QWidget):
                         break
 
             elif "Вход" in lines[i] or "Входные данные" in lines[i]:
-                self.options_widget.set_value("Вход:", lines[i + 1].strip())
+                self.test_list_widget.in_data_edit.setText(lines[i + 1].strip())
 
             elif "Выход" in lines[i] or "Выходные данные" in lines[i]:
-                self.options_widget.set_value("Выход:", lines[i + 1].strip())
+                self.test_list_widget.out_data_edit.setText(lines[i + 1].strip())
 
     def load_data_files(self):
         def get_files(test_type='pos'):
@@ -387,9 +374,11 @@ class TestsWidget(QWidget):
     def save_tests(self):
         if self.path == '':
             return
+        if not (self.test_list_widget.pos_test_list.count() or self.test_list_widget.neg_test_list.count()):
+            return
 
-        self.task_settings['in_data'] = self.options_widget['Вход:']
-        self.task_settings['out_data'] = self.options_widget['Выход:']
+        self.task_settings['in_data'] = self.test_list_widget.in_data_edit.text()
+        self.task_settings['out_data'] = self.test_list_widget.out_data_edit.text()
         os.makedirs(self.sm.data_lab_path(), exist_ok=True)
         with open(f"{self.sm.data_lab_path()}/settings.json", 'w') as f:
             f.write(json.dumps(self.task_settings))
@@ -402,26 +391,26 @@ class TestsWidget(QWidget):
         if item:
             item.store()
 
+        for i in range(self.test_list_widget.pos_test_list.count()):
+            item = self.test_list_widget.pos_test_list.item(i)
+            if not item.path.endswith(f"{i}.json"):
+                item.rename_file(f"{self.data_dir}/pos/{i}.json")
+
+        for i in range(self.test_list_widget.neg_test_list.count()):
+            item = self.test_list_widget.neg_test_list.item(i)
+            if not item.path.endswith(f"{i}.json"):
+                item.rename_file(f"{self.data_dir}/neg/{i}.json")
+
         if self.sm.get('func_tests_in_project', False):
             os.makedirs(f"{self.data_dir}/pos", exist_ok=True)
             os.makedirs(f"{self.data_dir}/neg", exist_ok=True)
 
             os.makedirs(os.path.split(self.sm.readme_path())[0], exist_ok=True)
-            readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.get('line_sep'))
+            readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.line_sep)
             readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
                          f"{self.sm.get('task'):0>2}\n\n"
-                         f"## Входные данные\n{self.options_widget['Вход:']}\n\n"
-                         f"## Выходные данные\n{self.options_widget['Выход:']}\n")
-
-            for i in range(self.test_list_widget.pos_test_list.count()):
-                item = self.test_list_widget.pos_test_list.item(i)
-                if not item.path.endswith(f"{i}.json"):
-                    item.rename_file(f"{self.data_dir}/pos/{i}.json")
-
-            for i in range(self.test_list_widget.neg_test_list.count()):
-                item = self.test_list_widget.neg_test_list.item(i)
-                if not item.path.endswith(f"{i}.json"):
-                    item.rename_file(f"{self.data_dir}/neg/{i}.json")
+                         f"## Входные данные\n{self.test_list_widget.in_data_edit.text()}\n\n"
+                         f"## Выходные данные\n{self.test_list_widget.out_data_edit.text()}\n")
 
             if self.data_dir in background_process_manager.dict:
                 background_process_manager.dict[self.data_dir].close()
@@ -431,7 +420,7 @@ class TestsWidget(QWidget):
             looper.start()
 
     def write_file(self, path, data=''):
-        file = open(path, 'w', encoding='utf-8', newline=self.sm.get_general('line_sep'))
+        file = open(path, 'w', encoding='utf-8', newline=self.sm.line_sep)
         file.write(data)
         file.close()
 
@@ -441,17 +430,14 @@ class TestsWidget(QWidget):
         return path
 
     def set_theme(self):
-        self.lab_widget.set_theme()
         self.test_list_widget.set_theme()
         self.test_edit_widget.set_theme()
-        self.tm.css_to_options_widget(self.options_widget)
-        self.generator_window.set_theme()
 
     def resizeEvent(self, a0) -> None:
-        if self.height() < 530:
-            self.options_widget.hide()
-        else:
-            self.options_widget.show()
+        # if self.height() < 530:
+        #     self.options_widget.hide()
+        # else:
+        #     self.options_widget.show()
         if self.height() < 560:
             self.test_edit_widget.preprocessor_line.hide()
             self.test_edit_widget.preprocessor_label.hide()
@@ -473,16 +459,9 @@ class TestsWidget(QWidget):
             self.test_list_widget.neg_comparator_widget.show()
             self.test_list_widget.neg_comparator_label.show()
 
-    def show(self):
-        if self.isHidden():
-            self.lab_widget.open_task()
-        super(TestsWidget, self).show()
-
     def hide(self) -> None:
         if not self.isHidden():
             self.save_tests()
-            self.test_list_widget.pos_test_list.clear()
-            self.test_list_widget.neg_test_list.clear()
         super(TestsWidget, self).hide()
 
 
@@ -559,6 +538,9 @@ class Test(QListWidgetItem):
         if key == 'desc':
             self.update_name()
 
+    def pop(self, key):
+        self._dict.pop(key)
+
 
 def read_file(path, default=None):
     if default is not None:
@@ -609,9 +591,9 @@ class TestCopyWindow(QDialog):
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
+        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
         self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
 
         self.layout = QVBoxLayout()
@@ -633,11 +615,7 @@ class TestCopyWindow(QDialog):
                 'Негативные': {'type': bool, 'name': OptionsWidget.NAME_RIGHT, 'initial': False}
             },
         })
-        self.options_widget.widgets['Проект'].setStyleSheet(self.tm.combo_box_style_sheet)
-        self.options_widget.widgets['Номер лабы:'].setStyleSheet(self.tm.spin_box_style_sheet)
-        self.options_widget.widgets['Номер задания:'].setStyleSheet(self.tm.spin_box_style_sheet)
-        self.options_widget.widgets['Номер варианта:'].setStyleSheet(self.tm.spin_box_style_sheet)
-        self.options_widget.setFont(self.tm.font_small)
+        self.tm.css_to_options_widget(self.options_widget)
         self.layout.addWidget(self.options_widget)
         self.options_widget.clicked.connect(self.options_changed)
 
@@ -650,7 +628,7 @@ class TestCopyWindow(QDialog):
         self.scroll_area.setWidget(self.widget)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFixedSize(480, 320)
-        self.scroll_area.setStyleSheet(self.tm.scroll_area_style_sheet)
+        self.tm.button_css(self.scroll_area)
         self.layout.addWidget(self.scroll_area)
 
         self.layout.addWidget(self.buttonBox)

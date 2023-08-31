@@ -3,27 +3,63 @@ import shutil
 
 from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
+    QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox, QTreeWidget, QTreeWidgetItem
 
-from tests.console import Console
+from code_tab.console import Console
 from ui.button import Button
 from ui.message_box import MessageBox
 from language.languages import languages
+from ui.side_panel_widget import SidePanelWidget
 
 
-class FilesWidget(QWidget):
+class TreeFile(QTreeWidgetItem):
+    def __init__(self, path: str, tm):
+        self.tm = tm
+        self.path = path
+        self.name = os.path.basename(self.path)
+        if '.' not in self.name or (ind := self.name.rindex('.')) == 0:
+            self.file_type = 'unknown_file'
+        else:
+            self.file_type = self.name[ind + 1:]
+
+        super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
+
+        self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
+        self.setFont(0, self.tm.font_small)
+
+
+class TreeDirectory(QTreeWidgetItem):
+    def __init__(self, path, tm):
+        super().__init__()
+        self.tm = tm
+        self.path = path
+        self.name = os.path.basename(self.path)
+        self.file_type = 'directory'
+
+        super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
+
+        self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
+        self.setFont(0, self.tm.font_small)
+
+        for el in os.listdir(self.path):
+            if os.path.isdir(path := os.path.join(self.path, el)):
+                self.addChild(TreeDirectory(path, self.tm))
+        for el in os.listdir(self.path):
+            if os.path.isfile(path := os.path.join(self.path, el)):
+                self.addChild(TreeFile(path, self.tm))
+
+
+class FilesWidget(SidePanelWidget):
     renameFile = pyqtSignal(str)
     openFile = pyqtSignal(str)
     ignore_files = []
 
     def __init__(self, sm, cm, tm):
-        super(FilesWidget, self).__init__()
-        self.sm = sm
+        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'update'])
         self.cm = cm
-        self.tm = tm
 
-        self.setMaximumWidth(175)
+        self.setFixedWidth(225)
         files_layout = QVBoxLayout()
         files_layout.setSpacing(3)
         files_layout.setContentsMargins(0, 5, 0, 0)
@@ -31,33 +67,8 @@ class FilesWidget(QWidget):
         self.path = ''
         self.current_path = ''
 
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(3)
-        files_layout.addLayout(buttons_layout)
-
-        self.button_add_file = Button(self.tm, 'plus')
-        self.button_add_file.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_add_file)
-
-        self.button_delete_file = Button(self.tm, 'delete')
-        self.button_delete_file.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_delete_file)
-
-        self.button_run = Button(self.tm, 'run')
-        self.button_run.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_run)
-
-        self.button_preview = Button(self.tm, 'button_preview')
-        self.button_preview.setFixedHeight(22)
-        self.button_preview.hide()
-        self.button_preview.setCheckable(True)
-        buttons_layout.addWidget(self.button_preview)
-
-        self.button_search = Button(self.tm, 'search')
-        self.button_search.setCheckable(True)
-        self.button_search.clicked.connect(self.show_search)
-        self.button_search.setFixedHeight(22)
-        buttons_layout.addWidget(self.button_search)
+        self.buttons['rename'].clicked.connect(lambda: self.rename_file(False))
+        self.buttons['update'].clicked.connect(self.update_files_list)
 
         search_layout = QHBoxLayout()
         search_layout.setSpacing(2)
@@ -93,16 +104,14 @@ class FilesWidget(QWidget):
 
         self.show_search(False)
 
-        self.files_list = QListWidget()
+        self.files_list = QTreeWidget()
         self.files_list.setFocusPolicy(False)
+        self.files_list.setHeaderHidden(True)
         files_layout.addWidget(self.files_list)
 
-        self.files_list.currentItemChanged.connect(self.open_file)
-        self.button_add_file.clicked.connect(self.create_file)
-        self.button_delete_file.clicked.connect(self.delete_file)
-        self.files_list.doubleClicked.connect(self.rename_file)
-        self.button_run.clicked.connect(self.run_file)
-        self.button_run.setDisabled(True)
+        self.files_list.doubleClicked.connect(self.open_file)
+        self.buttons['add'].clicked.connect(self.create_file)
+        self.buttons['delete'].clicked.connect(self.delete_file)
 
         self.dialog = None
 
@@ -119,25 +128,17 @@ class FilesWidget(QWidget):
         if not self.current_path or not os.path.isdir(self.current_path):
             return
 
-        items = []
-        if self.current_path != self.path:
-            items.append(FileListWidgetItem('..', self.tm, self.sm))
+        for el in os.listdir(self.path):
+            if os.path.isdir(path := os.path.join(self.path, el)):
+                self.files_list.addTopLevelItem(TreeDirectory(path, self.tm))
+        for el in os.listdir(self.path):
+            if os.path.isfile(path := os.path.join(self.path, el)):
+                self.files_list.addTopLevelItem(TreeFile(path, self.tm))
 
-        for file in os.listdir(self.current_path):
-            for el in FilesWidget.ignore_files:
-                if file.endswith(el):
-                    break
-            else:
-                items.append(FileListWidgetItem(f"{self.current_path}/{file}", self.tm, self.sm))
-
-        items.sort(key=lambda it: it.priority)
-        for item in items:
-            self.files_list.addItem(item)
-
-    def rename_file(self):
+    def rename_file(self, flag=True):
         if self.files_list.currentItem() is None:
             return
-        if (item := self.files_list.currentItem()).file_type == 'dir':
+        if (item := self.files_list.currentItem()).file_type == 'dir' and flag:
             if item.name == '..':
                 self.current_path = os.path.split(self.current_path)[0]
             else:
@@ -182,7 +183,7 @@ class FilesWidget(QWidget):
             self.update_files_list()
 
     def delete_file(self, *args):
-        if self.files_list.currentRow() == -1:
+        if self.files_list.currentItem() is None:
             return
         dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().name}?", self.tm)
         if dlg.exec():
@@ -194,50 +195,19 @@ class FilesWidget(QWidget):
 
     def open_file(self):
         item = self.files_list.currentItem()
-        if isinstance(item, FileListWidgetItem):
-            if item.file_type == 'dir':
+        if isinstance(item, (TreeFile, TreeDirectory)):
+            if item.file_type == 'directory':
                 self.openFile.emit('')
             else:
                 self.openFile.emit(item.path)
-                if item.path.endswith('.exe'):
-                    self.button_run.setDisabled(False)
-                    return
-                for language in languages.values():
-                    if language.get('fast_run', False):
-                        for el in language['files']:
-                            if item.path.endswith(el):
-                                self.button_run.setDisabled(False)
-                                return
-            self.button_run.setDisabled(True)
-
-    def run_file(self):
-        def run_file(command):
-            self.console = Console(self.sm, self.tm, command, self.current_path)
-            self.console.show()
-
-        path = self.files_list.currentItem().path
-        if not self.files_list.currentItem():
-            return
-        if self.files_list.currentItem().path.endswith('.exe'):
-            run_file(path)
-            return
-        for language in languages.values():
-            if language.get('fast_run', False):
-                for el in language['files']:
-                    if self.files_list.currentItem().path.endswith(el):
-                        if 'compile' in language:
-                            language['compile'](os.path.split(path)[0], self.cm, self.sm, coverage=False)
-                        run_file(language['run'](path, self.sm, coverage=False))
-                        return
 
     def set_theme(self):
-        for el in [self.button_add_file, self.button_delete_file, self.button_run, self.button_search,
-                   self.button_up, self.button_down, self.search_line, self.replace_line,
-                   self.button_replace, self.button_replace_all, self.button_preview]:
+        super().set_theme()
+        for el in [self.button_up, self.button_down, self.search_line, self.replace_line,
+                   self.button_replace, self.button_replace_all]:
             self.tm.auto_css(el)
-        self.files_list.setStyleSheet(self.tm.list_widget_style_sheet)
-        for i in range(self.files_list.count()):
-            self.files_list.item(i).set_theme()
+        self.files_list.setStyleSheet(self.tm.tree_widget_css('Main'))
+        self.update_files_list()
 
 
 class FileListWidgetItem(QListWidgetItem):
@@ -350,10 +320,8 @@ class DeleteFileDialog(QDialog):
         self.setLayout(self.layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
-        self.button_ok.setFont(tm.font_small)
-        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
-        self.button_cancel.setFont(tm.font_small)
+        for el in [self.button_cancel, self.button_ok]:
+            tm.auto_css(el)
 
 
 class RenameFileDialog(QDialog):
@@ -390,49 +358,7 @@ class RenameFileDialog(QDialog):
         self.setLayout(self.layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
-        self.button_ok.setFont(tm.font_small)
-        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
-        self.button_cancel.setFont(tm.font_small)
-        self.line_edit.setStyleSheet(tm.style_sheet)
-        self.line_edit.setFont(tm.font_small)
+        for el in [self.button_ok, self.button_cancel, self.line_edit]:
+             tm.auto_css(el)
 
         self.resize(280, 50)
-
-
-class FileRunner(QThread):
-    def __init__(self, func, path, sm, cm):
-        super().__init__()
-        self.func = func
-        self.path = path
-        self.sm = sm
-        self.cm = cm
-        self.res = None
-
-    def run(self):
-        self.res = self.func(self.path, self.sm, self.cm, scip_timeout=True)
-
-
-class RunDialog(QDialog):
-    def __init__(self, tm, path):
-        super().__init__()
-        self.tm = tm
-
-        self.setWindowTitle(path)
-
-        layout = QVBoxLayout()
-        label = QLabel(f"Идет выполнение скрипта \"{path}\"")
-        label.setWordWrap(True)
-        label.setFont(self.tm.font_small)
-
-        QBtn = QDialogButtonBox.Cancel
-
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.buttons_style_sheet)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
-
-        layout.addWidget(label)
-        layout.addWidget(self.buttonBox)
-        self.setLayout(layout)
-
