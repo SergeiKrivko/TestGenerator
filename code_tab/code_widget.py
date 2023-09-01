@@ -196,8 +196,7 @@ class CodeWidget(QWidget):
                         code_edit.set_theme()
                         self.code_widgets[path] = code_edit
                     if language.get('preview', False):
-                        preview_widget = PreviewWidget(self.sm, self.tm)
-                        preview_widget.open(path)
+                        preview_widget = PreviewWidget(self.sm, self.tm, path)
                         preview_widget.hide()
                         self.layout.addWidget(preview_widget)
                         preview_widget.set_theme()

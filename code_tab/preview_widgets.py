@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QTextEdit, QLabel, QWidget, QHBoxLayout
 
 
 class PreviewWidget(QWidget):
-    def __init__(self, sm, tm):
+    def __init__(self, sm, tm, path=None):
         super().__init__()
         self.sm = sm
         self.tm = tm
@@ -29,6 +29,9 @@ class PreviewWidget(QWidget):
         self.setLayout(layout)
         self.theme_apply = False
         self.file = ''
+
+        if path is not None:
+            self.open(path)
 
     def open(self, file: str):
         self.text_edit.hide()
@@ -62,4 +65,5 @@ class PreviewWidget(QWidget):
     def show(self) -> None:
         super().show()
         self.set_theme()
-        self.open(self.file)
+        if not self.file.endswith('.pdf'):
+            self.open(self.file)
