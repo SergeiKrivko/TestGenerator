@@ -3,7 +3,7 @@ import os
 
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog
 
 from code_tab.preview_widgets import PreviewWidget
 from code_tab.search_panel import SearchPanel
@@ -43,6 +43,7 @@ class CodeWidget(QWidget):
 
         self.search_panel = SearchPanel(self.sm, self.tm)
         self.search_panel.hide()
+        self.top_panel.button_open.clicked.connect(self.open_non_project_file)
         self.top_panel.button_search.clicked.connect(lambda flag:
                                                      self.search_panel.show() if flag else self.search_panel.hide())
         self.search_panel.selectText.connect(self.select_text)
@@ -152,6 +153,10 @@ class CodeWidget(QWidget):
         else:
             self.top_panel.button_run.hide()
             self.top_panel.button_preview.hide()
+        if self.current_file in self.code_widgets:
+            self.top_panel.button_search.show()
+        else:
+            self.top_panel.button_search.hide()
 
     def move_tab(self, ind1, ind2):
         self.files[ind1], self.files[ind2] = self.files[ind2], self.files[ind1]
@@ -173,7 +178,13 @@ class CodeWidget(QWidget):
             self.top_panel.button_preview.hide()
             self.current_file = ""
 
+    def open_non_project_file(self):
+        path = QFileDialog.getOpenFileName(caption="Выберите файл", directory=self.sm.lab_path())[0]
+        if os.path.isfile(path):
+            self.open_code(path)
+
     def open_code(self, path):
+        path = os.path.abspath(path)
         if path in self.code_widgets or path in self.preview_widgets:
             self.top_panel.select_tab(path)
             return
@@ -307,7 +318,11 @@ class TopPanelWidget(QWidget):
         self.tab_bar.tabMoved.connect(self.tab_moved)
         self.tab_bar.setMovable(True)
         self.tab_bar.setTabsClosable(True)
-        main_layout.addWidget(self.tab_bar, 100, Qt.AlignLeft)
+        main_layout.addWidget(self.tab_bar, 1000, Qt.AlignLeft)
+
+        self.button_open = Button(self.tm, 'plus', css='Bg', tooltip='Открыть файл')
+        self.button_open.setFixedSize(20, 20)
+        main_layout.addWidget(self.button_open, 1, Qt.AlignLeft)
 
         self.button_search = Button(self.tm, 'search', css='Bg', tooltip='Поиск')
         self.button_search.setFixedSize(20, 20)
@@ -388,6 +403,7 @@ QTabBar::close-button:hover {{
     image: url({self.tm.get_image('button_close_tab_hover')});
 }}
 """)
+        self.button_open.set_theme()
         self.button_run.set_theme()
         self.button_preview.set_theme()
         self.button_search.set_theme()
