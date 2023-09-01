@@ -288,7 +288,7 @@ class TopPanelWidget(QWidget):
         super().__init__()
         self.sm = sm
         self.tm = tm
-        self.setFixedHeight(28)
+        self.setFixedHeight(27)
 
         strange_layout = QVBoxLayout()
         strange_layout.setContentsMargins(0, 0, 0, 0)
@@ -297,8 +297,8 @@ class TopPanelWidget(QWidget):
         strange_layout.addWidget(strange_widget)
 
         main_layout = QHBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop)
-        main_layout.setContentsMargins(0, 0, 5, 0)
+        main_layout.setAlignment(Qt.AlignCenter)
+        main_layout.setContentsMargins(0, 0, 5, 1)
         main_layout.setSpacing(5)
         strange_widget.setLayout(main_layout)
 

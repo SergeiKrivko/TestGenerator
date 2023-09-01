@@ -114,6 +114,8 @@ class Terminal(QTextEdit):
         self.write_prompt()
 
     def terminate_process(self, error_type: QProcess.ProcessError = None):
+        if not self.current_process:
+            return
         if error_type is not None:
             if error_type == QProcess.ProcessError.FailedToStart and self.current_process:
                 self.write_text(f"Имя \"{self.current_process}\" не распознано как имя командлета, функции, "
