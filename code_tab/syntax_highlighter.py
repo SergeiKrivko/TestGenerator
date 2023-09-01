@@ -67,9 +67,6 @@ class CodeEditor(QsciScintilla):
         self.setTabIndents(True)
         self.setAutoIndent(True)
 
-        text = bytearray(str.encode("Courier"))
-        self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, text)
-
         self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 0)
 
         self.setCallTipsVisible(0)
@@ -109,10 +106,10 @@ class CodeEditor(QsciScintilla):
         self.theme_apply = True
         self.setStyleSheet(self.tm.scintilla_css(border=self.border))
 
-        self.setFont(self.tm.code_font)
-        self.setMarginsFont(self.tm.code_font)
-        fontmetrics = QFontMetrics(self.tm.code_font)
-        self.setMarginsFont(self.tm.code_font)
+        self.setFont(self.tm.code_font_std)
+        self.setMarginsFont(self.tm.code_font_std)
+        fontmetrics = QFontMetrics(self.tm.code_font_std)
+        self.setMarginsFont(self.tm.code_font_std)
         self.setMarginWidth(0, fontmetrics.width("00000") + 6)
 
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
@@ -125,11 +122,11 @@ class CodeEditor(QsciScintilla):
         self.setUnmatchedBraceForegroundColor(self.tm['BraceColor'])
 
         if self._lexer is not None:
-            self._lexer.setDefaultFont(self.tm.code_font)
+            self._lexer.setDefaultFont(self.tm.code_font_std)
             self._lexer.setPaper(self.tm['Paper'])
             for key, item in self.language_data.get('colors', dict()).items():
                 self._lexer.setColor(self.tm[item], key)
-                self._lexer.setFont(self.tm.code_font, key)
+                self._lexer.setFont(self.tm.code_font_std, key)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on

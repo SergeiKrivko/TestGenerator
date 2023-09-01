@@ -26,6 +26,7 @@ languages = {
             QsciLexerCPP.Operator: 'Identifier',
             QsciLexerCPP.DoubleQuotedString: 'String',
             QsciLexerCPP.SingleQuotedString: 'String',
+            QsciLexerCPP.UnclosedString: 'String'
         },
         'compile': language.testing.c.c_compile,
         'run': language.testing.c.c_run,
