@@ -464,6 +464,11 @@ class TestsWidget(QWidget):
             self.save_tests()
         super(TestsWidget, self).hide()
 
+    def show(self) -> None:
+        if self.isHidden() and self.current_test:
+            self.current_test.load()
+        super().show()
+
 
 class Test(QListWidgetItem):
     files_links = dict()
