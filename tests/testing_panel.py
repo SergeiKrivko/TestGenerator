@@ -12,7 +12,7 @@ class TestingPanel(SidePanelWidget):
     def __init__(self, sm, tm):
         super().__init__(sm, tm, 'Тестирование', ['run'])
 
-        self.setFixedWidth(200)
+        self.setFixedWidth(220)
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.list_widget = QListWidget()

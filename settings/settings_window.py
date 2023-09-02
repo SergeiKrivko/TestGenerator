@@ -106,11 +106,13 @@ class SettingsWindow(QDialog):
                         ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
                         LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
                         CheckBox("Ключ -lm", True, key='-lm'),
-                        ProgramEdit("Coverage:", 'gcov.exe', 'gcov')
+                        ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
+                        self.utils_settings('C'),
                     ],
                     'Python': [
                         ProgramEdit("Python:", 'python.exe', 'python'),
                         ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
+                        self.utils_settings('Python'),
                     ],
                 })
             }),
@@ -140,12 +142,7 @@ class SettingsWindow(QDialog):
             LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
             CheckBox("Ключ -lm", True, key='-lm'),
             ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
-            ListWidget("Сторонние утилиты:", children=lambda: [
-                LineEdit("Строка запуска: ", key='program', width=400),
-                ComboBox("Тип:", ["Для теста (STDERR)", "Для теста (Отдельной командой)", "Общий"], children={
-                    1: LineEdit("Команда:", key='test_report_command', width=350),
-                    2: LineEdit("Команда:", key='report_command', width=350),
-                }, key='type', width=250)], key='C_utils'),
+            self.utils_settings('C'),
             key_type=KEY_GLOBAL
         )
         self.c_settings_widget.hide()
@@ -155,6 +152,7 @@ class SettingsWindow(QDialog):
             self.sm, self.tm,
             ProgramEdit("Python:", 'python.exe', 'python'),
             ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
+            self.utils_settings('Python'),
             key_type=KEY_GLOBAL
         )
         self.python_settings_widget.hide()
@@ -197,6 +195,17 @@ class SettingsWindow(QDialog):
         # buttons_layout.addWidget(self.button_ok)
 
         self.setLayout(main_layout)
+
+    @staticmethod
+    def utils_settings(language='C'):
+        return ListWidget("Сторонние утилиты:", children=lambda: [
+            LineEdit("Строка запуска: ", key='program', width=400),
+            ComboBox("Тип:", ["Для теста"], children={
+                0: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='output_format'),
+                    CheckBox("Наличие вывода считается отрицательным результатом", key='output_res'),
+                    CheckBox("Ненулевой код возврата считается отрицательным результатом", key='exit_code_res')],
+                1: LineEdit("Команда:", key='report_command', width=350),
+            }, key='type', width=250)], key=f'{language}_utils')
 
     @staticmethod
     def check_path(path: str):

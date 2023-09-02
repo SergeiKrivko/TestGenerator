@@ -431,9 +431,12 @@ class Test:
         self._name = name
         self._test_type = test_type
         self._data = None
+
         self.in_data = dict()
         self.out_data = dict()
         self.prog_out = dict()
+        self.utils_output = dict()
+
         self.load()
         self._status = Test.IN_PROGRESS
 
@@ -593,6 +596,33 @@ class TestingLooper(QThread):
                             self.sm.test_check_file_path(test.type(), index, j, True), b''))
                     test.prog_out[f"in_file_{j + 1}.bin"], _ = decode(file['check'], text)
 
+    def clear_after_run(self, test: Test, index: int):
+        if self.sm.get('func_tests_in_project'):
+            self.convert_test_files('in', test, test.type(), index)
+        elif os.path.isdir(f"{self.sm.app_data_dir}/temp_files"):
+            shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
+
+    def run_util(self, test: Test, index: int, util_data: dict):
+        name = util_data.get('program', 'error_unknown_program').split()[0]
+        temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
+        res = self.cm.cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
+                                                                      args=test.get('args', ''), dict=temp_path),
+                                  shell=True, input=test['in'])
+        if util_data.get('type', 0) == 0:
+            if util_data.get('output_format', 0) == 0:
+                output = res.stdout
+            elif util_data.get('output_format', 0) == 1:
+                output = res.stderr
+            else:
+                output = read_file(temp_path, default='')
+            test.utils_output[name] = output
+            test.results[name] = True
+            if util_data.get('output_res', False):
+                test.results[name] = test.results[name] and not bool(output)
+            if util_data.get('exit_code_res', False):
+                test.results[name] = test.results[name] and res.returncode == 0
+        self.clear_after_run(test, index)
+
     def run_test(self, test: Test, index: int):
         self.prepare_test(test, index)
         try:
@@ -600,9 +630,18 @@ class TestingLooper(QThread):
             test.exit = res.returncode
             test.prog_out = {'STDOUT': res.stdout}
             self.run_comparators(test, index)
+            self.clear_after_run(test, index)
+            utils = self.sm.get_smart(f"{self.sm.get('language', 'C')}_utils", [])
+            try:
+                utils = json.loads(utils)
+                for util in utils:
+                    self.run_util(test, index, util)
+            except json.JSONDecodeError:
+                pass
             test.set_status(Test.PASSED if test.res() else Test.FAILED)
         except TimeoutExpired:
             test.set_status(Test.TIMEOUT)
+        self.clear_after_run(test, index)
 
     def run(self):
         code, errors = self.cm.compile(coverage=self._coverage)
@@ -612,10 +651,6 @@ class TestingLooper(QThread):
 
         for i, test in enumerate(self._tests):
             self.run_test(test, i)
-            if self.sm.get('func_tests_in_project'):
-                self.convert_test_files('in', test, test.type(), i)
-            elif os.path.isdir(f"{self.sm.app_data_dir}/temp_files"):
-                shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
 
             self.testStatusChanged.emit(i, test.status())
             sleep(0.01)
@@ -698,7 +733,7 @@ class TextField(QWidget):
         self._text_edit = QTextEdit()
         self._text_edit.setText(text)
         self._text_edit.setReadOnly(True)
-        self._text_edit.setMaximumHeight(300)
+        # self._text_edit.setMaximumHeight(300)
         layout.addWidget(self._text_edit)
 
     def set_theme(self):
@@ -736,15 +771,15 @@ class ListField(QWidget):
         layout.addWidget(self._label)
 
         self._list_widget = QListWidget()
-        self._list_widget.setMinimumHeight(80)
-        self._list_widget.setMaximumHeight(300)
+        self._list_widget.setMinimumHeight(100)
+        # self._list_widget.setMaximumHeight(300)
         layout.addWidget(self._list_widget)
         for key, item in dct.items():
             self._list_widget.addItem(_ListFieldItem(tm, key, item))
 
     def set_theme(self):
         for el in [self._label, self._list_widget]:
-            self._tm.auto_css(el)
+            self._tm.auto_css(el, palette='Main')
 
 
 class TestInfoWidget(QScrollArea):
@@ -779,17 +814,20 @@ class TestInfoWidget(QScrollArea):
         self.add_widget(LineField(self._tm, "Описание:", self._test['desc']))
         self.add_widget(LineField(self._tm, "Аргументы:", self._test['args']))
         if self._test.status() in (Test.PASSED, Test.FAILED):
-            if self._test.get('exit', None) is not None:
+            if self._test.get('exit', ''):
                 self.add_widget(SimpleField(self._tm, "Код возврата:", f"{self._test.exit} ({self._test['exit']})"))
             else:
                 self.add_widget(SimpleField(self._tm, "Код возврата:", self._test.exit))
             self.add_widget(ListField(self._tm, "Результаты:", self._test.results))
 
+            for key, item in self._test.utils_output.items():
+                self.add_widget(TextField(self._tm, key, item))
+
     def set_test(self, test: Test):
         self._test = test
 
     def set_theme(self):
-        self._tm.auto_css(self, border=False)
+        self._tm.auto_css(self, palette='Bg', border=False)
         for el in self._widgets:
             if hasattr(el, 'set_theme'):
                 el.set_theme()

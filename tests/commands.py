@@ -1,14 +1,9 @@
 import os
-import shutil
-from json import loads, JSONDecodeError
-from subprocess import run, TimeoutExpired
+from subprocess import run
 import subprocess
-from time import sleep
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from tests.binary_decoder import decode, comparator as bytes_comparator
-from tests.macros_converter import MacrosConverter, background_process_manager
 from language.languages import languages
 
 
