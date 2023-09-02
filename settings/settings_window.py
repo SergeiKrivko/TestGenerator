@@ -1,9 +1,9 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QHBoxLayout, QListWidget, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from settings.lib_dialog import LibWidget
 from ui.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
-    KEY_SMART, SwitchBox, ProgramEdit
+    KEY_SMART, SwitchBox, ProgramEdit, ListWidget
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
@@ -106,7 +106,7 @@ class SettingsWindow(QDialog):
                         ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
                         LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
                         CheckBox("Ключ -lm", True, key='-lm'),
-                        ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
+                        ProgramEdit("Coverage:", 'gcov.exe', 'gcov')
                     ],
                     'Python': [
                         ProgramEdit("Python:", 'python.exe', 'python'),
@@ -140,6 +140,12 @@ class SettingsWindow(QDialog):
             LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
             CheckBox("Ключ -lm", True, key='-lm'),
             ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
+            ListWidget("Сторонние утилиты:", children=lambda: [
+                LineEdit("Строка запуска: ", key='program', width=400),
+                ComboBox("Тип:", ["Для теста (STDERR)", "Для теста (Отдельной командой)", "Общий"], children={
+                    1: LineEdit("Команда:", key='test_report_command', width=350),
+                    2: LineEdit("Команда:", key='report_command', width=350),
+                }, key='type', width=250)], key='C_utils'),
             key_type=KEY_GLOBAL
         )
         self.c_settings_widget.hide()
@@ -204,6 +210,14 @@ class SettingsWindow(QDialog):
         try:
             path = pattern.format(test_type='pos', number=1)
             return SettingsWindow.check_path(path)
+        except Exception:
+            return False
+
+    @staticmethod
+    def check_util(command: str):
+        try:
+            command.format(app='app.exe', file='main.c', args='1 2 3', dist='dist.txt')
+            return True
         except Exception:
             return False
 

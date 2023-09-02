@@ -372,6 +372,8 @@ class TestsWidget(QWidget):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
     def save_tests(self):
+        if self.current_test:
+            self.current_test.store()
         if self.path == '':
             return
         if not (self.test_list_widget.pos_test_list.count() or self.test_list_widget.neg_test_list.count()):

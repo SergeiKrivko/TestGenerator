@@ -1,6 +1,7 @@
+import json
 import os.path
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
@@ -11,9 +12,12 @@ from ui.message_box import MessageBox
 KEY_GLOBAL = 0
 KEY_LOCAL = 1
 KEY_SMART = 2
+KEY_DICT = 3
 
 
 class _Widget(QWidget):
+    valueChanged = pyqtSignal(object)
+
     def __init__(self, key=None, key_type=None, default=None):
         super().__init__()
         self._tm = None
@@ -22,6 +26,7 @@ class _Widget(QWidget):
         self._key_type = key_type
         self._default = default
         self._children = dict()
+        self._dict = dict()
 
     def set_sm(self, sm):
         self._sm = sm
@@ -37,6 +42,13 @@ class _Widget(QWidget):
                 if hasattr(el, 'set_tm'):
                     el.set_tm(tm)
 
+    def set_dict(self, dct):
+        self._dict = dct
+        for item in self._children.values():
+            for el in item:
+                if hasattr(el, 'set_dict'):
+                    el.set_dict(dct)
+
     def set_key_type(self, key_type):
         if self._key_type is None:
             self._key_type = key_type
@@ -48,6 +60,8 @@ class _Widget(QWidget):
     def _get(self):
         if self._key is None:
             return
+        if self._key_type == KEY_DICT:
+            return self._dict.get(self._key, self._default)
         if self._key_type == KEY_GLOBAL or self._key_type is None:
             return self._sm.get_general(self._key, self._default)
         if self._key_type == KEY_LOCAL:
@@ -57,12 +71,19 @@ class _Widget(QWidget):
     def _set(self, value):
         if self._key is None:
             return
-        if self._key_type == KEY_GLOBAL or self._key_type is None:
-            return self._sm.set_general(self._key, value)
-        return self._sm.set(self._key, value)
+        if self._key_type == KEY_DICT:
+            self._dict[self._key] = value
+        elif self._key_type == KEY_GLOBAL or self._key_type is None:
+            self._sm.set_general(self._key, value)
+        else:
+            self._sm.set(self._key, value)
+        self.valueChanged.emit(value)
 
     def _del(self):
-        if self._key_type == KEY_GLOBAL or self._key_type is None:
+        if self._key_type == KEY_DICT:
+            if self._key in self._dict:
+                self._dict.pop(self._key)
+        elif self._key_type == KEY_GLOBAL or self._key_type is None:
             self._sm.remove_general(self._key)
         else:
             self._sm.remove(self._key)
@@ -428,6 +449,120 @@ class SwitchBox(_Widget):
                 el.set_theme()
 
 
+class _ListWidgetItem(_Widget):
+    closed = pyqtSignal(dict)
+
+    def __init__(self, parent: _Widget, children: list[_Widget], dct: dict = None):
+        super().__init__(None, KEY_DICT)
+        self._parent = parent
+        self._dict = dct
+
+        main_layout = QHBoxLayout()
+        self.setLayout(main_layout)
+        layout = QVBoxLayout()
+        main_layout.addLayout(layout)
+
+        self._button = Button(None, 'delete')
+        self._button.setFixedSize(26, 26)
+        self._button.clicked.connect(self.close_item)
+        main_layout.addWidget(self._button)
+
+        self._children[True] = []
+        for el in children:
+            self._children[True].append(el)
+            el.set_dict(self._dict)
+            el.set_key_type(KEY_DICT)
+            el.valueChanged.connect(self.save_value)
+            layout.addWidget(el)
+            el.load_value()
+
+    def save_value(self):
+        if hasattr(self._parent, 'save_value'):
+            self._parent.save_value()
+
+    def close_item(self):
+        self.setParent(None)
+        self.closed.emit(self._dict)
+
+    def set_theme(self):
+        for el in [self._button]:
+            self._tm.auto_css(el)
+        for item in self._children.values():
+            for el in item:
+                el.set_theme()
+
+
+class ListWidget(_Widget):
+    def __init__(self, name, children, key=None, key_type=None, height=300):
+        super().__init__(key, key_type, '')
+        self._list = []
+        self._children_struct = children
+
+        self.setMaximumHeight(height)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        top_layout = QHBoxLayout()
+        layout.addLayout(top_layout)
+
+        self._label = QLabel(name)
+        top_layout.addWidget(self._label)
+
+        self._button = Button(None, 'plus')
+        self._button.setFixedSize(24, 24)
+        self._button.clicked.connect(lambda: self._add_widget())
+        top_layout.addWidget(self._button)
+
+        self._scroll_area = QScrollArea()
+        layout.addWidget(self._scroll_area)
+
+        scroll_widget = QWidget()
+        self._scroll_area.setWidget(scroll_widget)
+        self._scroll_area.setWidgetResizable(True)
+
+        self._scroll_layout = QVBoxLayout()
+        self._scroll_layout.setAlignment(Qt.AlignTop)
+        scroll_widget.setLayout(self._scroll_layout)
+
+    def _add_widget(self, dct: dict = None):
+        if dct is None:
+            dct = dict()
+            self._list.append(dct)
+        item = _ListWidgetItem(self, self._children_struct(), dct)
+        item.set_sm(self._sm)
+        item.set_tm(self._tm)
+        item.set_theme()
+        item.closed.connect(self.close_item)
+        self._scroll_layout.addWidget(item)
+
+    def close_item(self, dct):
+        self._list.remove(dct)
+        self.save_value()
+
+    def load_value(self):
+        try:
+            self._list = json.loads(self._get())
+        except json.JSONDecodeError:
+            return
+        for i in range(self._scroll_layout.count()):
+            self._scroll_layout.itemAt(0).widget().setParent(None)
+        for el in self._list:
+            self._add_widget(el)
+
+    def save_value(self):
+        self._set(json.dumps(self._list))
+
+    def set_theme(self):
+        for el in [self._label, self._button, self._scroll_area]:
+            self._tm.auto_css(el, palette='Bg')
+        for i in range(self._scroll_layout.count()):
+            widget = self._scroll_layout.itemAt(i).widget()
+            if hasattr(widget, 'set_theme'):
+                widget.set_theme()
+
+
 class ProgramEdit(_Widget):
     def __init__(self, desc, file, key=None, key_type=None):
         super().__init__(key, key_type, file)
@@ -529,7 +664,7 @@ class SettingsWidget(QScrollArea):
                 if hasattr(el, 'set_key_type'):
                     el.set_key_type(key_type)
         self.load_values()
-        
+
     def resizeEvent(self, a0: QResizeEvent) -> None:
         self.__scroll_widget.setMaximumWidth(a0.size().width())
         super().resizeEvent(a0)

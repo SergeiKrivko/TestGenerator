@@ -11,6 +11,7 @@ from ui.message_box import MessageBox
 
 
 class TestingWidget(QWidget):
+    save_tests = pyqtSignal()
     jump_to_code = pyqtSignal(str, int, int)
 
     def __init__(self, sm, cm, tm, side_panel):
