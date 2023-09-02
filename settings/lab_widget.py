@@ -70,43 +70,43 @@ class LabWidget(QWidget):
         if self.sm.get('struct') != 0:
             return
         if signals := self.signals:
-            self.sm.start_change_task.emit()
+            self.sm.start_change_task()
             self.signals = False
         self.sm.set('lab', self.lab_spin_box.value())
         if signals:
             self.find_variant()
             self.signals = True
-            self.sm.finish_change_task.emit()
+            self.sm.finish_change_task()
 
     def subproject_changed(self):
         if self.sm.get('struct') != 2:
             return
         if signals := self.signals:
-            self.sm.start_change_task.emit()
+            self.sm.start_change_task()
             self.signals = False
         self.sm.set('lab', self.combo_box.currentIndex())
         if signals:
             self.signals = True
-            self.sm.finish_change_task.emit()
+            self.sm.finish_change_task()
 
     def task_changed(self):
         if signals := self.signals:
-            self.sm.start_change_task.emit()
+            self.sm.start_change_task()
             self.signals = False
         self.sm.set('task', self.task_spin_box.value())
         if signals:
             self.find_variant()
             self.signals = True
-            self.sm.finish_change_task.emit()
+            self.sm.finish_change_task()
 
     def var_changed(self):
         if signals := self.signals:
-            self.sm.start_change_task.emit()
+            self.sm.start_change_task()
             self.signals = False
         self.sm.set('var', self.var_spin_box.value())
         if signals:
             self.signals = True
-            self.sm.finish_change_task.emit()
+            self.sm.finish_change_task()
 
     def find_variant(self):
         for i in range(-1, 100):
@@ -148,7 +148,7 @@ class LabWidget(QWidget):
             self.button_plus.show()
 
         if signals := self.signals:
-            self.sm.start_change_task.emit()
+            self.sm.start_change_task()
             self.signals = False
         self.lab_spin_box.setValue(self.sm.get('lab', 1))
         self.task_spin_box.setValue(self.sm.get('task', 1))
@@ -158,7 +158,7 @@ class LabWidget(QWidget):
         self.combo_box.setCurrentIndex(self.sm.get('lab', 1))
         if signals:
             self.signals = True
-            self.sm.finish_change_task.emit()
+            self.sm.finish_change_task()
 
     def set_theme(self):
         for label in self.labels:

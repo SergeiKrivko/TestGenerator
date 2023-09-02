@@ -1,16 +1,23 @@
 import json
 import os
+import shutil
+from subprocess import TimeoutExpired
+from time import sleep
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton, QProgressBar, QComboBox, QLineEdit
+    QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
+from tests.binary_decoder import decode, comparator as bytes_comparator
+from tests.commands import CommandManager
+from tests.macros_converter import MacrosConverter
 from ui.message_box import MessageBox
 
 
 class TestingWidget(QWidget):
+    showTab = pyqtSignal()
     save_tests = pyqtSignal()
     jump_to_code = pyqtSignal(str, int, int)
 
@@ -22,12 +29,15 @@ class TestingWidget(QWidget):
         self.side_panel = side_panel
         self.labels = []
 
+        self.tests = []
+        self.test_count = {'pos': 0, 'neg': 0, 'completed': 0}
+
         self.side_list = side_panel.tabs['tests']
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.sm.finish_change_task.connect(self.open_task)
+        self.sm.finishChangeTask.connect(self.open_task)
 
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -50,18 +60,14 @@ class TestingWidget(QWidget):
         self.coverage_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.coverage_bar)
 
-        self.pos_result_bar = QLabel()
+        self.pos_result_bar = TestCountIndicator(self.tm, "POS:")
         self.labels.append(self.pos_result_bar)
         self.pos_result_bar.hide()
-        self.pos_result_bar.setFixedSize(125, 26)
-        self.pos_result_bar.setAlignment(Qt.AlignCenter)
         top_layout.addWidget(self.pos_result_bar)
 
-        self.neg_result_bar = QLabel()
+        self.neg_result_bar = TestCountIndicator(self.tm, "NEG:")
         self.labels.append(self.neg_result_bar)
         self.neg_result_bar.hide()
-        self.neg_result_bar.setFixedSize(125, 26)
-        self.neg_result_bar.setAlignment(Qt.AlignCenter)
         top_layout.addWidget(self.neg_result_bar)
 
         layout.addLayout(top_layout)
@@ -73,15 +79,14 @@ class TestingWidget(QWidget):
         layout2.addLayout(l)
         h_l = QHBoxLayout()
         l.addLayout(h_l)
-        # h_l.addWidget(label := QLabel("Список Тестов"))
+        # h_l.addWidget(label := QLabel("Общая информация:"))
         # self.labels.append(label)
-        self.test_name_bar = QLineEdit()
-        self.test_name_bar.setReadOnly(True)
-        h_l.addWidget(self.test_name_bar)
+        # self.test_name_bar = QLineEdit()
+        # self.test_name_bar.setReadOnly(True)
+        # h_l.addWidget(self.test_name_bar)
 
-        self.tests_list = QListWidget()
-        self.tests_list.itemSelectionChanged.connect(self.open_test_info)
-        l.addWidget(self.tests_list)
+        self.info_widget = TestInfoWidget(self.tm)
+        l.addWidget(self.info_widget)
 
         l = QVBoxLayout()
         layout2.addLayout(l)
@@ -128,59 +133,53 @@ class TestingWidget(QWidget):
         self.out_data.setFont(QFont("Courier", 10))
         l.addWidget(self.out_data)
 
-        self.current_task = (0, 0, 0)
         self.old_dir = os.getcwd()
         self.ui_disable_func = None
-        self.test_count = 0
-        self.side_list.jump_to_testing.connect(self.tests_list.setCurrentRow)
+        self.side_list.jump_to_testing.connect(self.open_test_info)
+        self.testing_looper = None
 
         self.current_item = None
 
     def set_theme(self):
         for el in [self.button, self.progress_bar, self.prog_out_combo_box, self.in_data_combo_box,
-                   self.out_data_combo_box, self.test_name_bar]:
+                   self.out_data_combo_box]:
             self.tm.auto_css(el)
         for el in [self.prog_out, self.in_data, self.out_data]:
             self.tm.auto_css(el, code_font=True)
         for label in self.labels:
             label.setFont(self.tm.font_small)
-        self.tm.set_theme_to_list_widget(self.tests_list)
+        self.info_widget.set_theme()
+        self.pos_result_bar.set_theme()
+        self.neg_result_bar.set_theme()
 
     def open_task(self):
-        self.get_path()
-        task = self.sm['lab'], self.sm['task'], self.sm['var']
-        if task != self.current_task:
-            self.coverage_bar.hide()
-            self.progress_bar.hide()
-            self.pos_result_bar.hide()
-            self.neg_result_bar.hide()
+        self.test_mode(False)
+        self.in_data.setText("")
+        self.out_data.setText("")
+        self.prog_out.setText("")
+        self.side_list.clear()
 
-            self.in_data.setText("")
-            self.out_data.setText("")
-            self.prog_out.setText("")
-            self.tests_list.clear()
-            self.side_list.clear()
-            self.current_task = task
-
-    def open_test_info(self):
-        if isinstance(self.current_item, TestingListWidgetItem):
-            self.current_item.unload()
-        item = self.tests_list.currentItem()
-        if isinstance(item, TestingListWidgetItem):
-            self.current_item = item
-            item.load()
-            current_in, current_out = item.dict.get('current_in', 0), item.dict.get('current_out', 0)
+    def open_test_info(self, index=None, *args):
+        if index is not None:
+            if isinstance(self.current_item, Test):
+                pass
+                # self.current_item.unload()
+            self.current_item = self.tests[index]
+            # self.current_item.load()
+        if isinstance(self.current_item, Test):
+            current_in, current_out = self.current_item.get('current_in', 0), self.current_item.get('current_out', 0)
 
             self.in_data_combo_box.clear()
-            self.in_data_combo_box.addItems(item.in_data.keys())
-            self.in_data.setText(item.dict.get('in', ''))
+            self.in_data_combo_box.addItems(self.current_item.in_data.keys())
+            self.in_data.setText(self.current_item.get('in', ''))
             self.out_data_combo_box.clear()
-            self.out_data_combo_box.addItems(item.out_data.keys())
-            self.out_data.setText(item.dict.get('out', ''))
+            self.out_data_combo_box.addItems(self.current_item.out_data.keys())
+            self.out_data.setText(self.current_item.get('out', ''))
             self.prog_out_combo_box.clear()
-            self.prog_out_combo_box.addItems(item.prog_out.keys())
-            self.prog_out.setText(item.prog_out.get('STDOUT', ''))
-            self.test_name_bar.setText(item.dict.get('desc', '-'))
+            self.prog_out_combo_box.addItems(self.current_item.prog_out.keys())
+            self.prog_out.setText(self.current_item.prog_out.get('STDOUT', ''))
+            self.info_widget.set_test(self.current_item)
+            self.info_widget.open_test_info()
 
             self.in_data_combo_box.setCurrentIndex(current_in)
             self.out_data_combo_box.setCurrentIndex(current_out)
@@ -194,45 +193,6 @@ class TestingWidget(QWidget):
     def prog_out_combo_box_triggered(self):
         self.prog_out.setText(self.current_item.prog_out.get(self.prog_out_combo_box.currentText(), ''))
 
-    def get_path(self):
-        self.path = self.sm.lab_path()
-
-    def add_list_item(self, res, prog_out, exit_code, memory_res, valgrind_out):
-        self.progress_bar.setValue(self.progress_bar.value() + 1)
-        self.tests_list.item(self.test_count).set_completed(res, prog_out, exit_code, memory_res, valgrind_out)
-        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], res and memory_res)
-        self.side_list.set_status(self.tests_list.item(self.test_count).name,
-                                  TestingListWidgetItem.passed if res else TestingListWidgetItem.failed)
-        self.test_count += 1
-        self.open_test_info()
-
-    def add_crash_list_item(self, prog_out, exit_code, prog_errors):
-        self.progress_bar.setValue(self.progress_bar.value() + 1)
-        self.tests_list.item(self.test_count).set_crashed(prog_out, exit_code, prog_errors)
-        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], False)
-        self.side_list.set_status(self.tests_list.item(self.test_count).name, TestingListWidgetItem.crashed)
-        self.test_count += 1
-        self.open_test_info()
-
-    def add_timeout_list_item(self):
-        self.tests_list.item(self.test_count).set_timeout()
-        self.progress_bar.setValue(self.progress_bar.value() + 1)
-        self.modify_testing_res(self.tests_list.item(self.test_count).text()[:3], False)
-        self.side_list.set_status(self.tests_list.item(self.test_count).name, TestingListWidgetItem.terminated)
-        self.test_count += 1
-        self.open_test_info()
-
-    def modify_testing_res(self, test_type='pos', res=True):
-        widget = self.pos_result_bar if test_type == 'pos' else self.neg_result_bar
-        if not res:
-            widget.setStyleSheet(f"color: {self.tm['TestFailed'].name()};")
-        else:
-            lst = widget.text().split()
-            lst2 = lst[1].split('/')
-            widget.setText(f"{lst[0]} {int(lst2[0]) + 1}/{lst2[1]}")
-            if int(lst2[0]) + 1 == int(lst2[1]):
-                widget.setStyleSheet(f"color: {self.tm['TestPassed'].name()};")
-
     def button_pressed(self, *args):
         if self.button.text() == "Тестировать":
             self.testing()
@@ -240,10 +200,60 @@ class TestingWidget(QWidget):
             self.stop_testing()
 
     def stop_testing(self):
-        self.cm.looper.terminate()
-        self.cm.looper.wait()
+        self.testing_looper.terminate()
         self.button.setText("Тестировать")
         self.testing_is_terminated(None)
+
+    def test_mode(self, flag=True):
+        if flag:
+            self.showTab.emit()
+            self.old_dir = os.getcwd()
+            os.chdir(self.sm.lab_path())
+
+            self.side_list.buttons['run'].setDisabled(True)
+            self.button.setText("Прервать")
+
+            self.coverage_bar.hide()
+            self.progress_bar.show()
+            self.pos_result_bar.show()
+            self.neg_result_bar.show()
+        else:
+            self.side_list.buttons['run'].setDisabled(False)
+            self.button.setText("Тестировать")
+            self.button.setDisabled(False)
+            os.chdir(self.old_dir)
+
+    def clear_tests(self):
+        self.tests.clear()
+        self.side_list.clear()
+
+    def add_test(self, path, name, test_type):
+        self.tests.append(test := Test(path, name, test_type))
+        self.side_list.add_item(test)
+
+    def set_tests_status(self, index, status):
+        if self.tests[index].type() == 'pos':
+            self.pos_result_bar.add_test(status)
+        else:
+            self.neg_result_bar.add_test(status)
+
+        self.tests[index].set_status(status)
+        self.side_list.set_status(index, status)
+
+    def load_tests(self):
+        for key in self.test_count:
+            self.test_count[key] = 0
+        for pos in ['pos', 'neg']:
+            data_dir = f"{self.sm.data_lab_path()}/func_tests"
+            if os.path.isdir(f"{data_dir}/{pos}"):
+                lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{data_dir}/{pos}")))
+                lst.sort(key=lambda s: int(s.rstrip('.json')))
+                for i, el in enumerate(lst):
+                    self.add_test(f"{data_dir}/{pos}/{el}", f"{pos}{i + 1}", pos)
+                    self.test_count[pos] += 1
+
+    def count(self):
+        return self.test_count['pos'] + self.test_count['neg']
 
     def testing(self):
         try:
@@ -253,96 +263,31 @@ class TestingWidget(QWidget):
                        "Папки с данным заданием не существует. Тестирование невозможно", self.tm)
             return
 
-        # self.ui_disable_func(True)
-        self.side_list.buttons['run'].setDisabled(True)
-        self.button.setText("Прервать")
+        self.test_mode(True)
+        self.clear_tests()
+        self.load_tests()
 
-        self.coverage_bar.hide()
-        self.progress_bar.show()
-        self.pos_result_bar.show()
-        self.neg_result_bar.show()
-
-        self.get_path()
-        self.old_dir = os.getcwd()
-        os.chdir(self.path)
-
-        if self.isHidden():
-            self.get_path()
-        self.tests_list.clear()
-        self.current_task = self.sm['lab'], self.sm['task'], self.sm['var']
-
-        tests_list = []
-        data_dir = f"{self.sm.data_lab_path()}/func_tests"
-
-        if os.path.isdir(f"{data_dir}/pos"):
-            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{data_dir}/pos")))
-            lst.sort(key=lambda s: int(s.rstrip('.json')))
-            for i, el in enumerate(lst):
-                try:
-                    self.tests_list.addItem(TestingListWidgetItem(
-                        self.tm, f"pos{i + 1}", f"{data_dir}/pos/{el}", self.sm.get_smart('memory_testing', False)))
-                    tests_list.append(f'pos{i + 1}')
-                except json.JSONDecodeError:
-                    pass
-
-        self.pos_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
-        self.pos_result_bar.setText(f"POS: 0/{len(tests_list)}")
-        pos_count = len(tests_list)
-
-        if os.path.isdir(f"{data_dir}/neg"):
-            lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{data_dir}/neg")))
-            lst.sort(key=lambda s: int(s.rstrip('.json')))
-            for i, el in enumerate(lst):
-                try:
-                    self.tests_list.addItem(TestingListWidgetItem(
-                        self.tm, f"neg{i + 1}", f"{data_dir}/neg/{el}", self.sm.get_smart('memory_testing', False)))
-                    tests_list.append(f'neg{i + 1}')
-                except json.JSONDecodeError:
-                    pass
-
-        self.tests_list.setCurrentRow(0)
-
-        self.neg_result_bar.setStyleSheet(f"color: {self.tm['TextColor']};")
-        self.neg_result_bar.setText(f"NEG: 0/{len(tests_list) - pos_count}")
+        self.pos_result_bar.set_count(self.test_count['pos'])
+        self.neg_result_bar.set_count(self.test_count['neg'])
 
         self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(len(tests_list))
+        self.progress_bar.setMaximum(self.count())
         self.progress_bar.setValue(0)
 
-        self.side_list.clear()
-        for el in tests_list:
-            self.side_list.add_item(el)
-
-        try:
-            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
-                settings = json.loads(f.read())
-                command = settings.get('preprocessor')
-        except FileNotFoundError:
-            command = ''
-        except json.JSONDecodeError:
-            command = ''
+        command = self.sm.get_task('preprocessor', '')
         if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(lambda: self.start_testing(tests_list))
+            self.looper.finished.connect(self.start_testing)
             self.looper.start()
         else:
-            self.start_testing(tests_list)
+            self.start_testing()
 
-    def start_testing(self, lst):
-        try:
-            self.cm.testing(self.pos_comparator, self.neg_comparator, self.sm.get_smart('memory_testing', False),
-                            self.sm.get_smart('coverage', False))
-        except FileNotFoundError:
-            self.enable_ui(False)
-            return
-
-        self.cm.looper.test_complete.connect(self.add_list_item)
-        self.cm.looper.test_crash.connect(self.add_crash_list_item)
-        self.cm.looper.test_timeout.connect(self.add_timeout_list_item)
-        self.cm.looper.end_testing.connect(self.end_testing)
-        self.cm.looper.testing_terminate.connect(self.testing_is_terminated)
-
-        self.test_count = 0
+    def start_testing(self):
+        self.testing_looper = TestingLooper(self.sm, self.cm, self.tests)
+        self.testing_looper.testStatusChanged.connect(self.set_tests_status)
+        self.testing_looper.compileFailed.connect(self.testing_is_terminated)
+        self.testing_looper.finished.connect(self.end_testing)
+        self.testing_looper.start()
 
     def end_testing(self):
         self.progress_bar.hide()
@@ -351,20 +296,13 @@ class TestingWidget(QWidget):
         if self.sm.get_smart('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
-        try:
-            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
-                settings = json.loads(f.read())
-                command = settings.get('postprocessor')
-        except FileNotFoundError:
-            command = ''
-        except json.JSONDecodeError:
-            command = ''
+        command = self.sm.get_task('postprocessor', '')
         if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(lambda: self.enable_ui(True))
+            self.looper.finished.connect(lambda: self.test_mode(False))
             self.looper.start()
         else:
-            self.enable_ui(True)
+            self.test_mode(False)
 
     def testing_is_terminated(self, errors=''):
         self.progress_bar.hide()
@@ -374,12 +312,12 @@ class TestingWidget(QWidget):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         if errors:
-            dialog = CompilerErrorWindow(errors, os.listdir(self.path), self.tm)
+            dialog = CompilerErrorWindow(errors, os.listdir(self.sm.lab_path()), self.tm)
             if dialog.exec():
                 if dialog.goto:
                     self.jump_to_code.emit(*dialog.goto)
 
-        for i in range(self.test_count, self.tests_list.count()):
+        for i in range(self.test_count['completed'], self.count()):
             self.tests_list.item(i).set_terminated()
 
         self.cm.clear_coverage_files()
@@ -394,59 +332,10 @@ class TestingWidget(QWidget):
             command = ''
         if command:
             self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(lambda: self.enable_ui(False))
+            self.looper.finished.connect(lambda: self.test_mode(False))
             self.looper.start()
         else:
-            self.enable_ui(False)
-
-    def enable_ui(self, success=True):
-        self.ui_disable_func(False)
-        self.side_list.buttons['run'].setDisabled(False)
-        self.button.setText("Тестировать")
-        self.button.setDisabled(False)
-        os.chdir(self.old_dir)
-
-    def pos_comparator(self, str1, str2):
-        comparator = self.sm.get('pos_comparators', dict()).get(
-            f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
-        if comparator == -1:
-            comparator = self.sm.get_smart('pos_comparator', 0)
-        if comparator == 0:
-            return comparator1(str1, str2, self.sm.get_smart('epsilon', 0))
-        if comparator == 1:
-            return comparator2(str1, str2)
-        if comparator == 2:
-            return comparator3(str1, str2, self.sm.get_smart('pos_substring', ''))
-        if comparator == 3:
-            return comparator4(str1, str2, self.sm.get_smart('pos_substring', ''))
-        if comparator == 4:
-            return comparator5(str1, str2)
-        if comparator == 5:
-            return comparator6(str1, str2)
-
-    def neg_comparator(self, str1, str2):
-        comparator = self.sm.get('neg_comparators', dict()).get(
-            f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
-        if comparator == -1:
-            comparator = self.sm.get_smart('neg_comparator', 0)
-        if comparator == 0:
-            return True
-        if comparator == 1:
-            return comparator1(str1, str2, self.sm.get_smart('epsilon', 0))
-        if comparator == 2:
-            return comparator2(str1, str2)
-        if comparator == 3:
-            return comparator3(str1, str2, self.sm.get_smart('neg_substring', ''))
-        if comparator == 4:
-            return comparator4(str1, str2, self.sm.get_smart('neg_substring', ''))
-        if comparator == 5:
-            return comparator5(str1, str2)
-        if comparator == 6:
-            return comparator6(str1, str2)
-
-    def show(self) -> None:
-        self.open_task()
-        super(TestingWidget, self).show()
+            self.test_mode(False)
 
 
 def comparator1(str1, str2, eps=0):
@@ -530,83 +419,419 @@ def read_file(path, default=None):
     return res
 
 
-class TestingListWidgetItem(QListWidgetItem):
-    in_progress = 0
-    passed = 1
-    failed = 2
-    terminated = 3
-    crashed = 2
+class Test:
+    IN_PROGRESS = 0
+    PASSED = 1
+    FAILED = 2
+    TERMINATED = 3
+    TIMEOUT = 4
 
-    def __init__(self, tm, name, file, memory_testing=False):
-        super(TestingListWidgetItem, self).__init__()
-        self.tm = tm
-        self.setText(f"{name:6}  in progress…")
-        self.setForeground(self.tm['TestInProgress'])
-        self.name = name
-        self.path = file
-        self.status = TestingListWidgetItem.in_progress
-        self.prog_out = dict()
-        self.dict = dict()
+    def __init__(self, path, name, test_type='pos'):
+        self._path = path
+        self._name = name
+        self._test_type = test_type
+        self._data = None
         self.in_data = dict()
         self.out_data = dict()
-        self.exit_code = 0
-        self.setFont(self.tm.code_font)
-        self.memory_testing = memory_testing
-        self.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestInProgress'])))
+        self.prog_out = dict()
+        self.load()
+        self._status = Test.IN_PROGRESS
+
+        self.exit = 0
+        self.args = ''
+        self.results = dict()
+
+    def status(self):
+        return self._status
+
+    def res(self):
+        return all(self.results.values())
+
+    def name(self):
+        return self._name
+
+    def set_status(self, status):
+        self._status = status
+
+    def type(self):
+        return self._test_type
 
     def load(self):
         try:
-            with open(self.path, encoding='utf-8') as f:
-                self.dict = json.loads(f.read())
-
-                self.in_data = {'STDIN': self.dict.get('in', '')}
-                for i, el in enumerate(self.dict.get('in_files', [])):
+            with open(self._path, encoding='utf-8') as f:
+                self._data = json.loads(f.read())
+                self.in_data = {'STDIN': self.get('in', '')}
+                self.out_data = {'STDOUT': self.get('out', '')}
+                for i, el in enumerate(self.get('in_files', [])):
                     self.in_data[f"in_file_{i + 1}.{el['type']}"] = el['text']
-
-                self.out_data = {'STDOUT': self.dict.get('out', '')}
-                for i, el in enumerate(self.dict.get('out_files', [])):
+                    if 'check' in el:
+                        self.out_data[f"check_file_{i + 1}.{el['type']}"] = el['check']
+                for i, el in enumerate(self.get('out_files', [])):
                     self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
-                for i, el in self.dict.get('check_files', dict()).items():
-                    self.out_data[f"check_file_{i}.{el['type']}"] = el['text']
-
-        except FileNotFoundError:
-            self.dict = dict()
         except json.JSONDecodeError:
-            self.dict = dict()
+            self._data = dict()
 
     def unload(self):
-        self.dict = None
+        self._data = None
+        self.in_data.clear()
+        self.out_data.clear()
 
-    def set_completed(self, res, prog_out, exit_code, memory_res, valgrind_out):
-        self.status = TestingListWidgetItem.passed if res else TestingListWidgetItem.failed
-        self.prog_out = prog_out
-        self.exit_code = exit_code
-        if self.memory_testing:
-            self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5} "
-                         f"{'MEMORY_OK' if memory_res else 'MEMORY_FAIL'}")
-            self.setToolTip(valgrind_out)
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+
+class TestingLooper(QThread):
+    testStatusChanged = pyqtSignal(int, int)
+    compileFailed = pyqtSignal(str)
+
+    def __init__(self, sm, cm: CommandManager, tests: list[Test]):
+        super(TestingLooper, self).__init__()
+        self.sm = sm
+        self.cm = cm
+        self._tests = tests
+        self._coverage = self.sm.get_smart('coverage')
+
+    def prepare_test(self, test: Test, index: int):
+        if self.sm.get('func_tests_in_project'):
+            test.args = CommandManager.read_file(self.sm.test_args_path(test.type(), index))
         else:
-            self.setText(f"{self.name:6}  {'PASSED' if res else 'FAILED'}    exit: {exit_code:<5}")
-        self.setForeground(color := (self.tm['TestPassed'] if res and memory_res else self.tm['TestFailed']))
-        self.setIcon(QIcon(self.tm.get_image('passed' if res and memory_res else 'failed', color=color)))
+            test.args = MacrosConverter.convert_args(
+                test.get('args', ''), '', test.type(), index,
+                {j + 1: self.sm.test_in_file_path(test.type(), index, j, binary=d.get('type', 'txt') == 'bin')
+                 for j, d in enumerate(test.get('in_files', []))},
+                {j + 1: self.sm.test_out_file_path(test.type(), index, j, binary=d.get('type', 'txt') == 'bin')
+                 for j, d in enumerate(test.get('out_files', []))},
+                f"{self.sm.app_data_dir}/temp_files")
+            self.convert_test_files('in', test, test.type(), index)
+            self.convert_test_files('out', test, test.type(), index)
+            self.convert_test_files('check', test, test.type(), index)
 
-    def set_crashed(self, prog_out, exit_code, prog_errors):
-        self.status = TestingListWidgetItem.crashed
-        self.prog_out = prog_out
-        self.exit_code = exit_code
-        self.setText(f"{self.name:6}  CRASHED   exit: {exit_code:<5} ")
-        self.setToolTip(prog_errors)
-        self.setForeground(self.tm['TestCrashed'])
-        self.setIcon(QIcon(self.tm.get_image('failed', color=self.tm['TestCrashed'])))
+    def pos_comparator(self, str1, str2):
+        comparator = self.sm.get('pos_comparators', dict()).get(
+            f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
+        if comparator == -1:
+            comparator = self.sm.get_smart('pos_comparator', 0)
+        if comparator == 0:
+            return comparator1(str1, str2, self.sm.get_smart('epsilon', 0))
+        if comparator == 1:
+            return comparator2(str1, str2)
+        if comparator == 2:
+            return comparator3(str1, str2, self.sm.get_smart('pos_substring', ''))
+        if comparator == 3:
+            return comparator4(str1, str2, self.sm.get_smart('pos_substring', ''))
+        if comparator == 4:
+            return comparator5(str1, str2)
+        if comparator == 5:
+            return comparator6(str1, str2)
 
-    def set_timeout(self):
-        self.status = TestingListWidgetItem.failed
-        self.setText(f"{self.name:6}  TIMEOUT")
-        self.setForeground(self.tm['TestFailed'])
-        self.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestFailed'])))
+    def neg_comparator(self, str1, str2):
+        comparator = self.sm.get('neg_comparators', dict()).get(
+            f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}", -1)
+        if comparator == -1:
+            comparator = self.sm.get_smart('neg_comparator', 0)
+        if comparator == 0:
+            return True
+        if comparator == 1:
+            return comparator1(str1, str2, self.sm.get_smart('epsilon', 0))
+        if comparator == 2:
+            return comparator2(str1, str2)
+        if comparator == 3:
+            return comparator3(str1, str2, self.sm.get_smart('neg_substring', ''))
+        if comparator == 4:
+            return comparator4(str1, str2, self.sm.get_smart('neg_substring', ''))
+        if comparator == 5:
+            return comparator5(str1, str2)
+        if comparator == 6:
+            return comparator6(str1, str2)
 
-    def set_terminated(self, message="terminated"):
-        self.status = TestingListWidgetItem.terminated
-        self.setText(f"{self.name:6}  {message}")
-        self.setForeground(self.tm['TestInProgress'])
-        self.setIcon(QIcon(self.tm.get_image('failed', color=self.tm['TestInProgress'])))
+    def comparator(self, test: Test, str1, str2):
+        if test.type() == 'pos':
+            return self.pos_comparator(str1, str2)
+        return self.neg_comparator(str1, str2)
+
+    def run_comparators(self, test: Test, index: int):
+        test.results['STDOUT'] = self.comparator(test, test.get('out', ''), test.prog_out.get('STDOUT'))
+
+        expected_code = test.get('exit', '')
+        if expected_code:
+            code_res = test.exit == int(expected_code)
+        elif test.type() == 'pos':
+            code_res = test.exit == 0
+        else:
+            code_res = test.exit != 0
+        test.results['Exit code'] = code_res
+
+        for j, file in enumerate(test.get('out_files', [])):
+            path = "" if self.sm.get('func_tests_in_project') else f"{self.sm.app_data_dir}/temp_files/"
+            if file.get('type', 'txt') == 'txt':
+                text = CommandManager.read_file(f"{path}temp_{j + 1}.txt", '')
+                test.results[f"out_file_{j + 1}.txt"] = self.comparator(test, file['text'], text)
+                test.prog_out[f"out_file_{j + 1}.txt"] = text
+            else:
+                text = CommandManager.read_binary(f"{path}temp_{j + 1}.bin", b'')
+                test.results[f"out_file_{j + 1}.bin"] = bytes_comparator(
+                    text, file['text'],
+                    CommandManager.read_binary(self.sm.test_out_file_path(test.type(), index, j, True), b''))
+                test.prog_out[f"out_file_{j + 1}.bin"], _ = decode(file['text'], text)
+
+        for j, file in enumerate(test.get('in_files', [])):
+            if 'check' in file:
+                if file.get('type', 'txt') == 'txt':
+                    text = CommandManager.read_file(self.sm.test_in_file_path(test.type(), index, j, False), '')
+                    test.results[f"in_file_{j + 1}.txt"] = self.comparator(test, file['check'], text)
+                    test.prog_out[f"in_file_{j + 1}.txt"] = text
+                else:
+                    text = CommandManager.read_binary(self.sm.test_in_file_path(test.type(), index, j, True), b'')
+                    test.results[f"in_file_{j + 1}.bin"] = bytes_comparator(
+                        text, file['check'], CommandManager.read_binary(
+                            self.sm.test_check_file_path(test.type(), index, j, True), b''))
+                    test.prog_out[f"in_file_{j + 1}.bin"], _ = decode(file['check'], text)
+
+    def run_test(self, test: Test, index: int):
+        self.prepare_test(test, index)
+        try:
+            res = self.cm.run_main_code(test.args, test.get('in', ''), coverage=self._coverage)
+            test.exit = res.returncode
+            test.prog_out = {'STDOUT': res.stdout}
+            self.run_comparators(test, index)
+            test.set_status(Test.PASSED if test.res() else Test.FAILED)
+        except TimeoutExpired:
+            test.set_status(Test.TIMEOUT)
+
+    def run(self):
+        code, errors = self.cm.compile(coverage=self._coverage)
+        if not code:
+            self.compileFailed.emit(errors)
+            return
+
+        for i, test in enumerate(self._tests):
+            self.run_test(test, i)
+            if self.sm.get('func_tests_in_project'):
+                self.convert_test_files('in', test, test.type(), i)
+            elif os.path.isdir(f"{self.sm.app_data_dir}/temp_files"):
+                shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
+
+            self.testStatusChanged.emit(i, test.status())
+            sleep(0.01)
+            i += 1
+
+    def convert_test_files(self, in_out, test, pos, i):
+        if in_out == 'in':
+            iterator = enumerate(test.get('in_files', []))
+        elif in_out == 'out':
+            iterator = enumerate(test.get('out_files', []))
+        elif in_out == 'check':
+            iterator = test.get('check_files', []).items()
+        else:
+            raise ValueError(f'Unknown files type: "{in_out}". Can be only "in", "out" and "check" files')
+
+        for j, file in iterator:
+            if file.get('type', 'txt') == 'txt':
+                MacrosConverter.convert_txt(file['text'], self.sm.test_in_file_path(pos, i, j, False),
+                                            self.sm.line_sep)
+            else:
+                MacrosConverter.convert_bin(file['text'], self.sm.test_in_file_path(pos, i, j, True))
+
+    def terminate(self) -> None:
+        sleep(0.1)
+        self.cm.clear_coverage_files()
+        super(TestingLooper, self).terminate()
+
+
+class SimpleField(QWidget):
+    def __init__(self, tm, name, text):
+        super().__init__()
+        self._tm = tm
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._label = QLabel(f"{name} {text}")
+        layout.addWidget(self._label)
+
+    def set_theme(self):
+        for el in [self._label]:
+            self._tm.auto_css(el)
+
+
+class LineField(QWidget):
+    def __init__(self, tm, name, text):
+        super().__init__()
+        self._tm = tm
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._label = QLabel(name)
+        layout.addWidget(self._label)
+
+        self._line_edit = QLineEdit()
+        self._line_edit.setText(text)
+        self._line_edit.setReadOnly(True)
+        layout.addWidget(self._line_edit)
+
+    def set_theme(self):
+        for el in [self._label, self._line_edit]:
+            self._tm.auto_css(el)
+
+
+class TextField(QWidget):
+    def __init__(self, tm, name, text):
+        super().__init__()
+        self._tm = tm
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._label = QLabel(name)
+        layout.addWidget(self._label)
+
+        self._text_edit = QTextEdit()
+        self._text_edit.setText(text)
+        self._text_edit.setReadOnly(True)
+        self._text_edit.setMaximumHeight(300)
+        layout.addWidget(self._text_edit)
+
+    def set_theme(self):
+        for el in [self._label, self._text_edit]:
+            self._tm.auto_css(el)
+
+
+class _ListFieldItem(QListWidgetItem):
+    def __init__(self, tm, name, status):
+        super().__init__()
+        self._tm = tm
+        self._status = status
+        self.setText(name)
+
+    def set_theme(self):
+        self.setFont(self._tm.font_small)
+        if self._status:
+            self.setIcon(QIcon(self._tm.get_image('passed', color=self._tm['TestPassed'])))
+            self.setForeground(self._tm['TestPassed'])
+        else:
+            self.setIcon(QIcon(self._tm.get_image('failed', color=self._tm['TestFailed'])))
+            self.setForeground(self._tm['TestFailed'])
+
+
+class ListField(QWidget):
+    def __init__(self, tm, name, dct: dict):
+        super().__init__()
+        self._tm = tm
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._label = QLabel(name)
+        layout.addWidget(self._label)
+
+        self._list_widget = QListWidget()
+        self._list_widget.setMinimumHeight(80)
+        self._list_widget.setMaximumHeight(300)
+        layout.addWidget(self._list_widget)
+        for key, item in dct.items():
+            self._list_widget.addItem(_ListFieldItem(tm, key, item))
+
+    def set_theme(self):
+        for el in [self._label, self._list_widget]:
+            self._tm.auto_css(el)
+
+
+class TestInfoWidget(QScrollArea):
+    def __init__(self, tm):
+        super().__init__()
+        self._tm = tm
+        self._test = None
+
+        scroll_widget = QWidget()
+        self.setWidget(scroll_widget)
+        self.setWidgetResizable(True)
+
+        self._scroll_layout = QVBoxLayout()
+        scroll_widget.setLayout(self._scroll_layout)
+        self._scroll_layout.setAlignment(Qt.AlignTop)
+
+        self._widgets = []
+
+    def clear(self):
+        for el in self._widgets:
+            el.setParent(None)
+        self._widgets.clear()
+
+    def add_widget(self, widget):
+        self._scroll_layout.addWidget(widget)
+        self._widgets.append(widget)
+        if hasattr(widget, 'set_theme'):
+            widget.set_theme()
+
+    def open_test_info(self):
+        self.clear()
+        self.add_widget(LineField(self._tm, "Описание:", self._test['desc']))
+        self.add_widget(LineField(self._tm, "Аргументы:", self._test['args']))
+        if self._test.status() in (Test.PASSED, Test.FAILED):
+            if self._test.get('exit', None) is not None:
+                self.add_widget(SimpleField(self._tm, "Код возврата:", f"{self._test.exit} ({self._test['exit']})"))
+            else:
+                self.add_widget(SimpleField(self._tm, "Код возврата:", self._test.exit))
+            self.add_widget(ListField(self._tm, "Результаты:", self._test.results))
+
+    def set_test(self, test: Test):
+        self._test = test
+
+    def set_theme(self):
+        self._tm.auto_css(self, border=False)
+        for el in self._widgets:
+            if hasattr(el, 'set_theme'):
+                el.set_theme()
+
+
+class TestCountIndicator(QLabel):
+    def __init__(self, tm, name='POS:'):
+        super().__init__()
+        self._tm = tm
+        self._name = name
+
+        self.setFixedSize(125, 26)
+        self.setAlignment(Qt.AlignCenter)
+
+        self._count = 0
+        self._passed = 0
+        self._completed = 0
+
+    def set_text(self):
+        self.setText(f"{self._name} {self._passed}/{self._count}")
+
+    def set_count(self, count):
+        self._passed = 0
+        self._completed = 0
+        self._count = count
+        self.set_text()
+        self.set_theme()
+
+    def add_test(self, status):
+        self._completed += 1
+        if status == Test.PASSED:
+            self._passed += 1
+        self.set_text()
+        self.set_theme()
+
+    def _get_color(self):
+        if self._passed == self._count:
+            return self._tm['TestPassed'].name()
+        if self._passed == self._completed:
+            return self._tm['TextColor']
+        return self._tm['TestFailed'].name()
+
+    def set_theme(self):
+        self.setFont(self._tm.font_small)
+        self.setStyleSheet(f"color: {self._get_color()};")

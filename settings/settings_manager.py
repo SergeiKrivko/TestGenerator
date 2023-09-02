@@ -11,8 +11,8 @@ from settings.search import Searcher
 class SettingsManager(QObject):
     searching_complete = pyqtSignal()
     project_changed = pyqtSignal()
-    start_change_task = pyqtSignal()
-    finish_change_task = pyqtSignal()
+    startChangeTask = pyqtSignal()
+    finishChangeTask = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -36,6 +36,7 @@ class SettingsManager(QObject):
             line_sep = 0
         self.line_sep = ['\n', '\r\n', '\r'][line_sep]
         self.project_settings = dict()
+        self.task_settings = dict()
         self.set_project(self.get_general('project'))
 
         self.programs = dict()
@@ -79,6 +80,9 @@ class SettingsManager(QObject):
             return self.project_settings[key]
         return self.get_general(key, default)
 
+    def get_task(self, key, default=None):
+        return self.task_settings.get(key, default)
+
     def remove_general(self, key):
         self.q_settings.remove(key)
 
@@ -87,7 +91,7 @@ class SettingsManager(QObject):
             self.project_settings.pop(key)
 
     def set_project(self, project):
-        self.start_change_task.emit()
+        self.start_change_task()
         if project is None:
             self.project = ''
             self.set_general('projects', dumps(self.projects))
@@ -122,7 +126,24 @@ class SettingsManager(QObject):
             self.project_settings = dict()
 
         self.project_changed.emit()
-        self.finish_change_task.emit()
+
+    def start_change_task(self):
+        if not self.project:
+            return
+        os.makedirs(self.data_lab_path(), exist_ok=True)
+        with open(f"{self.data_lab_path()}/settings.json", 'w', encoding='utf-8') as f:
+            f.write(dumps(self.task_settings))
+        self.startChangeTask.emit()
+
+    def finish_change_task(self):
+        try:
+            with open(f"{self.data_lab_path()}/settings.json", encoding='utf-8') as f:
+                self.task_settings = loads(f.read())
+        except FileNotFoundError:
+            self.task_settings = dict()
+        except JSONDecodeError:
+            self.task_settings = dict()
+        self.finishChangeTask.emit()
 
     def lab_path(self, lab=None, task=None, var=None, project=None):
         struct = self.get('struct', project=project)

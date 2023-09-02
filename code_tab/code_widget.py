@@ -26,7 +26,7 @@ class CodeWidget(QWidget):
         self.side_panel = side_panel
         self.current_file = ''
 
-        self.sm.finish_change_task.connect(self.first_open)
+        self.sm.finishChangeTask.connect(self.first_open)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)

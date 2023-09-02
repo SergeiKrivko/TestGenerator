@@ -21,8 +21,8 @@ class TestsWidget(QWidget):
 
         layout = QVBoxLayout()
 
-        self.sm.start_change_task.connect(self.save_tests)
-        self.sm.finish_change_task.connect(self.open_tests)
+        self.sm.startChangeTask.connect(self.save_tests)
+        self.sm.finishChangeTask.connect(self.open_tests)
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)

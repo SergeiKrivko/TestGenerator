@@ -37,14 +37,12 @@ class SidePanel(QWidget):
             'projects': ProjectWidget(self.sm, self.tm, lambda *args: None),
             'files': FilesWidget(self.sm, self.cm, self.tm),
             'tests': TestingPanel(self.sm, self.tm),
-            'search': SidePanelWidget(self.sm, self.tm, "Поиск", []),
             'todo': TODOPanel(self.sm, self.cm, self.tm),
             'git': GitPanel(self.sm, self.cm, self.tm),
             'generator': GeneratorTab(self.sm, self.cm, self.tm),
             'terminal': TerminalTab(self.sm, self.tm),
             'run': ConsolePanel(self.sm, self.tm, self.cm)
         }
-        self.tabs['search'].setFixedWidth(200)
         self.tab_width = dict()
 
         for key, el in self.tabs.items():
@@ -119,7 +117,7 @@ class SideBar(QWidget):
         strange_widget.setLayout(layout)
 
         self.buttons = {el: SideBarButton(self.tm, f'button_{el}') for el in [
-            'projects', 'files', 'tests', 'search', 'git', 'todo', 'generator', 'terminal', 'run']}
+            'projects', 'files', 'tests', 'git', 'todo', 'generator', 'terminal', 'run']}
         for el in self.buttons.values():
             layout.addWidget(el)
             el.clicked.connect(self.connect_button(el))

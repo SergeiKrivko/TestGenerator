@@ -537,7 +537,11 @@ class ThemeManager:
         widget.setFocusPolicy(False)
         widget.setStyleSheet(self.list_widget_css(palette))
         for i in range(widget.count()):
-            widget.item(i).setFont(font if font else self.font_small)
+            item = widget.item(i)
+            if hasattr(item, 'set_theme'):
+                item.set_theme()
+            else:
+                item.setFont(font if font else self.font_small)
 
     def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True):
         if code_font:
@@ -554,7 +558,7 @@ class ThemeManager:
         elif isinstance(widget, QTextEdit):
             widget.setStyleSheet(self.text_edit_css(palette))
         elif isinstance(widget, QScrollArea):
-            widget.setStyleSheet(self.scroll_area_css(palette))
+            widget.setStyleSheet(self.scroll_area_css(palette, border))
         elif isinstance(widget, Button):
             widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
