@@ -161,11 +161,11 @@ class SettingsManager(QObject):
                 return self.path
 
         if lab is None:
-            lab = self.get('lab', project=project)
+            lab = self.get('lab', 1, project=project)
         if task is None:
-            task = self.get('task', project=project)
+            task = self.get('task', 1, project=project)
         if var is None:
-            var = self.get('var', project=project)
+            var = self.get('var', 0, project=project)
         if project is None:
             path = self.path
         else:
@@ -185,11 +185,11 @@ class SettingsManager(QObject):
         else:
             project = self.data_path
         if lab is None:
-            lab = self.get('lab')
+            lab = self.get('lab', 1)
         if task is None:
-            task = self.get('task')
+            task = self.get('task', 1)
         if var is None:
-            var = self.get('var')
+            var = self.get('var', 0)
         return f"{project}/{lab}/{task}/{var}"
 
     def set_general(self, key, value):
