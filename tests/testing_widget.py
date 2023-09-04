@@ -7,7 +7,7 @@ from time import sleep
 from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
-    QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
+    QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea, QSizePolicy
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
 from tests.binary_decoder import decode, comparator as bytes_comparator
@@ -603,7 +603,7 @@ class TestingLooper(QThread):
             shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
 
     def run_util(self, test: Test, index: int, util_data: dict):
-        name = util_data.get('program', 'error_unknown_program').split()[0]
+        name = os.path.basename(util_data.get('program', 'error_unknown_program').split()[0])
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
                                                                       args=test.get('args', ''), dict=temp_path),
@@ -733,7 +733,7 @@ class TextField(QWidget):
         self._text_edit = QTextEdit()
         self._text_edit.setText(text)
         self._text_edit.setReadOnly(True)
-        # self._text_edit.setMaximumHeight(300)
+        self._text_edit.setMinimumHeight(150)
         layout.addWidget(self._text_edit)
 
     def set_theme(self):
@@ -771,15 +771,14 @@ class ListField(QWidget):
         layout.addWidget(self._label)
 
         self._list_widget = QListWidget()
-        self._list_widget.setMinimumHeight(100)
-        # self._list_widget.setMaximumHeight(300)
+        self._list_widget.setMinimumHeight(len(dct) * 22 + 2)
         layout.addWidget(self._list_widget)
         for key, item in dct.items():
             self._list_widget.addItem(_ListFieldItem(tm, key, item))
 
     def set_theme(self):
         for el in [self._label, self._list_widget]:
-            self._tm.auto_css(el, palette='Main')
+            self._tm.auto_css(el, palette='Bg', border=False)
 
 
 class TestInfoWidget(QScrollArea):

@@ -533,9 +533,9 @@ class ThemeManager:
     def code_colors(self, lexer):
         return self.theme.code_colors(lexer)
 
-    def set_theme_to_list_widget(self, widget, font=None, palette='Main'):
+    def set_theme_to_list_widget(self, widget, font=None, palette='Main', border=True, border_radius=True):
         widget.setFocusPolicy(False)
-        widget.setStyleSheet(self.list_widget_css(palette))
+        widget.setStyleSheet(self.list_widget_css(palette, border, border_radius))
         for i in range(widget.count()):
             item = widget.item(i)
             if hasattr(item, 'set_theme'):
@@ -574,7 +574,7 @@ class ThemeManager:
         elif isinstance(widget, QTabWidget):
             widget.setStyleSheet(self.tab_widget_css(palette))
         elif isinstance(widget, QListWidget):
-            self.set_theme_to_list_widget(widget, palette=palette)
+            self.set_theme_to_list_widget(widget, palette=palette, border=border, border_radius=border_radius)
         elif isinstance(widget, QCheckBox):
             widget.setStyleSheet(self.checkbox_css(palette))
 
@@ -635,10 +635,10 @@ QsciScintilla QScrollBar::sub-line, QScrollBar::add-line {{
     subcontrol-origin: margin;
 }}"""
 
-    def list_widget_css(self, palette):
+    def list_widget_css(self, palette, border=True, border_radius=True):
         return f"""
 QListWidget {{
-    {self.base_css(palette)}
+    {self.base_css(palette, border, border_radius)}
 }}
 QListWidget::item {{
     border-radius: 6px;
