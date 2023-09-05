@@ -18,6 +18,7 @@ from ui.message_box import MessageBox
 
 class TestingWidget(QWidget):
     showTab = pyqtSignal()
+    startTesting = pyqtSignal()
     save_tests = pyqtSignal()
     jump_to_code = pyqtSignal(str, int, int)
 
@@ -256,6 +257,7 @@ class TestingWidget(QWidget):
         return self.test_count['pos'] + self.test_count['neg']
 
     def testing(self):
+        self.startTesting.emit()
         try:
             self.cm.clear_coverage_files()
         except FileNotFoundError:
@@ -654,8 +656,15 @@ class TestingLooper(QThread):
             self.compileFailed.emit(errors)
             return
 
+        pos_count = 0
         for i, test in enumerate(self._tests):
-            self.run_test(test, i)
+            if self._tests[i].type() == 'pos':
+                pos_count += 1
+                index = i
+            else:
+                index = i - pos_count
+
+            self.run_test(test, index)
 
             self.testStatusChanged.emit(i, test.status())
             sleep(0.01)
