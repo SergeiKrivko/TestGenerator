@@ -69,14 +69,14 @@ class MacrosConverter(QThread):
             if text[i] == '#fin':
                 text[i] = '#fin1'
             if text[i].startswith('#fin') and (n := text[i].lstrip('#fin')).isdigit():
-                text[i] = in_files.get(int(n), '#fin')
+                text[i] = in_files.get(int(n), '#fin').replace('\\', '/')
             if text[i] == '#fout':
                 text[i] = '#fout1'
             if text[i].startswith('#fout') and (n := text[i].lstrip('#fout')).isdigit():
                 if int(n) in out_files:
-                    text[i] = f"{data_path}/temp_{int(n)}{out_files[int(n)][-4:]}"
+                    text[i] = f"{data_path}/temp_{int(n)}{out_files[int(n)][-4:]}".replace('\\', '/')
                 else:
-                    text[i] = f"{data_path}/temp_{int(n)}"
+                    text[i] = f"{data_path}/temp_{int(n)}".replace('\\', '/')
         if path:
             with open(path, 'w', encoding='utf-8', newline=line_sep) as f:
                 f.write(' '.join(text))

@@ -603,7 +603,11 @@ class TestingLooper(QThread):
             shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
 
     def run_util(self, test: Test, index: int, util_data: dict):
-        name = os.path.basename(util_data.get('program', 'error_unknown_program').split()[0])
+        name = util_data.get('program', 'error_unknown_program')
+        if name.startswith('wsl -e '):
+            name = os.path.basename(name.split()[2])
+        else:
+            name = os.path.basename(name.split()[0])
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
                                                                       args=test.get('args', ''), dict=temp_path),

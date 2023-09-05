@@ -18,11 +18,12 @@ KEY_DICT = 3
 class _Widget(QWidget):
     valueChanged = pyqtSignal(object)
 
-    def __init__(self, key=None, key_type=None, default=None):
+    def __init__(self, key=None, key_type=None, default=None, not_delete_keys=False):
         super().__init__()
         self._tm = None
         self._sm = None
         self._key = key
+        self._delete_keys = not not_delete_keys
         self._key_type = key_type
         self._default = default
         self._children = dict()
@@ -112,7 +113,7 @@ class _Widget(QWidget):
         for item in self._children.values():
             for el in item:
                 if el.isHidden():
-                    if hasattr(el, 'delete_value'):
+                    if hasattr(el, 'delete_value') and self._delete_keys:
                         el.delete_value()
                 else:
                     if hasattr(el, 'load_value'):
@@ -163,8 +164,8 @@ class LineEdit(_Widget):
 
 
 class CheckBox(_Widget):
-    def __init__(self, name, state=False, key=None, key_type=None, children: dict = None):
-        super().__init__(key, key_type=None, default=state)
+    def __init__(self, name, state=False, key=None, key_type=None, children: dict = None, not_delete_keys=False):
+        super().__init__(key, key_type=None, default=state, not_delete_keys=not_delete_keys)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -414,8 +415,8 @@ class FileEdit(_Widget):
 
 
 class SwitchBox(_Widget):
-    def __init__(self, condition, children: dict, key_type=None):
-        super().__init__()
+    def __init__(self, condition, children: dict, key_type=None, not_delete_keys=False):
+        super().__init__(not_delete_keys=not_delete_keys)
         self._condition = condition
 
         layout = QVBoxLayout()

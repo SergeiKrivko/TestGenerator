@@ -4,15 +4,19 @@ import os
 def c_compile(path, cm, sm, coverage=False):
     old_dir = os.getcwd()
     os.chdir(path)
-    compiler = sm.get_smart('gcc', 'gcc')
+    if os.name == 'nt' and sm.get_smart("C_wsl", False):
+        compiler = "wsl -e gcc"
+        env = None
+    else:
+        compiler = sm.get_smart('gcc', 'gcc')
+        env = {'PATH': f"{os.path.split(compiler)[0]};{os.getenv('PATH')}"}
     compiler_keys = sm.get_smart('c_compiler_keys', '')
-    env = {'PATH': f"{os.path.split(compiler)[0]};{os.getenv('PATH')}"}
     command = f"{compiler} {compiler_keys} -c {'--coverage' if coverage else ''} " \
               f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} " \
               f"-g {'-lm' if sm.get_smart('-lm', False) else ''}"
     compile_res = cm.cmd_command(command, shell=True, env=env)
     if not compile_res.returncode:
-        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/app.exe " \
+        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o app.exe " \
                   f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} " \
                   f"{'-lm' if sm.get_smart('-lm', False) else ''}"
         compile_res = cm.cmd_command(command, shell=True, env=env)
@@ -32,6 +36,8 @@ def c_compile(path, cm, sm, coverage=False):
 
 
 def c_run(path, sm, args='', coverage=False):
+    if os.name == 'nt' and sm.get_smart("C_wsl", False):
+        return f"wsl -e ./app.exe {args}"
     if os.path.isfile(path):
         if path.endswith('.c') or path.endswith('.h'):
             return f"{os.path.split(path)[0]}/app.exe {args}"
@@ -53,7 +59,11 @@ def c_collect_coverage(path, sm, cm):
 
     for file in os.listdir(path):
         if file.endswith('.c'):
-            res = cm.cmd_command(f"{sm.get_smart('gcov', 'gcov')} {path}/{file}", shell=True)
+            if os.name == 'nt' and sm.get_smart("C_wsl", False):
+                res = cm.cmd_command(f"wsl -e gcov {file}", shell=True)
+            else:
+                res = cm.cmd_command(f"{sm.get_smart('gcov', 'gcov')} {path}/{file}", shell=True)
+
             for line in res.stdout.split('\n'):
                 if "Lines executed:" in line:
                     p, _, c = line.split(":")[1].split()

@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
@@ -103,10 +105,7 @@ class SettingsWindow(QDialog):
             CheckBox("Глобальные настройки компилятора/интерпретатора", key='default_compiler_settings', children={
                 False: SwitchBox(lambda: self.sm.get('language'), {
                     'C': [
-                        ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
-                        LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
-                        CheckBox("Ключ -lm", True, key='-lm'),
-                        ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
+                        self.c_settings(),
                         self.utils_settings('C'),
                     ],
                     'Python': [
@@ -138,10 +137,7 @@ class SettingsWindow(QDialog):
 
         self.c_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
-            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
-            CheckBox("Ключ -lm", True, key='-lm'),
-            ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
+            self.c_settings(),
             self.utils_settings('C'),
             key_type=KEY_GLOBAL
         )
@@ -206,6 +202,21 @@ class SettingsWindow(QDialog):
                     CheckBox("Ненулевой код возврата считается отрицательным результатом", key='exit_code_res')],
                 1: LineEdit("Команда:", key='report_command', width=350),
             }, key='type', width=250)], key=f'{language}_utils')
+
+    @staticmethod
+    def c_settings():
+        return SwitchBox(lambda: os.name == 'posix', {True: [
+            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
+            CheckBox("Ключ -lm", True, key='-lm'),
+        ], False: CheckBox("Использовать WSL", False, key="C_wsl", children={True: [
+            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
+            CheckBox("Ключ -lm", True, key='-lm'),
+        ], False: [
+            ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
+            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
+            ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
+        ]}, not_delete_keys=True)
+        }, not_delete_keys=True)
 
     @staticmethod
     def check_path(path: str):
