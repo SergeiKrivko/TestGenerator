@@ -1,6 +1,7 @@
 import os
 from PyQt5.QtWidgets import QVBoxLayout
 
+from code_tab.compiler_errors_window import CompilerErrorWindow
 from language.languages import languages
 from other.terminal import Terminal
 from ui.side_panel_widget import SidePanelWidget
@@ -54,9 +55,16 @@ class ConsolePanel(SidePanelWidget):
         self.buttons['cancel'].clicked.connect(self.terminal.terminate_process)
 
     def run_main(self):
-        self.cm.compile()
-        self.terminal.start_process(languages[self.sm.get('language', 'C')]['run'](
-            self.sm.lab_path(), self.sm, coverage=False))
+        res, errors = self.cm.compile()
+        if res:
+            self.terminal.start_process(languages[self.sm.get('language', 'C')]['run'](
+                self.sm.lab_path(), self.sm, coverage=False))
+        elif errors:
+            dialog = CompilerErrorWindow(errors, os.listdir(self.sm.lab_path()), self.tm)
+            if dialog.exec():
+                pass
+                # if dialog.goto:
+                #     self.jump_to_code.emit(*dialog.goto)
 
     def set_theme(self):
         super().set_theme()
