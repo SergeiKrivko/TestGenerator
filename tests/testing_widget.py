@@ -632,12 +632,13 @@ class TestingLooper(QThread):
             self.run_comparators(test, index)
             self.clear_after_run(test, index)
             utils = self.sm.get_smart(f"{self.sm.get('language', 'C')}_utils", [])
-            try:
-                utils = json.loads(utils)
-                for util in utils:
-                    self.run_util(test, index, util)
-            except json.JSONDecodeError:
-                pass
+            if isinstance(utils, str):
+                try:
+                    utils = json.loads(utils)
+                    for util in utils:
+                        self.run_util(test, index, util)
+                except json.JSONDecodeError:
+                    pass
             test.set_status(Test.PASSED if test.res() else Test.FAILED)
         except TimeoutExpired:
             test.set_status(Test.TIMEOUT)
