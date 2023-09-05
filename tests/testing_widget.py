@@ -318,7 +318,7 @@ class TestingWidget(QWidget):
                     self.jump_to_code.emit(*dialog.goto)
 
         for i in range(self.test_count['completed'], self.count()):
-            self.tests_list.item(i).set_terminated()
+            self.side_list.set_status(i, Test.TERMINATED)
 
         self.cm.clear_coverage_files()
 
