@@ -177,5 +177,7 @@ class CodeEditor(QsciScintilla):
                 self.setText(f.read())
         except FileNotFoundError:
             pass
+        except TypeError:
+            pass
         except UnicodeDecodeError:
             pass

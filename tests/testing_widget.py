@@ -399,7 +399,7 @@ def comparator4(str1, str2, substring):
 
 
 def comparator5(str1, str2):
-    return str1 == str2
+    return str1.replace('\r', '') == str2.replace('\r', '')
 
 
 def comparator6(str1, str2):
@@ -744,15 +744,16 @@ class TextField(QWidget):
         self._label = QLabel(name)
         layout.addWidget(self._label)
 
-        self._text_edit = QTextEdit()
+        self._text_edit = QLabel()
         self._text_edit.setText(text)
-        self._text_edit.setReadOnly(True)
-        self._text_edit.setMinimumHeight(150)
+        self._text_edit.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
         layout.addWidget(self._text_edit)
 
     def set_theme(self):
-        for el in [self._label, self._text_edit]:
+        for el in [self._label]:
             self._tm.auto_css(el)
+        self._text_edit.setStyleSheet(self._tm.base_css())
+        self._text_edit.setFont(self._tm.code_font)
 
 
 class _ListFieldItem(QListWidgetItem):
