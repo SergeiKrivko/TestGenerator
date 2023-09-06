@@ -233,6 +233,8 @@ class TestingWidget(QWidget):
         self.side_list.add_item(test)
 
     def set_tests_status(self, index, status):
+        if status in [Test.PASSED, Test.FAILED, Test.TIMEOUT]:
+            self.test_count['completed'] += 1
         if self.tests[index].type() == 'pos':
             self.pos_result_bar.add_test(status)
         else:

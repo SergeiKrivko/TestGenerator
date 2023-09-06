@@ -135,8 +135,8 @@ class ThemeManager:
                     'MenuHoverColor': '#446D78',
                     'MenuSelectedColor': '#3A5D66',
                     'BorderColor': '#3E5875',
-                    'TextColor': '#2C3333',
-                    'ImageColor': (44, 51, 51),
+                    'TextColor': '#191C42',
+                    'ImageColor': (25, 28, 66),
 
                     'TestPassed': QColor('#449C38'),
                     'TestFailed': QColor('#F82525'),
@@ -171,8 +171,8 @@ class ThemeManager:
                     'MenuHoverColor': '#4C8A5F',
                     'MenuSelectedColor': '#4D8A51',
                     'BorderColor': '#39703A',
-                    'TextColor': '#483838',
-                    'ImageColor': (72, 56, 56),
+                    'TextColor': '#403232',
+                    'ImageColor': (64, 50, 50),
 
                     'TestPassed': QColor('#327329'),
                     'TestFailed': QColor('#F82525'),
@@ -269,15 +269,15 @@ class ThemeManager:
                     'CaretLineBackgroundColor': QColor('#B24E26'),
                     'BraceColor': QColor('#FC8817'),
 
-                    'MainColor': '#B22222',
+                    'MainColor': '#8C2E0D',
                     'MainHoverColor': '#DB4016',
                     'MainSelectedColor': '#CF0E04',
                     'BgColor': '#7C0A02',
                     'BgHoverColor': '#8F0C02',
                     'BgSelectedColor': '#A30D03',
-                    'MenuColor': '#69160E',
-                    'MenuHoverColor': '#57130C',
-                    'MenuSelectedColor': '#360C07',
+                    'MenuColor': '#57130B',
+                    'MenuHoverColor': '#450F09',
+                    'MenuSelectedColor': '#2B0A06',
                     'BorderColor': '#E25822',
                     'TextColor': '#F1BC31',
                     'ImageColor': (241, 188, 49),
@@ -419,9 +419,9 @@ class ThemeManager:
                     'BgColor': '#E8E8E8',
                     'BgHoverColor': '#CFE8E5',
                     'BgSelectedColor': '#BAE8E2',
-                    'MenuColor': '#66DBC6',
-                    'MenuHoverColor': '#60CFBA',
-                    'MenuSelectedColor': '#4BA191',
+                    'MenuColor': '#5BC2A8',
+                    'MenuHoverColor': '#4DA38D',
+                    'MenuSelectedColor': '#5299A3',
                     'BorderColor': '#93699E',
                     'TextColor': '#0C3326',
                     'ImageColor': (12, 51, 38),
@@ -452,12 +452,12 @@ class ThemeManager:
                     'MainColor': '#292E3D',
                     'MainHoverColor': '#23233D',
                     'MainSelectedColor': '#20204D',
-                    'BgColor': '#0C0C1C',
-                    'BgHoverColor': '#161633',
-                    'BgSelectedColor': '#2A2A61',
-                    'MenuColor': '#151740',
-                    'MenuHoverColor': '#1C1D52',
-                    'MenuSelectedColor': '#272973',
+                    'BgColor': '#111129',
+                    'BgHoverColor': '#1C1C42',
+                    'BgSelectedColor': '#2E2E6B',
+                    'MenuColor': '#191B4D',
+                    'MenuHoverColor': '#212463',
+                    'MenuSelectedColor': '#303491',
                     'BorderColor': '#07093B',
                     'TextColor': '#F0F0F0',
                     'ImageColor': (240, 240, 240),
@@ -534,7 +534,7 @@ class ThemeManager:
         return self.theme.code_colors(lexer)
 
     def set_theme_to_list_widget(self, widget, font=None, palette='Main', border=True, border_radius=True):
-        widget.setFocusPolicy(False)
+        # widget.setFocusPolicy(False)
         widget.setStyleSheet(self.list_widget_css(palette, border, border_radius))
         for i in range(widget.count()):
             item = widget.item(i)
