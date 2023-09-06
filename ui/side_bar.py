@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
 from code_tab.files_widget import FilesWidget
 from code_tab.terminal_tab import TerminalTab
+from other.chat_widget import ChatPanel
 from other.git_panel import GitPanel
 from other.todo_panel import TODOPanel
 from settings.project_widget import ProjectWidget
@@ -41,9 +42,10 @@ class SidePanel(QWidget):
             'git': GitPanel(self.sm, self.cm, self.tm),
             'generator': GeneratorTab(self.sm, self.cm, self.tm),
             'terminal': TerminalTab(self.sm, self.tm),
-            'run': ConsolePanel(self.sm, self.tm, self.cm)
+            'run': ConsolePanel(self.sm, self.tm, self.cm),
+            'chat': ChatPanel(self.sm, self.tm),
         }
-        self.tab_width = dict()
+        self.tab_width = {'chat': 300}
 
         for key, el in self.tabs.items():
             if isinstance(el, SidePanelWidget):
@@ -117,7 +119,7 @@ class SideBar(QWidget):
         strange_widget.setLayout(layout)
 
         self.buttons = {el: SideBarButton(self.tm, f'button_{el}') for el in [
-            'projects', 'files', 'tests', 'git', 'todo', 'generator', 'terminal', 'run']}
+            'projects', 'files', 'tests', 'git', 'todo', 'generator', 'terminal', 'run', 'chat']}
         for el in self.buttons.values():
             layout.addWidget(el)
             el.clicked.connect(self.connect_button(el))
