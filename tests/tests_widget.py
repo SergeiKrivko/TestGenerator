@@ -61,16 +61,6 @@ class TestsWidget(QWidget):
         self.tests_changed = False
         self.task_settings = dict()
 
-    def open_pos_generator_window(self):
-        self.save_tests()
-        self.generator_window.test_type = 'pos'
-        self.generator_window.show()
-
-    def open_neg_generator_window(self):
-        self.save_tests()
-        self.generator_window.test_type = 'neg'
-        self.generator_window.show()
-
     def open_tests_after_generation(self):
         self.tests_changed = False
         self.open_tests()
@@ -87,13 +77,25 @@ class TestsWidget(QWidget):
         self.tests_changed = True
         if not os.path.isdir(f"{self.data_dir}/pos"):
             os.makedirs(f"{self.data_dir}/pos")
-        self.test_list_widget.pos_test_list.addItem(Test(self.create_temp_file(), self.tm))
+        test = Test(self.create_temp_file(), self.tm)
+        if self.test_list_widget.pos_test_list.currentItem():
+            index = self.test_list_widget.pos_test_list.currentRow() + 1
+        else:
+            index = self.test_list_widget.pos_test_list.count()
+        self.test_list_widget.pos_test_list.insertItem(index, test)
+        self.test_list_widget.pos_test_list.setCurrentRow(index)
 
     def add_neg_test(self):
         self.tests_changed = True
         if not os.path.isdir(f"{self.data_dir}/neg"):
             os.makedirs(f"{self.data_dir}/neg")
-        self.test_list_widget.neg_test_list.addItem(Test(self.create_temp_file(), self.tm))
+        test = Test(self.create_temp_file(), self.tm)
+        if self.test_list_widget.neg_test_list.currentItem():
+            index = self.test_list_widget.neg_test_list.currentRow() + 1
+        else:
+            index = self.test_list_widget.neg_test_list.count()
+        self.test_list_widget.neg_test_list.insertItem(index, test)
+        self.test_list_widget.neg_test_list.setCurrentRow(index)
 
     def delete_pos_test(self):
         self.tests_changed = True
