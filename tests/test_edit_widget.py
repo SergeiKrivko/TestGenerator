@@ -209,6 +209,7 @@ class TestEditWidget(QWidget):
         self.test_edited.emit()
 
     def set_test_in(self, name, text):
+        text = text.replace('\r\n', '\n')
         if name == 'STDIN':
             self.data['in'] = text
         else:
@@ -220,6 +221,7 @@ class TestEditWidget(QWidget):
         self.test_edited.emit()
 
     def set_test_out(self, name, text):
+        text = text.replace('\r\n', '\n')
         if name == 'STDOUT':
             self.data['out'] = text
         elif name.startswith('out_file_'):
