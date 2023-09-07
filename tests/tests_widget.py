@@ -637,7 +637,7 @@ class TestCopyWindow(QDialog):
         self.scroll_area.setWidget(self.widget)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFixedSize(480, 320)
-        self.tm.button_css(self.scroll_area)
+        self.tm.auto_css(self.scroll_area)
         self.layout.addWidget(self.scroll_area)
 
         self.layout.addWidget(self.buttonBox)
@@ -660,7 +660,13 @@ class TestCopyWindow(QDialog):
                 if self.test_list[i].startswith("NEG"):
                     self.check_boxes[i].setChecked(self.options_widget['Негативные'])
             return
-        if key in ('Проект', 'Номер лабы:', 'Номер задания:'):
+        if key == 'Проект':
+            project = self.options_widget.widgets['Проект'].currentText()
+            print(self.sm.get('lab', 1, project=project), project)
+            self.options_widget.set_value('Номер лабы:', self.sm.get('lab', 1, project=project))
+            self.options_widget.set_value('Номер задания:', self.sm.get('task', 1, project=project))
+            self.options_widget.set_value('Номер варианта:', self.sm.get('var', 1, project=project))
+        if key in ('Номер лабы:', 'Номер задания:'):
             for i in range(-1, 100):
                 if os.path.isdir(self.sm.data_lab_path(
                         self.options_widget['Номер лабы:'], self.options_widget['Номер задания:'], i,

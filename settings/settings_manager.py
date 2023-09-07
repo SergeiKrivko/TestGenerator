@@ -178,19 +178,24 @@ class SettingsManager(QObject):
             lab=lab, task=task, var=var))
 
     def data_lab_path(self, lab=None, task=None, var=None, project=None):
-        if self.get('struct', project=project) == 1:
-            return f"{self.data_path}/data"
-        if project in self.projects:
-            project = f"{self.app_data_dir}/projects/{project}"
+        if project is None:
+            project_path = self.path
         else:
-            project = self.data_path
+            project_path = self.projects[project]
+        if os.path.isdir(f"{project_path}/.TestGenerator"):
+            path = f"{project_path}/.TestGenerator"
+        else:
+            path = f"{self.app_data_dir}/projects/{project}"
+
+        if self.get('struct', project=project) == 1:
+            return f"{path}/data"
         if lab is None:
-            lab = self.get('lab', 1)
+            lab = self.get('lab', 1, project=project)
         if task is None:
-            task = self.get('task', 1)
+            task = self.get('task', 1, project=project)
         if var is None:
-            var = self.get('var', 0)
-        return f"{project}/{lab}/{task}/{var}"
+            var = self.get('var', 0, project=project)
+        return f"{path}/{lab}/{task}/{var}"
 
     def set_general(self, key, value):
         if key == 'line_sep':
