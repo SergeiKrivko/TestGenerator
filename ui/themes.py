@@ -516,9 +516,9 @@ class ThemeManager:
                     'Number': QColor('#5191A6'),
                     'String': QColor('#5F864C'),
 
-                    'Paper': QColor('#2B2B2B'),
-                    'CaretLineBackgroundColor': QColor('#323232'),
-                    'BraceColor': QColor('#F0DA4A'),
+                    'Paper': QColor('#1E1F22'),
+                    'CaretLineBackgroundColor': QColor('#26282E'),
+                    'BraceColor': QColor('#CC7832'),
 
                     'MainColor': '#2B2D30',
                     'MainHoverColor': '#3E4145',
@@ -529,7 +529,7 @@ class ThemeManager:
                     'MenuColor': '#1F2024',
                     'MenuHoverColor': '#4E5157',
                     'MenuSelectedColor': '#3574F0',
-                    'BorderColor': '#101010',
+                    'BorderColor': '#363636',
                     'TextColor': '#F0F0F0',
                     'ImageColor': (250, 250, 250),
 
