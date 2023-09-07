@@ -543,6 +543,78 @@ class ThemeManager:
                     'TxtFile': QColor('#D6D6D6'),
                     'Directory': QColor('#95D68C')
                 }),
+            'christmas':
+                Theme({
+                    'Identifier': QColor('#000000'),
+                    'Preprocessor': QColor('#69803C'),
+                    'Comment': QColor('#A87269'),
+                    'Keyword': QColor('#ED1F1F'),
+                    'Number': QColor('#346AC7'),
+                    'String': QColor('#C31FC7'),
+
+                    'Paper': QColor('#F5F5F5'),
+                    'CaretLineBackgroundColor': QColor('#F5D1D1'),
+                    'BraceColor': QColor('#ED1F1F'),
+
+                    'MainColor': '#FFDBD7',
+                    'MainHoverColor': '#E8C7C4',
+                    'MainSelectedColor': '#E88C8C',
+                    'BgColor': '#FFF5E0',
+                    'BgHoverColor': '#FFD6C8',
+                    'BgSelectedColor': '#E3968A',
+                    'MenuColor': '#E65451',
+                    'MenuHoverColor': '#B84643',
+                    'MenuSelectedColor': '#BA0F0F',
+                    'BorderColor': '#A62121',
+                    'TextColor': '#101838',
+                    'ImageColor': (16, 24, 56),
+
+                    'TestPassed': QColor('#3BA126'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrashed': QColor('A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#9C783C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'Directory': QColor('#2E8217')
+                }),
+            'winter':
+                Theme({
+                    'Identifier': QColor('#142836'),
+                    'Preprocessor': QColor('#8A3199'),
+                    'Comment': QColor('#B57831'),
+                    'Keyword': QColor('#0816B5'),
+                    'Number': QColor('#5191A6'),
+                    'String': QColor('#DE435C'),
+
+                    'Paper': QColor('#D1D8F5'),
+                    'CaretLineBackgroundColor': QColor('#BACDF5'),
+                    'BraceColor': QColor('#EB6BD3'),
+
+                    'MainColor': '#B4D2FA',
+                    'MainHoverColor': '#93BBFA',
+                    'MainSelectedColor': '#4BA7FA',
+                    'BgColor': '#EEEEEE',
+                    'BgHoverColor': '#D1D1D1',
+                    'BgSelectedColor': '#7798C7',
+                    'MenuColor': '#7798C7',
+                    'MenuHoverColor': '#5787C7',
+                    'MenuSelectedColor': '#2971C7',
+                    'BorderColor': '#3E5875',
+                    'TextColor': '#191C42',
+                    'ImageColor': (25, 28, 66),
+
+                    'TestPassed': QColor('#38802E'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrashed': QColor('#A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'Directory': QColor('#1BBDD4')
+                }),
         }
 
         self.theme_name = ''
