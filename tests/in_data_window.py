@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
-    QScrollArea, QCheckBox
+    QScrollArea, QCheckBox, QSpinBox
 
 from ui.button import Button
 
@@ -16,11 +16,14 @@ class InDataWindow(QDialog):
         self._sm = sm
         self._tm = tm
 
+        self.setFixedSize(800, 500)
+
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
         buttons_layout = QHBoxLayout()
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setContentsMargins(10, 10, 10, 0)
         layout.addLayout(buttons_layout)
 
         self._button_plus = Button(self._tm, 'plus')
@@ -40,7 +43,7 @@ class InDataWindow(QDialog):
         self._widgets = []
 
     def add_elem(self, data=None):
-        widget = _DataEdit(self._tm)
+        widget = _DataEdit(self._tm, top_level=True)
         widget.set_theme()
         widget.closeRequested.connect(self.delete_elem)
         if isinstance(data, dict):
@@ -72,7 +75,7 @@ class InDataWindow(QDialog):
     def set_theme(self):
         self.setStyleSheet(self._tm.bg_style_sheet)
         self._tm.auto_css(self._button_plus)
-        self._tm.auto_css(self._button_plus, palette='Bg')
+        self._tm.auto_css(self._scroll_area, border=False, palette='Bg')
         for el in self._widgets:
             el.set_theme()
 
@@ -185,7 +188,7 @@ class _RangeEdit(QWidget):
         else:
             self._button_open_2.show()
             self._button_open_1.hide()
-        if data.get('close_brace', ')') == '(':
+        if data.get('close_brace', ')') == ')':
             self._button_close_1.show()
             self._button_close_2.hide()
         else:
@@ -234,45 +237,126 @@ class _StrEdit(QWidget):
         self._range_edit.set_theme()
 
 
+class _ArrayEdit(QWidget):
+    def __init__(self, tm):
+        super().__init__()
+        self._tm = tm
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(20, 0, 0, 0)
+        self.setLayout(layout)
+
+        top_layout = QHBoxLayout()
+        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(top_layout)
+
+        self._label = QLabel("Размер:")
+        top_layout.addWidget(self._label)
+
+        self._combo_box = QComboBox()
+        self._combo_box.addItems(['Фиксированный', 'Ввод', 'Концевой признак'])
+        self._combo_box.currentIndexChanged.connect(self._on_input_changed)
+        top_layout.addWidget(self._combo_box)
+
+        self._spin_box = QSpinBox()
+        self._spin_box.setMinimum(0)
+        self._spin_box.setMaximum(1000000)
+        top_layout.addWidget(self._spin_box)
+
+        self._range_edit = _RangeEdit(self._tm)
+        self._range_edit.hide()
+        top_layout.addWidget(self._range_edit)
+
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setAlignment(Qt.AlignLeft)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(bottom_layout)
+
+        self._checkbox = QCheckBox()
+        bottom_layout.addWidget(self._checkbox)
+
+        self._label2 = QLabel("Элементы в одну строку")
+        bottom_layout.addWidget(self._label2)
+
+        self._item_edit = _DataEdit(self._tm)
+        layout.addWidget(self._item_edit)
+
+    def _on_input_changed(self):
+        if self._combo_box.currentIndex() == 0:
+            self._spin_box.show()
+            self._range_edit.hide()
+        else:
+            self._spin_box.hide()
+            self._range_edit.show()
+
+    def save(self):
+        return {'size_input': self._combo_box.currentIndex(), **self._range_edit.save(),
+                'item': self._item_edit.save(), 'size': self._spin_box.value(), 'one_line': self._checkbox.isChecked()}
+
+    def load(self, data: dict):
+        self._combo_box.setCurrentIndex(data.get('size_input', 0))
+        self._spin_box.setValue(data.get('size', 10))
+        self._checkbox.setChecked(bool(data.get('one_line', False)))
+        self._range_edit.load(data)
+        self._item_edit.load(data.get('item', dict()))
+
+    def set_theme(self):
+        for el in [self._combo_box, self._label, self._spin_box, self._label2, self._checkbox]:
+            self._tm.auto_css(el)
+        for el in [self._range_edit, self._item_edit]:
+            el.set_theme()
+
+
 class _DataEdit(QWidget):
     _TYPE_WIDGETS = {'int': lambda tm: _RangeEdit(tm, "Диапазон:"),
                      'float': lambda tm: _RangeEdit(tm, "Диапазон:"),
                      'str': _StrEdit,
                      'struct': _RangeEdit,
-                     'array': _RangeEdit, }
+                     'array': _ArrayEdit, }
     closeRequested = pyqtSignal(object)
 
-    def __init__(self, tm):
+    def __init__(self, tm, top_level=False):
         super().__init__()
         self._tm = tm
+        self._top_level = top_level
 
         self._layout = QVBoxLayout()
+        if not top_level:
+            self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
-        top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.addLayout(top_layout)
+        self._top_layout = QHBoxLayout()
+        self._top_layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.addLayout(self._top_layout)
 
         self._combo_box = QComboBox()
         self._combo_box.addItems(['int', 'float', 'str', 'struct', 'array'])
         self._combo_box.currentIndexChanged.connect(self._on_type_changed)
-        top_layout.addWidget(self._combo_box)
+        self._top_layout.addWidget(self._combo_box)
 
         self._line_edit = QLineEdit()
-        top_layout.addWidget(self._line_edit)
+        self._top_layout.addWidget(self._line_edit)
 
         self._button = Button(self._tm, "delete")
         self._button.setFixedSize(BUTTON_WIDTH, HEIGHT)
         self._button.clicked.connect(lambda: self.closeRequested.emit(self))
-        top_layout.addWidget(self._button)
+        if self._top_level:
+            self._top_layout.addWidget(self._button)
 
-        self._type_edit = _RangeEdit(self._tm, "Диапазон:")
-        self._layout.addWidget(self._type_edit)
+        self._type_edit = QWidget()
+        self._on_type_changed()
 
     def _on_type_changed(self):
         self._type_edit.setParent(None)
-        self._type_edit = _DataEdit._TYPE_WIDGETS[self._combo_box.currentText()](self._tm)
-        self._layout.addWidget(self._type_edit)
+        value_type = self._combo_box.currentText()
+        self._type_edit = _DataEdit._TYPE_WIDGETS[value_type](self._tm)
+        if value_type == 'struct' or self._top_level:
+            self._line_edit.show()
+            self._layout.addWidget(self._type_edit)
+        else:
+            self._line_edit.hide()
+            self._top_layout.addWidget(self._type_edit)
         self._type_edit.set_theme()
 
     def save(self):

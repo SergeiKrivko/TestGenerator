@@ -1,6 +1,7 @@
 import json
 import os
 import random
+from copy import deepcopy
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
@@ -569,6 +570,8 @@ def random_value(data: dict):
         return random_float(data)
     if data.get('type') == 'str':
         return random_str(data)
+    if data.get('type') == 'array':
+        return random_array(data)
 
 
 def get_negatives(data: dict):
@@ -578,12 +581,23 @@ def get_negatives(data: dict):
         return float_negatives(data)
     if data.get('type') == 'str':
         return str_negatives(data)
+    if data.get('type') == 'array':
+        return array_negatives(data)
 
 
 def convert(arg):
     if isinstance(arg, float):
         return "{arg:.{n}g}".format(arg=arg, n=random.randint(2, 8))
     return str(arg)
+
+
+def array_to_str(lst: list, data: dict):
+    text = ''
+    if data.get('size_input', 0) == 1:
+        text = str(len(lst)) + '\n'
+    if data.get("one_line"):
+        return text + ' '.join(map(convert, lst))
+    return text + '\n'.join(map(convert, lst))
 
 
 def random_int(data: dict):
@@ -621,10 +635,23 @@ def random_str(data: dict = None):
     return ''.join(random.choices(st, k=random.randint(minimum, maximum)))
 
 
+def random_array(data: dict, lst=False, not_empty=False):
+    if data.get('size_input', 0) == 0:
+        size = data.get('size', 0)
+    else:
+        minimum = 0 if data.get('min') is None else max(0, data.get('min'))
+        maximum = 100 if data.get('max') is None else max(1, data.get('max'))
+        size = random.randint(max(1 if not_empty else 0, int(minimum)), int(maximum))
+    item_data = data.get('item', dict())
+    if lst:
+        return [random_value(item_data) for _ in range(size)]
+    return array_to_str([random_value(item_data) for _ in range(size)], data)
+
+
 def int_negatives(data: dict):
-    if data.get('open_brace', '(') == '[' and data.get('min') is not None:
+    if data.get('open_brace', '(') == '(' and data.get('min') is not None:
         yield f"{data.get('name')} равно {data.get('min')}", data.get('min')
-    if data.get('close_brace', ')') == ']' and data.get('max') is not None:
+    if data.get('close_brace', ')') == ')' and data.get('max') is not None:
         yield f"{data.get('name')} равно {data.get('max')}", data.get('max')
     if data.get('min') is not None:
         yield f"{data.get('name')} меньше {data.get('min')}", \
@@ -637,9 +664,9 @@ def int_negatives(data: dict):
 
 
 def float_negatives(data: dict):
-    if data.get('open_brace', '(') == '[' and data.get('min') is not None:
+    if data.get('open_brace', '(') == '(' and data.get('min') is not None:
         yield f"{data.get('name')} равно {data.get('min')}", data.get('min')
-    if data.get('close_brace', ')') == ']' and data.get('max') is not None:
+    if data.get('close_brace', ')') == ')' and data.get('max') is not None:
         yield f"{data.get('name')} равно {data.get('max')}", data.get('max')
     if data.get('min') is not None:
         yield f"{data.get('name')} меньше {data.get('min')}", \
@@ -663,6 +690,27 @@ def str_negatives(data: dict):
             yield f"{data.get('name')} - строка длиной {data.get('max')}", "".join(random.choices(
                 st, k=int(data.get('max'))))
 
+
+def array_negatives(data: dict):
+    if data.get('size_input', 0) == 1:
+        data_copy = deepcopy(data)
+        data_copy['name'] = f"Размер массива {data.get('name', '')}"
+        for el in int_negatives(data_copy):
+            yield el
+    elif data.get('size_input', 0) == 2:
+        if data.get('close_brace', ')') == ']' and data.get('max') is not None:
+            yield f"Длина массива {data.get('name')} равна {data.get('max')}", array_to_str(
+                [random_value(data.get('item')) for _ in range(data.get('max'))], data)
+        if data.get('max') is not None:
+            yield f"Длина массива {data.get('name')} больше {data.get('max')}", array_to_str(
+                [random_value(data.get('item')) for _ in range(random.randint(
+                    data.get('max') * 2 + 1, max(50, data.get('max') * 2) + 1))], data)
+    data_copy = deepcopy(data.get('item'))
+    data_copy['name'] = f"Элемент массива {data.get('name')}"
+    for desc, el in get_negatives(data_copy):
+        lst = random_array(data, lst=True, not_empty=True)
+        lst[random.randint(0, len(lst) - 1)] = el
+        yield desc, array_to_str(lst, data)
 
 def read_file(path, default=None):
     if default is not None:
