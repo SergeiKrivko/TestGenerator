@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtWidgets import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
-    QScrollArea
+    QScrollArea, QCheckBox
 
 from ui.button import Button
 
@@ -198,12 +198,48 @@ class _RangeEdit(QWidget):
             self._tm.auto_css(el)
 
 
+class _StrEdit(QWidget):
+    def __init__(self, tm):
+        super().__init__()
+        self._tm = tm
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._range_edit = _RangeEdit(self._tm, "Длина:")
+        layout.addWidget(self._range_edit)
+
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setAlignment(Qt.AlignLeft)
+        layout.addLayout(bottom_layout)
+
+        self._checkbox = QCheckBox()
+        bottom_layout.addWidget(self._checkbox)
+
+        self._label = QLabel("Пробелы")
+        bottom_layout.addWidget(self._label)
+
+    def load(self, data: dict):
+        self._checkbox.setChecked(bool(data.get('spaces', False)))
+        self._range_edit.load(data)
+
+    def save(self):
+        return {'spaces': self._checkbox.isChecked(), **self._range_edit.save()}
+
+    def set_theme(self):
+        self._tm.auto_css(self._label)
+        self._tm.auto_css(self._checkbox)
+        self._range_edit.set_theme()
+
+
 class _DataEdit(QWidget):
     _TYPE_WIDGETS = {'int': lambda tm: _RangeEdit(tm, "Диапазон:"),
                      'float': lambda tm: _RangeEdit(tm, "Диапазон:"),
-                     'str': lambda tm: _RangeEdit(tm, "Длина:"),
+                     'str': _StrEdit,
                      'struct': _RangeEdit,
-                     'array': _RangeEdit,}
+                     'array': _RangeEdit, }
     closeRequested = pyqtSignal(object)
 
     def __init__(self, tm):
