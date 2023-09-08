@@ -130,10 +130,11 @@ class SettingsManager(QObject):
     def start_change_task(self):
         if not self.project:
             return
-        os.makedirs(self.data_lab_path(), exist_ok=True)
-        with open(f"{self.data_lab_path()}/settings.json", 'w', encoding='utf-8') as f:
-            f.write(dumps(self.task_settings))
         self.startChangeTask.emit()
+        os.makedirs(self.data_lab_path(), exist_ok=True)
+        if self.task_settings:
+            with open(f"{self.data_lab_path()}/settings.json", 'w', encoding='utf-8') as f:
+                f.write(dumps(self.task_settings))
 
     def finish_change_task(self):
         try:
@@ -201,6 +202,9 @@ class SettingsManager(QObject):
         if key == 'line_sep':
             self.line_sep = ['\n', '\r\n', '\r'][value]
         self.q_settings.setValue(key, value)
+
+    def set_task(self, key, value):
+        self.task_settings[key] = value
 
     def set(self, key, value, project=None):
         if project is None or project == self.project:
@@ -364,6 +368,9 @@ class SettingsManager(QObject):
                 f.write(dumps(self.project_settings))
             self.set_general('projects', dumps(self.projects))
             self.set_general('project', self.project)
+            if self.task_settings:
+                with open(f"{self.data_lab_path()}/settings.json", 'w', encoding='utf-8') as f:
+                    f.write(dumps(self.task_settings))
 
     def load_programs(self):
         try:

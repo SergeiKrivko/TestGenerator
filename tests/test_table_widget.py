@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit
 
+from tests.in_data_window import InDataWindow
 from ui.button import Button
 
 BUTTONS_MAX_WIDTH = 30
@@ -27,6 +28,13 @@ class TestTableWidget(QWidget):
 
         self.in_data_edit = QLineEdit()
         in_data_layout.addWidget(self.in_data_edit)
+
+        self.in_data_window = InDataWindow(self.sm, self.tm)
+
+        self.in_data_button = Button(self.tm, 'plus', css='Bg')
+        self.in_data_button.setFixedHeight(22)
+        self.in_data_button.clicked.connect(self.in_data_window.exec)
+        in_data_layout.addWidget(self.in_data_button)
 
         pos_buttons_layout = QHBoxLayout()
         pos_layout.addLayout(pos_buttons_layout)
@@ -121,6 +129,11 @@ class TestTableWidget(QWidget):
         self.neg_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_copy)
 
+        self.neg_button_generate = Button(self.tm, 'button_generator', css='Bg')
+        self.neg_button_generate.setFixedHeight(22)
+        self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        neg_buttons_layout.addWidget(self.neg_button_generate)
+
         # self.neg_button_generate = Button(self.tm, 'generate')
         # self.neg_button_generate.setFixedHeight(22)
         # self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
@@ -164,7 +177,8 @@ class TestTableWidget(QWidget):
         for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
                    self.pos_button_copy, self.in_data_edit, self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.out_data_edit,
-                   self.pos_comparator_widget, self.neg_comparator_widget]:
+                   self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
+                   self.neg_button_generate]:
             self.tm.auto_css(el)
         for label in self.labels:
             label.setFont(self.tm.font_small)

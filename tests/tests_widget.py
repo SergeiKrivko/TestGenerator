@@ -1,5 +1,6 @@
 import json
 import os
+import random
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
@@ -35,6 +36,7 @@ class TestsWidget(QWidget):
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
         self.test_list_widget.pos_button_copy.clicked.connect(lambda: self.copy_tests('pos'))
         self.test_list_widget.neg_button_copy.clicked.connect(lambda: self.copy_tests('neg'))
+        self.test_list_widget.neg_button_generate.clicked.connect(self.generate_neg_tests)
         # self.test_list_widget.pos_button_generate.clicked.connect(self.open_pos_generator_window)
         # self.test_list_widget.neg_button_generate.clicked.connect(self.open_neg_generator_window)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
@@ -59,18 +61,17 @@ class TestsWidget(QWidget):
         self.file_compiled = False
         self.temp_file_index = 0
         self.tests_changed = False
-        self.task_settings = dict()
 
     def open_tests_after_generation(self):
         self.tests_changed = False
         self.open_tests()
 
     def set_preprocessor(self):
-        self.task_settings['preprocessor'] = self.test_edit_widget.preprocessor_line.text()
+        self.sm.set_task('preprocessor', self.test_edit_widget.preprocessor_line.text())
         self.tests_changed = True
 
     def set_postprocessor(self):
-        self.task_settings['postprocessor'] = self.test_edit_widget.postprocessor_line.text()
+        self.sm.set_task('postprocessor', self.test_edit_widget.postprocessor_line.text())
         self.tests_changed = True
 
     def add_pos_test(self):
@@ -233,15 +234,10 @@ class TestsWidget(QWidget):
             except Exception:
                 pass
         else:
-            try:
-                self.task_settings = json.loads(read_file(f"{self.sm.data_lab_path()}/settings.json", '{}'))
-                self.test_edit_widget.preprocessor_line.setText(self.task_settings.get('preprocessor', ''))
-                self.test_edit_widget.postprocessor_line.setText(self.task_settings.get('postprocessor', ''))
-                self.test_list_widget.in_data_edit.setText(self.task_settings.get('in_data', '-'))
-                self.test_list_widget.out_data_edit.setText(self.task_settings.get('out_data', '-'))
-            except json.JSONDecodeError:
-                self.test_edit_widget.preprocessor_line.setText('')
-                self.test_edit_widget.postprocessor_line.setText('')
+            self.test_edit_widget.preprocessor_line.setText(self.sm.get_task('preprocessor', ''))
+            self.test_edit_widget.postprocessor_line.setText(self.sm.get_task('postprocessor', ''))
+            self.test_list_widget.in_data_edit.setText(self.sm.get_task('in_data', '-'))
+            self.test_list_widget.out_data_edit.setText(self.sm.get_task('out_data', '-'))
 
             if os.path.isdir(f"{self.data_dir}/pos"):
                 lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self.data_dir}/pos")))
@@ -266,7 +262,6 @@ class TestsWidget(QWidget):
         self.load_data_files()
         self.tests_changed = True
         self.test_edit_widget.set_disabled()
-        self.task_settings = dict()
 
     def readme_parser(self):
         self.test_list_widget.pos_test_list.clear()
@@ -381,11 +376,9 @@ class TestsWidget(QWidget):
         if not (self.test_list_widget.pos_test_list.count() or self.test_list_widget.neg_test_list.count()):
             return
 
-        self.task_settings['in_data'] = self.test_list_widget.in_data_edit.text()
-        self.task_settings['out_data'] = self.test_list_widget.out_data_edit.text()
+        self.sm.set_task('in_data', self.test_list_widget.in_data_edit.text())
+        self.sm.set_task('out_data', self.test_list_widget.out_data_edit.text())
         os.makedirs(self.sm.data_lab_path(), exist_ok=True)
-        with open(f"{self.sm.data_lab_path()}/settings.json", 'w') as f:
-            f.write(json.dumps(self.task_settings))
 
         if not self.test_list_widget.pos_test_list.count() and not self.test_list_widget.neg_test_list.count() or \
                 not self.tests_changed:
@@ -462,6 +455,24 @@ class TestsWidget(QWidget):
             self.test_list_widget.pos_comparator_label.show()
             self.test_list_widget.neg_comparator_widget.show()
             self.test_list_widget.neg_comparator_label.show()
+
+    def generate_neg_tests(self):
+        in_data = self.sm.get_task('in_data_list', [])
+        for el in in_data:
+            for desc, neg_data in get_negatives(el):
+                test = Test(self.create_temp_file(), self.tm)
+                test.load()
+                in_text = []
+                for el2 in in_data:
+                    if el2 == el:
+                        in_text.append(neg_data)
+                    else:
+                        in_text.append(random_value(el2))
+                in_text.append('')
+                test['in'] = '\n'.join(map(convert, in_text))
+                test['desc'] = desc
+                test.store()
+                self.test_list_widget.neg_test_list.addItem(test)
 
     def hide(self) -> None:
         if not self.isHidden():
@@ -549,6 +560,108 @@ class Test(QListWidgetItem):
 
     def pop(self, key):
         self._dict.pop(key)
+
+
+def random_value(data: dict):
+    if data.get('type') == 'int':
+        return random_int(data)
+    if data.get('type') == 'float':
+        return random_float(data)
+    if data.get('type') == 'str':
+        return random_str(data)
+
+
+def get_negatives(data: dict):
+    if data.get('type') == 'int':
+        return int_negatives(data)
+    if data.get('type') == 'float':
+        return float_negatives(data)
+    if data.get('type') == 'str':
+        return str_negatives(data)
+
+
+def convert(arg):
+    if isinstance(arg, float):
+        return "{arg:.{n}g}".format(arg=arg, n=random.randint(2, 8))
+    return str(arg)
+
+
+def random_int(data: dict):
+    minimum = -10000 if data.get('min') is None else data.get('min')
+    maximum = 10000 if data.get('max') is None else data.get('max')
+    return random.randint(int(minimum), int(maximum))
+
+
+def random_float(data: dict):
+    minimum = -10000 if data.get('min') is None else data.get('min')
+    maximum = 10000 if data.get('max') is None else data.get('max')
+    return random.randint(int(minimum), int(maximum) - 1) + random.random()
+
+
+def random_str(data: dict = None):
+    st = "abcdefghijklmnopqrstuvwxyz"
+    if data is None:
+        return ''.join(random.choices(st, k=random.randint(1, 10)))
+    if data.get('spaces', False):
+        st += " " * 6
+    minimum = data.get('min')
+    if minimum is None or int(minimum) < 0:
+        minimum = 0
+    else:
+        minimum = int(minimum)
+        if data.get('open_brace') == '(':
+            minimum += 1
+    maximum = data.get('max')
+    if maximum is None:
+        maximum = 100 if data.get('spaces', False) else 10
+    else:
+        maximum = int(maximum)
+        if data.get('close_brace') == ')':
+            maximum -= 1
+    return ''.join(random.choices(st, k=random.randint(minimum, maximum)))
+
+
+def int_negatives(data: dict):
+    if data.get('open_brace', '(') == '[' and data.get('min') is not None:
+        yield f"{data.get('name')} равно {data.get('min')}", data.get('min')
+    if data.get('close_brace', ')') == ']' and data.get('max') is not None:
+        yield f"{data.get('name')} равно {data.get('max')}", data.get('max')
+    if data.get('min') is not None:
+        yield f"{data.get('name')} меньше {data.get('min')}", \
+            random.randint(min(-10000, data.get('min') * 2), data.get('min'))
+    if data.get('max') is not None:
+        yield f"{data.get('name')} больше {data.get('max')}", \
+            random.randint(data.get('max') * 2 + 1, max(10000, data.get('max') * 2) + 1)
+    yield f"{data.get('name')} - вещественное число", random.random()
+    yield f"{data.get('name')} - набор символов", random_str()
+
+
+def float_negatives(data: dict):
+    if data.get('open_brace', '(') == '[' and data.get('min') is not None:
+        yield f"{data.get('name')} равно {data.get('min')}", data.get('min')
+    if data.get('close_brace', ')') == ']' and data.get('max') is not None:
+        yield f"{data.get('name')} равно {data.get('max')}", data.get('max')
+    if data.get('min') is not None:
+        yield f"{data.get('name')} меньше {data.get('min')}", \
+            random.randint(min(-10000, data.get('min') * 2) - 1, data.get('min') - 1) + random.random()
+    if data.get('max') is not None:
+        yield f"{data.get('name')} больше {data.get('max')}", \
+            random.randint(data.get('max'), max(10000, data.get('max') * 2)) + random.random()
+    yield f"{data.get('name')} - набор символов", random_str()
+
+
+def str_negatives(data: dict):
+    if data.get('min') or data.get('min') == 0 and data.get('open_brace') == '(':
+        yield f"{data.get('name')} - строка нулевой длины", ""
+    if data.get('max'):
+        st = "abcdefghijklmnopqrstuvwxyz"
+        if data.get('spaces', False):
+            st += " " * 6
+        yield f"{data.get('name')} - слишком длинная строка", "".join(random.choices(
+            st, k=random.randint(int(data.get('max') + 1), int(data.get('max') * 2))))
+        if data.get('close_brace') == ')':
+            yield f"{data.get('name')} - строка длиной {data.get('max')}", "".join(random.choices(
+                st, k=int(data.get('max'))))
 
 
 def read_file(path, default=None):
