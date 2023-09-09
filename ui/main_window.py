@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         self.testing_widget.showTab.connect(lambda: self.side_bar.select_tab('tests'))
         self.testing_widget.startTesting.connect(self.tests_widget.save_tests)
         self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
+        self.side_panel.tabs['tests'].buttons['cancel'].clicked.connect(self.testing_widget.button_pressed)
         self.side_panel.tabs['tests'].jump_to_testing.connect(
             lambda index, show_tab: None if not show_tab else self.show_tab(MainMenu.TAB_TESTING))
 

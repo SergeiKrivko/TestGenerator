@@ -120,6 +120,8 @@ class CodeEditor(QsciScintilla):
         self.setMatchedBraceForegroundColor(self.tm['BraceColor'])
         self.setUnmatchedBraceBackgroundColor(self.tm['CaretLineBackgroundColor'])
         self.setUnmatchedBraceForegroundColor(self.tm['BraceColor'])
+        self.setPaper(self.tm['Paper'])
+        self.setColor(QColor(self.tm['TextColor']))
 
         if self._lexer is not None:
             self._lexer.setDefaultFont(self.tm.code_font_std)

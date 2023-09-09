@@ -715,6 +715,7 @@ class ThemeManager:
     def scintilla_css(self, border=False):
         return f"""
 QsciScintilla {{
+    background-color: {self['Paper'].name()};
     border: {'1' if border else '0'}px solid {self['BorderColor']};
     background-color: {self['Paper'].name()};
 }}
@@ -1122,6 +1123,19 @@ QTabBar::tab:hover {{
 }}
 QTabBar::tab:selected {{
     background-color: {self[f'{palette}SelectedColor']};
+}}
+QTabBar QToolButton {{
+    background-color: {self[f'{palette}Color']};
+    border: 1px solid {self['BorderColor']};
+}}
+QTabBar QToolButton::hover {{
+    background-color: {self[f'{palette}HoverColor']};
+}}
+QTabBar QToolButton::right-arrow {{
+    image: url({self.get_image('right_arrow')});
+}}
+QTabBar QToolButton::left-arrow {{
+    image: url({self.get_image('left_arrow')});
 }}
 """
 

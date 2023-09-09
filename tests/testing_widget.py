@@ -211,7 +211,8 @@ class TestingWidget(QWidget):
             self.old_dir = os.getcwd()
             os.chdir(self.sm.lab_path())
 
-            self.side_list.buttons['run'].setDisabled(True)
+            self.side_list.buttons['run'].hide()
+            self.side_list.buttons['cancel'].show()
             self.button.setText("Прервать")
 
             self.coverage_bar.hide()
@@ -219,7 +220,8 @@ class TestingWidget(QWidget):
             self.pos_result_bar.show()
             self.neg_result_bar.show()
         else:
-            self.side_list.buttons['run'].setDisabled(False)
+            self.side_list.buttons['run'].show()
+            self.side_list.buttons['cancel'].hide()
             self.button.setText("Тестировать")
             self.button.setDisabled(False)
             os.chdir(self.old_dir)

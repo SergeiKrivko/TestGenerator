@@ -111,9 +111,8 @@ class ProjectWidget(SidePanelWidget):
     def update_projects(self):
         self.list_widget.clear()
         for pr in self.sm.projects.keys():
-            item = ProjectListWidgetItem(pr)
-            item.setFont(self.tm.font_medium)
-            item.setIcon(QIcon(self.tm.get_image(LANGUAGE_ICONS[self.sm.get('language', project=pr)])))
+            item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS[self.sm.get('language', project=pr)])
+            item.setFont(self.tm.font_small)
             self.list_widget.addItem(item)
             if self.sm.project == pr:
                 self.list_widget.setCurrentItem(item)
@@ -250,7 +249,9 @@ class ProjectWidget(SidePanelWidget):
 
     def set_theme(self):
         super().set_theme()
-        self.tm.auto_css(self.list_widget)
+        self.list_widget.setStyleSheet(self.tm.list_widget_css('Main'))
+        for i in range(self.list_widget.count()):
+            self.list_widget.item(i).set_icon()
 
     def remove_temp_projects(self):
         # project = self.sm.project
@@ -264,10 +265,15 @@ class ProjectWidget(SidePanelWidget):
 
 
 class ProjectListWidgetItem(QListWidgetItem):
-    def __init__(self, path):
+    def __init__(self, path, tm, icon):
         super(ProjectListWidgetItem, self).__init__()
         self.path = path
         self.setText(str(os.path.basename(self.path)))
+        self._tm = tm
+        self._icon = icon
+
+    def set_icon(self):
+        self.setIcon(QIcon(self._tm.get_image(self._icon)))
 
 
 class RenameProjectDialog(QDialog):

@@ -402,6 +402,19 @@ QTabBar::close-button {{
 QTabBar::close-button:hover {{
     image: url({self.tm.get_image('button_close_tab_hover')});
 }}
+QTabBar QToolButton {{
+    background-color: {self.tm['BgColor']};
+    border: 0px solid {self.tm['BorderColor']};
+}}
+QTabBar QToolButton::hover {{
+    background-color: {self.tm['BgHoverColor']};
+}}
+QTabBar QToolButton::right-arrow {{
+    image: url({self.tm.get_image('right_arrow')});
+}}
+QTabBar QToolButton::left-arrow {{
+    image: url({self.tm.get_image('left_arrow')});
+}}
 """)
         self.button_open.set_theme()
         self.button_run.set_theme()

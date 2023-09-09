@@ -10,7 +10,7 @@ class TestingPanel(SidePanelWidget):
     jump_to_testing = pyqtSignal(int, bool)
 
     def __init__(self, sm, tm):
-        super().__init__(sm, tm, 'Тестирование', ['run'])
+        super().__init__(sm, tm, 'Тестирование', ['run', 'cancel'])
 
         self.setFixedWidth(225)
         layout = QVBoxLayout()

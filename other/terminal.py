@@ -22,6 +22,9 @@ class Terminal(QTextEdit):
         self.commands = []
         self.current_command = -1
 
+        self._prompt_color = "#000000"
+        self._error_color = "#111111"
+
         self.process = QProcess()
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         self.process.setWorkingDirectory(self.current_dir)
@@ -121,7 +124,7 @@ class Terminal(QTextEdit):
                 self.write_text(f"Имя \"{self.current_process}\" не распознано как имя командлета, функции, "
                                 f"файла сценария или выполняемой программы. Проверьте правильность написания имени, "
                                 f"а также наличие и правильность пути, после чего повторите попытку.\n",
-                                color=self.tm['TestFailed'])
+                                color=self._error_color)
         self.process.kill()
         self.end_process()
 
@@ -144,10 +147,17 @@ class Terminal(QTextEdit):
         self.write_prompt()
 
     def write_prompt(self):
-        self.write_text(self.current_dir, color=self.tm['TestPassed'])
+        self.write_text(self.current_dir, color=self._prompt_color)
         self.write_text('$ ')
 
     def set_theme(self):
+        command = self.toPlainText()[len(self.fixed_text):]
+        self.fixed_html = self.fixed_html.replace(self._prompt_color, self.tm['TestPassed'].name())
+        self.fixed_html = self.fixed_html.replace(self._error_color, self.tm['TestFailed'].name())
+        self._prompt_color = self.tm['TestPassed'].name()
+        self._error_color = self.tm['TestFailed'].name()
+        self.setHtml(self.fixed_html + command)
+
         self.setStyleSheet(self.tm.text_edit_css('Main'))
         self.setFont(self.tm.code_font)
 
