@@ -50,7 +50,7 @@ class TreeDirectory(QTreeWidgetItem):
         lst = list(map(lambda p: os.path.join(self.path, p), lst))
         while i < self.childCount() and j < len(lst):
             if (path := self.child(i).path) != lst[j]:
-                if os.path.isfile(path) or os.path.isdir(path):
+                if path.startswith(self.path) and (os.path.isfile(path) or os.path.isdir(path)):
                     if os.path.isdir(lst[j]):
                         self.insertChild(i, TreeDirectory(lst[j], self.tm))
                     else:
@@ -60,13 +60,14 @@ class TreeDirectory(QTreeWidgetItem):
                 else:
                     self.takeChild(i)
             elif isinstance(item := self.child(i), TreeDirectory):
-                pass
                 item.update_files_list()
-            i += 1
-            j += 1
+                i += 1
+                j += 1
+            else:
+                i += 1
+                j += 1
         while i < self.childCount():
             self.takeChild(i)
-            i += 1
         while j < len(lst):
             if os.path.isdir(lst[j]):
                 self.addChild(TreeDirectory(lst[j], self.tm))
@@ -116,7 +117,7 @@ class FilesWidget(SidePanelWidget):
         lst = list(map(lambda p: os.path.join(self.path, p), lst))
         while i < self.files_list.topLevelItemCount() and j < len(lst):
             if (path := self.files_list.topLevelItem(i).path) != lst[j]:
-                if os.path.isfile(path) or os.path.isdir(path):
+                if path.startswith(self.path) and (os.path.isfile(path) or os.path.isdir(path)):
                     if os.path.isdir(lst[j]):
                         self.files_list.insertTopLevelItem(i, TreeDirectory(lst[j], self.tm))
                     else:
@@ -126,13 +127,14 @@ class FilesWidget(SidePanelWidget):
                 else:
                     self.files_list.takeTopLevelItem(i)
             elif isinstance(item := self.files_list.topLevelItem(i), TreeDirectory):
-                pass
                 item.update_files_list()
-            i += 1
-            j += 1
+                i += 1
+                j += 1
+            else:
+                i += 1
+                j += 1
         while i < self.files_list.topLevelItemCount():
             self.files_list.takeTopLevelItem(i)
-            i += 1
         while j < len(lst):
             if os.path.isdir(lst[j]):
                 self.files_list.addTopLevelItem(TreeDirectory(lst[j], self.tm))
