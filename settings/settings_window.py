@@ -127,7 +127,6 @@ class SettingsWindow(QDialog):
                 LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring'),
                 LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring'),
                 CheckBox("Coverage", key='coverage'),
-                CheckBox("Тестирование по памяти", key='memory_testing'),
                 SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             ]}),
             key_type=KEY_SMART
@@ -166,7 +165,6 @@ class SettingsWindow(QDialog):
             LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring'),
             LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring'),
             CheckBox("Coverage", key='coverage'),
-            CheckBox("Тестирование по памяти", key='memory_testing'),
             SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             key_type=KEY_GLOBAL
         )

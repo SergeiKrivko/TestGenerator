@@ -655,10 +655,10 @@ def int_negatives(data: dict):
         yield f"{data.get('name')} равно {data.get('max')}", data.get('max')
     if data.get('min') is not None:
         yield f"{data.get('name')} меньше {data.get('min')}", \
-            random.randint(min(-10000, data.get('min') * 2), data.get('min'))
+            random.randint(min(-10000, data.get('min') * 100), data.get('min'))
     if data.get('max') is not None:
         yield f"{data.get('name')} больше {data.get('max')}", \
-            random.randint(data.get('max') * 2 + 1, max(10000, data.get('max') * 2) + 1)
+            random.randint(data.get('max') + 1, max(10000, data.get('max') * 100) + 1)
     yield f"{data.get('name')} - вещественное число", random.random()
     yield f"{data.get('name')} - набор символов", random_str()
 
@@ -670,10 +670,10 @@ def float_negatives(data: dict):
         yield f"{data.get('name')} равно {data.get('max')}", data.get('max')
     if data.get('min') is not None:
         yield f"{data.get('name')} меньше {data.get('min')}", \
-            random.randint(min(-10000, data.get('min') * 2) - 1, data.get('min') - 1) + random.random()
+            random.randint(min(-10000, data.get('min') * 100) - 1, data.get('min') - 1) + random.random()
     if data.get('max') is not None:
         yield f"{data.get('name')} больше {data.get('max')}", \
-            random.randint(data.get('max'), max(10000, data.get('max') * 2)) + random.random()
+            random.randint(data.get('max'), max(10000, data.get('max') * 100)) + random.random()
     yield f"{data.get('name')} - набор символов", random_str()
 
 
