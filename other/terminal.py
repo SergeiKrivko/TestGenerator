@@ -113,6 +113,7 @@ class Terminal(QTextEdit):
         self.process.start(program, csi)
 
     def end_process(self):
+        self.return_code = self.process.exitCode()
         self.current_process = ''
         self.write_prompt()
 
