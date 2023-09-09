@@ -242,6 +242,8 @@ class TestingWidget(QWidget):
         else:
             self.neg_result_bar.add_test(status)
 
+        self.progress_bar.setValue(self.test_count['completed'])
+
         self.tests[index].set_status(status)
         self.side_list.set_status(index, status)
 
