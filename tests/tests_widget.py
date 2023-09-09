@@ -130,6 +130,7 @@ class TestsWidget(QWidget):
                 ind if ind < self.test_list_widget.neg_test_list.count() else ind - 1)
 
     def copy_tests(self, test_type='pos'):
+        self.save_tests(deep=False)
         dlg = TestCopyWindow(self.sm, self.tm)
         if dlg.exec():
             self.tests_changed = True
@@ -141,9 +142,13 @@ class TestsWidget(QWidget):
                 item.store()
 
                 if test_type == 'pos':
-                    self.test_list_widget.pos_test_list.addItem(item)
+                    ind = self.test_list_widget.pos_test_list.currentRow() + 1
+                    self.test_list_widget.pos_test_list.insertItem(ind, item)
+                    self.test_list_widget.pos_test_list.setCurrentRow(ind)
                 else:
-                    self.test_list_widget.neg_test_list.addItem(item)
+                    ind = self.test_list_widget.neg_test_list.currentRow() + 1
+                    self.test_list_widget.neg_test_list.insertItem(ind, item)
+                    self.test_list_widget.neg_test_list.setCurrentRow(ind)
 
     def set_tests_changed(self):
         self.tests_changed = True
@@ -369,7 +374,7 @@ class TestsWidget(QWidget):
             if file.startswith('temp'):
                 os.remove(f"{self.path}/func_tests/data/{file}")
 
-    def save_tests(self):
+    def save_tests(self, deep=True):
         if self.current_test:
             self.current_test.store()
         if self.path == '':
@@ -410,12 +415,13 @@ class TestsWidget(QWidget):
                          f"## Входные данные\n{self.test_list_widget.in_data_edit.text()}\n\n"
                          f"## Выходные данные\n{self.test_list_widget.out_data_edit.text()}\n")
 
-            if self.data_dir in background_process_manager.dict:
-                background_process_manager.dict[self.data_dir].close()
+            if deep:
+                if self.data_dir in background_process_manager.dict:
+                    background_process_manager.dict[self.data_dir].close()
 
-            looper = MacrosConverter(self.data_dir, self.sm.lab_path(), self.sm.project, self.sm, readme)
-            self.loopers[self.sm.lab_path()] = looper
-            looper.start()
+                looper = MacrosConverter(self.data_dir, self.sm.lab_path(), self.sm.project, self.sm, readme)
+                self.loopers[self.sm.lab_path()] = looper
+                looper.start()
 
     def write_file(self, path, data=''):
         file = open(path, 'w', encoding='utf-8', newline=self.sm.line_sep)
@@ -754,6 +760,7 @@ class TestCopyWindow(QDialog):
         self.tm = tm
 
         self.setWindowTitle("Копировать тесты")
+        self.setFixedSize(600, 480)
         self.setStyleSheet(self.tm.bg_style_sheet)
 
         QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -797,7 +804,6 @@ class TestCopyWindow(QDialog):
         self.widget.setLayout(self.scroll_layout)
         self.scroll_area.setWidget(self.widget)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFixedSize(480, 320)
         self.tm.auto_css(self.scroll_area)
         self.layout.addWidget(self.scroll_area)
 
@@ -865,6 +871,7 @@ class TestCopyWindow(QDialog):
             check_box = QCheckBox()
             self.check_boxes.append(check_box)
             layout.addWidget(check_box)
+            self.tm.auto_css(check_box)
             layout.addWidget(label := QLabel(el))
             label.setFont(self.tm.font_small)
             widget.setLayout(layout)

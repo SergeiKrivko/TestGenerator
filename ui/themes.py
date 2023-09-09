@@ -529,7 +529,7 @@ class ThemeManager:
                     'MenuColor': '#1F2024',
                     'MenuHoverColor': '#4E5157',
                     'MenuSelectedColor': '#3574F0',
-                    'BorderColor': '#363636',
+                    'BorderColor': '#474747',
                     'TextColor': '#F0F0F0',
                     'ImageColor': (250, 250, 250),
 
