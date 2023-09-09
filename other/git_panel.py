@@ -62,7 +62,7 @@ class GitPanel(SidePanelWidget):
     def __init__(self, sm, cm, tm):
         super().__init__(sm, tm, 'Git', ['pull', 'commit', 'push'])
         self.cm = cm
-        self.setFixedWidth(300)
+        # self.setFixedWidth(300)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

@@ -42,7 +42,7 @@ class Console(Terminal):
 
 class ConsolePanel(SidePanelWidget):
     def __init__(self, sm, tm, cm):
-        super().__init__(sm, tm, 'Выполнение', ['run', 'cancel', 'resize'])
+        super().__init__(sm, tm, 'Выполнение', ['run', 'cancel'])
         self.cm = cm
 
         layout = QVBoxLayout()

@@ -30,7 +30,7 @@ class SidePanel(QWidget):
 
         layout = QHBoxLayout()
         layout.setSpacing(5)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setAlignment(Qt.AlignTop)
         strange_widget.setLayout(layout)
 
@@ -45,16 +45,12 @@ class SidePanel(QWidget):
             'run': ConsolePanel(self.sm, self.tm, self.cm),
             'chat': ChatPanel(self.sm, self.tm),
         }
-        self.tab_width = {'chat': 300}
+        self.tab_width = {'projects': 225, 'files': 225, 'tests': 225, 'git': 300, 'todo': 300, 'chat': 300}
 
         for key, el in self.tabs.items():
             if isinstance(el, SidePanelWidget):
                 el.hide()
-                button = el.get_button('resize')
-                if button:
-                    button.pressed.connect(self.start_resizing)
-                else:
-                    self.tab_width[key] = el.width() + 10
+                el.startResizing.connect(self.start_resizing)
                 layout.addWidget(el)
 
         self.resizing = False

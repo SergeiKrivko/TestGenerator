@@ -24,7 +24,7 @@ class ProjectWidget(SidePanelWidget):
         super(ProjectWidget, self).__init__(sm, tm, 'Проекты', ['add', 'delete', 'rename', 'to_zip', 'from_zip'])
         self.disable_menu_func = disable_menu_func
 
-        self.setFixedWidth(210)
+        # self.setFixedWidth(210)
 
         layout = QHBoxLayout()
 

@@ -6,7 +6,7 @@ from ui.side_panel_widget import SidePanelWidget
 
 class TerminalTab(SidePanelWidget):
     def __init__(self, sm, tm):
-        super().__init__(sm, tm, 'Терминал', ['cancel', 'resize'])
+        super().__init__(sm, tm, 'Терминал', ['cancel'])
         layout = QVBoxLayout()
         self.setMinimumWidth(175)
         layout.setContentsMargins(0, 0, 0, 0)

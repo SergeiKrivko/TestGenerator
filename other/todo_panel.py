@@ -8,7 +8,7 @@ class TODOPanel(SidePanelWidget):
     def __init__(self, sm, cm, tm):
         super().__init__(sm, tm, 'TODO', ['add', 'delete'])
         self.cm = cm
-        self.setFixedWidth(300)
+        # self.setFixedWidth(300)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

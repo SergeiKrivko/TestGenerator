@@ -1,10 +1,12 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QPushButton
 
 from ui.button import Button
 
 
 class SidePanelWidget(QWidget):
+    startResizing = pyqtSignal()
     __Buttons = {
         'add': lambda tm: SidePanelButton(tm, 'plus', tooltip='Создать'),
         'delete': lambda tm: SidePanelButton(tm, 'button_delete', tooltip='Удалить'),
@@ -20,7 +22,6 @@ class SidePanelWidget(QWidget):
         'load': lambda tm: SidePanelButton(tm, 'button_load', tooltip='Открыть'),
         'update': lambda tm: SidePanelButton(tm, 'update', tooltip='Обновить'),
         'cancel': lambda tm: SidePanelButton(tm, 'button_cancel', tooltip='Отменить'),
-        'resize': lambda tm: ResizeButton(tm),
         'close': lambda tm: SidePanelButton(tm, 'delete', tooltip='Закрыть'),
     }
 
@@ -29,8 +30,14 @@ class SidePanelWidget(QWidget):
         self.sm = sm
         self.tm = tm
 
-        __main_layout = QVBoxLayout()
-        __main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout = QHBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(5, 5, 0, 5)
+        layout.setSpacing(5)
+        main_layout.addLayout(layout)
 
         __top_layout = QHBoxLayout()
         __top_layout.setSpacing(2)
@@ -45,16 +52,25 @@ class SidePanelWidget(QWidget):
             self.buttons[el] = button
             __top_layout.addWidget(button)
 
-        __main_layout.addLayout(__top_layout)
+        layout.addLayout(__top_layout)
+
+        self._resize_widget = _ResizeWidget(self.tm)
+        self._resize_widget.pressed.connect(self.startResizing.emit)
+        main_layout.addWidget(self._resize_widget)
 
         self.__main_widget = QWidget()
-        __main_layout.addWidget(self.__main_widget)
-        super().setLayout(__main_layout)
+        layout.addWidget(self.__main_widget)
+        super().setLayout(main_layout)
 
     def setLayout(self, a0) -> None:
         self.__main_widget.setLayout(a0)
 
+    def setFixedWidth(self, w: int) -> None:
+        self._resize_widget.setDisabled(True)
+        super().setFixedWidth(w)
+
     def set_theme(self):
+        self._resize_widget.set_theme()
         self.setStyleSheet(f"border: none;")
         self.tm.auto_css(self.__name_label)
         for el in self.buttons.values():
@@ -70,12 +86,25 @@ class SidePanelButton(Button):
         self.setFixedSize(24, 24)
 
 
-class ResizeButton(SidePanelButton):
+class _ResizeWidget(QPushButton):
     pressed = pyqtSignal()
 
     def __init__(self, tm):
-        super().__init__(tm, 'button_resize', 'Изменить размер')
+        super().__init__()
+        self.tm = tm
+        self.setMaximumHeight(10000)
+        self.setFixedWidth(5)
+
+        self.setCursor(QCursor(Qt.SizeHorCursor))
 
     def mousePressEvent(self, e) -> None:
         if e.button() == Qt.MouseButton.LeftButton:
             self.pressed.emit()
+
+    def set_theme(self):
+        self.setStyleSheet(f"""
+        QPushButton {{
+            background-color: {self.tm['MainColor']};
+            border-right: 1px solid {self.tm['BorderColor']};
+        }}
+        """)

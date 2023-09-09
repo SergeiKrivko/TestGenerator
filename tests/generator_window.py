@@ -14,7 +14,7 @@ class GeneratorTab(SidePanelWidget):
     complete = pyqtSignal()
 
     def __init__(self, sm, cm, tm):
-        super().__init__(sm, tm, 'Генерация тестов', ['load', 'save', 'run', 'close', 'resize'])
+        super().__init__(sm, tm, 'Генерация тестов', ['load', 'save', 'run', 'close'])
         self.setWindowTitle("TestGenerator")
         self.resize(600, 400)
 

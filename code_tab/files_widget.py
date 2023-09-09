@@ -1,15 +1,13 @@
 import os
 import shutil
 
-from PyQt5.QtCore import pyqtSignal, Qt, QThread
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QDialogButtonBox, QTreeWidget, QTreeWidgetItem
+    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem
 
-from code_tab.console import Console
-from ui.button import Button
-from ui.message_box import MessageBox
 from language.languages import languages
+from ui.message_box import MessageBox
 from ui.side_panel_widget import SidePanelWidget
 
 
@@ -59,50 +57,16 @@ class FilesWidget(SidePanelWidget):
         super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'update'])
         self.cm = cm
 
-        self.setFixedWidth(225)
+        # self.setFixedWidth(225)
         files_layout = QVBoxLayout()
         files_layout.setSpacing(3)
-        files_layout.setContentsMargins(0, 5, 0, 0)
+        files_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(files_layout)
         self.path = ''
         self.current_path = ''
 
         self.buttons['rename'].clicked.connect(lambda: self.rename_file(False))
         self.buttons['update'].clicked.connect(self.update_files_list)
-
-        search_layout = QHBoxLayout()
-        search_layout.setSpacing(2)
-
-        self.search_line = QLineEdit()
-        search_layout.addWidget(self.search_line)
-
-        self.button_up = Button(self.tm, 'button_up')
-        self.button_up.setFixedSize(22, 22)
-        search_layout.addWidget(self.button_up)
-
-        self.button_down = Button(self.tm, 'button_down')
-        self.button_down.setFixedSize(22, 22)
-        search_layout.addWidget(self.button_down)
-
-        files_layout.addLayout(search_layout)
-
-        replace_layout = QHBoxLayout()
-        replace_layout.setSpacing(2)
-
-        self.replace_line = QLineEdit()
-        replace_layout.addWidget(self.replace_line)
-
-        self.button_replace = Button(self.tm, 'replace')
-        self.button_replace.setFixedSize(22, 22)
-        replace_layout.addWidget(self.button_replace)
-
-        self.button_replace_all = Button(self.tm, 'replace_all')
-        self.button_replace_all.setFixedSize(22, 22)
-        replace_layout.addWidget(self.button_replace_all)
-
-        files_layout.addLayout(replace_layout)
-
-        self.show_search(False)
 
         self.files_list = QTreeWidget()
         self.files_list.setFocusPolicy(False)
@@ -114,14 +78,6 @@ class FilesWidget(SidePanelWidget):
         self.buttons['delete'].clicked.connect(self.delete_file)
 
         self.dialog = None
-
-    def show_search(self, show):
-        for el in [self.search_line, self.replace_line,self.button_up, self.button_down,
-                   self.button_replace, self.button_replace_all]:
-            if show:
-                el.show()
-            else:
-                el.hide()
 
     def update_files_list(self):
         self.files_list.clear()
@@ -203,9 +159,6 @@ class FilesWidget(SidePanelWidget):
 
     def set_theme(self):
         super().set_theme()
-        for el in [self.button_up, self.button_down, self.search_line, self.replace_line,
-                   self.button_replace, self.button_replace_all]:
-            self.tm.auto_css(el)
         self.files_list.setStyleSheet(self.tm.tree_widget_css('Main'))
         self.update_files_list()
 

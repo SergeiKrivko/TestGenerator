@@ -11,7 +11,7 @@ from ui.side_panel_widget import SidePanelWidget
 
 class ChatPanel(SidePanelWidget):
     def __init__(self, sm, tm):
-        super().__init__(sm, tm, "Чат", ['resize'])
+        super().__init__(sm, tm, "Чат", [])
 
         self._bubbles = []
 
