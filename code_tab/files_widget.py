@@ -40,12 +40,39 @@ class TreeDirectory(QTreeWidgetItem):
         self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
         self.setFont(0, self.tm.font_small)
 
-        for el in os.listdir(self.path):
-            if os.path.isdir(path := os.path.join(self.path, el)):
-                self.addChild(TreeDirectory(path, self.tm))
-        for el in os.listdir(self.path):
-            if os.path.isfile(path := os.path.join(self.path, el)):
-                self.addChild(TreeFile(path, self.tm))
+        self.update_files_list()
+
+    def update_files_list(self):
+        i = 0
+        j = 0
+        lst = list(filter(lambda p: os.path.isdir(os.path.join(self.path, p)), os.listdir(self.path))) + \
+              list(filter(lambda p: os.path.isfile(os.path.join(self.path, p)), os.listdir(self.path)))
+        lst = list(map(lambda p: os.path.join(self.path, p), lst))
+        while i < self.childCount() and j < len(lst):
+            if (path := self.child(i).path) != lst[j]:
+                if os.path.isfile(path) or os.path.isdir(path):
+                    if os.path.isdir(lst[j]):
+                        self.insertChild(i, TreeDirectory(lst[j], self.tm))
+                    else:
+                        self.insertChild(i, TreeFile(lst[j], self.tm))
+                    i += 1
+                    j += 1
+                else:
+                    self.takeChild(i)
+            elif isinstance(item := self.child(i), TreeDirectory):
+                pass
+                item.update_files_list()
+            i += 1
+            j += 1
+        while i < self.childCount():
+            self.takeChild(i)
+            i += 1
+        while j < len(lst):
+            if os.path.isdir(lst[j]):
+                self.addChild(TreeDirectory(lst[j], self.tm))
+            else:
+                self.addChild(TreeFile(lst[j], self.tm))
+            j += 1
 
 
 class FilesWidget(SidePanelWidget):
@@ -80,16 +107,38 @@ class FilesWidget(SidePanelWidget):
         self.dialog = None
 
     def update_files_list(self):
-        self.files_list.clear()
         if not self.current_path or not os.path.isdir(self.current_path):
             return
-
-        for el in os.listdir(self.path):
-            if os.path.isdir(path := os.path.join(self.path, el)):
-                self.files_list.addTopLevelItem(TreeDirectory(path, self.tm))
-        for el in os.listdir(self.path):
-            if os.path.isfile(path := os.path.join(self.path, el)):
-                self.files_list.addTopLevelItem(TreeFile(path, self.tm))
+        i = 0
+        j = 0
+        lst = list(filter(lambda p: os.path.isdir(os.path.join(self.path, p)), os.listdir(self.path))) + \
+              list(filter(lambda p: os.path.isfile(os.path.join(self.path, p)), os.listdir(self.path)))
+        lst = list(map(lambda p: os.path.join(self.path, p), lst))
+        while i < self.files_list.topLevelItemCount() and j < len(lst):
+            if (path := self.files_list.topLevelItem(i).path) != lst[j]:
+                if os.path.isfile(path) or os.path.isdir(path):
+                    if os.path.isdir(lst[j]):
+                        self.files_list.insertTopLevelItem(i, TreeDirectory(lst[j], self.tm))
+                    else:
+                        self.files_list.insertTopLevelItem(i, TreeFile(lst[j], self.tm))
+                    i += 1
+                    j += 1
+                else:
+                    self.files_list.takeTopLevelItem(i)
+            elif isinstance(item := self.files_list.topLevelItem(i), TreeDirectory):
+                pass
+                item.update_files_list()
+            i += 1
+            j += 1
+        while i < self.files_list.topLevelItemCount():
+            self.files_list.takeTopLevelItem(i)
+            i += 1
+        while j < len(lst):
+            if os.path.isdir(lst[j]):
+                self.files_list.addTopLevelItem(TreeDirectory(lst[j], self.tm))
+            else:
+                self.files_list.addTopLevelItem(TreeFile(lst[j], self.tm))
+            j += 1
 
     def rename_file(self, flag=True):
         if self.files_list.currentItem() is None:
@@ -312,6 +361,6 @@ class RenameFileDialog(QDialog):
 
         self.setStyleSheet(tm.bg_style_sheet)
         for el in [self.button_ok, self.button_cancel, self.line_edit]:
-             tm.auto_css(el)
+            tm.auto_css(el)
 
         self.resize(280, 50)
