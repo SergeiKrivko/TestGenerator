@@ -17,7 +17,7 @@ def c_compile(path, cm, sm, coverage=False):
     compile_res = cm.cmd_command(command, shell=True, env=env)
     if not compile_res.returncode:
         command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o app.exe " \
-                  f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} " \
+                  f"{' '.join(map(lambda p: p[:-2] + '.o', filter(lambda p: p.endswith('.c'), os.listdir(path))))} " \
                   f"{'-lm' if sm.get_smart('-lm', False) else ''}"
         compile_res = cm.cmd_command(command, shell=True, env=env)
 

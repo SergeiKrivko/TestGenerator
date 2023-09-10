@@ -303,6 +303,8 @@ class TestingWidget(QWidget):
 
         if self.sm.get_smart('coverage', False):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
+        else:
+            self.coverage_bar.setText("")
 
         command = self.sm.get_task('postprocessor', '')
         if command:
