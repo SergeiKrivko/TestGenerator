@@ -268,9 +268,11 @@ class TestingWidget(QWidget):
         self.startTesting.emit()
         try:
             self.cm.clear_coverage_files()
-        except FileNotFoundError:
-            MessageBox(MessageBox.Warning, "Ошибка",
-                       "Папки с данным заданием не существует. Тестирование невозможно", self.tm)
+        except Exception as ex:
+            message = f"Папки с данным заданием не существует. Тестирование невозможно."
+            if not isinstance(ex, FileNotFoundError):
+                message += f"\n{ex.__class__.__name__}: {ex}"
+            MessageBox(MessageBox.Warning, "Ошибка", message, self.tm)
             return
 
         self.test_mode(True)

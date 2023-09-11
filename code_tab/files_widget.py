@@ -91,7 +91,6 @@ class FilesWidget(SidePanelWidget):
         files_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(files_layout)
         self.path = ''
-        self.current_path = ''
 
         self.buttons['rename'].clicked.connect(lambda: self.rename_file(False))
         self.buttons['update'].clicked.connect(self.update_files_list)
@@ -108,7 +107,9 @@ class FilesWidget(SidePanelWidget):
         self.dialog = None
 
     def update_files_list(self):
-        if not self.current_path or not os.path.isdir(self.current_path):
+        self.path = self.sm.lab_path()
+        if not self.path or not os.path.isdir(self.path):
+            self.files_list.clear()
             return
         i = 0
         j = 0
@@ -143,42 +144,34 @@ class FilesWidget(SidePanelWidget):
             j += 1
 
     def rename_file(self, flag=True):
-        if self.files_list.currentItem() is None:
+        if item := self.files_list.currentItem() is None:
             return
-        if (item := self.files_list.currentItem()).file_type == 'dir' and flag:
-            if item.name == '..':
-                self.current_path = os.path.split(self.current_path)[0]
+        self.dialog = RenameFileDialog(item.name, self.tm)
+        if self.dialog.exec():
+            if not os.path.isfile(f"{self.path}/{self.dialog.line_edit.text()}"):
+                os.rename(self.files_list.currentItem().path,
+                          f"{self.path}/{self.dialog.line_edit.text()}")
+                self.update_files_list()
+                self.renameFile.emit(self.dialog.line_edit.text())
             else:
-                self.current_path = f"{self.current_path}/{item.name}"
-            self.update_files_list()
-        else:
-            self.dialog = RenameFileDialog(item.name, self.tm)
-            if self.dialog.exec():
-                if not os.path.isfile(f"{self.current_path}/{self.dialog.line_edit.text()}"):
-                    os.rename(self.files_list.currentItem().path,
-                              f"{self.current_path}/{self.dialog.line_edit.text()}")
-                    self.update_files_list()
-                    self.renameFile.emit(self.dialog.line_edit.text())
-                else:
-                    MessageBox(MessageBox.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
+                MessageBox(MessageBox.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
 
     def open_task(self):
         self.path = self.sm.lab_path()
-        self.current_path = self.path
         self.update_files_list()
 
     def create_file(self, *args):
         self.dialog = RenameFileDialog(
             f"main{languages[self.sm.get('language', 'C')]['files'][0]}"
-            if self.path == self.current_path and not os.path.isfile(
+            if self.path == self.path and not os.path.isfile(
                 f"{self.path}/main{languages[self.sm.get('language', 'C')]['files'][0]}") else '', self.tm)
         if self.dialog.exec():
-            os.makedirs(self.current_path, exist_ok=True)
+            os.makedirs(self.path, exist_ok=True)
             if not self.dialog.line_edit.text():
                 MessageBox(MessageBox.Warning, "Ошибка", "Невозможно создать файл: имя файла не задано", self.tm)
                 return
             try:
-                open(f"{self.current_path}/{self.dialog.line_edit.text()}", 'x').close()
+                open(f"{self.path}/{self.dialog.line_edit.text()}", 'x').close()
             except FileExistsError:
                 MessageBox(MessageBox.Warning, "Ошибка",
                            "Невозможно создать файл: файл с таким именем уже существует", self.tm)
