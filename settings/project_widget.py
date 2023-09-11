@@ -111,8 +111,10 @@ class ProjectWidget(SidePanelWidget):
     def update_projects(self):
         self.list_widget.clear()
         for pr in self.sm.projects.keys():
-            item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS[self.sm.get('language', project=pr)])
+            item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS.get(self.sm.get('language', project=pr),
+                                                                         'unknown_file'))
             item.setFont(self.tm.font_small)
+            item.set_icon()
             self.list_widget.addItem(item)
             if self.sm.project == pr:
                 self.list_widget.setCurrentItem(item)
