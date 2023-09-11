@@ -296,6 +296,7 @@ class TestingWidget(QWidget):
 
     def start_testing(self):
         self.testing_looper = TestingLooper(self.sm, self.cm, self.tests)
+        self.testing_looper.utilFailed.connect(self.util_failed)
         self.testing_looper.testStatusChanged.connect(self.set_tests_status)
         self.testing_looper.compileFailed.connect(self.testing_is_terminated)
         self.testing_looper.finished.connect(self.end_testing)
@@ -318,6 +319,13 @@ class TestingWidget(QWidget):
         else:
             self.test_mode(False)
 
+    def util_failed(self, name, errors, mask):
+        dialog = CompilerErrorWindow(errors, self.tm, mask)
+        if dialog.exec():
+            if dialog.goto:
+                self.jump_to_code.emit(os.path.join(self.sm.lab_path(), dialog.goto[0]),
+                                       dialog.goto[1], dialog.goto[2])
+
     def testing_is_terminated(self, errors=''):
         self.progress_bar.hide()
         self.coverage_bar.show()
@@ -329,7 +337,8 @@ class TestingWidget(QWidget):
             dialog = CompilerErrorWindow(errors, self.tm, languages[self.sm.get('language', 'C')].get('compiler_mask'))
             if dialog.exec():
                 if dialog.goto:
-                    self.jump_to_code.emit(*dialog.goto, 0)
+                    self.jump_to_code.emit(os.path.join(self.sm.lab_path(), dialog.goto[0]),
+                                           dialog.goto[1], dialog.goto[2])
 
         for i in range(self.test_count['completed'], self.count()):
             self.side_list.set_status(i, Test.TERMINATED)
@@ -506,6 +515,7 @@ class Test:
 class TestingLooper(QThread):
     testStatusChanged = pyqtSignal(int, int)
     compileFailed = pyqtSignal(str)
+    utilFailed = pyqtSignal(str, str, str)
 
     def __init__(self, sm, cm: CommandManager, tests: list[Test]):
         super(TestingLooper, self).__init__()
@@ -513,6 +523,9 @@ class TestingLooper(QThread):
         self.cm = cm
         self._tests = tests
         self._coverage = self.sm.get_smart('coverage')
+        self.util_res = dict()
+        self.util_output = dict()
+        self.utils = []
 
     def prepare_test(self, test: Test, index: int):
         if self.sm.get('func_tests_in_project'):
@@ -616,31 +629,63 @@ class TestingLooper(QThread):
         elif os.path.isdir(f"{self.sm.app_data_dir}/temp_files"):
             shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
 
-    def run_util(self, test: Test, index: int, util_data: dict):
-        name = util_data.get('program', 'error_unknown_program')
+    @staticmethod
+    def parse_util_name(data: dict):
+        name = data.get('program', 'error_unknown_program')
         if name.startswith('wsl -e '):
             name = os.path.basename(name.split()[2])
         elif not name.strip():
             name = 'unknown_program'
         else:
             name = os.path.basename(name.split()[0])
+        return name
+
+    def run_preproc_util(self, data: dict):
+        if data.get('type', 0) != 1:
+            return
+        name = self.parse_util_name(data)
+        temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
+        res = self.cm.cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
+                                                                 files=' '.join(self.cm.get_files_list())),
+                                  shell=True)
+        if data.get('1_output_format', 0) == 0:
+            output = res.stdout
+        elif data.get('1_output_format', 0) == 1:
+            output = res.stderr
+        else:
+            output = read_file(temp_path, default='')
+        result = True
+        if data.get('1_output_res', False):
+            result = result and not bool(output)
+        if data.get('1_exit_code_res', False):
+            result = result and res.returncode == 0
+        # self.util_res[name] = result
+        # self.util_output[name] = output
+        if not result:
+            self.utilFailed.emit(name, output, data.get('1_mask', ''))
+            if not data.get('1_continue_testing', True):
+                self.terminate()
+
+    def run_test_util(self, test: Test, index: int, util_data: dict):
+        if util_data.get('type', 0) != 0:
+            return
+        name = self.parse_util_name(util_data)
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
                                                                       args=test.args, dict=temp_path),
                                   shell=True, input=test['in'])
-        if util_data.get('type', 0) == 0:
-            if util_data.get('output_format', 0) == 0:
-                output = res.stdout
-            elif util_data.get('output_format', 0) == 1:
-                output = res.stderr
-            else:
-                output = read_file(temp_path, default='')
-            test.utils_output[name] = output
-            test.results[name] = True
-            if util_data.get('output_res', False):
-                test.results[name] = test.results[name] and not bool(output)
-            if util_data.get('exit_code_res', False):
-                test.results[name] = test.results[name] and res.returncode == 0
+        if util_data.get('output_format', 0) == 0:
+            output = res.stdout
+        elif util_data.get('output_format', 0) == 1:
+            output = res.stderr
+        else:
+            output = read_file(temp_path, default='')
+        test.utils_output[name] = output
+        test.results[name] = True
+        if util_data.get('output_res', False):
+            test.results[name] = test.results[name] and not bool(output)
+        if util_data.get('exit_code_res', False):
+            test.results[name] = test.results[name] and res.returncode == 0
         self.clear_after_run(test, index)
 
     def run_test(self, test: Test, index: int):
@@ -651,14 +696,9 @@ class TestingLooper(QThread):
             test.prog_out = {'STDOUT': res.stdout}
             self.run_comparators(test, index)
             self.clear_after_run(test, index)
-            utils = self.sm.get_smart(f"{self.sm.get('language', 'C')}_utils", [])
-            if isinstance(utils, str):
-                try:
-                    utils = json.loads(utils)
-                except json.JSONDecodeError:
-                    utils = []
-            for util in utils:
-                self.run_util(test, index, util)
+
+            for util in self.utils:
+                self.run_test_util(test, index, util)
             test.set_status(Test.PASSED if test.res() else Test.FAILED)
         except TimeoutExpired:
             test.set_status(Test.TIMEOUT)
@@ -669,6 +709,15 @@ class TestingLooper(QThread):
         if not code:
             self.compileFailed.emit(errors)
             return
+        self.utils = self.sm.get_smart(f"{self.sm.get('language', 'C')}_utils", [])
+        if isinstance(self.utils, str):
+            try:
+                self.utils = json.loads(self.utils)
+            except json.JSONDecodeError:
+                self.utils = []
+
+        for util in self.utils:
+            self.run_preproc_util(util)
 
         pos_count = 0
         for i, test in enumerate(self._tests):

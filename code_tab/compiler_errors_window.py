@@ -15,7 +15,12 @@ class CompilerErrorWindow(QDialog):
             self._mask = mask
             self._prefix = self._mask[:self._mask.index("{file}")]
             self._sep = self._mask[self._mask.index("{file}") + len("{file}"):self._mask.index("{line}")]
-            self._suffix = self._mask[self._mask.index("{line}") + len("{line}"):]
+            if '{symbol}' in mask:
+                self._sep2 = self._mask[self._mask.index("{line}") + len("{line}"):self._mask.index("{symbol}")]
+                self._suffix = self._mask[self._mask.index("{symbol}") + len("{symbol}"):]
+            else:
+                self._sep2 = None
+                self._suffix = self._mask[self._mask.index("{line}") + len("{line}"):]
         else:
             self._mask = ''
 
@@ -36,9 +41,9 @@ class CompilerErrorWindow(QDialog):
 
         for line in text.split('\n'):
             if self._mask:
-                file, n, new_line = self.parse_line(line)
+                file, n, m, new_line = self.parse_line(line)
                 if file:
-                    button = LinkButton(self.tm, file, n)
+                    button = LinkButton(self.tm, file, n, m if self._sep2 is not None else None)
                     button.pressed.connect(self.button_triggered)
                     self.scroll_layout.addWidget(button)
                     self.add_label(new_line)
@@ -65,6 +70,7 @@ class CompilerErrorWindow(QDialog):
         old_text = text
         file = ''
         line = 0
+        symbol = 0
         try:
             text = text[len(self._prefix):]
             file = text[:text.index(self._sep)]
@@ -72,14 +78,20 @@ class CompilerErrorWindow(QDialog):
                 file = ''
             else:
                 text = text[text.index(self._sep) + len(self._sep):]
-                line = int(text[:text.index(self._suffix)])
-                text = text[text.index(self._suffix):]
-            return file, line, text
+                if self._sep2 is None:
+                    line = int(text[:text.index(self._suffix)])
+                    text = text[text.index(self._suffix) + len(self._suffix):]
+                else:
+                    line = int(text[:text.index(self._sep2)])
+                    text = text[text.index(self._sep2):]
+                    symbol = int(text[len(self._sep2):text.index(self._suffix)])
+                    text = text[text.index(self._suffix) + len(self._suffix):]
+            return file, line, symbol, text
         except IndexError:
-            return '', 0, old_text
+            return '', 0, 0, old_text
         except ValueError:
             # text = text[text.index(self._suffix):]
-            return '', 0, old_text
+            return '', 0, 0, old_text
 
     def add_label(self, text):
         label = QLabel(text)
@@ -91,22 +103,23 @@ class CompilerErrorWindow(QDialog):
     def connect_button(self, widget, file, pos):
         widget.clicked.connect(lambda: self.button_triggered(file, pos))
 
-    def button_triggered(self, file, pos):
-        self.goto = file, pos
+    def button_triggered(self, file, line, symbol):
+        self.goto = file, line, symbol
         self.accept()
 
 
 class LinkButton(QPushButton):
-    pressed = pyqtSignal(str, int)
+    pressed = pyqtSignal(str, int, int)
 
-    def __init__(self, tm, file, line):
+    def __init__(self, tm, file, line, symbol=None):
         super().__init__()
 
         self.file = file
         self.line = line
+        self.symbol = symbol
 
-        self.setText(f"{file}: line {line}")
+        self.setText(f"{file} {line}{f':{self.symbol}' if self.symbol is not None else ''}")
         tm.auto_css(self)
-        self.clicked.connect(lambda: self.pressed.emit(self.file, self.line))
+        self.clicked.connect(lambda: self.pressed.emit(self.file, self.line, self.symbol))
 
         self.setFixedSize(QFontMetrics(tm.font_small).size(0, self.text()).width() + 22, 22)

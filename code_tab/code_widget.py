@@ -183,10 +183,12 @@ class CodeWidget(QWidget):
         if os.path.isfile(path):
             self.open_code(path)
 
-    def open_code(self, path):
+    def open_code(self, path, line=None, pos=None):
         path = os.path.abspath(path)
         if path in self.code_widgets or path in self.preview_widgets:
             self.top_panel.select_tab(path)
+            if self.current_file in self.code_widgets:
+                self.code_widgets[self.current_file].setCursorPosition(line - 1, pos - 1)
             return
         if not os.path.isfile(path):
             return

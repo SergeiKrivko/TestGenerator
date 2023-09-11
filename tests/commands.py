@@ -59,6 +59,14 @@ class CommandManager:
         self.path = self.sm.lab_path()
         languages[self.sm.get('language', 'C')].get('clear_coverage', lambda *args: 0)(self.path)
 
+    def get_files_list(self, path=None):
+        if path is None:
+            path = self.sm.lab_path()
+        for el in os.listdir():
+            for ex in languages.get(self.sm.get('language', 'C'), dict()).get('files', list()):
+                if el.endswith(ex):
+                    yield el
+
     def test_count(self):
         count = 0
         i = 1

@@ -111,7 +111,7 @@ class MainWindow(QMainWindow):
         path = os.path.abspath(path)
         self.show_tab(MainMenu.TAB_CODE)
         if self.sm.get('struct', 0) == 1:
-            self.code_widget.open_code(path)
+            self.code_widget.open_code(path, line, pos)
             return
         if not os.path.isdir(self.sm.data_path):
             return
@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
                         self.menu_bar.lab_widget.lab_spin_box.setValue(int(dir1))
                         self.menu_bar.lab_widget.task_spin_box.setValue(int(dir2))
                         self.menu_bar.lab_widget.var_spin_box.setValue(int(dir3))
-                        self.code_widget.open_code(path)
+                        self.code_widget.open_code(path, line, pos)
 
     def show_tab(self, index):
         self.code_widget.hide()

@@ -201,7 +201,8 @@ class SettingsWindow(QDialog):
                 1: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='1_output_format'),
                     CheckBox("Наличие вывода считается отрицательным результатом", key='1_output_res'),
                     CheckBox("Ненулевой код возврата считается отрицательным результатом", key='1_exit_code_res'),
-                    LineEdit("Маска (Файл - строка)", key='1_mask', text='{file}:{line}:', one_line=True)],
+                    LineEdit("Маска (Файл - строка)", key='1_mask', text='{file}:{line}:', one_line=True),
+                    CheckBox("Продолжить тестирование", key='1_continue_testing')],
             }, key='type', width=250)], key=f'{language}_utils')
 
     @staticmethod
@@ -237,7 +238,7 @@ class SettingsWindow(QDialog):
     @staticmethod
     def check_util(command: str):
         try:
-            command.format(app='app.exe', file='main.c', args='1 2 3', dist='dist.txt')
+            command.format(app='app.exe', file='main.c', args='1 2 3', dist='dist.txt', files='main.c logic.c')
             return True
         except Exception:
             return False

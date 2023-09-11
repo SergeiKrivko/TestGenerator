@@ -40,9 +40,9 @@ def c_run(path, sm, args='', coverage=False):
         return f"wsl -e ./app.exe {args}"
     if os.path.isfile(path):
         if path.endswith('.c') or path.endswith('.h'):
-            return f"{os.path.split(path)[0]}/app.exe {args}"
+            return f"{os.path.join(os.path.split(path)[0], 'app.exe')} {args}"
         return f"{path} {args}"
-    return f"{path}/app.exe {args}"
+    return f"{os.path.join(path, 'app.exe')} {args}"
 
 
 def c_clear_coverage_files(path):
