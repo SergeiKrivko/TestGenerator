@@ -202,7 +202,8 @@ class SettingsWindow(QDialog):
                     CheckBox("Наличие вывода считается отрицательным результатом", key='1_output_res'),
                     CheckBox("Ненулевой код возврата считается отрицательным результатом", key='1_exit_code_res'),
                     LineEdit("Маска (Файл - строка)", key='1_mask', text='{file}:{line}:', one_line=True),
-                    CheckBox("Продолжить тестирование", key='1_continue_testing')],
+                    # CheckBox("Продолжить тестирование", key='1_continue_testing'), TODO: починить это опцию
+                    ],
             }, key='type', width=250)], key=f'{language}_utils')
 
     @staticmethod

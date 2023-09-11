@@ -6,9 +6,9 @@ from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QWidget, QPu
 
 
 class CompilerErrorWindow(QDialog):
-    def __init__(self, text: str, tm, mask=''):
+    def __init__(self, text: str, tm, mask='', name="Ошибка компиляции"):
         super().__init__()
-        self.setWindowTitle("Ошибка компиляции")
+        self.setWindowTitle(name)
         self.setStyleSheet(tm.bg_style_sheet)
         self.tm = tm
         if '{file}' in mask and '{line}' in mask:

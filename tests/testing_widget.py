@@ -320,7 +320,7 @@ class TestingWidget(QWidget):
             self.test_mode(False)
 
     def util_failed(self, name, errors, mask):
-        dialog = CompilerErrorWindow(errors, self.tm, mask)
+        dialog = CompilerErrorWindow(errors, self.tm, mask, name)
         if dialog.exec():
             if dialog.goto:
                 self.jump_to_code.emit(os.path.join(self.sm.lab_path(), dialog.goto[0]),
@@ -663,8 +663,8 @@ class TestingLooper(QThread):
         # self.util_output[name] = output
         if not result:
             self.utilFailed.emit(name, output, data.get('1_mask', ''))
-            if not data.get('1_continue_testing', True):
-                self.terminate()
+            # if not data.get('1_continue_testing', True):
+            #     self.terminate()
 
     def run_test_util(self, test: Test, index: int, util_data: dict):
         if util_data.get('type', 0) != 0:
