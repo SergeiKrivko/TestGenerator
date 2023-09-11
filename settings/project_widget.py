@@ -174,7 +174,10 @@ class ProjectWidget(SidePanelWidget):
 
     def open_project(self, forced=False):
         if self.list_widget.currentItem() is None:
-            return
+            if self.list_widget.count():
+                self.list_widget.setCurrentRow(0)
+            else:
+                return
         project = self.list_widget.currentItem().text()
         if project == self.sm.project and not forced:
             return
@@ -254,12 +257,15 @@ class ProjectWidget(SidePanelWidget):
             self.list_widget.item(i).set_icon()
 
     def remove_temp_projects(self):
-        # project = self.sm.project
+        project = self.sm.project
         for el in self.temp_project:
             if el in self.sm.projects:
                 self.select_project(el)
                 self.delete_project(forced=True)
-        # self.select_project(project)
+        if project is None:
+            self.list_widget.setCurrentRow(0)
+        else:
+            self.select_project(project)
         self.temp_project.clear()
         self.sm.set_general('temp_projects', '[]')
 

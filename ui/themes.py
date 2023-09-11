@@ -1089,7 +1089,7 @@ QPushButton {{
     background-color: {self[f'{palette}Color']};
     border: {'1' if border else '0'}px solid {self['BorderColor']};
     border-radius: {'5' if border_radius else '0'}px;
-    padding: 1px 4px 1px 4px;
+    padding: 3px 8px 3px 8px;
 }}
 QPushButton::hover {{
     background-color: {self[f'{palette}HoverColor']};

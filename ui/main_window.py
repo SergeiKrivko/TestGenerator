@@ -81,10 +81,10 @@ class MainWindow(QMainWindow):
 
         self.resize(1000, 600)
 
-        if not os.path.isdir(self.sm.project) or not self.side_panel.tabs['projects'].list_widget.count():
-            self.show_tab('project_widget')
-        else:
-            self.show_tab('project_widget')
+        # if not os.path.isdir(self.sm.project) or not self.side_panel.tabs['projects'].list_widget.count():
+        #     self.show_tab('project_widget')
+        # else:
+        #     self.show_tab('project_widget')
 
         if len(argv) == 2 and os.path.isfile(argv[1]):
             if argv[1].endswith('.7z'):

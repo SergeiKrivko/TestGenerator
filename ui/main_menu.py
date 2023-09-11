@@ -32,38 +32,36 @@ class MainMenu(QWidget):
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.setSpacing(2)
+        buttons_layout.setSpacing(5)
         layout.addLayout(buttons_layout)
 
         self.button_code = QPushButton("Код")
-        self.button_code.setFixedSize(50, 24)
+        # self.button_code.setFixedSize(50, 24)
         self.button_code.setCheckable(True)
         self.button_code.clicked.connect(lambda flag: self.select_tab(self.TAB_CODE, flag))
-        buttons_layout.addWidget(self.button_code)
+        buttons_layout.addWidget(self.button_code, 1, Qt.AlignLeft)
 
         self.button_tests = QPushButton("Тесты")
-        self.button_tests.setFixedSize(60, 24)
+        # self.button_tests.setFixedSize(60, 24)
         self.button_tests.setCheckable(True)
         self.button_tests.clicked.connect(lambda flag: self.select_tab(self.TAB_TESTS, flag))
-        buttons_layout.addWidget(self.button_tests)
+        buttons_layout.addWidget(self.button_tests, 1, Qt.AlignLeft)
 
         self.button_testing = QPushButton("Тестирование")
-        self.button_testing.setFixedSize(115, 24)
+        # self.button_testing.setFixedSize(115, 24)
         self.button_testing.setCheckable(True)
         self.button_testing.clicked.connect(lambda flag: self.select_tab(self.TAB_TESTING, flag))
-        buttons_layout.addWidget(self.button_testing)
+        buttons_layout.addWidget(self.button_testing, 1, Qt.AlignLeft)
 
         self.lab_widget = LabWidget(self.tm, self.sm)
         layout.addWidget(self.lab_widget)
 
-        right_layout = QHBoxLayout()
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.setAlignment(Qt.AlignRight)
-        layout.addLayout(right_layout)
+        self._widget = QWidget()
+        layout.addWidget(self._widget, 1000)
 
         self.button_settings = Button(self.tm, 'generate', css='Menu', color='TextColor')
         self.button_settings.setFixedSize(30, 30)
-        right_layout.addWidget(self.button_settings)
+        layout.addWidget(self.button_settings)
 
         self.current_tab = self.TAB_CODE
 
@@ -85,6 +83,7 @@ class MainMenu(QWidget):
     def set_theme(self):
         self.setStyleSheet(f"background-color: {self.tm['MenuColor']}; "
                            f"border-bottom: 1px solid {self.tm['BorderColor']};")
+        self._widget.setStyleSheet("border: none;")
         for el in [self.button_code, self.button_tests, self.button_testing]:
             self.tm.auto_css(el, palette='Menu', border=False)
         self.lab_widget.set_theme()

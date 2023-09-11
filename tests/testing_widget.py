@@ -246,6 +246,7 @@ class TestingWidget(QWidget):
 
         self.tests[index].set_status(status)
         self.side_list.set_status(index, status)
+        self.open_test_info()
 
     def load_tests(self):
         for key in self.test_count:
@@ -616,11 +617,13 @@ class TestingLooper(QThread):
         name = util_data.get('program', 'error_unknown_program')
         if name.startswith('wsl -e '):
             name = os.path.basename(name.split()[2])
+        elif not name.strip():
+            name = 'unknown_program'
         else:
             name = os.path.basename(name.split()[0])
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
-                                                                      args=test.get('args', ''), dict=temp_path),
+                                                                      args=test.args, dict=temp_path),
                                   shell=True, input=test['in'])
         if util_data.get('type', 0) == 0:
             if util_data.get('output_format', 0) == 0:
@@ -649,10 +652,10 @@ class TestingLooper(QThread):
             if isinstance(utils, str):
                 try:
                     utils = json.loads(utils)
-                    for util in utils:
-                        self.run_util(test, index, util)
                 except json.JSONDecodeError:
-                    pass
+                    utils = []
+            for util in utils:
+                self.run_util(test, index, util)
             test.set_status(Test.PASSED if test.res() else Test.FAILED)
         except TimeoutExpired:
             test.set_status(Test.TIMEOUT)

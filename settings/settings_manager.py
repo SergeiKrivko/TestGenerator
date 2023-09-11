@@ -92,7 +92,7 @@ class SettingsManager(QObject):
 
     def set_project(self, project):
         self.start_change_task()
-        if project is None:
+        if project is None or project not in self.projects:
             self.project = ''
             self.set_general('projects', dumps(self.projects))
             return
@@ -169,8 +169,10 @@ class SettingsManager(QObject):
             var = self.get('var', 0, project=project)
         if project is None:
             path = self.path
-        else:
+        elif project in self.projects:
             path = self.projects[project]
+        else:
+            return ''
 
         if var == -1:
             return os.path.join(path, self.get('dir_no_var_pattern', 'lab_{lab:0>2}_{task:0>2}').format(
