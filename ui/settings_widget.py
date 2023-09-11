@@ -2,7 +2,7 @@ import json
 import os.path
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtGui import QResizeEvent, QFontMetrics
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
 
@@ -35,6 +35,7 @@ class _Widget(QWidget):
             for el in item:
                 if hasattr(el, 'set_sm'):
                     el.set_sm(sm)
+                el.valueChanged.connect(self.valueChanged.emit)
 
     def set_tm(self, tm):
         self._tm = tm
@@ -126,12 +127,12 @@ class _Widget(QWidget):
 class LineEdit(_Widget):
     STD_WIDTH = 150
 
-    def __init__(self, name='', text='', key=None, key_type=None, width=None, check_func=None):
+    def __init__(self, name='', text='', key=None, key_type=None, width=None, check_func=None, one_line=False):
         super().__init__(key, key_type, text)
         self._check_func = check_func
         self._last_value = text
 
-        layout = QHBoxLayout() if width is None or width <= LineEdit.STD_WIDTH else QVBoxLayout()
+        layout = QHBoxLayout() if one_line else QVBoxLayout()
         self.setLayout(layout)
         layout.setAlignment(Qt.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -152,6 +153,10 @@ class LineEdit(_Widget):
         else:
             MessageBox(MessageBox.Warning, "Ошибка", "Некорректное значение", self._tm)
             self._line_edit.setText(self._last_value)
+
+    def set_tm(self, tm):
+        super().set_tm(tm)
+        self._label.setMaximumWidth(QFontMetrics(tm.font_small).size(0, self._label.text()).width())
 
     def set_value(self, text):
         self._last_value = str(text)
@@ -295,6 +300,7 @@ class ComboBox(_Widget):
         self.load_children()
 
     def set_value(self, value):
+        # print(f"{self._label.text()}: set value {value}")
         if self._text_mode:
             self._set(str(value))
             self._combo_box.setCurrentText(str(value))
@@ -475,7 +481,6 @@ class _ListWidgetItem(_Widget):
             el.set_key_type(KEY_DICT)
             el.valueChanged.connect(self.save_value)
             layout.addWidget(el)
-            el.load_value()
 
     def save_value(self):
         if hasattr(self._parent, 'save_value'):
@@ -498,6 +503,7 @@ class ListWidget(_Widget):
         super().__init__(key, key_type, '')
         self._list = []
         self._children_struct = children
+        self.setMinimumHeight(260)
 
         self.setMaximumHeight(height)
 
@@ -534,6 +540,7 @@ class ListWidget(_Widget):
         item = _ListWidgetItem(self, self._children_struct(), dct)
         item.set_sm(self._sm)
         item.set_tm(self._tm)
+        item.load_value()
         item.set_theme()
         item.closed.connect(self.close_item)
         self._scroll_layout.addWidget(item)

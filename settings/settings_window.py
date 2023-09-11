@@ -124,8 +124,8 @@ class SettingsWindow(QDialog):
                           'Слова после подстроки', 'Текст', 'Слова'],
                          key='neg_comparator'),
                 SpinBox("Погрешность сравнения чисел:", min_value=0, max_value=1000, key='epsilon', double=True),
-                LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring'),
-                LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring'),
+                LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring', one_line=True),
+                LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring', one_line=True),
                 CheckBox("Coverage", key='coverage'),
                 SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             ]}),
@@ -162,8 +162,8 @@ class SettingsWindow(QDialog):
                                                            'Слова после подстроки', 'Текст', 'Слова'],
                      key='neg_comparator'),
             SpinBox("Погрешность сравнения чисел:", min_value=0, max_value=1000, key='epsilon', double=True),
-            LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring'),
-            LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring'),
+            LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring', one_line=True),
+            LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring', one_line=True),
             CheckBox("Coverage", key='coverage'),
             SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             key_type=KEY_GLOBAL
@@ -194,11 +194,14 @@ class SettingsWindow(QDialog):
     def utils_settings(language='C'):
         return ListWidget("Сторонние утилиты:", children=lambda: [
             LineEdit("Строка запуска: ", key='program', width=400),
-            ComboBox("Тип:", ["Для теста"], children={
+            ComboBox("Тип:", ["Для теста", "Перед тестированием"], children={
                 0: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='output_format'),
                     CheckBox("Наличие вывода считается отрицательным результатом", key='output_res'),
                     CheckBox("Ненулевой код возврата считается отрицательным результатом", key='exit_code_res')],
-                1: LineEdit("Команда:", key='report_command', width=350),
+                1: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='1_output_format'),
+                    CheckBox("Наличие вывода считается отрицательным результатом", key='1_output_res'),
+                    CheckBox("Ненулевой код возврата считается отрицательным результатом", key='1_exit_code_res'),
+                    LineEdit("Маска (Файл - строка)", key='1_mask', text='{file}:{line}:', one_line=True)],
             }, key='type', width=250)], key=f'{language}_utils')
 
     @staticmethod

@@ -612,6 +612,7 @@ class NewProjectDialog(QDialog):
             self.options_widget.set_value("Название проекта:", os.path.basename(path))
 
     def set_theme(self):
+        self.setStyleSheet(self.tm.bg_style_sheet)
         for el in [self.checkbox, self.dir_edit, self.dir_button, self.button_ok, self.button_cancel]:
             self.tm.auto_css(el)
         for el in self.labels:

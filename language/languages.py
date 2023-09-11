@@ -32,7 +32,8 @@ languages = {
         'run': language.testing.c.c_run,
         'coverage': language.testing.c.c_collect_coverage,
         'clear_coverage': language.testing.c.c_clear_coverage_files,
-        'fast_run': True
+        'fast_run': True,
+        'compiler_mask': "{file}:{line}:",
     },
     'Python': {
         'lexer': QsciLexerPython,

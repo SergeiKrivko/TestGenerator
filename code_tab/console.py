@@ -60,7 +60,7 @@ class ConsolePanel(SidePanelWidget):
             self.terminal.start_process(languages[self.sm.get('language', 'C')]['run'](
                 self.sm.lab_path(), self.sm, coverage=False))
         elif errors:
-            dialog = CompilerErrorWindow(errors, os.listdir(self.sm.lab_path()), self.tm)
+            dialog = CompilerErrorWindow(errors, self.tm, languages[self.sm.get('language', 'C')].get('compiler_mask'))
             if dialog.exec():
                 pass
                 # if dialog.goto:

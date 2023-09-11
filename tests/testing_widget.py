@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBox
     QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea, QSizePolicy
 
 from code_tab.compiler_errors_window import CompilerErrorWindow
+from language.languages import languages
 from tests.binary_decoder import decode, comparator as bytes_comparator
 from tests.commands import CommandManager
 from tests.macros_converter import MacrosConverter
@@ -323,10 +324,10 @@ class TestingWidget(QWidget):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
 
         if errors:
-            dialog = CompilerErrorWindow(errors, os.listdir(self.sm.lab_path()), self.tm)
+            dialog = CompilerErrorWindow(errors, self.tm, languages[self.sm.get('language', 'C')].get('compiler_mask'))
             if dialog.exec():
                 if dialog.goto:
-                    self.jump_to_code.emit(*dialog.goto)
+                    self.jump_to_code.emit(*dialog.goto, 0)
 
         for i in range(self.test_count['completed'], self.count()):
             self.side_list.set_status(i, Test.TERMINATED)
