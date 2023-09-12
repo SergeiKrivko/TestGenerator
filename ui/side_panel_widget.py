@@ -2,6 +2,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QPushButton
 
+from settings.settings_manager import SettingsManager
 from ui.button import Button
 
 
@@ -25,7 +26,7 @@ class SidePanelWidget(QWidget):
         'close': lambda tm: SidePanelButton(tm, 'delete', tooltip='Закрыть'),
     }
 
-    def __init__(self, sm, tm, name, buttons):
+    def __init__(self, sm: SettingsManager, tm, name, buttons):
         super().__init__()
         self.sm = sm
         self.tm = tm

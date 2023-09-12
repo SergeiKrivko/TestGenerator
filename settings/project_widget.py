@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetIt
     QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox
 import py7zr
 
+from settings.settings_manager import SettingsManager
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 from ui.side_panel_widget import SidePanelWidget
@@ -20,21 +21,11 @@ LANGUAGE_ICONS = {'C': 'c', 'Python': 'py', None: 'unknown_file'}
 class ProjectWidget(SidePanelWidget):
     jump_to_code = pyqtSignal(str)
 
-    def __init__(self, sm, tm, disable_menu_func):
+    def __init__(self, sm: SettingsManager, tm):
         super(ProjectWidget, self).__init__(sm, tm, 'Проекты', ['add', 'delete', 'rename', 'to_zip', 'from_zip'])
-        self.disable_menu_func = disable_menu_func
-
-        # self.setFixedWidth(210)
-
-        layout = QHBoxLayout()
 
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(0, 0, 0, 0)
-
-        # self.button_new_project = QPushButton("Новый проект")
-        # self.button_new_project.setFixedSize(225, 50)
-        # self.button_new_project.clicked.connect(self.new_project)
-        # left_layout.addWidget(self.button_new_project)
 
         self.list_widget = QListWidget()
         self.list_widget.currentRowChanged.connect(self.open_project)
@@ -51,7 +42,6 @@ class ProjectWidget(SidePanelWidget):
         self.opening_project = False
         self.dialog = None
 
-        self.disable_menu_func(True)
         self.update_projects()
         self.looper = None
         try:
@@ -74,7 +64,7 @@ class ProjectWidget(SidePanelWidget):
         path, _ = os.path.split(path)
         while True:
             for key, item in self.sm.projects.items():
-                if not os.path.isdir(item):
+                if not os.path.isdir(item.name()):
                     continue
                 if os.path.samefile(path, item):
                     self.select_project(key)
@@ -100,12 +90,11 @@ class ProjectWidget(SidePanelWidget):
                 self.sm.set_general('temp_projects', json.dumps(self.temp_project))
             else:
                 sys.exit()
-            self.sm.projects[name] = os.path.split(path)[0]
+            self.sm.add_project(name, os.path.split(path)[0], temp=True)
             self.sm.set('struct', 1, project=name)
             self.update_projects()
             self.select_project(name)
 
-        self.disable_menu_func(False)
         self.jump_to_code.emit(path)
 
     def update_projects(self):
@@ -121,37 +110,21 @@ class ProjectWidget(SidePanelWidget):
         self.list_widget.sortItems()
 
     def rename_project(self):
-        self.dialog = RenameProjectDialog(self.sm.data_path, self.tm)
+        self.dialog = RenameProjectDialog(self.sm.project, self.tm)
         if self.dialog.exec():
             new_name = self.dialog.line_edit.text()
             if new_name in self.sm.projects:
                 MessageBox(MessageBox.Warning, "Переименование проекта",
                            f"Проект {new_name} уже существует. Переименование невозможно", self.tm)
             else:
-                os.rename(self.sm.data_path, f"{os.path.split(self.sm.data_path)[0]}/{new_name}")
-                self.sm.projects[new_name] = self.sm.projects[self.sm.project]
-                self.sm.projects.pop(self.sm.project)
-                self.sm.project = new_name
-                self.sm.repair_settings()
+                self.sm.rename_project(new_name)
                 self.update_projects()
 
     def delete_project(self, forced=False):
-        self.dialog = DeleteProjectDialog(self.sm.path, self.tm)
+        self.dialog = DeleteProjectDialog(self.sm.project, self.tm)
         if forced or self.dialog.exec():
-            try:
-                if not forced and os.path.isdir(self.sm.path) and self.dialog.check_box.isChecked():
-                    shutil.rmtree(self.sm.path)
-            except PermissionError:
-                pass
-            try:
-                if os.path.isdir(self.sm.data_path):
-                    shutil.rmtree(self.sm.data_path)
-            except PermissionError:
-                pass
-            self.sm.projects.pop(self.sm.project)
-            self.sm.set_project(None)
+            self.sm.delete_project(main_dir=not forced and self.dialog.check_box.isChecked())
             self.update_projects()
-            self.disable_menu_func(True)
 
     def new_project(self):
         dialog = NewProjectDialog(self.sm, self.tm)
@@ -162,17 +135,15 @@ class ProjectWidget(SidePanelWidget):
                 path = os.path.join(path, project)
                 os.makedirs(path, exist_ok=True)
 
-            os.makedirs(f"{path}/.TestGenerator", exist_ok=True)
-            with open(f"{path}/.TestGenerator/.gitignore", 'w', encoding='utf-8') as f:
-                f.write('# Created by TestGenerator\n*\n')
+            self.sm.add_project(project, path)
+            self.update_projects()
+            self.select_project(project)
 
-            self.sm.projects[os.path.basename(path)] = path
             self.sm.set('language', dialog.options_widget.widgets["Язык:"].currentText(), project=project)
             self.sm.set('struct', dialog.options_widget["Структура проекта:"], project=project)
             self.sm.set('func_tests_in_project', dialog.options_widget["Сохранять тесты в папке проекта"],
                         project=project)
             self.update_projects()
-            self.disable_menu_func(False)
 
     def open_project(self, forced=False):
         if self.list_widget.currentItem() is None:
@@ -185,10 +156,8 @@ class ProjectWidget(SidePanelWidget):
             return
         self.opening_project = True
         self.sm.set_project(project)
-        self.sm.repair_settings()
 
         self.opening_project = False
-        self.disable_menu_func(False)
 
     def project_to_zip(self):
         path, _ = QFileDialog.getSaveFileName(None, "Выберите путь", self.sm.path + '.7z', '7z (*.7z)')
@@ -259,15 +228,17 @@ class ProjectWidget(SidePanelWidget):
             self.list_widget.item(i).set_icon()
 
     def remove_temp_projects(self):
-        project = self.sm.project
+        # project = self.sm.project
+        # for el in self.temp_project:
+        #     if el in self.sm.projects:
+        #         self.select_project(el)
+        #         self.delete_project(forced=True)
+        # if project is None:
+        #     self.list_widget.setCurrentRow(0)
+        # else:
+        #     self.select_project(project)
         for el in self.temp_project:
-            if el in self.sm.projects:
-                self.select_project(el)
-                self.delete_project(forced=True)
-        if project is None:
-            self.list_widget.setCurrentRow(0)
-        else:
-            self.select_project(project)
+            self.sm.delete_project(el, main_dir=False)
         self.temp_project.clear()
         self.sm.set_general('temp_projects', '[]')
 
@@ -316,15 +287,14 @@ class RenameProjectDialog(QDialog):
         self.setLayout(layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.line_edit.setStyleSheet(tm.style_sheet)
-        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
-        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
+        for el in [self.line_edit, self.button_ok, self.button_cancel]:
+            tm.auto_css(el)
 
 
 class DeleteProjectDialog(QDialog):
-    def __init__(self, path, tm):
+    def __init__(self, name, tm):
         super(DeleteProjectDialog, self).__init__()
-        self.path = path
+        self.name = name
         self.setWindowTitle("Удалить проект")
         self.setMinimumWidth(300)
 
@@ -343,7 +313,7 @@ class DeleteProjectDialog(QDialog):
         layout.addLayout(h_layout)
         layout.setSpacing(15)
         label = QLabel(f"Эта операция приведет к безвозвратному удалению всех данных проекта. "
-                       f"Удалить проект {os.path.basename(self.path)}?")
+                       f"Удалить проект {self.name}?")
         label.setWordWrap(True)
         label.setFont(tm.font_small)
         layout.addWidget(label)
@@ -379,23 +349,23 @@ class ProjectFromZipDialog(QDialog):
         self.layout = QVBoxLayout()
 
         label = QLabel("Выберите директорию:")
-        label.setFont(tm.font_small)
+        tm.auto_css(label)
         self.layout.addWidget(label)
 
         h_layout = QHBoxLayout()
         self.path_edit = QLineEdit()
         self.path_edit.setText(directory)
-        self.path_edit.setStyleSheet(tm.style_sheet)
+        tm.auto_css(self.path_edit)
         h_layout.addWidget(self.path_edit)
         self.path_button = QPushButton("Обзор")
-        self.path_button.setStyleSheet(tm.buttons_style_sheet)
+        tm.auto_css(self.path_button)
         self.path_button.setFixedSize(50, 20)
         self.path_button.clicked.connect(self.get_dir)
         h_layout.addWidget(self.path_button)
         self.layout.addLayout(h_layout)
 
         label = QLabel("Введите имя проекта:")
-        label.setFont(tm.font_small)
+        tm.auto_css(label)
         self.layout.addWidget(label)
 
         self.line_edit = QLineEdit()
@@ -421,12 +391,8 @@ class ProjectFromZipDialog(QDialog):
         self.setLayout(self.layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.button_ok.setStyleSheet(tm.buttons_style_sheet)
-        self.button_ok.setFont(tm.font_small)
-        self.button_cancel.setStyleSheet(tm.buttons_style_sheet)
-        self.button_cancel.setFont(tm.font_small)
-        self.line_edit.setStyleSheet(tm.style_sheet)
-        self.line_edit.setFont(tm.font_small)
+        for el in [self.button_ok, self.button_cancel, self.line_edit]:
+            tm.auto_css(el)
 
         self.resize(280, 50)
 
@@ -448,8 +414,7 @@ class ProgressDialog(QMessageBox):
         self.setStyleSheet(tm.bg_style_sheet)
         self.addButton(QMessageBox.Cancel)
         button = self.button(QMessageBox.Cancel)
-        button.setFont(tm.font_small)
-        button.setStyleSheet(tm.buttons_style_sheet)
+        tm.auto_css(button)
         button.setFixedSize(70, 24)
 
 

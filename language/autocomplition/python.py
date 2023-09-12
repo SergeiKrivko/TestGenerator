@@ -419,7 +419,7 @@ class CodeAutocompletionManager(QThread):
         for el in self.builtins.get_all(-1):
             builtins[el] = self.builtins.get(el)
 
-        self.main = PythonModule('__main__', '', [self._sm.lab_path(), lib_path1, lib_path2, lib_path3, lib_path4,
+        self.main = PythonModule('__main__', '', [self.dir, lib_path1, lib_path2, lib_path3, lib_path4,
                                                   f"{self._sm.app_data_dir}/global_libs",
                                                   f"{self._sm.app_data_dir}/custom_libs"], builtins, main=True)
         self.parsed = False

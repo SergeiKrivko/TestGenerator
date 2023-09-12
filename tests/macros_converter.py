@@ -64,7 +64,6 @@ class MacrosConverter(QThread):
 
     @staticmethod
     def convert_args(text, path, test_type, index, in_files, out_files, data_path, line_sep='\n'):
-        os.makedirs(os.path.split(path)[0], exist_ok=True)
         text = text.split()
         for i in range(len(text)):
             if text[i] == '#fin':
@@ -79,6 +78,7 @@ class MacrosConverter(QThread):
                 else:
                     text[i] = f"{data_path}/temp_{int(n)}".replace('\\', '/')
         if path:
+            os.makedirs(os.path.split(path)[0], exist_ok=True)
             with open(path, 'w', encoding='utf-8', newline=line_sep) as f:
                 f.write(' '.join(text))
         else:

@@ -35,7 +35,7 @@ class SidePanel(QWidget):
         strange_widget.setLayout(layout)
 
         self.tabs = {
-            'projects': ProjectWidget(self.sm, self.tm, lambda *args: None),
+            'projects': ProjectWidget(self.sm, self.tm),
             'files': FilesWidget(self.sm, self.cm, self.tm),
             'tests': TestingPanel(self.sm, self.tm),
             'todo': TODOPanel(self.sm, self.cm, self.tm),

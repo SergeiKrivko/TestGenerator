@@ -736,19 +736,23 @@ class TestingLooper(QThread):
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':
             iterator = enumerate(test.get('in_files', []))
+            key = 'text'
         elif in_out == 'out':
             iterator = enumerate(test.get('out_files', []))
+            key = 'text'
         elif in_out == 'check':
-            iterator = test.get('check_files', []).items()
+            iterator = enumerate(test.get('in_files', []))
+            key = 'check'
         else:
             raise ValueError(f'Unknown files type: "{in_out}". Can be only "in", "out" and "check" files')
 
         for j, file in iterator:
-            if file.get('type', 'txt') == 'txt':
-                MacrosConverter.convert_txt(file['text'], self.sm.test_in_file_path(pos, i, j, False),
-                                            self.sm.line_sep)
-            else:
-                MacrosConverter.convert_bin(file['text'], self.sm.test_in_file_path(pos, i, j, True))
+            if key in file:
+                if file.get('type', 'txt') == 'txt':
+                    MacrosConverter.convert_txt(file[key], self.sm.test_in_file_path(pos, i, j, False),
+                                                self.sm.line_sep)
+                else:
+                    MacrosConverter.convert_bin(file[key], self.sm.test_in_file_path(pos, i, j, True))
 
     def terminate(self) -> None:
         sleep(0.1)
