@@ -541,6 +541,7 @@ class Test(QListWidgetItem):
             os.rename(self.path, new_name)
             other_test.rename_file(old_name)
         else:
+            os.makedirs(os.path.split(new_name)[0], exist_ok=True)
             os.rename(self.path, new_name)
         self.path = new_name
         Test.files_links[new_name] = self
@@ -578,6 +579,8 @@ def random_value(data: dict):
         return random_str(data)
     if data.get('type') == 'array':
         return random_array(data)
+    if data.get('type') == 'struct':
+        return random_struct(data)
 
 
 def get_negatives(data: dict):
@@ -589,6 +592,8 @@ def get_negatives(data: dict):
         return str_negatives(data)
     if data.get('type') == 'array':
         return array_negatives(data)
+    if data.get('type') == 'struct':
+        return struct_negatives(data)
 
 
 def convert(arg):
@@ -639,6 +644,14 @@ def random_str(data: dict = None):
         if data.get('close_brace') == ')':
             maximum -= 1
     return ''.join(random.choices(st, k=random.randint(minimum, maximum)))
+
+
+def random_struct(data: dict):
+    lst = []
+    for item in data.get('items', []):
+        lst.append(random_value(item))
+    sep = ' ' if data.get('one_lie', True) else '\n'
+    return sep.join(map(str, lst))
 
 
 def random_array(data: dict, lst=False, not_empty=False):
@@ -717,6 +730,20 @@ def array_negatives(data: dict):
         lst = random_array(data, lst=True, not_empty=True)
         lst[random.randint(0, len(lst) - 1)] = el
         yield desc, array_to_str(lst, data)
+
+
+def struct_negatives(data: dict):
+    sep = ' ' if data.get('one_lie', True) else '\n'
+    for item in data.get('items', []):
+        for desc, el in get_negatives(item):
+            lst = []
+            for elem in data.get('items', []):
+                if elem == item:
+                    lst.append(el)
+                else:
+                    lst.append(random_value(elem))
+            yield f"{data.get('name', '')}.{desc}", sep.join(map(str, lst))
+
 
 def read_file(path, default=None):
     if default is not None:

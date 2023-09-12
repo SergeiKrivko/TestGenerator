@@ -287,6 +287,8 @@ class Project:
             self._dict = dict()
 
     def store(self):
+        print(f'store {self.name()}')
+        self.store_task()
         if self._dict is None:
             return
         try:
@@ -329,10 +331,9 @@ class Project:
             self.store()
 
     def load_task(self):
-        if self._task_settings is not None:
-            self.store_task()
+        self.store_task()
         try:
-            with open(os.path.join(self.lab_path(), Project.TASK_SETTINGS_FILE), encoding='utf-8') as f:
+            with open(os.path.join(self.data_lab_path(), Project.TASK_SETTINGS_FILE), encoding='utf-8') as f:
                 self._task_settings = loads(f.read())
             if not isinstance(self._dict, dict):
                 self._task_settings = dict()
@@ -345,13 +346,12 @@ class Project:
         if self._task_settings is None:
             return
         if len(self._task_settings) <= 3:
-            if self.get_task('in_data') in ['', '-'] and self.get_task('out_data') in ['', '-']:
-                return
-            if not self.get_task('in_data_list'):
+            if self.get_task('in_data') in ['', '-'] and self.get_task('out_data') in ['', '-'] and \
+                    not self.get_task('in_data_list'):
                 return
         try:
-            os.makedirs(path := self.lab_path(), exist_ok=True)
-            with open(os.path.join(path, Project.SETTINGS_FILE), 'w', encoding='utf-8') as f:
+            os.makedirs(path := self.data_lab_path(), exist_ok=True)
+            with open(os.path.join(path, Project.TASK_SETTINGS_FILE), 'w', encoding='utf-8') as f:
                 f.write(dumps(self._task_settings))
             self._task_settings = None
         except Exception as ex:

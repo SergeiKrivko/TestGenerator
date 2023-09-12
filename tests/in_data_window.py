@@ -43,7 +43,7 @@ class InDataWindow(QDialog):
         self._widgets = []
 
     def add_elem(self, data=None):
-        widget = _DataEdit(self._tm, top_level=True)
+        widget = _DataEdit(self._tm, show_name=True)
         widget.set_theme()
         widget.closeRequested.connect(self.delete_elem)
         if isinstance(data, dict):
@@ -308,21 +308,83 @@ class _ArrayEdit(QWidget):
             el.set_theme()
 
 
+class _StructEdit(QWidget):
+    def __init__(self, tm):
+        super().__init__()
+        self._tm = tm
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(20, 0, 0, 0)
+        self.setLayout(layout)
+
+        top_layout = QHBoxLayout()
+        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(top_layout)
+
+        self._checkbox = QCheckBox()
+        top_layout.addWidget(self._checkbox)
+
+        self._label = QLabel("Ввод в строку")
+        top_layout.addWidget(self._label)
+
+        self._button = Button(self._tm, 'plus')
+        self._button.setFixedSize(BUTTON_WIDTH, HEIGHT)
+        self._button.clicked.connect(self._add_item)
+        top_layout.addWidget(self._button)
+
+        self._items_layout = QVBoxLayout()
+        layout.addLayout(self._items_layout)
+        self._items = []
+
+    def _add_item(self, data: dict = None):
+        item = _DataEdit(self._tm, show_name=True)
+        item.closeRequested.connect(self._delete_item)
+        item.set_theme()
+
+        if isinstance(data, dict):
+            item.load(data)
+
+        self._items.append(item)
+        self._items_layout.addWidget(item)
+
+    def _delete_item(self, item):
+        self._items.remove(item)
+        item.setParent(None)
+
+    def save(self):
+        return {'items': [item.save() for item in self._items], 'one_line': self._checkbox.isChecked()}
+
+    def load(self, data: dict):
+        self._checkbox.setChecked(bool(data.get('one_line', False)))
+        self._items.clear()
+        for i in range(self._items_layout.count()):
+            self._items_layout.itemAt(0).widget().setParent(None)
+        for el in data.get('items', []):
+            self._add_item(el)
+
+    def set_theme(self):
+        for el in [self._label, self._checkbox, self._button]:
+            self._tm.auto_css(el)
+        for el in self._items:
+            el.set_theme()
+
+
 class _DataEdit(QWidget):
     _TYPE_WIDGETS = {'int': lambda tm: _RangeEdit(tm, "Диапазон:"),
                      'float': lambda tm: _RangeEdit(tm, "Диапазон:"),
                      'str': _StrEdit,
-                     'struct': _RangeEdit,
+                     'struct': _StructEdit,
                      'array': _ArrayEdit, }
     closeRequested = pyqtSignal(object)
 
-    def __init__(self, tm, top_level=False):
+    def __init__(self, tm, show_name=False):
         super().__init__()
         self._tm = tm
-        self._top_level = top_level
+        self._show_name = show_name
 
         self._layout = QVBoxLayout()
-        if not top_level:
+        if not show_name:
             self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
@@ -341,7 +403,7 @@ class _DataEdit(QWidget):
         self._button = Button(self._tm, "delete")
         self._button.setFixedSize(BUTTON_WIDTH, HEIGHT)
         self._button.clicked.connect(lambda: self.closeRequested.emit(self))
-        if self._top_level:
+        if self._show_name:
             self._top_layout.addWidget(self._button)
 
         self._type_edit = QWidget()
@@ -351,7 +413,7 @@ class _DataEdit(QWidget):
         self._type_edit.setParent(None)
         value_type = self._combo_box.currentText()
         self._type_edit = _DataEdit._TYPE_WIDGETS[value_type](self._tm)
-        if value_type == 'struct' or self._top_level:
+        if value_type == 'struct' or self._show_name:
             self._line_edit.show()
             self._layout.addWidget(self._type_edit)
         else:
