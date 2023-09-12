@@ -6,8 +6,8 @@ def python_compile(path, sm, cm, coverage):
 
 
 def python_run(path, sm, args='', coverage=False):
-    command = f"\"{sm.get_smart('python_coverage', 'coverage')}\" run" \
-        if coverage else f"\"{sm.get_smart('python', 'python')}\""
+    command = f"{sm.get_smart('python_coverage', 'coverage')} run" \
+        if coverage else f"{sm.get_smart('python', 'python')}"
     if not os.path.isfile(path):
         path = f"{path}/main.py"
     return f"{command}{' -a' if coverage and os.path.isfile('.coverage') else ''} {path} {args}"
