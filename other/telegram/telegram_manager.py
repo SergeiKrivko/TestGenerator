@@ -132,6 +132,26 @@ class TelegramManager(QThread):
                 self._tg.authorized = True
                 self._tg.logger.info("User authorized")
 
+    def execute(self):
+        # start the client by sending request to it
+        self._tg.get_authorization_state()
+
+        # main events cycle
+        while True:
+            event = self._tg.tdjson.receive()
+            if event:
+                # if not self._tg.authorized:
+                #     self.authenticate_user(event)
+
+                if hasattr(self._tg, "update_handler"):
+                    self._tg.update_handler(event)
+
+                if event["@type"] == "error":
+                    self._tg.error_handler(event)
+
+            if hasattr(self._tg, "routine_handler"):
+                self._tg.routine_handler()
+
     def _update_handler(self, event):
         if event.get('@type') == "updateOption":
             if event['value']['@type'] == 'optionValueInteger':
@@ -173,7 +193,11 @@ class TelegramManager(QThread):
              "input_message_content": {'@type': 'inputMessageText', 'text': {'@type': 'formattedText', 'text': text}}})
 
     def run(self):
-        self._tg.start()
+        try:
+            self.execute()
+        except KeyboardInterrupt:
+            self._tg.tdjson.stop()
+            self._tg.logger.info("Execution stopped by the user")
 
 
 class TelegramUser(TelegramObject):
