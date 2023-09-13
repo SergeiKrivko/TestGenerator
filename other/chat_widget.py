@@ -1,6 +1,7 @@
 from random import randint
 from time import sleep
 
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFontMetrics, QKeyEvent
 from PyQt5.QtWidgets import QLabel, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QSizePolicy
@@ -12,6 +13,24 @@ from ui.side_panel_widget import SidePanelWidget
 class ChatPanel(SidePanelWidget):
     def __init__(self, sm, tm):
         super().__init__(sm, tm, "Чат", [])
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+
+        self._chat_widget = ChatWidget(self.sm, self.tm)
+        layout.addWidget(self._chat_widget)
+
+    def set_theme(self):
+        super().set_theme()
+        self._chat_widget.set_theme()
+
+
+class ChatWidget(QWidget):
+    def __init__(self, sm, tm):
+        super().__init__()
+        self._sm = sm
+        self._tm = tm
 
         self._bubbles = []
 
@@ -37,7 +56,7 @@ class ChatPanel(SidePanelWidget):
         self._text_edit.returnPressed.connect(self.send_message)
         bottom_layout.addWidget(self._text_edit, 1)
 
-        self._button = Button(self.tm, "button_send")
+        self._button = Button(self._tm, "button_send")
         self._button.setFixedSize(30, 30)
         self._button.clicked.connect(self.send_message)
         bottom_layout.addWidget(self._button)
@@ -56,15 +75,22 @@ class ChatPanel(SidePanelWidget):
         self.looper.start()
 
     def add_bubble(self, text, side):
-        bubble = ChatBubble(self.tm, text, side)
+        bubble = ChatBubble(self._tm, text, side)
+        self._add_buble(bubble)
+
+    def _add_buble(self, bubble):
         self._scroll_layout.addWidget(bubble)
         self._bubbles.append(bubble)
         bubble.set_theme()
-        
+
+    def _insert_bubble(self, bubble):
+        self._scroll_layout.insertWidget(0, bubble)
+        self._bubbles.insert(0, bubble)
+        bubble.set_theme()
+
     def set_theme(self):
-        super().set_theme()
         for el in [self._scroll_area, self._text_edit, self._button]:
-            self.tm.auto_css(el)
+            self._tm.auto_css(el)
         for el in self._bubbles:
             el.set_theme()
 
@@ -143,4 +169,3 @@ class ChatInputArea(QTextEdit):
             self.returnPressed.emit()
         else:
             super().keyPressEvent(e)
-

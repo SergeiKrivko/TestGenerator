@@ -80,6 +80,9 @@ class SidePanelWidget(QWidget):
     def get_button(self, key):
         return self.buttons.get(key)
 
+    def finish_work(self):
+        pass
+
 
 class SidePanelButton(Button):
     def __init__(self, tm, image, tooltip=''):

@@ -1,14 +1,17 @@
 import sys
 
 from PyQt5.QtWidgets import QApplication
+
+import config
 from ui.main_window import MainWindow
 
 
 def main():
     app = QApplication(sys.argv)
-    app.setOrganizationName("SergeiKrivko")
-    app.setOrganizationDomain("https://github.com/SergeiKrivko/TestGenerator")
-    app.setApplicationName("TestGenerator")
+    app.setOrganizationName(config.ORGANISATION_NAME)
+    app.setOrganizationDomain(config.ORGANISATION_URL)
+    app.setApplicationName(config.APP_NAME)
+    app.setApplicationVersion(config.APP_VERSION)
     window = MainWindow()
     window.show()
     window.set_theme()
