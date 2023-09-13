@@ -187,9 +187,9 @@ class CodeWidget(QWidget):
         path = os.path.abspath(path)
         if pos is None:
             pos = 0
-        if line is not None and path in self.code_widgets or path in self.preview_widgets:
+        if path in self.code_widgets or path in self.preview_widgets:
             self.top_panel.select_tab(path)
-            if self.current_file in self.code_widgets:
+            if line is not None and self.current_file in self.code_widgets:
                 self.code_widgets[self.current_file].setCursorPosition(line - 1, pos - 1)
             return
         if not os.path.isfile(path):
