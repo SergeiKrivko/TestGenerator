@@ -129,7 +129,7 @@ class TestTableWidget(QWidget):
         self.neg_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_copy)
 
-        self.neg_button_generate = Button(self.tm, 'button_generator', css='Bg')
+        self.neg_button_generate = Button(self.tm, 'generate', css='Bg')
         self.neg_button_generate.setFixedHeight(22)
         self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_generate)

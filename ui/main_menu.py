@@ -85,6 +85,7 @@ class MainMenu(QWidget):
                            f"border-bottom: 1px solid {self.tm['BorderColor']};")
         self._widget.setStyleSheet("border: none;")
         for el in [self.button_code, self.button_tests, self.button_testing]:
-            self.tm.auto_css(el, palette='Menu', border=False)
+            el.setStyleSheet(self.tm.button_css(palette='Menu', border=False, padding=True))
+            el.setFont(self.tm.font_small)
         self.lab_widget.set_theme()
         self.button_settings.set_theme(self.tm)

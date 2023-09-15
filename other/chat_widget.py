@@ -52,6 +52,14 @@ class ChatWidget(QWidget):
         bottom_layout = QHBoxLayout()
         layout.addLayout(bottom_layout)
 
+        self._button_document = Button(self._tm, "telegram_document")
+        self._button_document.setFixedSize(30, 30)
+        bottom_layout.addWidget(self._button_document)
+
+        self._button_tg_project = Button(self._tm, "button_to_zip")
+        self._button_tg_project.setFixedSize(30, 30)
+        bottom_layout.addWidget(self._button_tg_project)
+
         self._text_edit = ChatInputArea()
         self._text_edit.returnPressed.connect(self.send_message)
         bottom_layout.addWidget(self._text_edit, 1)
@@ -89,7 +97,7 @@ class ChatWidget(QWidget):
         bubble.set_theme()
 
     def set_theme(self):
-        for el in [self._scroll_area, self._text_edit, self._button]:
+        for el in [self._scroll_area, self._text_edit, self._button, self._button_document, self._button_tg_project]:
             self._tm.auto_css(el)
         for el in self._bubbles:
             el.set_theme()
@@ -151,6 +159,7 @@ class ChatBubble(QWidget):
 
 class ChatInputArea(QTextEdit):
     returnPressed = pyqtSignal()
+    resize = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()

@@ -1082,14 +1082,14 @@ QSpinBox::disabled {{
     def double_spinbox_css(self, palette='Bg'):
         return self.spinbox_css(palette=palette).replace('QSpinBox', 'QDoubleSpinBox')
 
-    def button_css(self, palette='Bg', border=True, border_radius=True):
+    def button_css(self, palette='Bg', border=True, border_radius=True, padding=False):
         return f"""
 QPushButton {{
     color: {self['TextColor']};
     background-color: {self[f'{palette}Color']};
     border: {'1' if border else '0'}px solid {self['BorderColor']};
     border-radius: {'5' if border_radius else '0'}px;
-    padding: 3px 8px 3px 8px;
+    {'padding: 3px 8px 3px 8px;' if padding else 'padding: 0px;'}
 }}
 QPushButton::hover {{
     background-color: {self[f'{palette}HoverColor']};
