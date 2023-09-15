@@ -26,7 +26,7 @@ class TestsWidget(QWidget):
         self.sm.startChangeTask.connect(self.save_tests)
         self.sm.finishChangeTask.connect(self.open_tests)
 
-        self.test_list_widget = TestTableWidget(self.tm, self.sm)
+        self.test_list_widget = TestTableWidget(self.tm, self.sm, self.cm)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
         self.test_list_widget.pos_delete_button.clicked.connect(self.delete_pos_test)
         self.test_list_widget.neg_add_button.clicked.connect(self.add_neg_test)
@@ -527,6 +527,9 @@ class Test(QListWidgetItem):
         os.makedirs(os.path.split(self.path)[0], exist_ok=True)
         with open(self.path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._dict))
+        self._dict = None
+
+    def unload(self):
         self._dict = None
 
     def get(self, key, default=None):

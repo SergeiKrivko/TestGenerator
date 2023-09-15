@@ -482,6 +482,9 @@ class Test:
     def type(self):
         return self._test_type
 
+    def is_loaded(self):
+        return self._data is not None
+
     def load(self):
         try:
             with open(self._path, encoding='utf-8') as f:
