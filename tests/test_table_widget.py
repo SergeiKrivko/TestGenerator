@@ -282,6 +282,7 @@ class ExportDialog(QDialog):
         lst = list(self._prepare_data())
 
         table = document.add_table(rows=len(lst), cols=len(lst[0]))
+        table.style = 'Table Grid'
         for i in range(len(lst)):
             for j in range(len(lst[i])):
                 table.cell(i, j).text = str(lst[i][j])

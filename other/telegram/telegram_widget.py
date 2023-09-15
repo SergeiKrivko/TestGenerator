@@ -17,13 +17,15 @@ class TelegramWidget(SidePanelWidget):
     def __init__(self, sm, tm):
         super().__init__(sm, tm, "Telegram", [])
 
-        if config.secret_data:
-            self._manager = TelegramManager(self.sm)
-            self._manager.newChat.connect(self.add_chat)
-            self._manager.addMessage.connect(self.add_message)
-            self._manager.insertMessage.connect(self.insert_message)
-            self._manager.loadingFinished.connect(self.loading_finished)
-            self._manager.authorization.connect(self.get_authentication_data)
+        if not config.secret_data:
+            return
+
+        self._manager = TelegramManager(self.sm)
+        self._manager.newChat.connect(self.add_chat)
+        self._manager.addMessage.connect(self.add_message)
+        self._manager.insertMessage.connect(self.insert_message)
+        self._manager.loadingFinished.connect(self.loading_finished)
+        self._manager.authorization.connect(self.get_authentication_data)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -50,7 +52,7 @@ class TelegramWidget(SidePanelWidget):
         # self._manager.start()
 
     def show(self):
-        if not self._manager_started and config.secret_data:
+        if config.secret_data and not self._manager_started:
             self._manager.start()
             self._manager_started = True
         super().show()
@@ -104,6 +106,8 @@ class TelegramWidget(SidePanelWidget):
 
     def set_theme(self):
         super().set_theme()
+        if not config.secret_data:
+            return
         self._top_panel.set_theme()
         self._list_widget.set_theme()
         for el in self._chat_widgets.values():
