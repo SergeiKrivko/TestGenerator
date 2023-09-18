@@ -44,7 +44,7 @@ class TestTableWidget(QWidget):
         self.in_data_button.clicked.connect(self.in_data_window.exec)
         in_data_layout.addWidget(self.in_data_button)
 
-        self.report_button = Button(self.tm, 'plus', css='Bg')
+        self.report_button = Button(self.tm, 'button_document', css='Bg')
         self.report_button.setFixedHeight(22)
         self.report_button.clicked.connect(self.open_report)
         in_data_layout.addWidget(self.report_button)
@@ -109,7 +109,7 @@ class TestTableWidget(QWidget):
 
         self._export_dialog = ExportDialog(self.sm, self.cm, self.tm)
 
-        self.export_button = Button(self.tm, 'plus', css='Bg')
+        self.export_button = Button(self.tm, 'button_export', css='Bg')
         self.export_button.setFixedHeight(22)
         self.export_button.clicked.connect(self.run_export)
         out_data_layout.addWidget(self.export_button)
@@ -255,6 +255,7 @@ class ExportDialog(QDialog):
 
         self._tm.css_to_options_widget(self._options_widget)
         self._tm.auto_css(self._button_export)
+        self.setStyleSheet(self._tm.bg_style_sheet)
 
     def _execute(self, skip_looper=False):
         if not skip_looper and self._options_widget["Запустить тестирование"]:
