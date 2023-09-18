@@ -1,6 +1,3 @@
-import threading
-import signal
-
 from pywtdlib.client import Client
 from typing import Any, Callable, Dict, Optional, List
 

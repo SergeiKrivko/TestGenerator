@@ -285,14 +285,7 @@ class TestingWidget(QWidget):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(self.count())
         self.progress_bar.setValue(0)
-
-        command = self.sm.get_task('preprocessor', '')
-        if command:
-            self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(self.start_testing)
-            self.looper.start()
-        else:
-            self.start_testing()
+        self.start_testing()
 
     def start_testing(self):
         self.testing_looper = TestingLooper(self.sm, self.cm, self.tests)
@@ -310,14 +303,6 @@ class TestingWidget(QWidget):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
         else:
             self.coverage_bar.setText("")
-
-        command = self.sm.get_task('postprocessor', '')
-        if command:
-            self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(lambda: self.test_mode(False))
-            self.looper.start()
-        else:
-            self.test_mode(False)
 
     def util_failed(self, name, errors, mask):
         dialog = CompilerErrorWindow(errors, self.tm, mask, name)
@@ -344,21 +329,6 @@ class TestingWidget(QWidget):
             self.side_list.set_status(i, Test.TERMINATED)
 
         self.cm.clear_coverage_files()
-
-        try:
-            with open(f"{self.sm.data_lab_path()}/settings.json") as f:
-                settings = json.loads(f.read())
-                command = settings.get('postprocessor')
-        except FileNotFoundError:
-            command = ''
-        except json.JSONDecodeError:
-            command = ''
-        if command:
-            self.looper = self.cm.cmd_command_looper(command, shell=True)
-            self.looper.finished.connect(lambda: self.test_mode(False))
-            self.looper.start()
-        else:
-            self.test_mode(False)
 
 
 def comparator1(str1, str2, eps=0):
@@ -731,6 +701,9 @@ class TestingLooper(QThread):
         self.clear_after_run(test, index)
 
     def run(self):
+        command = self.sm.get_task('preprocessor', '')
+        if command:
+            self.cm.cmd_command(command, shell=True)
         code, errors = self.cm.compile(coverage=self._coverage)
         if not code:
             self.compileFailed.emit(errors)
@@ -761,6 +734,9 @@ class TestingLooper(QThread):
 
         for util in self.utils:
             self.run_postproc_util(util)
+        command = self.sm.get_task('postprocessor', '')
+        if command:
+            self.cm.cmd_command(command, shell=True)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':
