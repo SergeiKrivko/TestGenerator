@@ -194,7 +194,7 @@ class SettingsWindow(QDialog):
     def utils_settings(language='C'):
         return ListWidget("Сторонние утилиты:", children=lambda: [
             LineEdit("Строка запуска: ", key='program', width=400),
-            ComboBox("Тип:", ["Для теста", "Перед тестированием"], children={
+            ComboBox("Тип:", ["Для теста", "Перед тестированием", "После тестирования"], children={
                 0: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='output_format'),
                     CheckBox("Наличие вывода считается отрицательным результатом", key='output_res'),
                     CheckBox("Ненулевой код возврата считается отрицательным результатом", key='exit_code_res')],
@@ -203,6 +203,10 @@ class SettingsWindow(QDialog):
                     CheckBox("Ненулевой код возврата считается отрицательным результатом", key='1_exit_code_res'),
                     LineEdit("Маска (Файл - строка)", key='1_mask', text='{file}:{line}:', one_line=True),
                     # CheckBox("Продолжить тестирование", key='1_continue_testing'), TODO: починить это опцию
+                    ],
+                2: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='2_output_format'),
+                    CheckBox("Наличие вывода считается отрицательным результатом", key='2_output_res'),
+                    CheckBox("Ненулевой код возврата считается отрицательным результатом", key='2_exit_code_res'),
                     ],
             }, key='type', width=250)], key=f'{language}_utils')
 

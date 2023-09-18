@@ -669,6 +669,29 @@ class TestingLooper(QThread):
             # if not data.get('1_continue_testing', True):
             #     self.terminate()
 
+    def run_postproc_util(self, data: dict):
+        if data.get('type', 0) != 2:
+            return
+        name = self.parse_util_name(data)
+        temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
+        res = self.cm.cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
+                                                                 files=' '.join(self.cm.get_files_list())),
+                                  shell=True)
+        if data.get('2_output_format', 0) == 0:
+            output = res.stdout
+        elif data.get('2_output_format', 0) == 1:
+            output = res.stderr
+        else:
+            output = read_file(temp_path, default='')
+        result = True
+        if data.get('2_output_res', False):
+            result = result and not bool(output)
+        if data.get('2_exit_code_res', False):
+            result = result and res.returncode == 0
+        for el in self._tests:
+            el.utils_output[name] = output
+            el.results[name] = result
+
     def run_test_util(self, test: Test, index: int, util_data: dict):
         if util_data.get('type', 0) != 0:
             return
@@ -735,6 +758,9 @@ class TestingLooper(QThread):
             self.testStatusChanged.emit(i, test.status())
             sleep(0.01)
             i += 1
+
+        for util in self.utils:
+            self.run_postproc_util(util)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':
