@@ -1481,3 +1481,30 @@ class TgChatActionUploadingDocument:
         self.progress = data.get('progress')
 
 
+class TgMessagePoll:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.poll = None if 'poll' not in data else TgPoll(data.get('poll'), client)
+
+
+class TgPoll:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.id = data.get('id')
+        self.question = data.get('question')
+        self.options = data.get('options')
+        self.total_voter_count = data.get('total_voter_count')
+        self.recent_voter_user_ids = data.get('recent_voter_user_ids')
+        self.is_anonymous = data.get('is_anonymous')
+        self.type = None if 'type' not in data else TgPollTypeRegular(data.get('type'), client)
+        self.open_period = data.get('open_period')
+        self.close_date = data.get('close_date')
+        self.is_closed = data.get('is_closed')
+
+
+class TgPollTypeRegular:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.allow_multiple_answers = data.get('allow_multiple_answers')
+
+
