@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QPoint
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton
 
@@ -11,6 +11,11 @@ class MainMenu(QWidget):
     TAB_TESTS = 1
     TAB_TESTING = 2
     tab_changed = pyqtSignal(int)
+    closeButtonClicked = pyqtSignal()
+    moveWindow = pyqtSignal(QPoint)
+    maximize = pyqtSignal()
+    minimize = pyqtSignal()
+    hideWindow = pyqtSignal()
 
     def __init__(self, sm, tm):
         super().__init__()
@@ -59,11 +64,66 @@ class MainMenu(QWidget):
         self._widget = QWidget()
         layout.addWidget(self._widget, 1000)
 
+        right_layout = QHBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(5)
+        layout.addLayout(right_layout)
+
         self.button_settings = Button(self.tm, 'generate', css='Menu', color='TextColor')
         self.button_settings.setFixedSize(30, 30)
-        layout.addWidget(self.button_settings)
+        right_layout.addWidget(self.button_settings)
+
+        self.button_hide = Button(self.tm, 'button_hide_window', css='Menu', color='TextColor')
+        self.button_hide.clicked.connect(self.hideWindow.emit)
+        self.button_hide.setFixedSize(30, 30)
+        right_layout.addWidget(self.button_hide)
+
+        self.button_minimize = Button(self.tm, 'button_minimize_window', css='Menu', color='TextColor')
+        self.button_minimize.hide()
+        self.button_minimize.clicked.connect(self._on_minimize_clicked)
+        self.button_minimize.setFixedSize(30, 30)
+        right_layout.addWidget(self.button_minimize)
+
+        self.button_maximize = Button(self.tm, 'button_maximize_window', css='Menu', color='TextColor')
+        self.button_maximize.setFixedSize(30, 30)
+        self.button_maximize.clicked.connect(self._on_maximize_clicked)
+        right_layout.addWidget(self.button_maximize)
+
+        self.button_close = Button(self.tm, 'button_close', css='Menu', color='TextColor')
+        self.button_close.setFixedSize(30, 30)
+        self.button_close.clicked.connect(self.closeButtonClicked.emit)
+        right_layout.addWidget(self.button_close)
 
         self.current_tab = self.TAB_CODE
+        self.last_pos = None
+        self.moving = False
+        self.maximized = False
+
+    def _on_minimize_clicked(self):
+        self.maximized = False
+        self.button_minimize.hide()
+        self.button_maximize.show()
+        self.minimize.emit()
+
+    def _on_maximize_clicked(self):
+        self.maximized = True
+        self.button_maximize.hide()
+        self.button_minimize.show()
+        self.maximize.emit()
+
+    def mousePressEvent(self, a0) -> None:
+        if a0.button() == Qt.LeftButton and not self.maximized:
+            self.moving = True
+            self.last_pos = a0.pos()
+
+    def mouseReleaseEvent(self, a0) -> None:
+        if a0.button() == Qt.LeftButton:
+            self.moving = False
+            self.last_pos = None
+
+    def mouseMoveEvent(self, a0) -> None:
+        if self.moving:
+            self.moveWindow.emit(a0.pos() - self.last_pos)
 
     def select_tab(self, index, flag):
         if index != self.TAB_CODE:
@@ -88,4 +148,6 @@ class MainMenu(QWidget):
             el.setStyleSheet(self.tm.button_css(palette='Menu', border=False, padding=True))
             el.setFont(self.tm.font_small)
         self.lab_widget.set_theme()
-        self.button_settings.set_theme(self.tm)
+        for el in [self.button_minimize, self.button_maximize, self.button_settings, self.button_close,
+                   self.button_hide]:
+            el.set_theme()

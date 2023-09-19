@@ -1,5 +1,6 @@
 from sys import argv
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
 from tests.macros_converter import background_process_manager
@@ -13,10 +14,6 @@ from tests.tests_widget import TestsWidget
 from tests.commands import CommandManager
 from settings.settings_manager import SettingsManager
 import os
-import math
-
-line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
-line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 
 
 class MainWindow(QMainWindow):
@@ -24,6 +21,8 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)
+
+        self.setWindowFlags(Qt.CustomizeWindowHint | Qt.BypassWindowManagerHint | Qt.WindowSystemMenuHint)
 
         self.sm = SettingsManager()
 
@@ -39,6 +38,11 @@ class MainWindow(QMainWindow):
 
         self.menu_bar = MainMenu(self.sm, self.tm)
         self.menu_bar.tab_changed.connect(self.show_tab)
+        self.menu_bar.closeButtonClicked.connect(self.close)
+        self.menu_bar.moveWindow.connect(lambda point: self.move(self.pos() + point))
+        self.menu_bar.minimize.connect(lambda: self.setWindowState(Qt.WindowState.WindowNoState))
+        self.menu_bar.maximize.connect(lambda: self.setWindowState(Qt.WindowState.WindowMaximized))
+        self.menu_bar.hideWindow.connect(lambda: self.setWindowState(Qt.WindowState.WindowMinimized))
         main_layout.addWidget(self.menu_bar)
 
         layout = QHBoxLayout()
