@@ -510,7 +510,7 @@ class ThemeManager:
             'dark':
                 Theme({
                     'Identifier': QColor('#DFDFDF'),
-                    'Preprocessor': QColor('#BBB529'),
+                    'Preprocessor': QColor('#56A8F5'),
                     'Comment': QColor('#74797B'),
                     'Keyword': QColor('#CC7832'),
                     'Number': QColor('#5191A6'),
@@ -603,6 +603,42 @@ class ThemeManager:
                     'MenuSelectedColor': '#2971C7',
                     'BorderColor': '#3E5875',
                     'TextColor': '#191C42',
+                    'ImageColor': (25, 28, 66),
+
+                    'TestPassed': QColor('#38802E'),
+                    'TestFailed': QColor('#F82525'),
+                    'TestInProgress': QColor('#A0A0A0'),
+                    'TestCrashed': QColor('#A01010'),
+                    'MainC': QColor('#A01010'),
+                    'CFile': QColor('#F82525'),
+                    'HFile': QColor('#99922C'),
+                    'TxtFile': QColor('#2065D4'),
+                    'Directory': QColor('#1BBDD4')
+                }),
+            'light':
+                Theme({
+                    'Identifier': QColor('#101010'),
+                    'Preprocessor': QColor('#D1A00C'),
+                    'Comment': QColor('#B0B0B0'),
+                    'Keyword': QColor('#0057D5'),
+                    'Number': QColor('#0057D5'),
+                    'String': QColor('#18822C'),
+
+                    'Paper': QColor('#FFFFFF'),
+                    'CaretLineBackgroundColor': QColor('#FFFFFF'),
+                    'BraceColor': QColor('#0057D5'),
+
+                    'MainColor': '#FFFFFF',
+                    'MainHoverColor': '#DFE1E5',
+                    'MainSelectedColor': '#CFDEFC',
+                    'BgColor': '#DFE1E3',
+                    'BgHoverColor': '#CBCDCF',
+                    'BgSelectedColor': '#5283C9',
+                    'MenuColor': '#F7F8FA',
+                    'MenuHoverColor': '#DFE1E5',
+                    'MenuSelectedColor': '#3573F0',
+                    'BorderColor': '#BFC0C2',
+                    'TextColor': '#222222',
                     'ImageColor': (25, 28, 66),
 
                     'TestPassed': QColor('#38802E'),

@@ -99,6 +99,13 @@ class MainMenu(QWidget):
         self.moving = False
         self.maximized = False
 
+    def mouseDoubleClickEvent(self, a0) -> None:
+        if a0.button() == Qt.LeftButton:
+            if self.maximized:
+                self._on_minimize_clicked()
+            else:
+                self._on_maximize_clicked()
+
     def _on_minimize_clicked(self):
         self.maximized = False
         self.button_minimize.hide()
