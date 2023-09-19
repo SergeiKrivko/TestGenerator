@@ -303,6 +303,7 @@ class TestingWidget(QWidget):
             self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
         else:
             self.coverage_bar.setText("")
+        self.test_mode(False)
 
     def util_failed(self, name, errors, mask):
         dialog = CompilerErrorWindow(errors, self.tm, mask, name)
