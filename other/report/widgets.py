@@ -261,6 +261,7 @@ class ReportListWidget(ReportWidget):
     def load(self, data: dict):
         for el in data.get('children', []):
             widget = get_widget(el)(self.tm)
+            self._combo_box.setCurrentIndex(data.get('type', 0))
             widget.load(el)
             self.add_child(widget)
 

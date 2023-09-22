@@ -15,6 +15,8 @@ from tests.commands import CommandManager
 from settings.settings_manager import SettingsManager
 import os
 
+from unit_testing.unit_testing_widget import UnitTestingWidget
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -22,7 +24,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)
 
-        self.setWindowFlags(Qt.CustomizeWindowHint | Qt.BypassWindowManagerHint | Qt.WindowSystemMenuHint)
+        self.setWindowFlags(Qt.CustomizeWindowHint)
 
         self.sm = SettingsManager()
 
@@ -76,6 +78,9 @@ class MainWindow(QMainWindow):
         self.code_widget.testing_signal.connect(self.testing_widget.testing)
         self.code_widget.hide()
 
+        self.unit_testing_widget = UnitTestingWidget(self.sm, self.cm, self.tm)
+        layout.addWidget(self.unit_testing_widget)
+
         self.settings_widget = SettingsWindow(self.sm, self.tm)
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide()
@@ -83,7 +88,7 @@ class MainWindow(QMainWindow):
 
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
 
-        self.resize(1000, 600)
+        self.resize(1100, 700)
 
         # if not os.path.isdir(self.sm.project) or not self.side_panel.tabs['projects'].list_widget.count():
         #     self.show_tab('project_widget')
@@ -110,6 +115,7 @@ class MainWindow(QMainWindow):
         self.menu_bar.set_theme()
         self.side_bar.set_theme()
         self.side_panel.set_theme()
+        self.unit_testing_widget.set_theme()
 
     def jump_to_code(self, path, line=None, pos=None):
         path = os.path.abspath(path)
@@ -135,6 +141,7 @@ class MainWindow(QMainWindow):
         self.code_widget.hide()
         self.tests_widget.hide()
         self.testing_widget.hide()
+        self.unit_testing_widget.hide()
         if index == MainMenu.TAB_CODE:
             self.code_widget.show()
             self.menu_bar.button_code.setChecked(True)
@@ -150,6 +157,11 @@ class MainWindow(QMainWindow):
             self.menu_bar.button_testing.setChecked(True)
         else:
             self.menu_bar.button_testing.setChecked(False)
+        if index == MainMenu.TAB_UNIT_TESTING:
+            self.unit_testing_widget.show()
+            self.menu_bar.button_unit_testing.setChecked(True)
+        else:
+            self.menu_bar.button_unit_testing.setChecked(False)
 
     def open_test_from_code(self):
         index = 0
@@ -189,7 +201,7 @@ class ExitDialog(QDialog):
         label = QLabel("В данный момент идет сохранение одного или нескольких наборов тестов."
                        "Если вы выйдите из программы, данные будут записаны в рабочую директорию не полностью.")
         label.setWordWrap(True)
-        label.setFont(self.tm.font_small)
+        label.setFont(self.tm.font_medium)
 
         QBtn = QDialogButtonBox.Close | QDialogButtonBox.Cancel
 

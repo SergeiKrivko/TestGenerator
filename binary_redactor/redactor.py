@@ -233,6 +233,6 @@ QTabBar::close-button:hover {{
     image: url({self.tm.get_image('button_close_tab_hover')});
 }}
 """
-        self._tab_bar.setFont(self.tm.font_small)
+        self._tab_bar.setFont(self.tm.font_medium)
         self._tab_bar.setStyleSheet(css)
         self._empty_widget.setStyleSheet(self.tm.text_edit_css('Main'))

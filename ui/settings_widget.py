@@ -156,7 +156,7 @@ class LineEdit(_Widget):
 
     def set_tm(self, tm):
         super().set_tm(tm)
-        self._label.setMaximumWidth(QFontMetrics(tm.font_small).size(0, self._label.text()).width())
+        self._label.setMaximumWidth(QFontMetrics(tm.font_medium).size(0, self._label.text()).width())
 
     def set_value(self, text):
         self._last_value = str(text)

@@ -8,7 +8,7 @@ class MessageBox(QMessageBox):
         self.setIcon(message_type)
         self.setText(message)
         self.setWindowTitle(title)
-        self.setFont(tm.font_small)
+        self.setFont(tm.font_medium)
 
         self.setStyleSheet(tm.bg_style_sheet)
         self.addButton(QMessageBox.Ok)

@@ -685,13 +685,13 @@ class ThemeManager:
             if hasattr(item, 'set_theme'):
                 item.set_theme()
             else:
-                item.setFont(font if font else self.font_small)
+                item.setFont(font if font else self.font_medium)
 
     def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True):
         if code_font:
             widget.setFont(self.code_font)
         else:
-            widget.setFont(self.font_small)
+            widget.setFont(self.font_medium)
 
         if isinstance(widget, QMainWindow):
             widget.setStyleSheet(self.bg_style_sheet)
@@ -723,7 +723,7 @@ class ThemeManager:
             widget.setStyleSheet(self.checkbox_css(palette))
 
     def css_to_options_widget(self, widget):
-        widget.setFont(self.font_small)
+        widget.setFont(self.font_medium)
         for el in widget.widgets.values():
             if isinstance(el, ProgramComboBox):
                 el.set_theme(self)
@@ -740,9 +740,9 @@ class ThemeManager:
         if theme_name not in self.themes:
             self.theme_name = ThemeManager.BASIC_THEME
         self.theme = self.themes.get(theme_name, self.themes[ThemeManager.BASIC_THEME])
-        self.font_small = QFont(self.get('FontFamily'), 11)
-        self.font_medium = QFont(self.get('FontFamily'), 14)
-        self.font_big = QFont(self.get('FontFamily'), 18)
+        self.font_small = QFont(self.get('FontFamily'), 10)
+        self.font_medium = QFont(self.get('FontFamily'), 11)
+        self.font_big = QFont(self.get('FontFamily'), 14)
         self.code_font_std = QFont(self.get('CodeFontFamily'), 10)
         self.code_font = QFont(self.get('CodeFontFamily'), 11)
         self.bg_style_sheet = f"color: {self['TextColor']};\n" \

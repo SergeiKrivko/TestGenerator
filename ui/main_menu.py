@@ -10,6 +10,7 @@ class MainMenu(QWidget):
     TAB_CODE = 0
     TAB_TESTS = 1
     TAB_TESTING = 2
+    TAB_UNIT_TESTING = 3
     tab_changed = pyqtSignal(int)
     closeButtonClicked = pyqtSignal()
     moveWindow = pyqtSignal(QPoint)
@@ -57,6 +58,12 @@ class MainMenu(QWidget):
         self.button_testing.setCheckable(True)
         self.button_testing.clicked.connect(lambda flag: self.select_tab(self.TAB_TESTING, flag))
         buttons_layout.addWidget(self.button_testing, 1, Qt.AlignLeft)
+
+        self.button_unit_testing = QPushButton("Модульное тестирование")
+        # self.button_testing.setFixedSize(115, 24)
+        self.button_unit_testing.setCheckable(True)
+        self.button_unit_testing.clicked.connect(lambda flag: self.select_tab(self.TAB_UNIT_TESTING, flag))
+        buttons_layout.addWidget(self.button_unit_testing, 1, Qt.AlignLeft)
 
         self.lab_widget = LabWidget(self.tm, self.sm)
         layout.addWidget(self.lab_widget)
@@ -145,15 +152,19 @@ class MainMenu(QWidget):
             self.button_testing.setChecked(False)
         elif not flag:
             self.button_testing.setChecked(True)
+        if index != self.TAB_UNIT_TESTING:
+            self.button_unit_testing.setChecked(False)
+        elif not flag:
+            self.button_unit_testing.setChecked(True)
         self.tab_changed.emit(index)
 
     def set_theme(self):
         self.setStyleSheet(f"background-color: {self.tm['MenuColor']}; "
                            f"border-bottom: 1px solid {self.tm['BorderColor']};")
         self._widget.setStyleSheet("border: none;")
-        for el in [self.button_code, self.button_tests, self.button_testing]:
+        for el in [self.button_code, self.button_tests, self.button_testing, self.button_unit_testing]:
             el.setStyleSheet(self.tm.button_css(palette='Menu', border=False, padding=True))
-            el.setFont(self.tm.font_small)
+            el.setFont(self.tm.font_medium)
         self.lab_widget.set_theme()
         for el in [self.button_minimize, self.button_maximize, self.button_settings, self.button_close,
                    self.button_hide]:

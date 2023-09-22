@@ -430,3 +430,11 @@ class TgUpdateMessageContent(TgEvent):
         self.new_content = None if 'new_content' not in data else _types.TgMessageDocument(data.get('new_content'), client)
 
 
+class TgUpdateChatOnlineMemberCount(TgEvent):
+    def __init__(self, data: dict, client):
+        if data['@type'] .lower() != self.__class__.__name__[2:].lower():
+            raise TypeError('TgType error')
+        self.chat_id = data.get('chat_id')
+        self.online_member_count = data.get('online_member_count')
+
+

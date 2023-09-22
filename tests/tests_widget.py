@@ -504,7 +504,7 @@ class Test(QListWidgetItem):
         self.update_name()
         self._dict = None
 
-        self.setFont(tm.font_small)
+        self.setFont(tm.font_medium)
 
     def is_loaded(self):
         return self._dict is not None
@@ -903,7 +903,7 @@ class TestCopyWindow(QDialog):
             layout.addWidget(check_box)
             self.tm.auto_css(check_box)
             layout.addWidget(label := QLabel(el))
-            label.setFont(self.tm.font_small)
+            label.setFont(self.tm.font_medium)
             widget.setLayout(layout)
             self.scroll_layout.addWidget(widget)
 

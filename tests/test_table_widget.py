@@ -215,7 +215,7 @@ class TestTableWidget(QWidget):
                    self.neg_button_generate, self.export_button, self.report_button]:
             self.tm.auto_css(el)
         for label in self.labels:
-            label.setFont(self.tm.font_small)
+            label.setFont(self.tm.font_medium)
         for el in self._windows:
             if hasattr(el, 'set_theme'):
                 el.set_theme()

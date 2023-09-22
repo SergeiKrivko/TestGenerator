@@ -133,7 +133,7 @@ class ChatBubble(QWidget):
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        font_metrics = QFontMetrics(self._tm.font_small)
+        font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._label = QLabel(self._text)
         self._label.setWordWrap(True)
@@ -154,7 +154,7 @@ class ChatBubble(QWidget):
             border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;
             padding: 4px;"""
         self._label.setStyleSheet(css)
-        self._label.setFont(self._tm.font_small)
+        self._label.setFont(self._tm.font_medium)
 
 
 class ChatInputArea(QTextEdit):

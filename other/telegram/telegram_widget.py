@@ -1,12 +1,14 @@
+import datetime
+import os
+
 from PyQt5 import QtGui
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QScrollArea, QDialog, QLineEdit, QPushButton, \
-    QFileDialog
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QLineEdit, QPushButton, QFileDialog
 
 import config
-from other.chat_widget import ChatWidget, ChatBubble, ChatInputArea
+from other.chat_widget import ChatWidget, ChatInputArea
 from other.telegram.chat_bubble import TelegramChatBubble
+from other.telegram.chat_list_widget import TelegramListWidget
 from other.telegram.telegram_api import types
 from other.telegram.telegram_manager import TelegramManager
 from ui.button import Button
@@ -17,7 +19,7 @@ class TelegramWidget(SidePanelWidget):
     def __init__(self, sm, tm):
         super().__init__(sm, tm, "Telegram", [])
 
-        if not config.secret_data:
+        if not config.secret_data or os.name == 'posix':
             return
 
         self._manager = TelegramManager(self.sm)
@@ -40,7 +42,7 @@ class TelegramWidget(SidePanelWidget):
         self._chats_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self._chats_layout)
 
-        self._top_panel = TelegramTopWidget(self.tm)
+        self._top_panel = TelegramTopWidget(self.tm, self._manager)
         self._top_panel.hide()
         self._top_panel.buttonBackPressed.connect(lambda: self.show_chat(None))
         self._chats_layout.addWidget(self._top_panel)
@@ -83,9 +85,10 @@ class TelegramWidget(SidePanelWidget):
                 self._chat_widgets[self._current_chat].hide()
             self._list_widget.hide()
             self._top_panel.show()
-            self._top_panel.set_chat_name(self._manager.get_chat(chat_id).title)
+            self._top_panel.set_chat(self._manager.get_chat(chat_id))
             self._chat_widgets[chat_id].show()
             self._current_chat = chat_id
+            self._manager.open_chat(chat_id)
             # self._manager.get_messages(chat_id)
         else:
             if self._current_chat in self._chat_widgets:
@@ -106,7 +109,7 @@ class TelegramWidget(SidePanelWidget):
 
     def set_theme(self):
         super().set_theme()
-        if not config.secret_data:
+        if not config.secret_data or os.name == 'posix':
             return
         self._top_panel.set_theme()
         self._list_widget.set_theme()
@@ -124,6 +127,7 @@ class TelegramChatWidget(ChatWidget):
         self._manager = manager
 
         self._scroll_bar = self._scroll_area.verticalScrollBar()
+        self._scroll_bar.valueChanged.connect(self._on_scroll_bar_value_changed)
 
         self._messages_to_load = 50
 
@@ -152,7 +156,9 @@ class TelegramChatWidget(ChatWidget):
             self._manager.load_messages(self._chat)
 
     def _on_scroll_bar_value_changed(self):
-        self.check_if_need_to_load()
+        for el in self._bubbles:
+            if 0 < el.y() - self._scroll_bar.value() + el.height() < self.height():
+                el.set_read()
 
     def add_messages_to_load(self):
         self._messages_to_load = self._chat.message_count() + 50
@@ -166,17 +172,21 @@ class TelegramChatWidget(ChatWidget):
     def insert_bubble(self, message: types.TgMessage):
         bubble = TelegramChatBubble(self._tm, message, self._manager)
         bubble.set_max_width(int(self.width() * 0.8))
+        if isinstance(self._chat.type, types.TgChatTypePrivate):
+            bubble.hide_sender()
         self._insert_bubble(bubble)
 
     def add_bubble(self, message: types.TgMessage, *args):
         bubble = TelegramChatBubble(self._tm, message, self._manager)
         bubble.set_max_width(int(self.width() * 0.8))
+        if isinstance(self._chat.type, types.TgChatTypePrivate):
+            bubble.hide_sender()
         self._add_buble(bubble)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
         super().resizeEvent(a0)
         for el in self._bubbles:
-            el.set_max_width(min(300, int(self.width() * 0.7)))
+            el.set_max_width(min(500, int(self.width() * 0.7)))
 
     def send_message(self):
         if not (text := self._text_edit.toPlainText()):
@@ -186,180 +196,14 @@ class TelegramChatWidget(ChatWidget):
         self._text_edit.setText("")
 
 
-class TelegramListWidget(QScrollArea):
-    currentItemChanged = pyqtSignal(str)
+class TelegramTopWidget(QWidget):
+    buttonBackPressed = pyqtSignal()
 
     def __init__(self, tm, manager: TelegramManager):
         super().__init__()
         self._tm = tm
         self._manager = manager
-
-        scroll_widget = QWidget()
-        self.setWidget(scroll_widget)
-        self.setWidgetResizable(True)
-
-        self._layout = QVBoxLayout()
-        self._layout.setSpacing(0)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        scroll_widget.setLayout(self._layout)
-
-        self._items = dict()
-
-    def _on_item_hover(self, chat_id):
-        if isinstance(chat_id, str):
-            chat_id = int(chat_id)
-        for key, item in self._items.items():
-            if key != chat_id:
-                item.set_hover(False)
-
-    def _on_item_selected(self, chat_id):
-        if isinstance(chat_id, str):
-            chat_id = int(chat_id)
-        for key, item in self._items.items():
-            if key != chat_id:
-                item.set_selected(False)
-        self.currentItemChanged.emit(str(chat_id))
-
-    def set_current_id(self, chat_id):
-        for key, item in self._items.items():
-            if key != chat_id:
-                item.set_selected(False)
-        if chat_id in self._items:
-            self._items[chat_id].set_selected(True)
-
-    def add_item(self, chat: types.TgChat):
-        item = TelegramListWidgetItem(self._tm, chat, self._manager)
-        item.selected.connect(self._on_item_selected)
-        item.hover.connect(self._on_item_hover)
-        chat_id = chat.id
-        item.set_theme()
-        self._items[chat_id] = item
-        self._layout.addWidget(item)
-
-    def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
-        super().resizeEvent(a0)
-        self._set_items_width()
-
-    def _set_items_width(self):
-        width = self.width() - 15
-        for el in self._items.values():
-            el.setFixedWidth(width)
-
-    def set_theme(self):
-        self._tm.auto_css(self)
-        for item in self._items.values():
-            item.set_theme()
-
-
-class Label(QLabel):
-    mouseMoving = pyqtSignal()
-
-    def __init__(self, text=''):
-        super().__init__(text)
-        self.setMouseTracking(True)
-
-    def mouseMoveEvent(self, ev: QtGui.QMouseEvent) -> None:
-        self.mouseMoving.emit()
-        super().mouseMoveEvent(ev)
-
-
-class TelegramListWidgetItem(QWidget):
-    PALETTE = 'Main'
-    selected = pyqtSignal(str)
-    hover = pyqtSignal(str)
-
-    def __init__(self, tm, chat: types.TgChat, manager: TelegramManager):
-        super().__init__()
-        self._tm = tm
-        self._chat = chat
-        self._chat_id = chat.id
-        self._selected = False
-        self._hover = False
-
-        self.setFixedHeight(50)
-
-        strange_layout = QVBoxLayout()
-        strange_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(strange_layout)
-        strange_widget = QWidget()
-        strange_layout.addWidget(strange_widget)
-
-        main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(3, 3, 3, 3)
-        strange_widget.setLayout(main_layout)
-
-        self._icon_label = Label()
-        self._icon_label.mouseMoving.connect(lambda: self.set_hover(True))
-        self._icon_label.setFixedWidth(50)
-        self._photo = None
-        if chat.photo is not None:
-            self._photo = chat.photo.small
-            if self._photo.local.can_be_downloaded:
-                self._photo.download()
-            manager.updateFile.connect(self.update_icon)
-            if self._photo.local.is_downloading_completed:
-                self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
-        main_layout.addWidget(self._icon_label)
-
-        layout = QVBoxLayout()
-        main_layout.addLayout(layout)
-
-        self._name_label = Label(self._chat.title)
-        self._name_label.mouseMoving.connect(lambda: self.set_hover(True))
-        layout.addWidget(self._name_label)
-
-    def update_icon(self, image: types.TgFile):
-        if isinstance(self._photo, types.TgFile) and image.id == self._photo.id and \
-                self._photo.local.is_downloading_completed:
-            self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
-
-    def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if a0.button() == Qt.LeftButton:
-            self.set_selected(True)
-
-    def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if 0 < a0.x() < self.width() and 0 < a0.y() < self.height():
-            self.set_hover(True)
-        else:
-            self.set_hover(False)
-
-    def set_selected(self, status):
-        if self._selected == bool(status):
-            return
-        self._selected = bool(status)
-        self.set_theme()
-        if status:
-            self.selected.emit(str(self._chat_id))
-
-    def set_hover(self, hover):
-        hover = bool(hover)
-        if self._hover == hover:
-            return
-        self._hover = hover
-        self.set_theme()
-        if hover:
-            self.hover.emit(str(self._chat_id))
-
-    def set_theme(self):
-        if self._selected:
-            suffix = "Selected"
-        elif self._hover:
-            suffix = "Hover"
-        else:
-            suffix = ""
-        self.setStyleSheet(f"""background-color: {self._tm[f'{TelegramListWidgetItem.PALETTE}{suffix}Color']};
-                               border: 0px solid {self._tm[f'{TelegramListWidgetItem.PALETTE}BorderColor']};
-                               color: {self._tm['TextColor']};""")
-        self._name_label.setStyleSheet("border: none;")
-        self._name_label.setFont(self._tm.font_small)
-
-
-class TelegramTopWidget(QWidget):
-    buttonBackPressed = pyqtSignal()
-
-    def __init__(self, tm):
-        super().__init__()
-        self._tm = tm
+        self._chat = None
 
         layout = QHBoxLayout()
         layout.setAlignment(Qt.AlignLeft)
@@ -377,8 +221,37 @@ class TelegramTopWidget(QWidget):
         self._name_label = QLabel()
         labels_layout.addWidget(self._name_label)
 
-    def set_chat_name(self, name):
-        self._name_label.setText(name)
+        self._status_label = QLabel()
+        labels_layout.addWidget(self._status_label)
+
+        self._manager.updateUserStatus.connect(self._on_user_status_updated)
+
+    def set_chat(self, chat: types.TgChat):
+        self._chat = chat
+        self._name_label.setText(chat.title)
+        if isinstance(chat.type, types.TgChatTypePrivate):
+            self._status_label.show()
+            user = self._manager.get_user(chat.type.user_id)
+            if isinstance(user.status, types.TgUserStatusOnline):
+                self._status_label.setText("В сети")
+            else:
+                self._status_label.setText(f"Был(а) в {self.get_time(user.status.was_online)}")
+        else:
+            self._status_label.hide()
+
+    @staticmethod
+    def get_time(t: int):
+        return datetime.datetime.fromtimestamp(t).strftime("%H:%M")
+
+    def _on_user_status_updated(self, user_id: str | int):
+        user_id = int(user_id)
+        if isinstance(self._chat.type, types.TgChatTypePrivate):
+            self._status_label.show()
+            user = self._manager.get_user(self._chat.type.user_id)
+            if isinstance(user.status, types.TgUserStatusOnline):
+                self._status_label.setText("В сети")
+            else:
+                self._status_label.setText(f"Был(а) в {self.get_time(user.status.was_online)}")
 
     def set_theme(self):
         for el in [self._name_label]:
@@ -487,5 +360,3 @@ class SendFileDialog(QDialog):
 
         for el in [self.file_name_line, self.text_area, self._button_send, self._button_cancel]:
             self._tm.auto_css(el)
-
-

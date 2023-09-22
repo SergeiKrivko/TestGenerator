@@ -149,7 +149,7 @@ class TestingWidget(QWidget):
         for el in [self.prog_out, self.in_data, self.out_data]:
             self.tm.auto_css(el, code_font=True)
         for label in self.labels:
-            label.setFont(self.tm.font_small)
+            label.setFont(self.tm.font_medium)
         self.info_widget.set_theme()
         self.pos_result_bar.set_theme()
         self.neg_result_bar.set_theme()
@@ -837,7 +837,7 @@ class _ListFieldItem(QListWidgetItem):
         self.setText(name)
 
     def set_theme(self):
-        self.setFont(self._tm.font_small)
+        self.setFont(self._tm.font_medium)
         if self._status:
             self.setIcon(QIcon(self._tm.get_image('passed', color=self._tm['TestPassed'])))
             self.setForeground(self._tm['TestPassed'])
@@ -958,5 +958,5 @@ class TestCountIndicator(QLabel):
         return self._tm['TestFailed'].name()
 
     def set_theme(self):
-        self.setFont(self._tm.font_small)
+        self.setFont(self._tm.font_medium)
         self.setStyleSheet(f"color: {self._get_color()};")

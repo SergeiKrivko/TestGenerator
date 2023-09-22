@@ -142,7 +142,7 @@ languages = {
             QsciLexerHTML.UnknownTag: 'Keyword',
             QsciLexerHTML.UnknownAttribute: 'Preprocessor',
         }},
-    'json': {'lexer': QsciLexerJSON, 'files': ['.json'], 'autocompletion': AcMAbstract, 'colors': {
+    'json': {'lexer': QsciLexerJSON, 'files': ['.json', '.dg'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerJSON.Default: 'Identifier',
         QsciLexerJSON.Number: 'Number',
         QsciLexerJSON.Keyword: 'Keyword',

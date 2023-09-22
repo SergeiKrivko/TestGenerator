@@ -1,5 +1,7 @@
 import os
 
+from language.utils import get_files
+
 
 def c_compile(path, cm, sm, coverage=False):
     old_dir = os.getcwd()
@@ -12,12 +14,12 @@ def c_compile(path, cm, sm, coverage=False):
         env = {'PATH': f"{os.path.split(compiler)[0]};{os.getenv('PATH')}"}
     compiler_keys = sm.get_smart('c_compiler_keys', '')
     command = f"{compiler} {compiler_keys} -c {'--coverage' if coverage else ''} " \
-              f"{' '.join(filter(lambda path: path.endswith('.c'), os.listdir(path)))} " \
+              f"{' '.join(get_files(path, '.c'))} " \
               f"-g {'-lm' if sm.get_smart('-lm', False) else ''}"
     compile_res = cm.cmd_command(command, shell=True, env=env)
     if not compile_res.returncode:
         command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o app.exe " \
-                  f"{' '.join(map(lambda p: p[:-2] + '.o', filter(lambda p: p.endswith('.c'), os.listdir(path))))} " \
+                  f"{' '.join(get_files(path, '.o'))} " \
                   f"{'-lm' if sm.get_smart('-lm', False) else ''}"
         compile_res = cm.cmd_command(command, shell=True, env=env)
 

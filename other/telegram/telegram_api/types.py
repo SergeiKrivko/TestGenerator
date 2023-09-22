@@ -3,8 +3,9 @@ import os
 
 
 def check_type(name: str, obj: object):
-    if name.lower() != obj.__class__.__name__[2:].lower():
-        raise TypeError(f"TgType error: get type {name}")
+    pass
+    # if name.lower() != obj.__class__.__name__[2:].lower():
+    #     raise TypeError(f"TgType error: get type {name}")
 
 
 def update_object(obj1: object, obj2: object):
@@ -19,7 +20,7 @@ def get_tg_option(data: dict, client):
         return TgOptionValueInteger(data, client)
     if data['@type'] == 'optionValueBoolean':
         return TgOptionValueBoolean(data, client)
-    raise TypeError(f"Unknown option type {data['@type']}")
+    # raise TypeError(f"Unknown option type {data['@type']}")
 
 
 def get_authorization_state(data: dict, client):
@@ -39,7 +40,7 @@ def get_authorization_state(data: dict, client):
         return TgAuthorizationStateWaitPassword(data, client)
     if data['@type'] == 'authorizationStateWaitCode':
         return TgAuthorizationStateWaitCode(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_connection_state(data: dict, client):
@@ -49,7 +50,7 @@ def get_connection_state(data: dict, client):
         return TgConnectionStateReady(data, client)
     if data['@type'] == "connectionStateConnecting":
         return TgConnectionStateConnecting(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_user_status(data: dict, client):
@@ -63,7 +64,7 @@ def get_user_status(data: dict, client):
         return TgUserStatusOnline(data, client)
     if data['@type'] == "userStatusLastMonth":
         return TgUserStatusLastMonth(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_user_type(data: dict, client):
@@ -71,7 +72,7 @@ def get_user_type(data: dict, client):
         return TgUserTypeBot(data, client)
     if data['@type'] == "userTypeRegular":
         return TgUserTypeRegular(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_chat_member_status(data: dict, client):
@@ -81,7 +82,7 @@ def get_chat_member_status(data: dict, client):
         return TgChatMemberStatusLeft(data, client)
     if data['@type'] == "chatMemberStatusBanned":
         return TgChatMemberStatusBanned(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_message_sender(data: dict, client):
@@ -89,7 +90,7 @@ def get_message_sender(data: dict, client):
         return TgMessageSenderUser(data, client)
     if data['@type'] == "messageSenderChat":
         return TgMessageSenderChat(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_chat_type(data: dict, client):
@@ -99,7 +100,7 @@ def get_chat_type(data: dict, client):
         return TgChatTypePrivate(data, client)
     if data['@type'] == "chatTypeBasicGroup":
         return TgChatTypeBasicGroup(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_message_content(data: dict, client):
@@ -131,7 +132,11 @@ def get_message_content(data: dict, client):
         return TgMessageChatJoinByLink(data, client)
     if data['@type'] == "messageChatAddMembers":
         return TgMessageChatAddMembers(data, client)
-    raise TypeError(f"Unknown message content {data['@type']}")
+    if data['@type'] == "messagePoll":
+        return TgMessagePoll(data, client)
+    if data['@type'] == "messagePinMessage":
+        return TgMessagePinMessage(data, client)
+    # raise TypeError(f"Unknown message content {data['@type']}")
 
 
 def get_chat_available_reactions(data: dict, client):
@@ -139,7 +144,7 @@ def get_chat_available_reactions(data: dict, client):
         return TgChatAvailableReactionsSome(data, client)
     if data['@type'] == "chatAvailableReactionsAll":
         return TgChatAvailableReactionsAll(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_chat_list(data: dict, client):
@@ -149,7 +154,7 @@ def get_chat_list(data: dict, client):
         return TgChatListMain(data, client)
     if data['@type'] == "chatListFilter":
         return TgChatListFilter(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_sticker_format(data: dict, client):
@@ -159,7 +164,7 @@ def get_sticker_format(data: dict, client):
         return TgStickerFormatWebp(data, client)
     if data['@type'] == "stickerFormatWebm":
         return TgStickerFormatWebm(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_thumbnail_format(data: dict, client):
@@ -169,7 +174,7 @@ def get_thumbnail_format(data: dict, client):
         return TgThumbnailFormatPng(data, client)
     if data['@type'] == "thumbnailFormatWebp":
         return TgThumbnailFormatWebp(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 def get_chat_action(data: dict, client):
@@ -179,62 +184,62 @@ def get_chat_action(data: dict, client):
         return TgChatActionCancel(data, client)
     if data['@type'] == "chatActionUploadingDocument":
         return TgChatActionUploadingDocument(data, client)
-    raise TypeError(f"Unknown authorization state {data['@type']}")
+    # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
 class TgOptionValueString:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.value = data.get('value')
 
 
 class TgAuthorizationStateWaitTdlibParameters:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgOptionValueInteger:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.value = int(data.get('value'))
 
 
 class TgReactionTypeEmoji:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.emoji = data.get('emoji')
 
 
 class TgOptionValueBoolean:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.value = data.get('value')
 
 
 class TgAuthorizationStateReady:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgNotificationSettingsScopeChannelChats:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgScopeNotificationSettings:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.mute_for = data.get('mute_for')
         self.sound_id = data.get('sound_id')
         self.show_preview = data.get('show_preview')
@@ -244,36 +249,36 @@ class TgScopeNotificationSettings:
 
 class TgChatListMain:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgChatListFilter:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.chat_filter_id = data.get('chat_filter_id')
 
 
 class TgChatListArchive:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgConnectionStateConnecting:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgUser:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.first_name = data.get('first_name')
         self.last_name = data.get('last_name')
@@ -299,22 +304,22 @@ class TgUser:
 
 class TgUserStatusEmpty:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgUserTypeRegular:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgProfilePhoto:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.small = TgFile(data.get('small'), client)
         self.big = TgFile(data.get('big'), client)
@@ -324,8 +329,8 @@ class TgProfilePhoto:
 
 class TgFile:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.size = data.get('size')
         self.expected_size = data.get('expected_size')
@@ -341,8 +346,8 @@ class TgFile:
 
 class TgLocalFile:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.path = data.get('path')
         self.can_be_downloaded = data.get('can_be_downloaded')
         self.can_be_deleted = data.get('can_be_deleted')
@@ -355,8 +360,8 @@ class TgLocalFile:
 
 class TgRemoteFile:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.unique_id = data.get('unique_id')
         self.is_uploading_active = data.get('is_uploading_active')
@@ -366,8 +371,8 @@ class TgRemoteFile:
 
 class TgMinithumbnail:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.width = data.get('width')
         self.height = data.get('height')
         self.data = data.get('data')
@@ -384,8 +389,8 @@ class TgMinithumbnail:
 
 class TgSupergroup:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         # self.usernames = TgUsernames(data.get('usernames'), client)
         self.date = data.get('date')
@@ -408,8 +413,8 @@ class TgSupergroup:
 
 class TgUsernames:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.active_usernames = data.get('active_usernames')
         self.disabled_usernames = data.get('disabled_usernames')
         self.editable_username = data.get('editable_username')
@@ -417,15 +422,14 @@ class TgUsernames:
 
 class TgChatMemberStatusMember:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgChat:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.id = data.get('id')
         self.type = get_chat_type(data.get('type'), client)
         self.title = data.get('title')
@@ -480,16 +484,14 @@ class TgChat:
 
 class TgChatTypeSupergroup:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.supergroup_id = data.get('supergroup_id')
         self.is_channel = data.get('is_channel')
 
 
 class TgChatPhotoInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.small = TgFile(data.get('small'), client)
         self.big = TgFile(data.get('big'), client)
         self.minithumbnail = TgMinithumbnail(data.get('minithumbnail'), client)
@@ -498,8 +500,7 @@ class TgChatPhotoInfo:
 
 class TgChatPermissions:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.can_send_messages = data.get('can_send_messages')
         self.can_send_media_messages = data.get('can_send_media_messages')
         self.can_send_polls = data.get('can_send_polls')
@@ -513,8 +514,7 @@ class TgChatPermissions:
 
 class TgChatNotificationSettings:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.use_default_mute_for = data.get('use_default_mute_for')
         self.mute_for = data.get('mute_for')
         self.use_default_sound = data.get('use_default_sound')
@@ -530,44 +530,38 @@ class TgChatNotificationSettings:
 
 class TgChatAvailableReactionsSome:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.reactions = data.get('reactions')
 
 
 class TgVideoChat:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.group_call_id = data.get('group_call_id')
         self.has_participants = data.get('has_participants')
 
 
 class TgChatMemberStatusLeft:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         pass
 
 
 class TgUserStatusOffline:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.was_online = data.get('was_online')
 
 
 class TgChatAvailableReactionsAll:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         pass
 
 
 class TgMessage:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.id = data.get('id')
         self.sender_id = get_message_sender(data.get('sender_id'), client)
         self.chat_id = data.get('chat_id')
@@ -605,30 +599,26 @@ class TgMessage:
 
 class TgMessageSenderUser:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.user_id = data.get('user_id')
 
 
 class TgMessageText:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.text = TgFormattedText(data.get('text'), client)
 
 
 class TgFormattedText:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.text = data.get('text')
         self.entities = data.get('entities')
 
 
 class TgSupergroupFullInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.photo = None if 'photo' not in data else TgChatPhoto(data.get('photo'), client)
         self.description = data.get('description')
         self.member_count = data.get('member_count')
@@ -653,8 +643,7 @@ class TgSupergroupFullInfo:
 
 class TgChatPhoto:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.id = data.get('id')
         self.added_date = data.get('added_date')
         self.minithumbnail = None if 'minithumbnail' not in data else TgMinithumbnail(data.get('minithumbnail'), client)
@@ -663,15 +652,13 @@ class TgChatPhoto:
 
 class TgMessageSenderChat:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.chat_id = data.get('chat_id')
 
 
 class TgMessageInteractionInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.view_count = data.get('view_count')
         self.forward_count = data.get('forward_count')
         self.reply_info = None if 'replay_info' not in data else TgMessageReplyInfo(data.get('reply_info'), client)
@@ -680,8 +667,7 @@ class TgMessageInteractionInfo:
 
 class TgMessageReplyInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.reply_count = data.get('reply_count')
         self.recent_replier_ids = data.get('recent_replier_ids')
         self.last_read_inbox_message_id = data.get('last_read_inbox_message_id')
@@ -691,8 +677,7 @@ class TgMessageReplyInfo:
 
 class TgMessagePhoto:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.photo = TgPhoto(data.get('photo'), client)
         self.caption = TgFormattedText(data.get('caption'), client)
         self.is_secret = data.get('is_secret')
@@ -700,8 +685,7 @@ class TgMessagePhoto:
 
 class TgPhoto:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.has_stickers = data.get('has_stickers')
         self.minithumbnail = None if 'minithumbnail' not in data else TgMinithumbnail(data.get('minithumbnail'), client)
         self.sizes = list(map(lambda size: TgPhotoSize(size, client), data.get('sizes', [])))
@@ -709,15 +693,13 @@ class TgPhoto:
 
 class TgUserStatusRecently:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         pass
 
 
 class TgDraftMessage:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.reply_to_message_id = data.get('reply_to_message_id')
         self.date = data.get('date')
         self.input_message_text = TgInputMessageText(data.get('input_message_text'), client)
@@ -725,8 +707,7 @@ class TgDraftMessage:
 
 class TgInputMessageText:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
         self.text = TgFormattedText(data.get('text'), client)
         self.disable_web_page_preview = data.get('disable_web_page_preview')
         self.clear_draft = data.get('clear_draft')
@@ -734,8 +715,8 @@ class TgInputMessageText:
 
 class TgMessageForwardInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.origin = TgMessageForwardOriginChannel(data.get('origin'), client)
         self.date = data.get('date')
         self.public_service_announcement_type = data.get('public_service_announcement_type')
@@ -745,8 +726,8 @@ class TgMessageForwardInfo:
 
 class TgMessageForwardOriginChannel:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.chat_id = data.get('chat_id')
         self.message_id = data.get('message_id')
         self.author_signature = data.get('author_signature')
@@ -754,8 +735,8 @@ class TgMessageForwardOriginChannel:
 
 class TgWebPage:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.url = data.get('url')
         self.display_url = data.get('display_url')
         self.type = data.get('type')
@@ -774,8 +755,8 @@ class TgWebPage:
 
 class TgChatPosition:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.list = get_chat_list(data.get('list'), client)
         self.order = data.get('order')
         self.is_pinned = data.get('is_pinned')
@@ -783,22 +764,22 @@ class TgChatPosition:
 
 class TgChatTypePrivate:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.user_id = data.get('user_id')
 
 
 class TgUserStatusOnline:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.expires = data.get('expires')
 
 
 class TgUserTypeBot:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.can_join_groups = data.get('can_join_groups')
         self.can_read_all_group_messages = data.get('can_read_all_group_messages')
         self.is_inline = data.get('is_inline')
@@ -809,15 +790,15 @@ class TgUserTypeBot:
 
 class TgEmojiStatus:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.custom_emoji_id = data.get('custom_emoji_id')
 
 
 class TgBasicGroup:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.member_count = data.get('member_count')
         self.status = get_chat_member_status(data.get('status'), client)
@@ -827,30 +808,30 @@ class TgBasicGroup:
 
 class TgChatTypeBasicGroup:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.basic_group_id = data.get('basic_group_id')
 
 
 class TgMessageForwardOriginUser:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.sender_user_id = data.get('sender_user_id')
 
 
 class TgMessageDocument:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.document = TgDocument(data.get('document'), client)
         self.caption = TgFormattedText(data.get('caption'), client)
 
 
 class TgDocument:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.file_name = data.get('file_name')
         self.mime_type = data.get('mime_type')
         self.document = TgFile(data.get('document'), client)
@@ -858,71 +839,64 @@ class TgDocument:
 
 class TgMessageForwardOriginHiddenUser:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         self.sender_name = data.get('sender_name')
 
 
 class TgConnectionStateUpdating:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgConnectionStateReady:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError(f"TgType error: get type {data['@type']}")
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgAuthorizationStateWaitPhoneNumber:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         pass
 
 
 class TgAuthorizationStateWaitCode:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         self.code_info = TgAuthenticationCodeInfo(data.get('code_info'), client)
 
 
 class TgAuthorizationStateWaitRegistration:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         pass
 
 
 class TgAuthorizationStateWaitPassword:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         pass
 
 
 class TgAuthorizationStateWaitEmailAddress:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         pass
 
 
 class TgAuthorizationStateWaitEmailCode:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         pass
 
 
 class TgAuthenticationCodeInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         self.phone_number = data.get('phone_number')
         self.type = TgAuthenticationCodeTypeTelegramMessage(data.get('type'), client)
         self.timeout = data.get('timeout')
@@ -930,29 +904,26 @@ class TgAuthenticationCodeInfo:
 
 class TgAuthenticationCodeTypeTelegramMessage:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         self.length = data.get('length')
 
 
 class TgChatMemberStatusBanned:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         self.banned_until_date = data.get('banned_until_date')
 
 
 class TgMessageContactRegistered:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
         pass
 
 
 class TgVideo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.duration = data.get('duration')
         self.width = data.get('width')
         self.height = data.get('height')
@@ -967,8 +938,8 @@ class TgVideo:
 
 class TgThumbnail:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.format = get_thumbnail_format(data.get('format'), client)
         self.width = data.get('width')
         self.height = data.get('height')
@@ -977,22 +948,22 @@ class TgThumbnail:
 
 class TgThumbnailFormatJpeg:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgMessageChatUpgradeTo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.supergroup_id = data.get('supergroup_id')
 
 
 class TgUserFullInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.photo = None if 'photo' not in data else TgChatPhoto(data.get('photo'), client)
         self.is_blocked = data.get('is_blocked')
         self.can_be_called = data.get('can_be_called')
@@ -1008,15 +979,15 @@ class TgUserFullInfo:
 
 class TgUserStatusLastMonth:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgBasicGroupFullInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.photo = None if 'photo' not in data else TgChatPhoto(data.get('photo'), client)
         self.description = data.get('description')
         self.creator_user_id = data.get('creator_user_id')
@@ -1026,8 +997,8 @@ class TgBasicGroupFullInfo:
 
 class TgBotInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.share_text = data.get('share_text')
         self.description = data.get('description')
         self.commands = data.get('commands')
@@ -1035,15 +1006,15 @@ class TgBotInfo:
 
 class TgChatActionTyping:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgMessageVideo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.video = TgVideo(data.get('video'), client)
         self.caption = TgFormattedText(data.get('caption'), client)
         self.is_secret = data.get('is_secret')
@@ -1051,16 +1022,16 @@ class TgMessageVideo:
 
 class TgMessageAnimatedEmoji:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.animated_emoji = TgAnimatedEmoji(data.get('animated_emoji'), client)
         self.emoji = data.get('emoji')
 
 
 class TgAnimatedEmoji:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.sticker = TgSticker(data.get('sticker'), client)
         self.sticker_width = data.get('sticker_width')
         self.sticker_height = data.get('sticker_height')
@@ -1069,8 +1040,8 @@ class TgAnimatedEmoji:
 
 class TgSticker:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.set_id = data.get('set_id')
         self.width = data.get('width')
         self.height = data.get('height')
@@ -1086,44 +1057,44 @@ class TgSticker:
 
 class TgStickerFormatTgs:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgStickerTypeRegular:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgThumbnailFormatWebp:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgMessageSticker:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.sticker = TgSticker(data.get('sticker'), client)
         self.is_premium = data.get('is_premium')
 
 
 class TgStickerFormatWebp:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgAnimatedChatPhoto:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.length = data.get('length')
         self.file = TgFile(data.get('file'), client)
         self.main_frame_timestamp = data.get('main_frame_timestamp')
@@ -1131,8 +1102,8 @@ class TgAnimatedChatPhoto:
 
 class TgChatTheme:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.name = data.get('name')
         self.light_settings = TgThemeSettings(data.get('light_settings'), client)
         self.dark_settings = TgThemeSettings(data.get('dark_settings'), client)
@@ -1140,8 +1111,8 @@ class TgChatTheme:
 
 class TgThemeSettings:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.accent_color = data.get('accent_color')
         self.background = TgBackground(data.get('background'), client)
         self.outgoing_message_fill = TgBackgroundFillGradient(data.get('outgoing_message_fill'), client)
@@ -1151,8 +1122,8 @@ class TgThemeSettings:
 
 class TgBackground:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.is_default = data.get('is_default')
         self.is_dark = data.get('is_dark')
@@ -1163,15 +1134,15 @@ class TgBackground:
 
 class TgThumbnailFormatPng:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgBackgroundTypePattern:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.fill = TgBackgroundFillFreeformGradient(data.get('fill'), client)
         self.intensity = data.get('intensity')
         self.is_inverted = data.get('is_inverted')
@@ -1180,15 +1151,15 @@ class TgBackgroundTypePattern:
 
 class TgBackgroundFillFreeformGradient:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.colors = data.get('colors')
 
 
 class TgBackgroundFillGradient:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.top_color = data.get('top_color')
         self.bottom_color = data.get('bottom_color')
         self.rotation_angle = data.get('rotation_angle')
@@ -1196,15 +1167,15 @@ class TgBackgroundFillGradient:
 
 class TgBackgroundFillSolid:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.color = data.get('color')
 
 
 class TgChatFilterInfo:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.id = data.get('id')
         self.title = data.get('title')
         self.icon_name = data.get('icon_name')
@@ -1212,8 +1183,8 @@ class TgChatFilterInfo:
 
 class TgPhotoSize:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.type = data.get('type')
         self.photo = TgFile(data.get('photo'), client)
         self.width = data.get('width')
@@ -1223,8 +1194,8 @@ class TgPhotoSize:
 
 class TgMessageReaction:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.type = TgReactionTypeEmoji(data.get('type'), client)
         self.total_count = data.get('total_count')
         self.is_chosen = data.get('is_chosen')
@@ -1233,8 +1204,8 @@ class TgMessageReaction:
 
 class TgTextEntity:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.offset = data.get('offset')
         self.length = data.get('length')
         self.type = TgTextEntityTypeTextUrl(data.get('type'), client)
@@ -1242,57 +1213,57 @@ class TgTextEntity:
 
 class TgTextEntityTypeTextUrl:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.url = data.get('url')
 
 
 class TgTextEntityTypeBold:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgTextEntityTypeUrl:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgTextEntityTypePre:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgTextEntityTypeEmailAddress:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgTextEntityTypeMention:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgTextEntityTypeCode:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgMessageAnimation:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.animation = TgAnimation(data.get('animation'), client)
         self.caption = TgFormattedText(data.get('caption'), client)
         self.is_secret = data.get('is_secret')
@@ -1300,8 +1271,8 @@ class TgMessageAnimation:
 
 class TgAnimation:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.duration = data.get('duration')
         self.width = data.get('width')
         self.height = data.get('height')
@@ -1315,15 +1286,15 @@ class TgAnimation:
 
 class TgClosedVectorPath:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.commands = data.get('commands')
 
 
 class TgVectorPathCommandCubicBezierCurve:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.start_control_point = TgPoint(data.get('start_control_point'), client)
         self.end_control_point = TgPoint(data.get('end_control_point'), client)
         self.end_point = TgPoint(data.get('end_point'), client)
@@ -1331,44 +1302,44 @@ class TgVectorPathCommandCubicBezierCurve:
 
 class TgPoint:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.x = data.get('x')
         self.y = data.get('y')
 
 
 class TgVectorPathCommandLine:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.end_point = TgPoint(data.get('end_point'), client)
 
 
 class TgTextEntityTypeItalic:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgTextEntityTypeCustomEmoji:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.custom_emoji_id = data.get('custom_emoji_id')
 
 
 class TgTextEntityTypeHashtag:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
 class TgPremiumPaymentOption:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.currency = data.get('currency')
         self.amount = data.get('amount')
         self.discount_percentage = data.get('discount_percentage')
@@ -1379,15 +1350,15 @@ class TgPremiumPaymentOption:
 
 class TgInternalLinkTypeInvoice:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.invoice_name = data.get('invoice_name')
 
 
 class TgChatMember:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.member_id = TgMessageSenderUser(data.get('member_id'), client)
         self.inviter_user_id = data.get('inviter_user_id')
         self.joined_chat_date = data.get('joined_chat_date')
@@ -1396,8 +1367,8 @@ class TgChatMember:
 
 class TgChatMemberStatusCreator:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.custom_title = data.get('custom_title')
         self.is_anonymous = data.get('is_anonymous')
         self.is_member = data.get('is_member')
@@ -1405,15 +1376,15 @@ class TgChatMemberStatusCreator:
 
 class TgReplyMarkupInlineKeyboard:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         self.rows = data.get('rows')
 
 
 class TgTextEntityTypeBotCommand:
     def __init__(self, data: dict, client):
-        if data['@type'].lower() != self.__class__.__name__[2:].lower():
-            raise TypeError('TgType error')
+        check_type(data['@type'], self)
+
         pass
 
 
@@ -1439,6 +1410,8 @@ class TgMessageChatChangeTitle:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         self.title = data.get('title')
+
+
 class TgMessageGameScore:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
@@ -1470,10 +1443,12 @@ class TgMessageChatJoinByLink:
         check_type(data['@type'], self)
         pass
 
+
 class TgStickerFormatWebm:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         pass
+
 
 class TgChatActionUploadingDocument:
     def __init__(self, data: dict, client):
@@ -1508,3 +1483,35 @@ class TgPollTypeRegular:
         self.allow_multiple_answers = data.get('allow_multiple_answers')
 
 
+class TgPollOption:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.text = data.get('text')
+        self.voter_count = data.get('voter_count')
+        self.vote_percentage = data.get('vote_percentage')
+        self.is_chosen = data.get('is_chosen')
+        self.is_being_chosen = data.get('is_being_chosen')
+
+
+class TgMessagePinMessage:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.message_id = data.get('message_id')
+
+
+class TgTextEntityTypeSpoiler:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        pass
+
+
+class TgTextEntityTypeStrikethrough:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        pass
+
+
+class TgUserStatusLastWeek:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        pass

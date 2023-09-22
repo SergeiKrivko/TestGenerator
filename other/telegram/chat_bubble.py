@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFontMetrics, QPixmap
 from PyQt5.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QPushButton, QFileDialog
 
 from other.telegram.telegram_api import types
+from other.telegram.telegram_manager import TelegramManager
 from ui.button import Button
 from ui.message_box import MessageBox
 
@@ -13,7 +14,7 @@ from ui.message_box import MessageBox
 class TelegramChatBubble(QWidget):
     _BORDER_RADIUS = 10
 
-    def __init__(self, tm, message: types.TgMessage, manager):
+    def __init__(self, tm, message: types.TgMessage, manager: TelegramManager):
         super().__init__()
         self._tm = tm
         self._message = message
@@ -37,31 +38,53 @@ class TelegramChatBubble(QWidget):
         self._main_widget = QWidget()
         main_layout.addWidget(self._main_widget)
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)
-        self._main_widget.setLayout(layout)
+        self._layout = QVBoxLayout()
+        self._layout.setSpacing(0)
+        self._layout.setContentsMargins(1, 1, 1, 1)
+        self._main_widget.setLayout(self._layout)
+
+        if isinstance(self._message.sender_id, types.TgMessageSenderUser):
+            user = self._manager.get_user(self._message.sender_id.user_id)
+            user_name = f"{user.first_name} {user.last_name}"
+        elif isinstance(self._message.sender_id, types.TgMessageSenderChat):
+            chat = self._manager.get_chat(self._message.sender_id.chat_id)
+            user_name = chat.title
+        else:
+            user_name = ""
+        self._sender_label = QLabel(user_name)
+        self._sender_label.setContentsMargins(10, 2, 10, 2)
+        self._layout.addWidget(self._sender_label)
 
         if isinstance(self._message.content, types.TgMessagePhoto):
             self._photo_label = _PhotoLabel(self._tm, self._message.content.photo.sizes[-1].photo)
             self._manager.updateFile.connect(self._photo_label.update_image)
-            layout.addWidget(self._photo_label)
+            self._layout.addWidget(self._photo_label)
 
         if isinstance(self._message.content, types.TgMessageDocument):
             self._document_widget = _DocumentWidget(self._tm, self._message.content.document, self._manager)
-            layout.addWidget(self._document_widget)
+            self._layout.addWidget(self._document_widget)
 
-        font_metrics = QFontMetrics(self._tm.font_small)
+        font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._label = QLabel(self._text)
+        self._label.setContentsMargins(7, 4, 7, 7)
         self._label.setWordWrap(True)
         self._label.setMaximumWidth(font_metrics.size(0, self._text).width() + 20)
         self._label.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
-        layout.addWidget(self._label, 10)
+        self._layout.addWidget(self._label, 10)
 
         widget = QWidget()
         main_layout.addWidget(widget, 1)
 
+    def hide_sender(self):
+        self._sender_label.hide()
+        self._layout.setContentsMargins(1, 7, 1, 1)
+
+    def set_read(self):
+        self._manager.view_messages(self._message.chat_id, [self._message.id])
+
     def set_max_width(self, width):
+        self._main_widget.setMaximumWidth(width)
         if hasattr(self, '_photo_label'):
             self._photo_label.setMaximumWidth(width)
             self._photo_label.resize_pixmap()
@@ -75,9 +98,11 @@ class TelegramChatBubble(QWidget):
             border-bottom-left-radius: {0 if not self._right_side else TelegramChatBubble._BORDER_RADIUS}px;
             border-bottom-right-radius: {0 if self._right_side else TelegramChatBubble._BORDER_RADIUS}px;"""
         self._main_widget.setStyleSheet(css)
-        self._main_widget.setFont(self._tm.font_small)
+        self._main_widget.setFont(self._tm.font_medium)
         self._label.setStyleSheet("border: none;")
-        self._label.setFont(self._tm.font_small)
+        self._label.setFont(self._tm.font_medium)
+        self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}; border: none;")
+        self._sender_label.setFont(self._tm.font_small)
         if hasattr(self, '_photo_label'):
             self._photo_label.setStyleSheet("border: none;")
         if hasattr(self, '_document_widget'):
@@ -85,7 +110,7 @@ class TelegramChatBubble(QWidget):
 
 
 class _PhotoLabel(QLabel):
-    MAX_HEIGHT = 500
+    MAX_HEIGHT = 600
 
     def __init__(self, tm, file: types.TgFile):
         super().__init__()
@@ -107,7 +132,7 @@ class _PhotoLabel(QLabel):
     def resize_pixmap(self):
         if isinstance(self._pixmap, QPixmap):
             pixmap = self._pixmap
-            if self._pixmap.width() > self.maximumWidth() or self._pixmap.height():
+            if self._pixmap.width() > self.maximumWidth() or self._pixmap.height() > self.MAX_HEIGHT:
                 pixmap = self._pixmap.scaled(self.maximumWidth(), _PhotoLabel.MAX_HEIGHT, Qt.KeepAspectRatio)
             self.setPixmap(pixmap)
 

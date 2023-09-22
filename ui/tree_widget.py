@@ -53,7 +53,7 @@ class TreeWidgetItemCheckable(TreeWidgetItem):
         if isinstance(color, QColor):
             color = color.name()
         self._label.setStyleSheet(f"color: {color};")
-        self._label.setFont(self._tm.font_small)
+        self._label.setFont(self._tm.font_medium)
 
 
 class TreeBranch(QWidget):

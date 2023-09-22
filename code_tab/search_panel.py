@@ -143,7 +143,7 @@ class SearchPanel(QWidget):
         self.replace_line_edit.setStyleSheet(css)
         self.search_line_edit.setStyleSheet(css.replace('border-bottom: none',
                                                         f"border-bottom: 1px solid {self._tm['BorderColor']}"))
-        self.search_line_edit.setFont(self._tm.font_small)
-        self.replace_line_edit.setFont(self._tm.font_small)
+        self.search_line_edit.setFont(self._tm.font_medium)
+        self.replace_line_edit.setFont(self._tm.font_medium)
         for el in [self.button_up, self.button_down, self.button_replace, self.button_replace_all, self.label]:
             self._tm.auto_css(el)

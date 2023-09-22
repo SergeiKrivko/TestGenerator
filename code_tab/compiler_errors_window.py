@@ -122,4 +122,4 @@ class LinkButton(QPushButton):
         tm.auto_css(self)
         self.clicked.connect(lambda: self.pressed.emit(self.file, self.line, self.symbol))
 
-        self.setFixedSize(QFontMetrics(tm.font_small).size(0, self.text()).width() + 22, 22)
+        self.setFixedSize(QFontMetrics(tm.font_medium).size(0, self.text()).width() + 22, 22)

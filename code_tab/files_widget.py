@@ -24,7 +24,7 @@ class TreeFile(QTreeWidgetItem):
         super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
 
         self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
-        self.setFont(0, self.tm.font_small)
+        self.setFont(0, self.tm.font_medium)
 
 
 class TreeDirectory(QTreeWidgetItem):
@@ -38,7 +38,7 @@ class TreeDirectory(QTreeWidgetItem):
         super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
 
         self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
-        self.setFont(0, self.tm.font_small)
+        self.setFont(0, self.tm.font_medium)
 
         self.update_files_list()
 
@@ -286,7 +286,7 @@ class FileListWidgetItem(QListWidgetItem):
             self.setIcon(QIcon(self.tm.get_image(self.name.split('.')[1], 'unknown_file', color=color)))
         else:
             self.setIcon(QIcon(self.tm.get_image('unknown_file', color=color)))
-        self.setFont(self.tm.font_small)
+        self.setFont(self.tm.font_medium)
 
 
 class DeleteFileDialog(QDialog):
@@ -297,7 +297,7 @@ class DeleteFileDialog(QDialog):
 
         self.layout = QVBoxLayout()
         label = QLabel(message)
-        label.setFont(tm.font_small)
+        label.setFont(tm.font_medium)
         self.layout.addWidget(label)
 
         button_layout = QHBoxLayout()
@@ -329,7 +329,7 @@ class RenameFileDialog(QDialog):
 
         self.layout = QVBoxLayout()
         label = QLabel("Введите новое имя файла:" if name else "Введите имя файла:")
-        label.setFont(tm.font_small)
+        label.setFont(tm.font_medium)
         self.layout.addWidget(label)
 
         self.line_edit = QLineEdit()

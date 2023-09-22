@@ -92,7 +92,7 @@ class _RangeEdit(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        font_metrics = QFontMetrics(self._tm.font_small)
+        font_metrics = QFontMetrics(self._tm.font_medium)
         self._name_label = QLabel(desc)
         self._name_label.setFixedWidth(font_metrics.size(0, desc).width())
         layout.addWidget(self._name_label)

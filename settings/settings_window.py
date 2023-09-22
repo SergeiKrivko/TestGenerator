@@ -269,7 +269,7 @@ class SettingsWindow(QDialog):
         # self.button_ok.setStyleSheet(self.tm.button_css('Main'))
         # self.button_ok.setFont(self.tm.font_small)
         self.tree_widget.setStyleSheet(self.tm.tree_widget_css('Bg', border=False))
-        self.tree_widget.setFont(self.tm.font_medium)
+        self.tree_widget.setFont(self.tm.font_big)
         self.libs_widget.set_theme()
         self.project_settings_widget.set_theme()
         self.main_settings_widget.set_theme()

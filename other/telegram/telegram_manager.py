@@ -12,9 +12,12 @@ class TelegramManager(QThread):
     authorization = pyqtSignal(object)
 
     newChat = pyqtSignal(types.TgChat)
+    updateChat = pyqtSignal(str)
     addMessage = pyqtSignal(types.TgMessage)
     insertMessage = pyqtSignal(types.TgMessage)
     loadingFinished = pyqtSignal(types.TgChat)
+
+    updateUserStatus = pyqtSignal(str)
 
     updateFile = pyqtSignal(types.TgFile)
 
@@ -52,6 +55,9 @@ class TelegramManager(QThread):
     def get_chat(self, chat_id: int) -> types.TgChat:
         return self._chats[chat_id]
 
+    def get_user(self, user_id: int) -> types.TgUser:
+        return self._users[user_id]
+
     def update_chat(self, chat: types.TgChat):
         if chat.id not in self._chats:
             self._chats[chat.id] = chat
@@ -77,12 +83,21 @@ class TelegramManager(QThread):
     def download_file(self, file: types.TgFile):
         self._client.download_file(file)
 
+    def view_messages(self, chat_id: int, message_ids: list):
+        # return
+        self._client.send({'@type': "viewMessages", 'chat_id': chat_id, 'message_ids': message_ids})
+
+    def open_chat(self, chat_id: int):
+        self._client.send({'@type': 'openChat', 'chat_id': chat_id})
+
+    def close_chat(self, chat_id: int):
+        self._client.send({'@type': 'closeChat', 'chat_id': chat_id})
+
     def authenticate_user(self, str1, str2):
         self._client.send_authentication(str1, str2)
 
     def _handler(self, event_dict: dict):
         event = events.convert_event(event_dict, self)
-
         # OPTIONS
 
         if isinstance(event, events.TgUpdateOption):
@@ -93,6 +108,9 @@ class TelegramManager(QThread):
         elif isinstance(event, events.TgUpdateNewChat):
             self._chats[event.chat.id] = event.chat
             self.newChat.emit(event.chat)
+        elif isinstance(event, events.TgUpdateChatReadInbox):
+            self._chats[event.chat_id].unread_count = event.unread_count
+            self.updateChat.emit(str(event.chat_id))
 
         # MESSAGES
 
@@ -100,13 +118,11 @@ class TelegramManager(QThread):
             chat = self.get_chat(event.message.chat_id)
             if chat.last_message is None or event.message.id != chat.last_message.id:
                 chat.append_message(event.message)
+                # print(event_dict)
                 self.addMessage.emit(event.message)
         elif isinstance(event, events.TgUpdateChatLastMessage):
             if event.last_message is not None:
                 chat = self.get_chat(event.chat_id)
-                if chat.last_message is None or event.last_message.id != chat.last_message.id:
-                    chat.append_message(event.last_message)
-                    self.addMessage.emit(event.last_message)
                 chat.set_last_message(event.last_message)
         elif isinstance(event, events.TgMessages):
             el = None
@@ -121,9 +137,10 @@ class TelegramManager(QThread):
         # USERS
 
         elif isinstance(event, events.TgUpdateUser):
-            self._chats[event.user.id] = event.user
+            self._users[event.user.id] = event.user
         elif isinstance(event, events.TgUpdateUserStatus):
-            self._users[event.user_id] = event.status
+            self.get_user(event.user_id).set_status(event.status)
+            self.updateUserStatus.emit(str(event.user_id))
 
         # FILES
 

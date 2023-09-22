@@ -194,7 +194,7 @@ class TestEditWidget(QWidget):
         for el in [self.test_in_edit, self.test_out_edit]:
             el.set_theme()
         for label in self.labels:
-            label.setFont(self.tm.font_small)
+            label.setFont(self.tm.font_medium)
 
     def set_test_name(self, name):
         self.data['desc'] = name
@@ -322,13 +322,13 @@ class NewInFileDialog(QDialog):
         layout = QVBoxLayout()
 
         label = QLabel("Тип файла:")
-        label.setFont(self.tm.font_small)
+        label.setFont(self.tm.font_medium)
         layout.addWidget(label)
 
         self.combo_box = QComboBox()
         self.combo_box.addItems(['Текстовый', 'Бинарный'])
         self.combo_box.setStyleSheet(tm.combobox_css('Main'))
-        self.combo_box.setFont(tm.font_small)
+        self.combo_box.setFont(tm.font_medium)
 
         layout.addWidget(self.combo_box)
         layout.addWidget(self.buttonBox)
@@ -361,7 +361,7 @@ class NewOutFileDialog(QDialog):
         layout.addWidget(self.combo_box)
 
         self.type_label = QLabel("Тип файла:")
-        self.type_label.setFont(self.tm.font_small)
+        self.type_label.setFont(self.tm.font_medium)
         layout.addWidget(self.type_label)
 
         self.type_combo_box = QComboBox()
@@ -370,7 +370,7 @@ class NewOutFileDialog(QDialog):
         layout.addWidget(self.type_combo_box)
 
         self.file_label = QLabel("Проверяемый файл:")
-        self.file_label.setFont(self.tm.font_small)
+        self.file_label.setFont(self.tm.font_medium)
         layout.addWidget(self.file_label)
         self.file_label.hide()
 

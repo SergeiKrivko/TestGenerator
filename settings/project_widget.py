@@ -102,7 +102,7 @@ class ProjectWidget(SidePanelWidget):
         for pr in self.sm.projects.keys():
             item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS.get(self.sm.get('language', project=pr),
                                                                          'unknown_file'))
-            item.setFont(self.tm.font_small)
+            item.setFont(self.tm.font_medium)
             item.set_icon()
             self.list_widget.addItem(item)
             if self.sm.project == pr:
@@ -306,7 +306,7 @@ class DeleteProjectDialog(QDialog):
         h_layout.addWidget(self.check_box)
 
         label = QLabel("Удалить папку проекта")
-        label.setFont(tm.font_small)
+        label.setFont(tm.font_medium)
         h_layout.addWidget(label)
 
         layout = QVBoxLayout()
@@ -315,7 +315,7 @@ class DeleteProjectDialog(QDialog):
         label = QLabel(f"Эта операция приведет к безвозвратному удалению всех данных проекта. "
                        f"Удалить проект {self.name}?")
         label.setWordWrap(True)
-        label.setFont(tm.font_small)
+        label.setFont(tm.font_medium)
         layout.addWidget(label)
 
         buttons_layout = QHBoxLayout()
@@ -335,9 +335,9 @@ class DeleteProjectDialog(QDialog):
 
         self.setStyleSheet(tm.bg_style_sheet)
         self.button_yes.setStyleSheet(tm.button_css())
-        self.button_no.setFont(tm.font_small)
+        self.button_no.setFont(tm.font_medium)
         self.button_no.setStyleSheet(tm.button_css())
-        self.button_no.setFont(tm.font_small)
+        self.button_no.setFont(tm.font_medium)
 
 
 class ProjectFromZipDialog(QDialog):
@@ -409,7 +409,7 @@ class ProgressDialog(QMessageBox):
         self.setIcon(QMessageBox.Information)
         self.setText(message)
         self.setWindowTitle(title)
-        self.setFont(tm.font_small)
+        self.setFont(tm.font_medium)
 
         self.setStyleSheet(tm.bg_style_sheet)
         self.addButton(QMessageBox.Cancel)
@@ -496,6 +496,7 @@ class OpenAsProjectDialog(QDialog):
         main_layout.addLayout(buttons_layout)
         self.setLayout(main_layout)
 
+        self.setStyleSheet(self.tm.bg_style_sheet)
         for el in [self.label, self.line_edit, self.button_cancel, self.button_scip, self.button_create]:
             self.tm.auto_css(el)
         self.create_temp_project = False
