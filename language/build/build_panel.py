@@ -81,6 +81,9 @@ class BuildPanel(SidePanelWidget):
     def store_task(self):
         if not self._list_widget.count():
             return
+        item = self._list_widget.currentItem()
+        if isinstance(item, Scenario):
+            item.store()
         converter = MakeConverter(self.sm)
         for i in range(self._list_widget.count()):
             item = self._list_widget.item(i)
