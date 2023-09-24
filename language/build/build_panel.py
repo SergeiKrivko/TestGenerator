@@ -160,7 +160,7 @@ class ScenarioEdit(QWidget):
 
         self._combo_box = QComboBox()
         self._combo_box.addItems(["Сценарий сборки", "Сценарий Make"])
-        self._combo_box.currentIndexChanged.connect(lambda ind: self._scenario.set_type(ind))
+        self._combo_box.currentIndexChanged.connect(self._on_scenario_type_changed)
         main_layout.addWidget(self._combo_box)
 
         self._compiler_edit = QLineEdit()
@@ -184,9 +184,7 @@ class ScenarioEdit(QWidget):
             return
         self._name_edit.setText(self._scenario.name)
         self._combo_box.setCurrentIndex(self._scenario.type)
-        match self._scenario.type:
-            case Scenario.TYPE_COMPILE:
-                self.load_compiler()
+        self._on_scenario_type_changed()
 
     def load_compiler(self):
         for el in [self._compiler_edit, self._keys_edit, self._tree_widget]:
@@ -214,6 +212,13 @@ class ScenarioEdit(QWidget):
 
     def _connect_tree_elem(self, elem: 'TreeElement', path):
         elem.stateChanged.connect(lambda flag: self._scenario.set_file_status(path, flag))
+
+    def _on_scenario_type_changed(self, index=None):
+        if index is not None:
+            self._scenario.set_type(index)
+        match self._scenario.type:
+            case Scenario.TYPE_COMPILE:
+                self.load_compiler()
 
     def set_theme(self):
         for el in [self._combo_box, self._name_edit, self._keys_edit, self._compiler_edit]:
