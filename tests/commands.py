@@ -5,6 +5,7 @@ import subprocess
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from language.languages import languages
+from language.utils import get_files
 
 
 class CommandManager:
@@ -63,10 +64,9 @@ class CommandManager:
     def get_files_list(self, path=None):
         if path is None:
             path = self.sm.lab_path()
-        for el in os.listdir():
-            for ex in languages.get(self.sm.get('language', 'C'), dict()).get('files', list()):
-                if el.endswith(ex):
-                    yield el
+        for ex in languages.get(self.sm.get('language', 'C'), dict()).get('files', list()):
+            for el in get_files(path, ex):
+                yield el
 
     def test_count(self):
         count = 0
