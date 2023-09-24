@@ -4,6 +4,7 @@ import os
 from PyQt5.QtWidgets import QTabBar, QVBoxLayout, QComboBox, QHBoxLayout, QListWidget, QListWidgetItem, QWidget, \
     QLineEdit
 
+from language.build.make_convert import MakeConverter
 from language.languages import languages
 from language.utils import get_files
 from ui.button import Button
@@ -32,16 +33,19 @@ class BuildPanel(SidePanelWidget):
         self.button_delete = Button(self.tm, 'delete', css='Main')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(40)
+        self.button_delete.clicked.connect(self.delete_scenario)
         buttons_layout.addWidget(self.button_delete, 1)
 
         self.button_up = Button(self.tm, 'button_up', css='Main')
         self.button_up.setFixedHeight(22)
         self.button_up.setMaximumWidth(40)
+        self.button_up.clicked.connect(self.move_scenario_up)
         buttons_layout.addWidget(self.button_up, 1)
 
         self.button_down = Button(self.tm, 'button_down', css='Main')
         self.button_down.setFixedHeight(22)
         self.button_down.setMaximumWidth(40)
+        self.button_down.clicked.connect(self.move_scenario_down)
         buttons_layout.addWidget(self.button_down, 1)
 
         self._list_widget = QListWidget()
@@ -75,9 +79,11 @@ class BuildPanel(SidePanelWidget):
                 self._list_widget.addItem(sc)
 
     def store_task(self):
+        if not self._list_widget.count():
+            return
+        converter = MakeConverter(self.sm)
         for i in range(self._list_widget.count()):
             item = self._list_widget.item(i)
-            print(item)
             if not isinstance(item, Scenario):
                 continue
             path = f"{self.data_dir}/{i}.json"
@@ -85,9 +91,41 @@ class BuildPanel(SidePanelWidget):
                 if path in self._files:
                     self._files[item.path].rename_file(self.create_temp_file())
                 item.rename_file(path)
+            with open(path, encoding='utf-8') as f:
+                converter.add_scenario(json.loads(f.read()))
+        converter.run()
+        
+    def hide(self) -> None:
+        self.store_task()
+        super().hide()
 
     def add_scenario(self):
         self._list_widget.addItem(Scenario(self.create_temp_file()))
+
+    def delete_scenario(self):
+        item = self._list_widget.takeItem(self._list_widget.currentRow())
+        try:
+            os.remove(item.path)
+        except FileNotFoundError:
+            pass
+
+    def move_scenario_up(self):
+        index = self._list_widget.currentRow()
+        if index == 0:
+            return
+        item = self._list_widget.takeItem(index)
+        index -= 1
+        self._list_widget.insertItem(index, item)
+        self._list_widget.setCurrentRow(index)
+
+    def move_scenario_down(self):
+        index = self._list_widget.currentRow()
+        if index == self._list_widget.count() - 1:
+            return
+        item = self._list_widget.takeItem(index)
+        index += 1
+        self._list_widget.insertItem(index, item)
+        self._list_widget.setCurrentRow(index)
 
     def create_temp_file(self):
         path = f"{self.data_dir}/temp_{self.temp_file_index}"

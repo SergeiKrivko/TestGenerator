@@ -95,4 +95,5 @@ def convert_make(sm, name, files: dict[str]):
     res = [MakeCommand(name, o_files, f"{compiler} {compiler_keys} --coverage -g {' '.join(o_files)} -o {name} "
                                       f"{'-lm' if sm.get_smart('-lm', False) else ''}")]
     for c_file, o_file in zip(c_files, o_files):
-        res.append(MakeCommand(name, o_files, f"{compiler} {compiler_keys} --coverage -g -c {c_file} -o {o_file}"))
+        res.append(MakeCommand(o_file, c_file, f"{compiler} {compiler_keys} --coverage -g -c {c_file} -o {o_file}"))
+    return res
