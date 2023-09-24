@@ -30,6 +30,7 @@ languages = {
         },
         'compile': language.testing.c.c_compile,
         'run': language.testing.c.c_run,
+        'to_make': language.testing.c.convert_make,
         'coverage': language.testing.c.c_collect_coverage,
         'clear_coverage': language.testing.c.c_clear_coverage_files,
         'fast_run': True,

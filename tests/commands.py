@@ -46,9 +46,10 @@ class CommandManager:
         if in_data is not None:
             return self.cmd_command(languages[self.sm.get('language', 'C')].get('run')(
                 f"{self.path}/{file}", self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)),
-                shell=True, input=in_data)
+                shell=True, input=in_data, cwd=self.sm.lab_path())
         return self.cmd_command(languages[self.sm.get('language', 'C')].get('run')(
-            f"{self.path}/{file}", self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)), shell=True)
+            f"{self.path}/{file}", self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)), shell=True,
+            cwd=self.sm.lab_path())
 
     def collect_coverage(self):
         res = languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)

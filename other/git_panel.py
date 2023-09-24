@@ -23,7 +23,7 @@ class TreeElement(TreeWidgetItemCheckable):
         self.check_status()
 
     def set_checked(self, flag):
-        if self._checkbox == flag:
+        if self._checkbox.isChecked() == flag:
             return
         self._checkbox.setChecked(flag)
 

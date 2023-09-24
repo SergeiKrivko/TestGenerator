@@ -1,5 +1,6 @@
 import os
 
+from language.build.make_command import MakeCommand
 from language.utils import get_files
 
 
@@ -76,3 +77,22 @@ def c_collect_coverage(path, sm, cm):
     if total_count == 0:
         return 0
     return count / total_count * 100
+
+
+def convert_make(sm, name, files: dict[str]):
+    c_files = []
+    for key, item in files.items():
+        if item:
+            c_files.append(key)
+    o_files = [el[:-2] + '.o' for el in c_files]
+
+    if os.name == 'nt' and sm.get_smart("C_wsl", False):
+        compiler = "wsl -e gcc"
+    else:
+        compiler = sm.get_smart('gcc', 'gcc')
+    compiler_keys = sm.get_smart('c_compiler_keys', '')
+
+    res = [MakeCommand(name, o_files, f"{compiler} {compiler_keys} --coverage -g {' '.join(o_files)} -o {name} "
+                                      f"{'-lm' if sm.get_smart('-lm', False) else ''}")]
+    for c_file, o_file in zip(c_files, o_files):
+        res.append(MakeCommand(name, o_files, f"{compiler} {compiler_keys} --coverage -g -c {c_file} -o {o_file}"))

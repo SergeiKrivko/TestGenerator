@@ -497,6 +497,7 @@ class TestingLooper(QThread):
         self.cm = cm
         self._tests = tests
         self._coverage = self.sm.get_smart('coverage')
+        self.path = self.sm.lab_path()
         self.util_res = dict()
         self.util_output = dict()
         self.utils = []
@@ -621,7 +622,7 @@ class TestingLooper(QThread):
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                                  files=' '.join(self.cm.get_files_list())),
-                                  shell=True)
+                                  shell=True, cwd=self.path)
         if data.get('1_output_format', 0) == 0:
             output = res.stdout
         elif data.get('1_output_format', 0) == 1:
@@ -647,7 +648,7 @@ class TestingLooper(QThread):
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                                  files=' '.join(self.cm.get_files_list())),
-                                  shell=True)
+                                  shell=True, cwd=self.path)
         if data.get('2_output_format', 0) == 0:
             output = res.stdout
         elif data.get('2_output_format', 0) == 1:
@@ -670,7 +671,7 @@ class TestingLooper(QThread):
         temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
         res = self.cm.cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
                                                                       args=test.args, dict=temp_path),
-                                  shell=True, input=test['in'])
+                                  shell=True, input=test['in'], cwd=self.path)
         if util_data.get('output_format', 0) == 0:
             output = res.stdout
         elif util_data.get('output_format', 0) == 1:
@@ -704,7 +705,7 @@ class TestingLooper(QThread):
     def run(self):
         command = self.sm.get_task('preprocessor', '')
         if command:
-            self.cm.cmd_command(command, shell=True)
+            self.cm.cmd_command(command, shell=True, cwd=self.path)
         code, errors = self.cm.compile(coverage=self._coverage)
         if not code:
             self.compileFailed.emit(errors)
@@ -737,7 +738,7 @@ class TestingLooper(QThread):
             self.run_postproc_util(util)
         command = self.sm.get_task('postprocessor', '')
         if command:
-            self.cm.cmd_command(command, shell=True)
+            self.cm.cmd_command(command, shell=True, cwd=self.path)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':

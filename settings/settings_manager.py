@@ -213,6 +213,8 @@ class SettingsManager(QObject):
     def delete_project(self, name=None, main_dir=False):
         if name is None:
             name = self.project
+        if name not in self.projects:
+            return
         self.projects[name].delete(main_dir)
         self.projects.pop(name)
         if name == self.project:

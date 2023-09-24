@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
 from code_tab.files_widget import FilesWidget
 from code_tab.terminal_tab import TerminalTab
+from language.build.build_panel import BuildPanel
 from other.chat_widget import ChatPanel
 from other.git_panel import GitPanel
 from other.telegram.telegram_widget import TelegramWidget
@@ -38,6 +39,7 @@ class SidePanel(QWidget):
         self.tabs = {
             'projects': ProjectWidget(self.sm, self.tm),
             'files': FilesWidget(self.sm, self.cm, self.tm),
+            'build': BuildPanel(self.sm, self.tm),
             'tests': TestingPanel(self.sm, self.tm),
             'todo': TODOPanel(self.sm, self.cm, self.tm),
             'git': GitPanel(self.sm, self.cm, self.tm),
@@ -48,7 +50,7 @@ class SidePanel(QWidget):
             'telegram': TelegramWidget(self.sm, self.tm),
         }
         self.tab_width = {'projects': 225, 'files': 225, 'tests': 225, 'git': 300, 'todo': 300, 'chat': 300,
-                          'telegram': 300}
+                          'telegram': 300, 'build': 300}
 
         for key, el in self.tabs.items():
             if isinstance(el, SidePanelWidget):
@@ -122,7 +124,7 @@ class SideBar(QWidget):
         strange_widget.setLayout(layout)
 
         self.buttons = {el: SideBarButton(self.tm, f'button_{el}') for el in [
-            'projects', 'files', 'tests', 'git', 'todo', 'generator', 'terminal', 'run', 'chat', 'telegram']}
+            'projects', 'files', 'build', 'tests', 'git', 'todo', 'generator', 'terminal', 'run', 'chat', 'telegram']}
         for el in self.buttons.values():
             layout.addWidget(el)
             el.clicked.connect(self.connect_button(el))

@@ -4,7 +4,7 @@ import shutil
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar
 import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
@@ -715,6 +715,8 @@ class ThemeManager:
             widget.setStyleSheet(self.double_spinbox_css(palette))
         elif isinstance(widget, QProgressBar):
             widget.setStyleSheet(self.progress_bar_css(palette))
+        elif isinstance(widget, QTabBar):
+            widget.setStyleSheet(self.tab_bar_css(palette))
         elif isinstance(widget, QTabWidget):
             widget.setStyleSheet(self.tab_widget_css(palette))
         elif isinstance(widget, QListWidget):
@@ -1139,11 +1141,8 @@ QPushButton::checked {{
 }}
 """
 
-    def tab_widget_css(self, palette='Main'):
+    def tab_bar_css(self, palette='Main'):
         return f"""
-QTabWidget::pane {{
-    color: {self[f'{self.shift(palette)}Color']};
-}}
 QTabBar::tab {{
     color: {self['TextColor']};
     background-color: {self[f'{palette}Color']};
@@ -1173,6 +1172,14 @@ QTabBar QToolButton::right-arrow {{
 QTabBar QToolButton::left-arrow {{
     image: url({self.get_image('left_arrow')});
 }}
+"""
+
+    def tab_widget_css(self, palette='Main'):
+        return f"""
+QTabWidget::pane {{
+    color: {self[f'{self.shift(palette)}Color']};
+}}
+{self.tab_bar_css(palette)}
 """
 
     def checkbox_css(self, palette='Main'):
