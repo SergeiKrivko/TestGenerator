@@ -46,8 +46,6 @@ class TestsWidget(QWidget):
 
         self.test_edit_widget = TestEditWidget(self.tm)
         self.test_edit_widget.test_edited.connect(self.set_tests_changed)
-        self.test_edit_widget.preprocessor_line.textEdited.connect(self.set_preprocessor)
-        self.test_edit_widget.postprocessor_line.textEdited.connect(self.set_postprocessor)
         # self.test_edit_widget.button_generate.clicked.connect(self.generate_test)
         layout.addWidget(self.test_edit_widget)
 
@@ -66,14 +64,6 @@ class TestsWidget(QWidget):
     def open_tests_after_generation(self):
         self.tests_changed = False
         self.open_tests()
-
-    def set_preprocessor(self):
-        self.sm.set_task('preprocessor', self.test_edit_widget.preprocessor_line.text())
-        self.tests_changed = True
-
-    def set_postprocessor(self):
-        self.sm.set_task('postprocessor', self.test_edit_widget.postprocessor_line.text())
-        self.tests_changed = True
 
     def add_pos_test(self):
         self.tests_changed = True
@@ -225,11 +215,6 @@ class TestsWidget(QWidget):
         except Exception as ex:
             print(f"{ex.__class__.__name__}: {ex}")
 
-        path = f"{self.sm.data_lab_path()}/func_tests/preprocessor.txt"
-        self.test_edit_widget.preprocessor_line.setText(read_file(path, ''))
-        path = f"{self.sm.data_lab_path()}/func_tests/postprocessor.txt"
-        self.test_edit_widget.postprocessor_line.setText(read_file(path, ''))
-
         self.test_list_widget.in_data_edit.setText('-')
         self.test_list_widget.out_data_edit.setText('-')
 
@@ -240,8 +225,6 @@ class TestsWidget(QWidget):
             except Exception:
                 pass
         else:
-            self.test_edit_widget.preprocessor_line.setText(self.sm.get_task('preprocessor', ''))
-            self.test_edit_widget.postprocessor_line.setText(self.sm.get_task('postprocessor', ''))
             self.test_list_widget.in_data_edit.setText(self.sm.get_task('in_data', '-'))
             self.test_list_widget.out_data_edit.setText(self.sm.get_task('out_data', '-'))
 
@@ -438,20 +421,6 @@ class TestsWidget(QWidget):
         self.test_edit_widget.set_theme()
 
     def resizeEvent(self, a0) -> None:
-        # if self.height() < 530:
-        #     self.options_widget.hide()
-        # else:
-        #     self.options_widget.show()
-        if self.height() < 560:
-            self.test_edit_widget.preprocessor_line.hide()
-            self.test_edit_widget.preprocessor_label.hide()
-            self.test_edit_widget.postprocessor_line.hide()
-            self.test_edit_widget.postprocessor_label.hide()
-        else:
-            self.test_edit_widget.preprocessor_line.show()
-            self.test_edit_widget.preprocessor_label.show()
-            self.test_edit_widget.postprocessor_line.show()
-            self.test_edit_widget.postprocessor_label.show()
         if self.height() < 500:
             self.test_list_widget.pos_comparator_widget.hide()
             self.test_list_widget.pos_comparator_label.hide()

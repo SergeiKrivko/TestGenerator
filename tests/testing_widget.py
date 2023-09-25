@@ -703,13 +703,12 @@ class TestingLooper(QThread):
         self.clear_after_run(test, index)
 
     def run(self):
-        command = self.sm.get_task('preprocessor', '')
-        if command:
-            self.cm.cmd_command(command, shell=True, cwd=self.path)
-        code, errors = self.cm.compile(coverage=self._coverage)
-        if not code:
-            self.compileFailed.emit(errors)
-            return
+        command = self.sm.get_task('build', [])
+        res = self.cm.run_scenarios(command, self.path)
+        if res and res[0].returncode:
+            self.compileFailed.emit(res[0].stderr)
+        command = self.sm.get_task('preprocessor', [])
+        self.cm.run_scenarios(command, self.path)
         self.utils = self.sm.get_smart(f"{self.sm.get('language', 'C')}_utils", [])
         if isinstance(self.utils, str):
             try:
@@ -737,8 +736,7 @@ class TestingLooper(QThread):
         for util in self.utils:
             self.run_postproc_util(util)
         command = self.sm.get_task('postprocessor', '')
-        if command:
-            self.cm.cmd_command(command, shell=True, cwd=self.path)
+        self.cm.run_scenarios(command, self.path)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':

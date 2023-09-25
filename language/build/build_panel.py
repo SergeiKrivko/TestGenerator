@@ -4,6 +4,7 @@ import os
 from PyQt5.QtWidgets import QTabBar, QVBoxLayout, QComboBox, QHBoxLayout, QListWidget, QListWidgetItem, QWidget, \
     QLineEdit
 
+from language.build.commands_list import CommandsList
 from language.build.make_convert import MakeConverter
 from language.languages import languages
 from language.utils import get_files
@@ -176,9 +177,15 @@ class ScenarioEdit(QWidget):
         self._tree_widget = TreeWidget(self._tm, TreeWidget.CHECKABLE)
         main_layout.addWidget(self._tree_widget)
 
+        self._dependencies_edit = CommandsList(self._sm, self._tm, "Зависимости", fixed_type=CommandsList.TYPE_MAKE)
+        main_layout.addWidget(self._dependencies_edit)
+
+        self._commands_edit = CommandsList(self._sm, self._tm, "Команды", fixed_type=CommandsList.TYPE_CMD)
+        main_layout.addWidget(self._commands_edit)
+
     def load_scenario(self, scenario: 'Scenario'):
         if isinstance(self._scenario, Scenario):
-            self._scenario.store()
+            self.store_scenario()
         self._scenario = scenario
         if not isinstance(self._scenario, Scenario):
             return
@@ -186,12 +193,23 @@ class ScenarioEdit(QWidget):
         self._combo_box.setCurrentIndex(self._scenario.type)
         self._on_scenario_type_changed()
 
+    def store_scenario(self):
+        match self._scenario.type:
+            case Scenario.TYPE_MAKE:
+                self._scenario.dependencies = self._dependencies_edit.store()
+                self._scenario.commands = self._commands_edit.store()
+        self._scenario.store()
+
     def load_compiler(self):
         for el in [self._compiler_edit, self._keys_edit, self._tree_widget]:
             el.show()
         self.update_tree()
         self._compiler_edit.setText(self._scenario.compiler)
         self._keys_edit.setText(self._scenario.keys)
+
+    def load_make(self):
+        self._dependencies_edit.load(self._scenario.dependencies)
+        self._commands_edit.load(self._scenario.commands)
 
     def update_tree(self):
         self._tree_widget.clear()
@@ -214,16 +232,30 @@ class ScenarioEdit(QWidget):
         elem.stateChanged.connect(lambda flag: self._scenario.set_file_status(path, flag))
 
     def _on_scenario_type_changed(self, index=None):
+        self._tree_widget.hide()
+        self._keys_edit.hide()
+        self._compiler_edit.hide()
+        self._dependencies_edit.hide()
+        self._commands_edit.hide()
         if index is not None:
             self._scenario.set_type(index)
         match self._scenario.type:
             case Scenario.TYPE_COMPILE:
+                self._tree_widget.show()
+                self._keys_edit.show()
+                self._compiler_edit.show()
                 self.load_compiler()
+            case Scenario.TYPE_MAKE:
+                self._dependencies_edit.show()
+                self._commands_edit.show()
+                self.load_make()
 
     def set_theme(self):
         for el in [self._combo_box, self._name_edit, self._keys_edit, self._compiler_edit]:
             self._tm.auto_css(el)
         self._tree_widget.set_theme()
+        self._dependencies_edit.set_theme()
+        self._commands_edit.set_theme()
 
 
 class Scenario(QListWidgetItem):

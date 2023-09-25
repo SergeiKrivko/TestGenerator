@@ -39,21 +39,6 @@ class TestEditWidget(QWidget):
         self.exit_code_edit.textChanged.connect(self.exit_code_edit_triggered)
         h_layout2.addWidget(self.exit_code_edit)
 
-        h_layout3 = QHBoxLayout()
-        layout.addLayout(h_layout3)
-
-        h_layout3.addWidget(label := QLabel("Препроцессор:"))
-        self.preprocessor_label = label
-        self.labels.append(label)
-        self.preprocessor_line = QLineEdit()
-        h_layout3.addWidget(self.preprocessor_line)
-
-        h_layout3.addWidget(label := QLabel("Постпроцессор:"))
-        self.postprocessor_label = label
-        self.labels.append(label)
-        self.postprocessor_line = QLineEdit()
-        h_layout3.addWidget(self.postprocessor_line)
-
         h_layout = QHBoxLayout()
         layout.addLayout(h_layout)
 
@@ -182,14 +167,12 @@ class TestEditWidget(QWidget):
         self.test_in_edit.clear()
         self.test_out_edit.clear()
         self.test_name_edit.setText("")
-        self.preprocessor_line.setText("")
-        self.postprocessor_line.setText("")
         self.exit_code_edit.setText("")
 
     def set_theme(self):
         for el in [self.test_name_edit, self.exit_code_edit]:
             self.tm.auto_css(el)
-        for el in [self.cmd_args_edit, self.preprocessor_line, self.postprocessor_line]:
+        for el in [self.cmd_args_edit]:
             self.tm.auto_css(el, code_font=True)
         for el in [self.test_in_edit, self.test_out_edit]:
             el.set_theme()

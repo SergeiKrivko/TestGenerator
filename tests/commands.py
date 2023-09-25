@@ -4,6 +4,7 @@ import subprocess
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from language.build.commands_list import CommandsList
 from language.languages import languages
 from language.utils import get_files
 
@@ -67,6 +68,20 @@ class CommandManager:
         for ex in languages.get(self.sm.get('language', 'C'), dict()).get('files', list()):
             for el in get_files(path, ex):
                 yield el
+
+    def run_scenarios(self, data: list | dict, cwd=None):
+        if isinstance(data, dict):
+            data = [data]
+        if cwd is None:
+            cwd = self.sm.lab_path()
+        res = []
+        for scenario in data:
+            match scenario['type']:
+                case CommandsList.TYPE_CMD:
+                    res.append(self.cmd_command(scenario['data'], shell=True, cwd=cwd))
+                case CommandsList.TYPE_MAKE:
+                    res.append(self.cmd_command(f"make {scenario['data']['name']}", shell=True, cwd=cwd))
+        return res
 
     def test_count(self):
         count = 0

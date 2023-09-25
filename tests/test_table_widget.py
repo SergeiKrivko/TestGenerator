@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
     QPushButton
 
+from language.build.commands_list import CommandsList, MakeScenarioBox
 from tests.in_data_window import InDataWindow
 from ui.button import Button
 from ui.options_window import OptionsWidget
@@ -36,6 +37,13 @@ class TestTableWidget(QWidget):
 
         self.in_data_edit = QLineEdit()
         in_data_layout.addWidget(self.in_data_edit)
+
+        self.options_window = TestingOptionsDialog(self.sm, self.tm)
+
+        self.options_button = Button(self.tm, 'plus', css='Bg')
+        self.options_button.setFixedHeight(22)
+        self.options_button.clicked.connect(self.options_window.exec)
+        in_data_layout.addWidget(self.options_button)
 
         self.in_data_window = InDataWindow(self.sm, self.tm)
 
@@ -212,7 +220,7 @@ class TestTableWidget(QWidget):
                    self.pos_button_copy, self.in_data_edit, self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.out_data_edit,
                    self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
-                   self.neg_button_generate, self.export_button, self.report_button]:
+                   self.neg_button_generate, self.export_button, self.report_button, self.options_button]:
             self.tm.auto_css(el)
         for label in self.labels:
             label.setFont(self.tm.font_medium)
@@ -304,3 +312,58 @@ class ExportDialog(QDialog):
                 table.cell(i, j).text = str(lst[i][j])
 
         document.save(self._options_widget["Путь:"])
+
+
+class TestingOptionsDialog(QDialog):
+    def __init__(self, sm, tm):
+        super().__init__()
+        self.sm = sm
+        self.tm = tm
+
+        self.setFixedSize(600, 400)
+        self._labels = []
+
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
+
+        layout_h1 = QHBoxLayout()
+        main_layout.addLayout(layout_h1)
+        layout_h1.setContentsMargins(0, 0, 0, 0)
+        layout_h1.setAlignment(Qt.AlignLeft)
+        label = QLabel("Сценарий сборки:")
+        layout_h1.addWidget(label)
+        self._labels.append(label)
+        self._build_box = MakeScenarioBox(self.sm, default=True)
+        layout_h1.addWidget(self._build_box)
+
+        self._preproc_list = CommandsList(self.sm, self.tm, "Препроцессор")
+        main_layout.addWidget(self._preproc_list)
+
+        self._postproc_list = CommandsList(self.sm, self.tm, "Постпроцессор")
+        main_layout.addWidget(self._postproc_list)
+
+        self.set_theme()
+
+    def load(self):
+        self._build_box.load(self.sm.get_task('build', None))
+        self._preproc_list.load(self.sm.get_task('preprocessor', []))
+        self._postproc_list.load(self.sm.get_task('postprocessor', []))
+
+    def store(self):
+        self.sm.set_task('build', self._build_box.current_scenario())
+        self.sm.set_task('preprocessor', self._preproc_list.store())
+        self.sm.set_task('postprocessor', self._postproc_list.store())
+
+    def exec(self) -> int:
+        self.load()
+        res = super().exec()
+        self.store()
+        return res
+
+    def set_theme(self):
+        for el in [self._preproc_list, self._postproc_list]:
+            el.set_theme()
+        for el in [self._build_box]:
+            self.tm.auto_css(el)
+        for el in self._labels:
+            self.tm.auto_css(el)

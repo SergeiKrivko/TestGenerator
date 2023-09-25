@@ -51,28 +51,32 @@ def c_run(path, sm, args='', coverage=False):
 def c_clear_coverage_files(path):
     if not os.path.isdir(path):
         return
-    for file in os.listdir(path):
-        if '.gcda' in file or '.gcno' in file or 'temp.txt' in file or '.gcov' in file:
-            os.remove(f"{path}/{file}")
+    for file in get_files(path, '.gcda'):
+        os.remove(file)
+    for file in get_files(path, '.gcno'):
+        os.remove(file)
+    for file in get_files(path, 'temp.txt'):
+        os.remove(file)
+    for file in get_files(path, '.gcov'):
+        os.remove(file)
 
 
 def c_collect_coverage(path, sm, cm):
     total_count = 0
     count = 0
 
-    for file in os.listdir(path):
-        if file.endswith('.c'):
-            if os.name == 'nt' and sm.get_smart("C_wsl", False):
-                res = cm.cmd_command(f"wsl -e gcov {file}", shell=True)
-            else:
-                res = cm.cmd_command(f"{sm.get_smart('gcov', 'gcov')} {path}/{file}", shell=True)
+    for file in get_files(path, '.c'):
+        if os.name == 'nt' and sm.get_smart("C_wsl", False):
+            res = cm.cmd_command(f"wsl -e gcov {file}", shell=True)
+        else:
+            res = cm.cmd_command(f"{sm.get_smart('gcov', 'gcov')} {file}", shell=True)
 
-            for line in res.stdout.split('\n'):
-                if "Lines executed:" in line:
-                    p, _, c = line.split(":")[1].split()
-                    total_count += int(c)
-                    count += round(float(p[:-1]) / 100 * int(c))
-                    break
+        for line in res.stdout.split('\n'):
+            if "Lines executed:" in line:
+                p, _, c = line.split(":")[1].split()
+                total_count += int(c)
+                count += round(float(p[:-1]) / 100 * int(c))
+                break
 
     if total_count == 0:
         return 0

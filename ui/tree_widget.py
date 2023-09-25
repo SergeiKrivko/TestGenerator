@@ -183,7 +183,8 @@ class TreeBranch(QWidget):
     def clear(self):
         self.child_widgets.clear()
         for i in reversed(range(self.items_layout.count())):
-            self.items_layout.itemAt(i).widget().setParent(None)
+            item = self.items_layout.takeAt(i)
+            item.widget().hide()
 
     def set_theme(self):
         for el in [self._button_minimize, self._button_maximize, self._checkbox, self._label]:

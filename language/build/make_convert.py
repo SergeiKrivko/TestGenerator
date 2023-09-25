@@ -15,6 +15,10 @@ class MakeConverter:
             if 'to_make' in languages[scenario['language']]:
                 for el in languages[scenario['language']]['to_make'](self.sm, scenario['name'], scenario['files']):
                     self.commands[el.name] = el
+        elif scenario['type'] == 1:
+            self.commands[scenario['name']] = MakeCommand(scenario['name'],
+                                                          [el['data']['name'] for el in scenario['dependencies']],
+                                                          [el['data'] for el in scenario['commands']])
 
     def add_scenarios(self, *args: dict):
         for el in args:
