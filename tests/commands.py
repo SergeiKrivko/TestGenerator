@@ -1,6 +1,7 @@
 import os
 from subprocess import run
 import subprocess
+from time import sleep
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -92,6 +93,13 @@ class CommandManager:
         while os.path.isfile(self.sm.test_in_file_path('neg', i)):
             count += 1
         return count
+
+    @staticmethod
+    def after_second(func, time: int | float = 1):
+        looper = Looper(lambda: sleep(time))
+        looper.finished.connect(func)
+        looper.start()
+        return looper
 
     @staticmethod
     def read_file(path, default=''):

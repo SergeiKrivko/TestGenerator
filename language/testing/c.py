@@ -83,9 +83,9 @@ def c_collect_coverage(path, sm, cm):
     return count / total_count * 100
 
 
-def convert_make(sm, name, files: dict[str]):
+def convert_make(sm, data: dict):
     c_files = []
-    for key, item in files.items():
+    for key, item in data['files'].items():
         if item:
             c_files.append(key)
     o_files = [el[:-2] + '.o' for el in c_files]
@@ -96,8 +96,8 @@ def convert_make(sm, name, files: dict[str]):
         compiler = sm.get_smart('gcc', 'gcc')
     compiler_keys = sm.get_smart('c_compiler_keys', '')
 
-    res = [MakeCommand(name, o_files, f"{compiler} {compiler_keys} --coverage -g {' '.join(o_files)} -o {name} "
-                                      f"{'-lm' if sm.get_smart('-lm', False) else ''}")]
+    res = [MakeCommand(data['name'], o_files, f"{compiler} --coverage -g {' '.join(o_files)} -o {data['name']} "
+                                              f"{data['keys']}")]
     for c_file, o_file in zip(c_files, o_files):
         res.append(MakeCommand(o_file, c_file, f"{compiler} {compiler_keys} --coverage -g -c {c_file} -o {o_file}"))
     return res

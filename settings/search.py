@@ -23,11 +23,12 @@ class Searcher(QThread):
                 'gcc.exe': None,
                 'gcov.exe': None,
                 'python.exe': None,
-                'coverage.exe': None})
+                'coverage.exe': None
+            })
         else:
-            self.res = {
-                'gcc.exe': ['gcc'],
-                'gcov.exe': ['gcov'],
-                'python.exe': ['python3'],
-                'coverage.exe': ['coverage']
-            }
+            self.res = find('/', {
+                'gcc.exe': None,
+                'gcov.exe': None,
+                'python.exe': None,
+                'coverage.exe': None
+            })

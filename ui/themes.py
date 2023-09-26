@@ -4,7 +4,7 @@ import shutil
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget
 import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
@@ -701,6 +701,8 @@ class ThemeManager:
             widget.setStyleSheet(self.base_css(palette, border, border_radius))
         elif isinstance(widget, QTextEdit):
             widget.setStyleSheet(self.text_edit_css(palette))
+        elif isinstance(widget, QTreeWidget):
+            widget.setStyleSheet(self.tree_widget_css(palette, border, border_radius))
         elif isinstance(widget, QScrollArea):
             widget.setStyleSheet(self.scroll_area_css(palette, border))
         elif isinstance(widget, Button):

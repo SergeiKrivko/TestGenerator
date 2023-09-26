@@ -213,8 +213,10 @@ class SettingsWindow(QDialog):
     @staticmethod
     def c_settings():
         return SwitchBox(lambda: os.name == 'posix', {True: [
+            ProgramEdit("Компилятор:", 'gcc', 'gcc'),
             LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
             CheckBox("Ключ -lm", True, key='-lm'),
+            ProgramEdit("Coverage:", 'gcov', 'gcov'),
         ], False: CheckBox("Использовать WSL", False, key="C_wsl", children={True: [
             LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
             CheckBox("Ключ -lm", True, key='-lm'),

@@ -593,12 +593,18 @@ class ProgramEdit(_Widget):
         layout.addWidget(self.combo_box)
         self.combo_box.currentTextChanged.connect(self._on_index_changed)
 
+        self.line_edit = QLineEdit()
+        self.line_edit.hide()
+        self.line_edit.returnPressed.connect(self._on_return_pressed)
+        layout.addWidget(self.line_edit)
+
         self.button_update = Button(None, 'update')
         layout.addWidget(self.button_update)
         self.button_update.setFixedSize(24, 22)
 
         self.button_add = Button(None, 'plus')
         layout.addWidget(self.button_add)
+        self.button_add.clicked.connect(self._on_plus_clicked)
         self.button_add.setFixedSize(24, 22)
 
     def set_sm(self, sm):
@@ -606,10 +612,7 @@ class ProgramEdit(_Widget):
 
         self.button_update.clicked.connect(self._sm.start_search)
         self._sm.searching_complete.connect(self.update_items)
-        if os.name != 'nt':
-            self.setDisabled(True)
-        else:
-            self.update_items()
+        self.update_items()
 
     def set_items(self, items: list, delete_current=False):
         text = self.combo_box.currentText()
@@ -617,6 +620,8 @@ class ProgramEdit(_Widget):
             items.append(text)
         else:
             text = self._get()
+            if text not in items:
+                items.append(text)
         self._items = items
         self.combo_box.clear()
         self.combo_box.addItems(items)
@@ -625,6 +630,24 @@ class ProgramEdit(_Widget):
     def add_item(self, item: str):
         self._items.append(item)
         self.combo_box.addItem(item, None)
+
+    def _on_plus_clicked(self):
+        self.combo_box.hide()
+        self.line_edit.show()
+        self.line_edit.setText(self.combo_box.currentText())
+        self.line_edit.selectAll()
+        self.line_edit.setFocus()
+
+    def _on_return_pressed(self):
+        if text := self.line_edit.text().strip():
+            self.combo_box.addItems([text])
+            self.combo_box.setCurrentText(text)
+        self.line_edit.hide()
+        self.combo_box.show()
+
+    def _on_editing_finished(self):
+        self.line_edit.hide()
+        self.combo_box.show()
 
     def update_items(self, forced=True):
         self.set_items(self._sm.programs.get(self._file, []), delete_current=forced)
@@ -641,6 +664,7 @@ class ProgramEdit(_Widget):
         self._tm.auto_css(self.combo_box)
         self._tm.auto_css(self.button_add)
         self._tm.auto_css(self.button_update)
+        self._tm.auto_css(self.line_edit)
         if self.label:
             self._tm.auto_css(self.label)
 
