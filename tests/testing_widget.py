@@ -573,7 +573,8 @@ class TestingLooper(QThread):
         test.results['Exit code'] = code_res
 
         for j, file in enumerate(test.get('out_files', [])):
-            path = "" if self.sm.get('func_tests_in_project') else f"{self.sm.app_data_dir}/temp_files/"
+            path = self.sm.get('temp_files_dir', '.') + '/' if self.sm.get('func_tests_in_project') else \
+                f"{self.sm.app_data_dir}/temp_files/"
             if file.get('type', 'txt') == 'txt':
                 text = CommandManager.read_file(f"{path}temp_{j + 1}.txt", '')
                 test.results[f"out_file_{j + 1}.txt"] = self.comparator(test, file['text'], text)

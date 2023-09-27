@@ -26,7 +26,7 @@ class MakeConverter:
             self.add_scenario(el)
 
     def _convert(self):
-        with open(f"{self.dst_path}/makefile", 'w', encoding='utf-8') as f:
+        with open(f"{self.dst_path}/makefile2.txt", 'w', encoding='utf-8') as f:
             for command in self.commands.values():
                 f.write(f"{command.name}: {' '.join(command.dependencies)}\n\t")
                 f.write('\n\t'.join(command.commands))

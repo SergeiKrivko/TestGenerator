@@ -180,7 +180,8 @@ class MacrosConverter(QThread):
             if data.get('args', ''):
                 self.convert_args(data.get('args', ''),
                                   self.sm.test_args_path(tests_type, index, lab=self.lab, project=self.project),
-                                  tests_type, index, in_files, out_files, '.', self.line_sep)
+                                  tests_type, index, in_files, out_files, self.sm.get('temp_files_dir', '.'),
+                                  self.line_sep)
                 self.add_file(self.sm.test_args_path(tests_type, index, lab=self.lab, project=self.project))
 
     def close(self):
