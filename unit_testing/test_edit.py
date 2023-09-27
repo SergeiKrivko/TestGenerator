@@ -1,13 +1,15 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QScrollArea
 
+from code_tab.syntax_highlighter import CodeEditor
 from tests.commands import CommandManager
-from unit_testing.unit_test import UnitTest
+from unit_testing.unit_test import UnitTest, UnitTestSuite
 
 
 class UnitTestEdit(QScrollArea):
-    def __init__(self, tm):
+    def __init__(self, sm, tm):
         super().__init__()
+        self._sm = sm
         self._tm = tm
         self._labels = []
         self._test = None
@@ -47,7 +49,7 @@ class UnitTestEdit(QScrollArea):
         self._labels.append(label)
         main_layout.addWidget(label)
 
-        self._in_edit = QTextEdit()
+        self._in_edit = CodeEditor(self._sm, self._tm, language='C')
         self._in_edit.textChanged.connect(self._resize_code_edits)
         main_layout.addWidget(self._in_edit)
 
@@ -55,7 +57,7 @@ class UnitTestEdit(QScrollArea):
         self._labels.append(label)
         main_layout.addWidget(label)
 
-        self._run_edit = QTextEdit()
+        self._run_edit = CodeEditor(self._sm, self._tm, language='C')
         self._run_edit.textChanged.connect(self._resize_code_edits)
         main_layout.addWidget(self._run_edit)
 
@@ -63,23 +65,31 @@ class UnitTestEdit(QScrollArea):
         self._labels.append(label)
         main_layout.addWidget(label)
 
-        self._out_edit = QTextEdit()
+        self._out_edit = CodeEditor(self._sm, self._tm, language='C')
         self._out_edit.textChanged.connect(self._resize_code_edits)
         main_layout.addWidget(self._out_edit)
-        self._looper = None
 
+        label = QLabel("Результат")
+        self._labels.append(label)
+        main_layout.addWidget(label)
+
+        self._result_field = QLineEdit()
+        self._result_field.setReadOnly(True)
+        main_layout.addWidget(self._result_field)
+
+        self._looper = None
         main_layout.addWidget(QWidget(), 100)
 
     def open_test(self, test: UnitTest | None):
         self.store_test()
         self._test = test
         if isinstance(self._test, UnitTest):
-            self._test.load()
             self._name_edit.setText(self._test.get('name', ''))
             self._desc_edit.setText(self._test.get('desc', ''))
             self._in_edit.setText(self._test.get('in_code', ''))
             self._run_edit.setText(self._test.get('run_code', ''))
             self._out_edit.setText(self._test.get('out_code', ''))
+            self._result_field.setText(self._test.get('test_res', ''))
         else:
             self._name_edit.setText("")
             self._desc_edit.setText("")
@@ -90,23 +100,24 @@ class UnitTestEdit(QScrollArea):
 
     def _resize_code_edits(self):
         for el in [self._in_edit, self._run_edit, self._out_edit]:
-            el.setFixedHeight(20)
-            el.setFixedHeight(20 + el.verticalScrollBar().maximum())
+            el.setFixedHeight(el.lines() * el.textHeight(0))
 
     def store_test(self):
         if not isinstance(self._test, UnitTest):
             return
         self._test['name'] = self._name_edit.text()
         self._test['desc'] = self._desc_edit.text()
-        self._test['in_code'] = self._in_edit.toPlainText()
-        self._test['run_code'] = self._run_edit.toPlainText()
-        self._test['out_code'] = self._out_edit.toPlainText()
-        self._test.store()
+        self._test['in_code'] = self._in_edit.text()
+        self._test['run_code'] = self._run_edit.text()
+        self._test['out_code'] = self._out_edit.text()
+        # self._test.store()
 
     def set_theme(self):
         self._tm.auto_css(self, palette='Bg', border=False)
-        for el in [self._name_edit, self._desc_edit, self._in_edit, self._run_edit, self._out_edit]:
+        for el in [self._name_edit, self._desc_edit, self._result_field]:
             self._tm.auto_css(el)
+        for el in [self._in_edit, self._run_edit, self._out_edit]:
+            el.set_theme()
         self._in_edit.setFont(self._tm.code_font)
         self._run_edit.setFont(self._tm.code_font)
         self._out_edit.setFont(self._tm.code_font)
@@ -114,11 +125,17 @@ class UnitTestEdit(QScrollArea):
             self._tm.auto_css(el)
 
 
-class TestSectionEdit(QWidget):
-    def __init__(self, tm):
+class TestSuiteEdit(QScrollArea):
+    def __init__(self, sm, tm):
         super().__init__()
-        self.tm = tm
+        self._sm = sm
+        self._tm = tm
         self._labels = []
+        self._suite = None
+
+        main_widget = QWidget()
+        self.setWidget(main_widget)
+        self.setWidgetResizable(True)
 
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignTop)
@@ -134,3 +151,42 @@ class TestSectionEdit(QWidget):
 
         self._name_edit = QLineEdit()
         name_layout.addWidget(self._name_edit)
+
+        label = QLabel("Код")
+        self._labels.append(label)
+        main_layout.addWidget(label)
+
+        self._code_edit = CodeEditor(self._sm, self._tm, language='C')
+        self._code_edit.textChanged.connect(self._resize_code_edits)
+        main_layout.addWidget(self._code_edit)
+
+        main_layout.addWidget(QWidget(), 100)
+
+    def open_suite(self, suite: UnitTestSuite | None):
+        self.store_suite()
+        self._suite = suite
+        if isinstance(self._suite, UnitTestSuite):
+            self._name_edit.setText(self._suite.name())
+            self._code_edit.setText(self._suite.code)
+        else:
+            self._name_edit.setText("")
+            self._code_edit.setText("")
+        self._looper = CommandManager.after_second(self._resize_code_edits, 0.1)
+
+    def store_suite(self):
+        if not isinstance(self._suite, UnitTestSuite):
+            return
+        self._suite.set_name(self._name_edit.text())
+        self._suite.code = self._code_edit.text()
+
+    def _resize_code_edits(self):
+        for el in [self._code_edit]:
+            el.setFixedHeight(el.lines() * el.textHeight(0))
+
+    def set_theme(self):
+        self._tm.auto_css(self, palette='Bg', border=False)
+        for el in self._labels:
+            self._tm.auto_css(el)
+        for el in [self._name_edit]:
+            self._tm.auto_css(el)
+        self._code_edit.set_theme()

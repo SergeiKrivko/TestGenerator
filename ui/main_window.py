@@ -103,6 +103,7 @@ class MainWindow(QMainWindow):
         else:
             self.side_panel.tabs['projects'].open_project(forced=True)
 
+        self.sm.finish_change_task()
         self.show_tab(MainMenu.TAB_CODE)
 
     def set_theme(self):

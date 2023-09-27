@@ -53,11 +53,13 @@ class LabWidget(QWidget):
 
         self.combo_box = QComboBox()
         self.combo_box.setFixedSize(200, 24)
+        self.combo_box.hide()
         self.combo_box.currentIndexChanged.connect(self.subproject_changed)
         main_layout.addWidget(self.combo_box)
 
         self.button_plus = Button(self.tm, 'plus', css='Menu')
         self.button_plus.setFixedSize(24, 24)
+        self.button_plus.hide()
         self.button_plus.clicked.connect(self.new_subproject)
         main_layout.addWidget(self.button_plus)
 

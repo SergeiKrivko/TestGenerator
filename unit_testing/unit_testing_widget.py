@@ -13,7 +13,7 @@ from settings.settings_manager import SettingsManager
 from tests.commands import CommandManager
 from ui.button import Button
 from unit_testing.check_converter import CheckConverter
-from unit_testing.test_edit import UnitTestEdit
+from unit_testing.test_edit import UnitTestEdit, TestSuiteEdit
 from unit_testing.unit_test import UnitTest, UnitTestSuite
 
 BUTTONS_MAX_WIDTH = 40
@@ -25,6 +25,8 @@ class UnitTestingWidget(QWidget):
         self.sm = sm
         self.cm = cm
         self.tm = tm
+
+        super().hide()
 
         main_layout = QHBoxLayout()
         self.setLayout(main_layout)
@@ -88,8 +90,13 @@ class UnitTestingWidget(QWidget):
         right_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(right_layout, 2)
 
-        self._test_edit = UnitTestEdit(self.tm)
+        self._test_edit = UnitTestEdit(self.sm, self.tm)
+        self._test_edit.hide()
         right_layout.addWidget(self._test_edit)
+
+        self._test_suite_edit = TestSuiteEdit(self.sm, self.tm)
+        self._test_suite_edit.hide()
+        right_layout.addWidget(self._test_suite_edit)
 
         self.data_dir = ""
         self.sm.startChangeTask.connect(self.store_task)
@@ -134,9 +141,11 @@ class UnitTestingWidget(QWidget):
                 items[i].test['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
                 items[i].test['test_res'] = ':'.join(lst[6:])
                 items[i].set_theme()
+                i += 1
 
     def store_task(self):
         self._test_edit.store_test()
+        self._test_suite_edit.store_suite()
         if self.scenario_box.current_scenario() is not None:
             self.sm.set_task('unit_test_build', self.scenario_box.current_scenario())
         if not self._tree_widget.topLevelItemCount():
@@ -149,6 +158,7 @@ class UnitTestingWidget(QWidget):
             item = self._tree_widget.topLevelItem(i)
             if not isinstance(item, TreeModuleItem):
                 continue
+            item.store()
             module = converter.add_module(item.name())
             item.to_converter(module)
         converter.convert()
@@ -156,8 +166,15 @@ class UnitTestingWidget(QWidget):
     def _on_test_selected(self):
         item = self._tree_widget.currentItem()
         if isinstance(item, TreeItem):
+            self._test_suite_edit.hide()
+            self._test_edit.show()
             self._test_edit.open_test(item.test)
+        elif isinstance(item, TreeSectionItem):
+            self._test_edit.hide()
+            self._test_suite_edit.show()
+            self._test_suite_edit.open_suite(item.suite())
         else:
+            self._test_edit.hide()
             self._test_edit.open_test(None)
 
     def delete_item(self):
@@ -203,6 +220,7 @@ class UnitTestingWidget(QWidget):
                 continue
             item.set_theme()
         self._test_edit.set_theme()
+        self._test_suite_edit.set_theme()
 
 
 class TreeModuleItem(QTreeWidgetItem):
@@ -260,7 +278,7 @@ class TreeModuleItem(QTreeWidgetItem):
 
     def to_converter(self, module):
         for i in range(self.childCount()):
-            suite = module.add_suite(self.child(i).name())
+            suite = module.add_suite(self.child(i).suite())
             self.child(i).to_converter(suite)
 
     def add_section(self, after=None):
@@ -310,6 +328,9 @@ class TreeSectionItem(QTreeWidgetItem):
                 self._files[el] = item
                 self.addChild(item)
 
+    def suite(self):
+        return self._suite
+
     def name(self):
         return self._suite.name()
 
@@ -328,19 +349,22 @@ class TreeSectionItem(QTreeWidgetItem):
                 return True
 
     def store(self):
+        try:
+            shutil.rmtree(self._suite.path())
+        except FileNotFoundError:
+            pass
         if not self.childCount():
             return
+        os.makedirs(self._suite.path(), exist_ok=True)
+        self._suite.store()
         for i in range(self.childCount()):
             item = self.child(i)
             if not isinstance(item, TreeItem):
                 continue
-            item.test.store()
+            # item.test.store()
             path = os.path.abspath(f"{self._suite.path()}/{i}.json")
-            if item.test.path() != path:
-                if path in self._files:
-                    self._files[os.path.basename(path)].test.rename_file(self._create_temp_file())
-                    self._files.pop(os.path.basename(path))
-                item.test.rename_file(path)
+            item.test.set_path(path)
+            item.test.store()
 
     def add_item(self, after=None):
         item = TreeItem(self._tm, UnitTest(self._create_temp_file()))
@@ -374,6 +398,7 @@ class TreeItem(QTreeWidgetItem):
         super().__init__()
         self._tm = tm
         self.test = test
+        self.test.load()
         self.setText(0, self.test.get('desc', ''))
         if not self.text(0).strip():
             self.setText(0, self.test.get('name', '-'))

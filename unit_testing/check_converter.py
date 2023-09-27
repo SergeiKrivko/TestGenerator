@@ -1,6 +1,6 @@
 import os.path
 
-from unit_testing.unit_test import UnitTest
+from unit_testing.unit_test import UnitTest, UnitTestSuite
 
 
 class CheckConverter:
@@ -27,7 +27,7 @@ class CheckConverter:
 
     def _write_main(self, modules, suits):
         with open(f"{self._data_path}/check_main.c", 'w', encoding='utf-8') as file:
-            file.write(f"#include <check.h>\n#include <stdlib.h>\n")
+            file.write(f"#include <check.h>\n#include <stdlib.h>\n\n")
             for el in self._headers:
                 file.write(el)
             file.write("\ntypedef Suite *(*suite_array_t)(void);\n\n")
@@ -54,9 +54,9 @@ class _Module:
         self._path_h = f"{path}/check_{self._name[:-2]}.h"
         self._suits = dict()
 
-    def add_suite(self, name):
-        s = _Suite(name)
-        self._suits[name] = s
+    def add_suite(self, suite: UnitTestSuite):
+        s = _Suite(suite.name(), suite.code)
+        self._suits[suite.name()] = s
         return s
 
     def convert(self, headers):
@@ -71,8 +71,9 @@ class _Module:
 
 
 class _Suite:
-    def __init__(self, name: str):
+    def __init__(self, name: str, code=''):
         self._name = name
+        self._code = code
         self._tests = []
 
     def _convert_test(self, file, index):
@@ -89,6 +90,8 @@ class _Suite:
 END_TEST\n\n""")
 
     def convert(self, file, headers):
+        file.write(self._code)
+        file.write('\n\n')
         for i in range(len(self._tests)):
             self._convert_test(file, i)
 

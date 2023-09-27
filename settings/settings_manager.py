@@ -81,6 +81,8 @@ class SettingsManager(QObject):
             self.current_project.remove(key)
 
     def set_project(self, project):
+        if project == self.project:
+            return
         self.start_change_task()
 
         if project is None or project not in self.projects:

@@ -44,10 +44,13 @@ class UnitTest:
         os.makedirs(os.path.split(self._path)[0], exist_ok=True)
         with open(self._path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._data))
-        self.unload(forced)
+        # self.unload(forced)
 
     def change_dir(self, new_path):
         self._path = os.path.join(new_path + os.path.basename(self._path))
+
+    def set_path(self, new_path):
+        self._path = new_path
 
     def unload(self, forced=False):
         if self._data is None:
@@ -60,21 +63,21 @@ class UnitTest:
             self._data = None
 
     def __getitem__(self, item):
-        self.load()
+        # self.load()
         res = self._data[item]
-        self.unload()
+        # self.unload()
         return res
 
     def get(self, key, default):
-        self.load()
+        # self.load()
         res = self._data.get(key, default)
-        self.unload()
+        # self.unload()
         return res
 
     def __setitem__(self, key, value):
-        self.load()
+        # self.load()
         self._data[key] = value
-        self.store()
+        # self.store()
 
 
 class UnitTestSuite:
@@ -83,9 +86,18 @@ class UnitTestSuite:
         self._data_dir = data_dir
         self._module = module
         self._name = name
+        self.code = ''
 
         self._path = ''
         self._update_path()
+        self.load_code()
+
+    def load_code(self):
+        try:
+            with open(f"{self._path}/code.txt", encoding='utf-8') as f:
+                self.code = f.read()
+        except FileNotFoundError:
+            self.code = ''
 
     def _update_path(self):
         old_path = self._path
@@ -97,6 +109,11 @@ class UnitTestSuite:
 
     def path(self):
         return self._path
+
+    def store(self):
+        print(f"{self._path}/code.txt")
+        with open(f"{self._path}/code.txt", 'w', encoding='utf-8') as f:
+            f.write(self.code)
 
     def set_name(self, name):
         self._name = name
