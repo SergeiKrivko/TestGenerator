@@ -85,10 +85,13 @@ def c_collect_coverage(path, sm, cm):
 
 def convert_make(sm, data: dict):
     c_files = []
-    for key, item in data['files'].items():
-        if item:
+    h_dirs = set()
+    for key in data['files']:
+        if key.endswith('.c'):
             c_files.append(key)
-    o_files = [el[:-2] + '.o' for el in c_files]
+        else:
+            h_dirs.add(os.path.split(key)[0])
+    o_files = [f"{sm.get('temp_files_dir', '')}/{os.path.basename(el)[:-2]}.o" for el in c_files]
 
     if os.name == 'nt' and sm.get_smart("C_wsl", False):
         compiler = "wsl -e gcc"
@@ -99,5 +102,7 @@ def convert_make(sm, data: dict):
     res = [MakeCommand(data['name'], o_files, f"{compiler} --coverage -g {' '.join(o_files)} -o {data['name']} "
                                               f"{data['keys']}")]
     for c_file, o_file in zip(c_files, o_files):
-        res.append(MakeCommand(o_file, c_file, f"{compiler} {compiler_keys} --coverage -g -c {c_file} -o {o_file}"))
+        res.append(MakeCommand(
+            o_file, c_file, f"{compiler} {compiler_keys} {' '.join(map(lambda s: '-I ' + s, h_dirs))} "
+                            f"--coverage -g -c {c_file} -o {o_file}"))
     return res

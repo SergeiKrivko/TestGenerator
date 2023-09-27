@@ -4,6 +4,10 @@ import shutil
 
 
 class UnitTest:
+    PASSED = 0
+    FAILED = 1
+    CHANGED = 2
+
     def __init__(self, path):
         self._path = path
         self._data = None

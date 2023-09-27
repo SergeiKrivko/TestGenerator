@@ -8,6 +8,7 @@ class CheckConverter:
         self._data_path = data_path
 
         self._modules = dict()
+        self._headers = []
 
     def add_module(self, name):
         m = _Module(name, self._data_path)
@@ -21,14 +22,14 @@ class CheckConverter:
             if item.suits():
                 modules.append(key)
                 suits.extend(item.suits())
-                item.convert()
+                item.convert(self._headers)
         self._write_main(modules, suits)
 
     def _write_main(self, modules, suits):
         with open(f"{self._data_path}/check_main.c", 'w', encoding='utf-8') as file:
-            file.write(f"#include <check.h>\n")
-            for el in modules:
-                file.write(f"#include \"check_{os.path.basename(el)[:-2]}.h\"\n")
+            file.write(f"#include <check.h>\n#include <stdlib.h>\n")
+            for el in self._headers:
+                file.write(el)
             file.write("\ntypedef Suite *(*suite_array_t)(void);\n\n")
             file.write(f"""int main(void)
 {{
@@ -58,15 +59,12 @@ class _Module:
         self._suits[name] = s
         return s
 
-    def convert(self):
-        with open(self._path, 'w', encoding='utf-8') as file, open(self._path_h, 'w', encoding='utf-8') as h_file:
-            file.write(f"#include \"check_{self._name[:-2]}.h\"\n\n")
-            h_file.write(f"#ifndef {os.path.basename(self._path_h).replace('.', '_').upper()}\n"
-                         f"#define {os.path.basename(self._path_h).replace('.', '_').upper()}\n\n"
-                         f"#include <check.h>\n#include \"inc/{self._name[:-2]}.h\"\n\n")
+    def convert(self, headers):
+        with open(self._path, 'w', encoding='utf-8') as file:
+            file.write(f"#include <check.h>\n")
+            file.write(f"#include \"{self._name[:-2]}.h\"\n\n")
             for item in self._suits.values():
-                item.convert(file, h_file)
-            h_file.write(f"\n#endif\n")
+                item.convert(file, headers)
 
     def suits(self):
         return list(self._suits.keys())
@@ -79,19 +77,22 @@ class _Suite:
 
     def _convert_test(self, file, index):
         test: UnitTest = self._tests[index]
+        in_code = '\n    '.join(test['in_code'].split('\n'))
+        run_code = '\n    '.join(test['run_code'].split('\n'))
+        out_code = '\n    '.join(test['out_code'].split('\n'))
         file.write(f"""START_TEST({test['name']})
 {{
-    {test['in_code']}
-    {test['run_code']}
-    {test['out_code']}
+    {in_code}
+    {run_code}
+    {out_code}
 }}
 END_TEST\n\n""")
 
-    def convert(self, file, h_file):
+    def convert(self, file, headers):
         for i in range(len(self._tests)):
             self._convert_test(file, i)
 
-        h_file.write(f"Suite *{self._name}_suite(void);\n")
+        headers.append(f"Suite *{self._name}_suite(void);\n")
 
         file.write(f"""Suite *{self._name}_suite(void)
 {{

@@ -1,10 +1,16 @@
 import os
 import shutil
 
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QTextEdit, QListWidgetItem, QTreeWidget, \
     QTreeWidgetItem
 
+from code_tab.compiler_errors_window import CompilerErrorWindow
+from language.build.commands_list import MakeScenarioBox
+from language.languages import languages
+from language.utils import get_files
 from settings.settings_manager import SettingsManager
+from tests.commands import CommandManager
 from ui.button import Button
 from unit_testing.check_converter import CheckConverter
 from unit_testing.test_edit import UnitTestEdit
@@ -14,7 +20,7 @@ BUTTONS_MAX_WIDTH = 40
 
 
 class UnitTestingWidget(QWidget):
-    def __init__(self, sm: SettingsManager, cm, tm):
+    def __init__(self, sm: SettingsManager, cm: CommandManager, tm):
         super().__init__()
         self.sm = sm
         self.cm = cm
@@ -26,6 +32,9 @@ class UnitTestingWidget(QWidget):
         left_layout = QVBoxLayout()
         left_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(left_layout, 1)
+
+        self.scenario_box = MakeScenarioBox(self.sm)
+        left_layout.addWidget(self.scenario_box)
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
@@ -64,6 +73,12 @@ class UnitTestingWidget(QWidget):
         self.button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         buttons_layout.addWidget(self.button_copy)
 
+        self.button_run = Button(self.tm, 'button_run', css='Bg')
+        self.button_run.setFixedHeight(22)
+        self.button_run.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.button_run.clicked.connect(self.run_tests)
+        buttons_layout.addWidget(self.button_run)
+
         self._tree_widget = QTreeWidget()
         self._tree_widget.setHeaderHidden(True)
         self._tree_widget.currentItemChanged.connect(self._on_test_selected)
@@ -81,28 +96,59 @@ class UnitTestingWidget(QWidget):
         self.sm.finishChangeTask.connect(self.open_task)
 
     def open_task(self):
+        self.scenario_box.load(self.sm.get_task('unit_test_build', ''))
         self.data_dir = f"{self.sm.data_lab_path()}/unit_tests"
         self._tree_widget.clear()
         if not os.path.isdir(self.data_dir):
             return
+        items = []
         for el in os.listdir(self.data_dir):
             if os.path.isdir(os.path.join(self.data_dir, el)):
+                items.append(el)
                 self._tree_widget.addTopLevelItem(item := TreeModuleItem(self.tm, os.path.join(self.data_dir, el)))
                 item.load()
                 item.set_theme()
+        for el in get_files(self.sm.lab_path(), '.c'):
+            name = os.path.basename(el)
+            if name not in items and not name.startswith('check_') and not name.startswith('main.'):
+                self._tree_widget.addTopLevelItem(item := TreeModuleItem(self.tm, os.path.join(self.data_dir, name)))
+                item.set_theme()
+
+    def run_tests(self):
+        self.store_task()
+        res = self.cm.run_scenarios(self.scenario_box.current_scenario())[0]
+        if res.returncode:
+            dialog = CompilerErrorWindow(res.stderr, self.tm, languages[
+                self.sm.get('language', 'C')].get('compiler_mask'))
+            dialog.exec()
+            return
+        res = self.cm.cmd_command(f"{self.sm.lab_path()}/{self.scenario_box.current_scenario()['data']['name']}",
+                                  cwd=self.sm.lab_path())
+        items = []
+        for i in range(self._tree_widget.topLevelItemCount()):
+            items.extend(self._tree_widget.topLevelItem(i).get_items())
+        i = 0
+        for line in res.stdout.split('\n'):
+            if line.count(':') >= 6:
+                lst = line.split(':')
+                items[i].test['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
+                items[i].test['test_res'] = ':'.join(lst[6:])
+                items[i].set_theme()
 
     def store_task(self):
+        self._test_edit.store_test()
+        if self.scenario_box.current_scenario() is not None:
+            self.sm.set_task('unit_test_build', self.scenario_box.current_scenario())
         if not self._tree_widget.topLevelItemCount():
             if os.path.isdir(self.data_dir):
                 shutil.rmtree(self.data_dir)
             return
 
-        converter = CheckConverter(self.sm.lab_path())
+        converter = CheckConverter(os.path.join(self.sm.lab_path(), self.sm.get('unit_tests_dir', 'unit_tests')))
         for i in range(self._tree_widget.topLevelItemCount()):
             item = self._tree_widget.topLevelItem(i)
             if not isinstance(item, TreeModuleItem):
                 continue
-            item.store()
             module = converter.add_module(item.name())
             item.to_converter(module)
         converter.convert()
@@ -142,9 +188,14 @@ class UnitTestingWidget(QWidget):
             if self._tree_widget.topLevelItem(i).add_section(selected):
                 break
 
+    def hide(self) -> None:
+        if not self.isHidden():
+            self.store_task()
+        super().hide()
+
     def set_theme(self):
-        for el in [self._tree_widget, self.button_add, self.button_delete, self.button_down,
-                   self.button_up, self.button_copy, self.button_add_dir]:
+        for el in [self._tree_widget, self.button_add, self.button_delete, self.button_down, self.scenario_box,
+                   self.button_up, self.button_copy, self.button_add_dir, self.button_run]:
             self.tm.auto_css(el)
         for i in range(self._tree_widget.topLevelItemCount()):
             item = self._tree_widget.topLevelItem(i)
@@ -173,6 +224,11 @@ class TreeModuleItem(QTreeWidgetItem):
                 self.addChild(item := TreeSectionItem(self._tm, UnitTestSuite(
                     self._data_path2, os.path.basename(self._data_path), el)))
                 item.load()
+
+    def get_items(self):
+        for i in range(self.childCount()):
+            for el in self.child(i).get_items():
+                yield el
 
     def add_item(self, after: QTreeWidgetItem):
         if isinstance(after, TreeSectionItem):
@@ -226,6 +282,7 @@ class TreeModuleItem(QTreeWidgetItem):
         return f"NewSection{i}"
 
     def set_theme(self):
+        self.setIcon(0, QIcon(self._tm.get_image('c')))
         self.setFont(0, self._tm.font_medium)
         for i in range(self.childCount()):
             self.child(i).set_theme()
@@ -296,12 +353,17 @@ class TreeSectionItem(QTreeWidgetItem):
         self.addChild(item)
         return True
 
+    def get_items(self):
+        for i in range(self.childCount()):
+            yield self.child(i)
+
     def _create_temp_file(self):
         path = f"{self._suite.path()}/temp_{self._temp_file_index}"
         self._temp_file_index += 1
         return path
 
     def set_theme(self):
+        self.setIcon(0, QIcon(self._tm.get_image('directory')))
         self.setFont(0, self._tm.font_medium)
         for i in range(self.childCount()):
             self.child(i).set_theme()
@@ -319,5 +381,12 @@ class TreeItem(QTreeWidgetItem):
 
     def set_theme(self):
         self.setFont(0, self._tm.font_medium)
+        match self.test.get('status', UnitTest.CHANGED):
+            case UnitTest.PASSED:
+                self.setIcon(0, QIcon(self._tm.get_image('passed', color=self._tm['TestPassed'].name())))
+            case UnitTest.FAILED:
+                self.setIcon(0, QIcon(self._tm.get_image('failed', color=self._tm['TestFailed'].name())))
+            case UnitTest.CHANGED:
+                self.setIcon(0, QIcon(self._tm.get_image('running', color=self._tm['TestInProgress'].name())))
 
 

@@ -172,6 +172,8 @@ class MakeScenarioBox(QComboBox):
         self.setMinimumWidth(150)
 
     def _load_make(self):
+        self._make_commands.clear()
+        self.clear()
         data_dir = f"{self._sm.data_lab_path()}/scenarios/make"
         for el in os.listdir(data_dir):
             if el.endswith('.json'):
@@ -189,7 +191,10 @@ class MakeScenarioBox(QComboBox):
                     pass
 
     def load_data(self):
-        self._load_make()
+        try:
+            self._load_make()
+        except FileNotFoundError:
+            pass
 
     def load(self, data: dict | None):
         self.load_data()
@@ -199,6 +204,8 @@ class MakeScenarioBox(QComboBox):
             self.setCurrentText(data['data']['name'])
 
     def current_scenario(self) -> dict | None:
+        if self.currentText() not in self._make_commands:
+            return None
         return {'type': CommandsList.TYPE_MAKE, 'data': self._make_commands[self.currentText()]}
 
 

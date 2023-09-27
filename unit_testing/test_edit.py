@@ -68,6 +68,8 @@ class UnitTestEdit(QScrollArea):
         main_layout.addWidget(self._out_edit)
         self._looper = None
 
+        main_layout.addWidget(QWidget(), 100)
+
     def open_test(self, test: UnitTest | None):
         self.store_test()
         self._test = test

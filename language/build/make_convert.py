@@ -14,7 +14,8 @@ class MakeConverter:
         if scenario['type'] == 0:
             if 'to_make' in languages[scenario['language']]:
                 for el in languages[scenario['language']]['to_make'](self.sm, scenario):
-                    self.commands[el.name] = el
+                    if el.name not in self.commands:
+                        self.commands[el.name] = el
         elif scenario['type'] == 1:
             self.commands[scenario['name']] = MakeCommand(scenario['name'],
                                                           [el['data']['name'] for el in scenario['dependencies']],

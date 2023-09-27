@@ -95,6 +95,12 @@ class SettingsWindow(QDialog):
                 LineEdit("Информация о тестах", "func_tests/readme.md",
                          key='readme_pattern', width=500, check_func=SettingsWindow.check_path)
             ]}),
+            LineEdit("Папка с модульными тестами", "unit_tests",
+                     key='unit_tests_dir', width=500, check_func=SettingsWindow.check_path),
+            LineEdit("Приложение для модульных тестов", "unit_tests.exe",
+                     key='unit_tests_app', width=500, check_func=SettingsWindow.check_path),
+            LineEdit("Папка с временными файлами", "out",
+                     key='temp_files_dir', width=500, check_func=SettingsWindow.check_path),
             key_type=KEY_LOCAL
         )
         self.project_struct_widget.hide()

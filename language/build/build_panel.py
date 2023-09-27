@@ -213,19 +213,17 @@ class ScenarioEdit(QWidget):
 
     def update_tree(self):
         self._tree_widget.clear()
-        for el in get_files(lab_dir := self._sm.lab_path(), languages[self._scenario.language]['files'][0]):
+        for el in get_files(lab_dir := self._sm.lab_path(), languages[self._scenario.language]['files']):
             el = os.path.relpath(el, lab_dir).replace('\\', '/')
             lst = el.split('/')[:-1]
             tree_elem = TreeElement(self._tm, el)
             self._tree_widget.add_item(tree_elem, key=lst)
             self._connect_tree_elem(tree_elem, el)
             if el in self._scenario.files:
-                tree_elem.set_checked(self._scenario.files[el])
-            else:
-                self._scenario.files[el] = False
+                tree_elem.set_checked(True)
             for key in self._scenario.files:
                 if not os.path.isfile(f"{lab_dir}/{el}"):
-                    self._scenario.files.pop(key)
+                    self._scenario.files.remove(key)
         self._tree_widget.set_theme()
 
     def _connect_tree_elem(self, elem: 'TreeElement', path):
@@ -272,7 +270,7 @@ class Scenario(QListWidgetItem):
         self.language = 'C'
         self.compiler = ''
         self.keys = ''
-        self.files = dict()
+        self.files = set()
 
         self.dependencies = []
         self.commands = []
@@ -300,7 +298,10 @@ class Scenario(QListWidgetItem):
         self.keys = keys
 
     def set_file_status(self, file, status):
-        self.files[file] = status
+        if status:
+            self.files.add(file)
+        else:
+            self.files.remove(file)
 
     def load(self):
         try:
@@ -318,7 +319,7 @@ class Scenario(QListWidgetItem):
         match self.type:
             case Scenario.TYPE_COMPILE:
                 self.language = data.get('language', 'C')
-                self.files = data.get('files')
+                self.files = set(data.get('files'))
                 self.compiler = data.get('compiler', 'C')
                 self.keys = data.get('keys')
             case Scenario.TYPE_MAKE:
@@ -330,7 +331,7 @@ class Scenario(QListWidgetItem):
         match self.type:
             case Scenario.TYPE_COMPILE:
                 data['language'] = self.language
-                data['files'] = self.files
+                data['files'] = list(self.files)
                 data['compiler'] = self.compiler
                 data['keys'] = self.keys
             case Scenario.TYPE_MAKE:
