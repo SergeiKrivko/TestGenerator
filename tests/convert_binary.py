@@ -103,7 +103,8 @@ class BinaryConverter:
 
             if line.startswith('#define '):
                 words = line.split()
-                defines.append((words[1], words[2]))
+                if len(words) >= 3:
+                    defines.append((words[1], words[2]))
             elif line.startswith('#encoding '):
                 self.encoding = line.split()[1]
             elif line.startswith('#'):
@@ -130,7 +131,7 @@ class BinaryConverter:
             except BinaryConverterError as ex:
                 raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
 
-            if n != (found := len(line.split()) - 1):
+            if n != (found := len(self.split_line(line)) - 1):
                 raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT, i, line, expected=n, found=found)
 
             try:
@@ -139,7 +140,7 @@ class BinaryConverter:
                 raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
 
     def convert_line(self, line: str):
-        lst = line.split()
+        lst = BinaryConverter.split_line(line)
         numbers = []
         i = 1
         for count, literal in self.parse_mask(lst[0]):
@@ -168,6 +169,39 @@ class BinaryConverter:
         if i != len(lst):
             raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT)
         return struct.pack(lst[0], *numbers)
+
+    @staticmethod
+    def replace_line(line):
+        line = line.replace('\\\\', '{\\\\}')
+        if line.startswith('"'):
+            line = line[1:]
+        if line.endswith('"') and not line.endswith('\\"'):
+            line = line[:-1]
+        line = line.replace('\\t', '\t').replace('\\r', '\r').replace('\\n', '\n').replace('\\0', '\0').replace(
+            '\\"', '\"').replace('\\b', '\b').replace('{\\\\}', '\\')
+        return line
+
+    @staticmethod
+    def split_line(line: str, replace=True):
+        res = []
+        elem = []
+        for el in line.split(' '):
+            if elem:
+                elem.append(el)
+                if el.endswith('"') and (len(el) <= 1 or (el[-2] != '\\' or len(el) >= 2 and (el[-3] == '\\'))):
+                    res.append(' '.join(elem))
+                    elem = []
+            elif el.strip():
+                if el.startswith('"'):
+                    elem.append(el)
+                else:
+                    res.append(el)
+        if elem:
+            res.append(' '.join(elem))
+        if replace:
+            for i in range(len(res)):
+                res[i] = BinaryConverter.replace_line(res[i])
+        return res
 
     @staticmethod
     def parse_mask(mask: str):
