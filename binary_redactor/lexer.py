@@ -70,7 +70,7 @@ class LexerBin(QsciLexerCustom):
             else:
                 comment_len = 0
 
-            split_line = line.split()
+            split_line = BinaryConverter.split_line(line, False)
             if line.startswith('#'):
                 self.setStyling(len(line), LexerBin.PreProcessor)
             elif line.strip():
@@ -97,11 +97,19 @@ class LexerBin(QsciLexerCustom):
                     line = line.lstrip(split_line[i])
                     try:
                         value_type, minimum, maximum = expected_values[i - 1]
-                        if value_type == str and len(split_line[i].encode(self.encoder.encoding)) > maximum:
+                        if value_type == str and len(BinaryConverter.replace_line(
+                                split_line[i]).encode(self.encoder.encoding)) > maximum:
                             raise ValueError
                         elif value_type != str and not(minimum <= value_type(split_line[i]) <= maximum):
                             raise ValueError
-                        self.setStyling(len(split_line[i]), LexerBin.Value)
+                        j = 0
+                        while j < len(split_line[i]):
+                            if split_line[i][j] == '\\':
+                                self.setStyling(2, LexerBin.Mask)
+                                j += 2
+                            else:
+                                self.setStyling(1, LexerBin.Value)
+                                j += 1
                     except ValueError:
                         self.setStyling(len(split_line[i]), LexerBin.InvalidValue)
                     except IndexError:

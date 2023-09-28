@@ -393,9 +393,10 @@ class TestsWidget(QWidget):
 
             os.makedirs(os.path.split(self.sm.readme_path())[0], exist_ok=True)
             readme = open(self.sm.readme_path(), 'w', encoding='utf-8', newline=self.sm.line_sep)
-            readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
-                         f"{self.sm.get('task'):0>2}\n\n"
-                         f"## Входные данные\n{self.test_list_widget.in_data_edit.text()}\n\n"
+            if self.sm.get('struct', 0) == 0:
+                readme.write(f"# Тесты для лабораторной работы №{self.sm.get('lab'):0>2}, задания №"
+                             f"{self.sm.get('task'):0>2}\n\n")
+            readme.write(f"## Входные данные\n{self.test_list_widget.in_data_edit.text()}\n\n"
                          f"## Выходные данные\n{self.test_list_widget.out_data_edit.text()}\n")
 
             if deep:
