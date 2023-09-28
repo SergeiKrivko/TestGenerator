@@ -10,7 +10,7 @@ from ui.button import Button
 
 
 class CommandsList(QWidget):
-    TYPE_MAKE = 0
+    TYPE_BUILD = 0
     TYPE_CMD = 1
 
     def __init__(self, sm, tm, name="", fixed_type=None):
@@ -138,7 +138,7 @@ class NewCommandDialog(QDialog):
 
     def _on_type_changed(self):
         match self._type_box.currentIndex():
-            case CommandsList.TYPE_MAKE:
+            case CommandsList.TYPE_BUILD:
                 self._line_edit.hide()
                 self._make_box.show()
             case CommandsList.TYPE_CMD:
@@ -149,7 +149,7 @@ class NewCommandDialog(QDialog):
         match self._type_box.currentIndex():
             case CommandsList.TYPE_CMD:
                 res = self._line_edit.text()
-            case CommandsList.TYPE_MAKE:
+            case CommandsList.TYPE_BUILD:
                 res = self._make_box.current_scenario()['data']
             case _:
                 raise IndexError
@@ -181,8 +181,9 @@ class MakeScenarioBox(QComboBox):
                 try:
                     with open(path, encoding='utf-8') as f:
                         data = json.loads(f.read())
-                        self._make_commands[data['name']] = data
-                        self.addItems([data['name']])
+                        name = data['name']
+                        self._make_commands[name] = name
+                        self.addItems([name])
                 except FileNotFoundError:
                     pass
                 except json.JSONDecodeError:
@@ -200,13 +201,13 @@ class MakeScenarioBox(QComboBox):
         self.load_data()
         if data is None:
             self.setCurrentText("")
-        elif 'data' in data and 'name' in data['data'] and data['data']['name'] in self._make_commands:
-            self.setCurrentText(data['data']['name'])
+        elif 'data' in data and data['data'] in self._make_commands:
+            self.setCurrentText(data['data'])
 
     def current_scenario(self) -> dict | None:
         if self.currentText() not in self._make_commands:
             return None
-        return {'type': CommandsList.TYPE_MAKE, 'data': self._make_commands[self.currentText()]}
+        return {'type': CommandsList.TYPE_BUILD, 'data': self._make_commands[self.currentText()]}
 
 
 class _ListWidgetItem(QListWidgetItem):
@@ -220,7 +221,7 @@ class _ListWidgetItem(QListWidgetItem):
             case CommandsList.TYPE_CMD:
                 self.setText(self._data)
                 self.setIcon(QIcon(self._tm.get_image('cmd')))
-            case CommandsList.TYPE_MAKE:
+            case CommandsList.TYPE_BUILD:
                 self.setText(self._data['name'])
                 self.setIcon(QIcon(self._tm.get_image('icon_build')))
 

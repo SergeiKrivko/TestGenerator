@@ -1,3 +1,4 @@
+import json
 import os
 from subprocess import run
 import subprocess
@@ -40,10 +41,17 @@ class CommandManager:
     def update_path(self):
         self.path = self.sm.lab_path()
 
-    def compile(self, coverage=False):
-        self.update_path()
+    def compile(self, data: dict | str, path: str = None, coverage=False):
+        if path is None:
+            path = self.sm.lab_path()
+        if isinstance(data, str):
+            try:
+                data = json.loads(CommandManager.read_file(
+                                f"{self.sm.data_lab_path()}/scenarios/make/{data}.json", ''))
+            except json.JSONDecodeError:
+                return False, "Invalid build data"
         return languages[self.sm.get('language', 'C')].get(
-            'compile', lambda *args: (False, 'Can\'t compile this file'))(self.path, self, self.sm, coverage)
+            'compile', lambda *args: (False, 'Can\'t compile this file'))(path, self, self.sm, data, coverage)
 
     def run_main_code(self, args='', in_data=None, file='', coverage=False):
         if in_data is not None:
@@ -80,8 +88,8 @@ class CommandManager:
             match scenario['type']:
                 case CommandsList.TYPE_CMD:
                     res.append(self.cmd_command(scenario['data'], shell=True, cwd=cwd))
-                case CommandsList.TYPE_MAKE:
-                    res.append(self.cmd_command(f"make {scenario['data']['name']}", shell=True, cwd=cwd))
+                case CommandsList.TYPE_BUILD:
+                    res.append(self.compile(scenario['data'], cwd))
         return res
 
     def test_count(self):

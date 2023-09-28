@@ -704,10 +704,12 @@ class TestingLooper(QThread):
         self.clear_after_run(test, index)
 
     def run(self):
-        command = self.sm.get_task('build', [])
-        res = self.cm.run_scenarios(command, self.path)
-        if res and res[0].returncode:
-            self.compileFailed.emit(res[0].stderr)
+        command = self.sm.get_task('build', dict()).get('data', '')
+        # res = self.cm.run_scenarios(command, self.path)
+        res, errors = self.cm.compile(command, self.path, coverage=self._coverage)
+        if not res:
+            self.compileFailed.emit(errors)
+            return
         command = self.sm.get_task('preprocessor', [])
         self.cm.run_scenarios(command, self.path)
         self.utils = self.sm.get_smart(f"{self.sm.get('language', 'C')}_utils", [])

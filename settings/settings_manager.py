@@ -83,7 +83,9 @@ class SettingsManager(QObject):
     def set_project(self, project):
         if project == self.project:
             return
+        print(1)
         self.start_change_task()
+        print(2)
 
         if project is None or project not in self.projects:
             self.project = ''
@@ -109,8 +111,6 @@ class SettingsManager(QObject):
             self.current_project.store_task()
 
     def finish_change_task(self):
-        if isinstance(self.current_project, Project):
-            self.current_project.store_task()
         self.finishChangeTask.emit()
 
     def lab_path(self, lab=None, task=None, var=None, project=None):
@@ -146,6 +146,9 @@ class SettingsManager(QObject):
 
     def __setitem__(self, key, value):
         self.set(key, value)
+
+    def temp_dir(self):
+        return f"{self.app_data_dir}/temp_files"
 
     def test_in_path(self, test_type, number, lab=(None, None, None), project=None):
         if not self.get('func_tests_in_project', True):
@@ -291,8 +294,6 @@ class Project:
             self._dict = dict()
 
     def store(self):
-        print(f'store {self.name()}')
-        self.store_task()
         if self._dict is None:
             return
         try:
@@ -349,7 +350,7 @@ class Project:
     def store_task(self):
         if self._task_settings is None:
             return
-        if len(self._task_settings) <= 3:
+        if set(self._task_settings.keys()).issubset({'in_data', 'out_data', 'in_data_list'}):
             if self.get_task('in_data') in ['', '-'] and self.get_task('out_data') in ['', '-'] and \
                     not self.get_task('in_data_list'):
                 return

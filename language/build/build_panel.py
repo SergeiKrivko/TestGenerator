@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 
 from PyQt5.QtWidgets import QTabBar, QVBoxLayout, QComboBox, QHBoxLayout, QListWidget, QListWidgetItem, QWidget, \
     QLineEdit
@@ -80,28 +81,22 @@ class BuildPanel(SidePanelWidget):
                 self._list_widget.addItem(sc)
 
     def store_task(self):
+        if os.path.isdir(self.data_dir):
+            shutil.rmtree(self.data_dir)
         if not self._list_widget.count():
             return
-        item = self._list_widget.currentItem()
-        if isinstance(item, Scenario):
-            item.store()
-        converter = MakeConverter(self.sm)
         for i in range(self._list_widget.count()):
             item = self._list_widget.item(i)
             if not isinstance(item, Scenario):
                 continue
-            path = f"{self.data_dir}/{i}.json"
-            if item.path != path:
-                if path in self._files:
-                    self._files[item.path].rename_file(self.create_temp_file())
-                item.rename_file(path)
-            with open(path, encoding='utf-8') as f:
-                converter.add_scenario(json.loads(f.read()))
-        converter.run()
-        
-    def hide(self) -> None:
-        self.store_task()
-        super().hide()
+            path = f"{self.data_dir}/{item.name}.json"
+            item.path = path
+            item.store()
+            
+    def hideEvent(self, a0) -> None:
+        if not self.isHidden():
+            self.store_task()
+        super().hideEvent(a0)
 
     def add_scenario(self):
         self._list_widget.addItem(Scenario(self.create_temp_file()))
@@ -159,57 +154,26 @@ class ScenarioEdit(QWidget):
         self._name_edit.editingFinished.connect(lambda: self._scenario.set_name(self._name_edit.text()))
         main_layout.addWidget(self._name_edit)
 
-        self._combo_box = QComboBox()
-        self._combo_box.addItems(["Сценарий сборки", "Сценарий Make"])
-        self._combo_box.currentIndexChanged.connect(self._on_scenario_type_changed)
-        main_layout.addWidget(self._combo_box)
-
-        self._compiler_edit = QLineEdit()
-        self._compiler_edit.setPlaceholderText("Компилятор")
-        self._compiler_edit.editingFinished.connect(lambda: self._scenario.set_compiler(self._compiler_edit.text()))
-        main_layout.addWidget(self._compiler_edit)
-
         self._keys_edit = QLineEdit()
         self._keys_edit.setPlaceholderText("Ключи компилятора")
         self._keys_edit.editingFinished.connect(lambda: self._scenario.set_keys(self._keys_edit.text()))
         main_layout.addWidget(self._keys_edit)
 
+        self._linker_keys_edit = QLineEdit()
+        self._linker_keys_edit.setPlaceholderText("Ключи компоновки")
+        self._linker_keys_edit.editingFinished.connect(lambda: self._scenario.set_lkeys(self._linker_keys_edit.text()))
+        main_layout.addWidget(self._linker_keys_edit)
+
         self._tree_widget = TreeWidget(self._tm, TreeWidget.CHECKABLE)
         main_layout.addWidget(self._tree_widget)
 
-        self._dependencies_edit = CommandsList(self._sm, self._tm, "Зависимости", fixed_type=CommandsList.TYPE_MAKE)
-        main_layout.addWidget(self._dependencies_edit)
-
-        self._commands_edit = CommandsList(self._sm, self._tm, "Команды", fixed_type=CommandsList.TYPE_CMD)
-        main_layout.addWidget(self._commands_edit)
-
     def load_scenario(self, scenario: 'Scenario'):
-        if isinstance(self._scenario, Scenario):
-            self.store_scenario()
         self._scenario = scenario
         if not isinstance(self._scenario, Scenario):
             return
         self._name_edit.setText(self._scenario.name)
-        self._combo_box.setCurrentIndex(self._scenario.type)
-        self._on_scenario_type_changed()
-
-    def store_scenario(self):
-        match self._scenario.type:
-            case Scenario.TYPE_MAKE:
-                self._scenario.dependencies = self._dependencies_edit.store()
-                self._scenario.commands = self._commands_edit.store()
-        self._scenario.store()
-
-    def load_compiler(self):
-        for el in [self._compiler_edit, self._keys_edit, self._tree_widget]:
-            el.show()
         self.update_tree()
-        self._compiler_edit.setText(self._scenario.compiler)
         self._keys_edit.setText(self._scenario.keys)
-
-    def load_make(self):
-        self._dependencies_edit.load(self._scenario.dependencies)
-        self._commands_edit.load(self._scenario.commands)
 
     def update_tree(self):
         self._tree_widget.clear()
@@ -229,73 +193,37 @@ class ScenarioEdit(QWidget):
     def _connect_tree_elem(self, elem: 'TreeElement', path):
         elem.stateChanged.connect(lambda flag: self._scenario.set_file_status(path, flag))
 
-    def _on_scenario_type_changed(self, index=None):
-        self._tree_widget.hide()
-        self._keys_edit.hide()
-        self._compiler_edit.hide()
-        self._dependencies_edit.hide()
-        self._commands_edit.hide()
-        if index is not None:
-            self._scenario.set_type(index)
-        match self._scenario.type:
-            case Scenario.TYPE_COMPILE:
-                self._tree_widget.show()
-                self._keys_edit.show()
-                self._compiler_edit.show()
-                self.load_compiler()
-            case Scenario.TYPE_MAKE:
-                self._dependencies_edit.show()
-                self._commands_edit.show()
-                self.load_make()
-
     def set_theme(self):
-        for el in [self._combo_box, self._name_edit, self._keys_edit, self._compiler_edit]:
+        for el in [self._name_edit, self._keys_edit, self._linker_keys_edit]:
             self._tm.auto_css(el)
         self._tree_widget.set_theme()
-        self._dependencies_edit.set_theme()
-        self._commands_edit.set_theme()
 
 
 class Scenario(QListWidgetItem):
-    TYPE_COMPILE = 0
-    TYPE_MAKE = 1
-
     def __init__(self, path):
         super().__init__()
         self.path = path
 
         self.name = '-'
-        self.type = Scenario.TYPE_COMPILE
-
         self.language = 'C'
-        self.compiler = ''
         self.keys = ''
+        self.linker_keys = ''
         self.files = set()
 
-        self.dependencies = []
-        self.commands = []
-
         self.load()
-
-    def rename_file(self, new_name):
-        os.rename(self.path, new_name)
-        self.path = new_name
 
     def set_name(self, name):
         self.name = name
         self.setText(name)
 
-    def set_type(self, new_type):
-        self.type = new_type
-
     def set_language(self, language):
         self.language = language
 
-    def set_compiler(self, compiler):
-        self.compiler = compiler
-
     def set_keys(self, keys):
         self.keys = keys
+
+    def set_lkeys(self, keys):
+        self.linker_keys = keys
 
     def set_file_status(self, file, status):
         if status:
@@ -315,28 +243,19 @@ class Scenario(QListWidgetItem):
             data = dict()
 
         self.set_name(data.get('name', ''))
-        self.type = data.get('type', Scenario.TYPE_MAKE)
-        match self.type:
-            case Scenario.TYPE_COMPILE:
-                self.language = data.get('language', 'C')
-                self.files = set(data.get('files'))
-                self.compiler = data.get('compiler', 'C')
-                self.keys = data.get('keys')
-            case Scenario.TYPE_MAKE:
-                self.dependencies = data.get('dependencies', [])
-                self.commands = data.get('commands', [])
+        self.language = data.get('language', 'C')
+        self.files = set(data.get('files', []))
+        self.keys = data.get('keys', '')
+        self.linker_keys = data.get('linker_keys', '')
 
     def store(self):
-        data = {'name': self.name, 'type': self.type}
-        match self.type:
-            case Scenario.TYPE_COMPILE:
-                data['language'] = self.language
-                data['files'] = list(self.files)
-                data['compiler'] = self.compiler
-                data['keys'] = self.keys
-            case Scenario.TYPE_MAKE:
-                data['dependencies'] = self.dependencies
-                data['commands'] = self.commands
+        data = {
+            'name': self.name,
+            'language': self.language,
+            'files': list(self.files),
+            'keys': self.keys,
+            'linker_keys': self.keys
+        }
         os.makedirs(os.path.split(self.path)[0], exist_ok=True)
         with open(self.path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(data))

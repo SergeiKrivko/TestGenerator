@@ -111,7 +111,6 @@ class UnitTestSuite:
         return self._path
 
     def store(self):
-        print(f"{self._path}/code.txt")
         with open(f"{self._path}/code.txt", 'w', encoding='utf-8') as f:
             f.write(self.code)
 

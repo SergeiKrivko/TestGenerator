@@ -180,12 +180,14 @@ class MainWindow(QMainWindow):
             if dialog.exec():
                 for process in background_process_manager.dict.values():
                     process.close()
+                self.sm.start_change_task()
                 self.side_panel.finish_work()
                 self.side_panel.tabs['projects'].remove_temp_projects()
                 super(MainWindow, self).close()
             else:
                 a0.ignore()
         else:
+            self.sm.start_change_task()
             self.side_panel.finish_work()
             self.side_panel.tabs['projects'].remove_temp_projects()
             super(MainWindow, self).close()
