@@ -2,7 +2,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QPushButton
 
-from settings.settings_manager import SettingsManager
+from backend.settings_manager import SettingsManager
 from ui.button import Button
 
 
@@ -30,6 +30,7 @@ class SidePanelWidget(QWidget):
         super().__init__()
         self.sm = sm
         self.tm = tm
+        self.side_panel_width = 300
 
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -79,6 +80,9 @@ class SidePanelWidget(QWidget):
 
     def get_button(self, key):
         return self.buttons.get(key)
+
+    def command(self, *args, **kwargs):
+        pass
 
     def finish_work(self):
         pass

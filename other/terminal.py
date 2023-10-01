@@ -10,7 +10,7 @@ class Terminal(QTextEdit):
     def __init__(self, sm, tm):
         super().__init__(None)
         self.sm = sm
-        self.sm.project_changed.connect(self.select_project)
+        self.sm.projectChanged.connect(self.select_project)
         self.tm = tm
 
         self.fixed_text = ""
@@ -18,7 +18,7 @@ class Terminal(QTextEdit):
         self.current_text = ""
         self.not_check = False
         self.current_process = ''
-        self.current_dir = self.sm.path
+        self.current_dir = os.getcwd()
         self.commands = []
         self.current_command = -1
 
@@ -163,7 +163,7 @@ class Terminal(QTextEdit):
         self.setFont(self.tm.code_font)
 
     def select_project(self):
-        self.current_dir = self.sm.path
+        self.current_dir = self.sm.project.path()
         self.process.setWorkingDirectory(self.current_dir)
         self.fixed_html = ''
         self.write_prompt()

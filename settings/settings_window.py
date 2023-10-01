@@ -4,8 +4,8 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from settings.lib_dialog import LibWidget
-from ui.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
-    KEY_SMART, SwitchBox, ProgramEdit, ListWidget
+from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
+    SwitchBox, ProgramEdit, ListWidget
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
@@ -135,7 +135,7 @@ class SettingsWindow(QDialog):
                 CheckBox("Coverage", key='coverage'),
                 SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             ]}),
-            key_type=KEY_SMART
+            key_type=KEY_LOCAL
         )
         self.project_testing_widget.hide()
         layout.addWidget(self.project_testing_widget)
