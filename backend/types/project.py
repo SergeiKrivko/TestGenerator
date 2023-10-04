@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 
 
 class Project:
@@ -107,7 +108,8 @@ class Project:
         self._data[key] = value
 
     def pop(self, key):
-        self._data.pop(key)
+        if key in self._data:
+            self._data.pop(key)
 
     def get_child(self, name):
         return self._children[name]
@@ -171,3 +173,9 @@ class Project:
         os.makedirs(self.data_path(), exist_ok=True)
         with open(os.path.join(self.data_path(), ".gitignore"), 'w', encoding='utf-8') as f:
             f.write('# Created by TestGenerator\n*\n')
+
+    def delete(self, dir=False):
+        if dir:
+            shutil.rmtree(self.path())
+        else:
+            shutil.rmtree(self.data_path())

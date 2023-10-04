@@ -87,7 +87,7 @@ class TestsWidget(MainTab):
             index = self.test_list_widget.pos_test_list.currentRow() + 1
         else:
             index = self.test_list_widget.pos_test_list.count()
-        self.bm.add_func_test(FuncTest(test_type='pos'))
+        self.bm.add_func_test(FuncTest(test_type='pos'), index)
         self.test_list_widget.pos_test_list.setCurrentRow(index)
 
     def add_neg_test(self):
@@ -95,7 +95,7 @@ class TestsWidget(MainTab):
             index = self.test_list_widget.neg_test_list.currentRow() + 1
         else:
             index = self.test_list_widget.neg_test_list.count()
-        self.bm.add_func_test(FuncTest(test_type='neg'))
+        self.bm.add_func_test(FuncTest(test_type='neg'), index)
         self.test_list_widget.neg_test_list.setCurrentRow(index)
 
     def delete_pos_test(self):
@@ -153,18 +153,22 @@ class TestsWidget(MainTab):
     def move_pos_test_up(self):
         self.tests_changed = True
         self.bm.move_func_test('pos', 'up', self.test_list_widget.pos_test_list.currentRow())
+        self.test_list_widget.move_selection('pos', 'up')
 
     def move_pos_test_down(self):
         self.tests_changed = True
         self.bm.move_func_test('pos', 'down', self.test_list_widget.pos_test_list.currentRow())
+        self.test_list_widget.move_selection('pos', 'down')
 
     def move_neg_test_up(self):
         self.tests_changed = True
         self.bm.move_func_test('neg', 'up', self.test_list_widget.neg_test_list.currentRow())
+        self.test_list_widget.move_selection('neg', 'up')
 
     def move_neg_test_down(self):
         self.tests_changed = True
         self.bm.move_func_test('neg', 'down', self.test_list_widget.neg_test_list.currentRow())
+        self.test_list_widget.move_selection('neg', 'down')
 
     def get_path(self, from_settings=False):
         self.path = self.sm.lab_path()
@@ -619,7 +623,6 @@ class TestCopyWindow(QDialog):
             return
         if key == 'Проект':
             project = self.options_widget.widgets['Проект'].currentText()
-            print(self.sm.get('lab', 1, project=project), project)
             self.options_widget.set_value('Номер лабы:', self.sm.get('lab', 1, project=project))
             self.options_widget.set_value('Номер задания:', self.sm.get('task', 1, project=project))
             self.options_widget.set_value('Номер варианта:', self.sm.get('var', 1, project=project))

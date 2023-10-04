@@ -9,9 +9,9 @@ class FuncTest:
     TERMINATED = 3
     TIMEOUT = 4
 
-    def __init__(self, path=None, name='', test_type='pos'):
+    def __init__(self, path=None, test_type='pos'):
         self._path = path
-        self._name = name
+        self._name = ''
         self._test_type = test_type
         self._data = None
 
@@ -50,6 +50,7 @@ class FuncTest:
 
     def load(self):
         if self._path is None:
+            self._data = dict()
             return
         try:
             with open(self._path, encoding='utf-8') as f:

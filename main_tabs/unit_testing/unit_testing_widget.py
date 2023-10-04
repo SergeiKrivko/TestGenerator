@@ -1,27 +1,25 @@
 import os
-import shutil
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QTreeWidget, \
     QTreeWidgetItem
 
-from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
-from side_tabs.builds.commands_list import MakeScenarioBox
-from language.languages import languages
-from language.utils import get_files
+from backend.backend_manager import BackendManager
 from backend.settings_manager import SettingsManager
+from backend.types.unit_test import UnitTest
+from backend.types.unit_tests_module import UnitTestsModule
+from backend.types.unit_tests_suite import UnitTestsSuite
 from main_tabs.tests.commands import CommandManager
+from main_tabs.unit_testing.test_edit import UnitTestEdit, TestSuiteEdit
+from side_tabs.builds.commands_list import MakeScenarioBox
 from ui.button import Button
 from ui.main_tab import MainTab
-from main_tabs.unit_testing.check_converter import CheckConverter
-from main_tabs.unit_testing.test_edit import UnitTestEdit, TestSuiteEdit
-from main_tabs.unit_testing.unit_test import UnitTest, UnitTestSuite
 
 BUTTONS_MAX_WIDTH = 40
 
 
 class UnitTestingWidget(MainTab):
-    def __init__(self, sm: SettingsManager, bm, cm: CommandManager, tm):
+    def __init__(self, sm: SettingsManager, bm: BackendManager, cm: CommandManager, tm):
         super().__init__()
         self.sm = sm
         self.bm = bm
@@ -47,7 +45,7 @@ class UnitTestingWidget(MainTab):
         self.button_add_dir = Button(self.tm, 'add_dir', css='Bg')
         self.button_add_dir.setFixedHeight(22)
         self.button_add_dir.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        self.button_add_dir.clicked.connect(self.add_section)
+        self.button_add_dir.clicked.connect(self.add_suite)
         buttons_layout.addWidget(self.button_add_dir)
 
         self.button_add = Button(self.tm, 'plus', css='Bg')
@@ -101,67 +99,17 @@ class UnitTestingWidget(MainTab):
         right_layout.addWidget(self._test_suite_edit)
 
         self.data_dir = ""
+        self.bm.addUnitTestModule.connect(self.add_module)
+        self.bm.clearUnitTests.connect(self.clear_tests)
 
-    def open_task(self):
-        self.scenario_box.load(self.sm.get_task('unit_test_build', ''))
-        self.data_dir = f"{self.sm.data_lab_path()}/unit_tests"
+    def add_module(self, module: UnitTestsModule):
+        self._tree_widget.addTopLevelItem(TreeModuleItem(self.tm, module))
+
+    def clear_tests(self):
         self._tree_widget.clear()
-        if not os.path.isdir(self.data_dir):
-            return
-        items = []
-        for el in os.listdir(self.data_dir):
-            if os.path.isdir(os.path.join(self.data_dir, el)):
-                items.append(el)
-                self._tree_widget.addTopLevelItem(item := TreeModuleItem(self.tm, os.path.join(self.data_dir, el)))
-                item.load()
-                item.set_theme()
-        for el in get_files(self.sm.lab_path(), '.c'):
-            name = os.path.basename(el)
-            if name not in items and not name.startswith('check_') and not name.startswith('main.'):
-                self._tree_widget.addTopLevelItem(item := TreeModuleItem(self.tm, os.path.join(self.data_dir, name)))
-                item.set_theme()
 
     def run_tests(self):
-        self.store_task()
-        res = self.cm.run_scenarios(self.scenario_box.current_scenario())[0]
-        if res.returncode:
-            dialog = CompilerErrorWindow(res.stderr, self.tm, languages[
-                self.sm.get('language', 'C')].get('compiler_mask'))
-            dialog.exec()
-            return
-        res = self.cm.cmd_command(f"{self.sm.lab_path()}/{self.scenario_box.current_scenario()['data']['name']}",
-                                  cwd=self.sm.lab_path())
-        items = []
-        for i in range(self._tree_widget.topLevelItemCount()):
-            items.extend(self._tree_widget.topLevelItem(i).get_items())
-        i = 0
-        for line in res.stdout.split('\n'):
-            if line.count(':') >= 6:
-                lst = line.split(':')
-                items[i].test['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
-                items[i].test['test_res'] = ':'.join(lst[6:])
-                items[i].set_theme()
-                i += 1
-
-    def store_task(self):
-        self._test_edit.store_test()
-        self._test_suite_edit.store_suite()
-        if self.scenario_box.current_scenario() is not None:
-            self.sm.set_task('unit_test_build', self.scenario_box.current_scenario())
-        if not self._tree_widget.topLevelItemCount():
-            if os.path.isdir(self.data_dir):
-                shutil.rmtree(self.data_dir)
-            return
-
-        converter = CheckConverter(os.path.join(self.sm.lab_path(), self.sm.get('unit_tests_dir', 'unit_tests')))
-        for i in range(self._tree_widget.topLevelItemCount()):
-            item = self._tree_widget.topLevelItem(i)
-            if not isinstance(item, TreeModuleItem):
-                continue
-            item.store()
-            module = converter.add_module(item.name())
-            item.to_converter(module)
-        converter.convert()
+        pass
 
     def _on_test_selected(self):
         item = self._tree_widget.currentItem()
@@ -169,10 +117,10 @@ class UnitTestingWidget(MainTab):
             self._test_suite_edit.hide()
             self._test_edit.show()
             self._test_edit.open_test(item.test)
-        elif isinstance(item, TreeSectionItem):
+        elif isinstance(item, TreeSuiteItem):
             self._test_edit.hide()
             self._test_suite_edit.show()
-            self._test_suite_edit.open_suite(item.suite())
+            self._test_suite_edit.open_suite(item.suite)
         else:
             self._test_edit.hide()
             self._test_edit.open_test(None)
@@ -188,27 +136,14 @@ class UnitTestingWidget(MainTab):
                 break
 
     def add_test(self):
-        selected = self._tree_widget.selectedItems()
-        if len(selected) == 0:
-            return
-        selected = selected[0]
         for i in range(self._tree_widget.topLevelItemCount()):
-            if self._tree_widget.topLevelItem(i).add_item(selected):
+            if self._tree_widget.topLevelItem(i).add_test():
                 break
 
-    def add_section(self):
-        selected = self._tree_widget.selectedItems()
-        if len(selected) == 0:
-            return
-        selected = selected[0]
+    def add_suite(self):
         for i in range(self._tree_widget.topLevelItemCount()):
-            if self._tree_widget.topLevelItem(i).add_section(selected):
-                break
-
-    def hide(self) -> None:
-        if not self.isHidden():
-            self.store_task()
-        super().hide()
+            if self._tree_widget.topLevelItem(i).add_suite():
+                return
 
     def set_theme(self):
         for el in [self._tree_widget, self.button_add, self.button_delete, self.button_down, self.scenario_box,
@@ -224,80 +159,49 @@ class UnitTestingWidget(MainTab):
 
 
 class TreeModuleItem(QTreeWidgetItem):
-    def __init__(self, tm, data_path):
+    def __init__(self, tm, module: UnitTestsModule):
         super().__init__()
         self._tm = tm
-        self._data_path = data_path
-        self._data_path2 = os.path.split(self._data_path)[0]
-        self.setText(0, os.path.basename(data_path))
+        self.module = module
+        self.setText(0, os.path.basename(module.name()))
 
-        self._dirs = dict()
+        self.module.addSuite.connect(self._on_suite_add)
+        self.module.deleteSuite.connect(self._on_suite_delete)
 
-    def name(self):
-        return os.path.basename(self._data_path)
+        for suite in self.module.suits():
+            self.addChild(TreeSuiteItem(self._tm, suite))
 
-    def load(self):
-        for el in os.listdir(self._data_path):
-            if os.path.isdir(os.path.join(self._data_path, el)):
-                self.addChild(item := TreeSectionItem(self._tm, UnitTestSuite(
-                    self._data_path2, os.path.basename(self._data_path), el)))
-                item.load()
-
-    def get_items(self):
-        for i in range(self.childCount()):
-            for el in self.child(i).get_items():
-                yield el
-
-    def add_item(self, after: QTreeWidgetItem):
-        if isinstance(after, TreeSectionItem):
-            after.add_item()
+    def add_suite(self):
+        if self.isSelected():
+            self.module.insert_suite(UnitTestsSuite('-'), 0)
             return True
-        elif isinstance(after, TreeItem):
-            for i in range(self.childCount()):
-                if self.child(i).add_item(after):
-                    return True
-            return False
+
+        for i in range(self.childCount()):
+            if self.child(i).isSelected():
+                self.module.insert_suite(UnitTestsSuite('-'), i + 1)
+                return True
         return False
 
-    def delete(self, item):
-        if isinstance(item, TreeSectionItem):
-            for i in range(self.childCount()):
-                if self.child(i) == item:
-                    self.takeChild(i)
-                    item.delete_self()
-                    return True
-        elif isinstance(item, TreeItem):
-            for i in range(self.childCount()):
-                if self.child(i).delete(item):
-                    return True
+    def add_test(self):
+        if self.isSelected():
+            return True
+        for i in range(self.childCount()):
+            return self.child(i).add_test()
+
+    def delete_item(self):
+        for i in range(self.childCount()):
+            if self.child(i).isSelected():
+                self.module.delete_suite(i)
+                return True
+            if self.child(i).delete_item():
+                return True
         return False
 
-    def store(self):
-        for i in range(self.childCount()):
-            self.child(i).store()
+    def _on_suite_add(self, suite, index):
+        self.insertChild(index, TreeSuiteItem(self._tm, suite))
 
-    def to_converter(self, module):
-        for i in range(self.childCount()):
-            suite = module.add_suite(self.child(i).suite())
-            self.child(i).to_converter(suite)
-
-    def add_section(self, after=None):
-        item = TreeSectionItem(self._tm, UnitTestSuite(self._data_path2, os.path.basename(self._data_path),
-                                                       self._create_new_path()))
-        if after is not None:
-            for i in range(self.childCount()):
-                if self.child(i) == after:
-                    self.insertChild(i + 1, item)
-                    return True
-            return False
-        self.addChild(item)
-        return True
-
-    def _create_new_path(self):
-        i = 0
-        while os.path.isdir(f"{self._data_path}/NewSection{i}"):
-            i += 1
-        return f"NewSection{i}"
+    def _on_suite_delete(self, index):
+        self.takeChild(index)
 
     def set_theme(self):
         self.setIcon(0, QIcon(self._tm.get_image('c')))
@@ -306,88 +210,49 @@ class TreeModuleItem(QTreeWidgetItem):
             self.child(i).set_theme()
 
 
-class TreeSectionItem(QTreeWidgetItem):
-    def __init__(self, tm, suite: UnitTestSuite):
+class TreeSuiteItem(QTreeWidgetItem):
+    def __init__(self, tm, suite: UnitTestsSuite):
         super().__init__()
         self._tm = tm
-        self._suite = suite
-        self.setText(0, self._suite.name())
+        self.suite = suite
+        self.setText(0, suite.name())
 
-        self._files = dict()
-        self._temp_file_index = 0
+        self.suite.addTest.connect(self._on_test_add)
+        self.suite.deleteTest.connect(self._on_test_delete)
+        self.suite.nameChanged.connect(self._on_name_changed)
 
-        os.makedirs(self._suite.path(), exist_ok=True)
+        for test in self.suite.tests():
+            self.addChild(TreeItem(self._tm, test))
 
-    def load(self):
-        self._temp_file_index = 0
-        self._files.clear()
-        for el in os.listdir(self._suite.path()):
-            if el.endswith('.json'):
-                path = os.path.abspath(os.path.join(self._suite.path(), el))
-                item = TreeItem(self._tm, UnitTest(path))
-                self._files[el] = item
-                self.addChild(item)
+    def add_test(self):
+        if self.isSelected():
+            self.suite.insert_test(UnitTest('-'), 0)
+            return True
 
-    def suite(self):
-        return self._suite
-
-    def name(self):
-        return self._suite.name()
-
-    def to_converter(self, suite):
         for i in range(self.childCount()):
-            suite.add_test(self.child(i).test)
-
-    def delete_self(self):
-        self._suite.delete_dir()
-
-    def delete(self, item):
-        for i in range(self.childCount()):
-            if self.child(i) == item:
-                self.takeChild(i)
-                item.test.delete_file()
+            if self.child(i).isSelected():
+                self.suite.insert_test(UnitTest('-'), i)
                 return True
+        return False
 
-    def store(self):
-        try:
-            shutil.rmtree(self._suite.path())
-        except FileNotFoundError:
-            pass
-        if not self.childCount():
-            return
-        os.makedirs(self._suite.path(), exist_ok=True)
-        self._suite.store()
+    def delete_item(self):
         for i in range(self.childCount()):
-            item = self.child(i)
-            if not isinstance(item, TreeItem):
-                continue
-            # item.test.store()
-            path = os.path.abspath(f"{self._suite.path()}/{i}.json")
-            item.test.set_path(path)
-            item.test.store()
+            if self.child(i).isSelected():
+                self.suite.delete_test(i)
+                return True
+        return False
 
-    def add_item(self, after=None):
-        item = TreeItem(self._tm, UnitTest(self._create_temp_file()))
-        if after is not None:
-            for i in range(self.childCount()):
-                if self.child(i) == after:
-                    self.insertChild(i + 1, item)
-                    return True
-            return False
-        self.addChild(item)
-        return True
+    def _on_test_add(self, test, index):
+        self.insertChild(index, TreeItem(self._tm, test))
 
-    def get_items(self):
-        for i in range(self.childCount()):
-            yield self.child(i)
+    def _on_test_delete(self, index):
+        self.takeChild(index)
 
-    def _create_temp_file(self):
-        path = f"{self._suite.path()}/temp_{self._temp_file_index}"
-        self._temp_file_index += 1
-        return path
+    def _on_name_changed(self):
+        self.setText(0, self.suite.name())
 
     def set_theme(self):
-        self.setIcon(0, QIcon(self._tm.get_image('directory')))
+        self.setIcon(0, QIcon(self._tm.get_image('c')))
         self.setFont(0, self._tm.font_medium)
         for i in range(self.childCount()):
             self.child(i).set_theme()
@@ -399,10 +264,16 @@ class TreeItem(QTreeWidgetItem):
         self._tm = tm
         self.test = test
         self.test.load()
+        self.set_theme()
+
+        self.test.nameChanged.connect(self._on_name_changed)
+        self.test.statusChanged.connect(self.set_theme)
+        self._on_name_changed()
+
+    def _on_name_changed(self):
         self.setText(0, self.test.get('desc', ''))
         if not self.text(0).strip():
             self.setText(0, self.test.get('name', '-'))
-        self.set_theme()
 
     def set_theme(self):
         self.setFont(0, self._tm.font_medium)

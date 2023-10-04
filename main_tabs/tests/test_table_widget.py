@@ -7,7 +7,6 @@ from side_tabs.builds.commands_list import CommandsList, MakeScenarioBox
 from main_tabs.tests.in_data_window import InDataWindow
 from ui.button import Button
 from ui.options_window import OptionsWidget
-from other.report.report_window import ReportWindow
 
 BUTTONS_MAX_WIDTH = 30
 
@@ -51,11 +50,6 @@ class TestTableWidget(QWidget):
         self.in_data_button.setFixedHeight(22)
         self.in_data_button.clicked.connect(self.in_data_window.exec)
         in_data_layout.addWidget(self.in_data_button)
-
-        self.report_button = Button(self.tm, 'button_document', css='Bg')
-        self.report_button.setFixedHeight(22)
-        self.report_button.clicked.connect(self.open_report)
-        in_data_layout.addWidget(self.report_button)
 
         pos_buttons_layout = QHBoxLayout()
         pos_layout.addLayout(pos_buttons_layout)
@@ -200,6 +194,15 @@ class TestTableWidget(QWidget):
         dct[f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}"] = \
             self.neg_comparator_widget.currentIndex() - 1
 
+    def move_selection(self, test_type, direction):
+        list_widget = self.pos_test_list if test_type == 'pos' else self.neg_test_list
+        index = list_widget.currentRow()
+        if direction == 'up':
+            index = max(0, index - 2)
+        else:
+            index = min(list_widget.count() - 1, index + 1)
+        list_widget.setCurrentRow(index)
+
     def run_export(self):
         self._export_dialog.tests = []
         # for i in range(self.pos_test_list.count()):
@@ -208,11 +211,6 @@ class TestTableWidget(QWidget):
         #     self._export_dialog.tests.append(Test(self.neg_test_list.item(i).path, f"neg{i}", 'neg'))
         self._export_dialog.exec()
 
-    def open_report(self):
-        window = ReportWindow(self.sm, self.tm)
-        self._windows.append(window)
-        window.show()
-
     def set_theme(self):
         self.tm.set_theme_to_list_widget(self.pos_test_list)
         self.tm.set_theme_to_list_widget(self.neg_test_list)
@@ -220,7 +218,7 @@ class TestTableWidget(QWidget):
                    self.pos_button_copy, self.in_data_edit, self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.out_data_edit,
                    self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
-                   self.neg_button_generate, self.export_button, self.report_button, self.options_button]:
+                   self.neg_button_generate, self.export_button, self.options_button]:
             self.tm.auto_css(el)
         for label in self.labels:
             label.setFont(self.tm.font_medium)

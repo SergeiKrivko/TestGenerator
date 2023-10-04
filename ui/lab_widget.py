@@ -24,7 +24,6 @@ class LabWidget(QMenuBar):
 
     def full_update(self):
         self._project = self.sm.main_project
-        print("LAB WIDGET:", self._project)
         if not isinstance(self._project, Project):
             return
         self.clear()

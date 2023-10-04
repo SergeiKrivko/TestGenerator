@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
 from ui.button import Button
+from ui.side_bar_window import SideBarDialog, SideBarWindow
 from ui.side_panel_widget import SidePanelWidget
 
 
@@ -102,13 +103,19 @@ class SideBar(QWidget):
         strange_widget.setLayout(self._layout)
 
         self.buttons = dict()
+        self._windows = dict()
 
-    def add_tab(self, widget: SidePanelWidget, name: str):
+    def add_tab(self, widget: SidePanelWidget | SideBarWindow | SideBarDialog, name: str):
         button = SideBarButton(self.tm, name, f'button_{name}')
-        self._layout.addWidget(button)
-        button.clicked.connect(lambda flag: self.button_clicked(button.name, flag))
         self.buttons[name] = button
-        self.side_panel.add_tab(name, widget)
+        self._layout.addWidget(button)
+        if isinstance(widget, SidePanelWidget):
+            button.clicked.connect(lambda flag: self.button_clicked(button.name, flag))
+            self.side_panel.add_tab(name, widget)
+        elif isinstance(widget, SideBarWindow):
+            button.setCheckable(False)
+            button.clicked.connect(lambda flag: self.window_button_clicked(button.name))
+            self._windows[name] = widget
 
     def button_clicked(self, key: str, flag: bool):
         for _key, item in self.buttons.items():
@@ -120,6 +127,9 @@ class SideBar(QWidget):
                 self.side_panel.show_tab(key)
             else:
                 self.side_panel.hide()
+
+    def window_button_clicked(self, key):
+        self._windows[key].show()
 
     def select_tab(self, key):
         for _key, item in self.buttons.items():

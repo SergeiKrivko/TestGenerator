@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 
 from main_tabs.code_tab.syntax_highlighter import CodeEditor
 from main_tabs.tests.commands import CommandManager
-from main_tabs.unit_testing.unit_test import UnitTest, UnitTestSuite
+from backend.types.unit_test import UnitTest
+from backend.types.unit_tests_suite import UnitTestsSuite
 
 
 class UnitTestEdit(QScrollArea):
@@ -162,22 +163,22 @@ class TestSuiteEdit(QScrollArea):
 
         main_layout.addWidget(QWidget(), 100)
 
-    def open_suite(self, suite: UnitTestSuite | None):
+    def open_suite(self, suite: UnitTestsSuite | None):
         self.store_suite()
         self._suite = suite
-        if isinstance(self._suite, UnitTestSuite):
+        if isinstance(self._suite, UnitTestsSuite):
             self._name_edit.setText(self._suite.name())
-            self._code_edit.setText(self._suite.code)
+            self._code_edit.setText(self._suite.code())
         else:
             self._name_edit.setText("")
             self._code_edit.setText("")
         self._looper = CommandManager.after_second(self._resize_code_edits, 0.1)
 
     def store_suite(self):
-        if not isinstance(self._suite, UnitTestSuite):
+        if not isinstance(self._suite, UnitTestsSuite):
             return
         self._suite.set_name(self._name_edit.text())
-        self._suite.code = self._code_edit.text()
+        self._suite.set_code(self._code_edit.text())
 
     def _resize_code_edits(self):
         for el in [self._code_edit]:

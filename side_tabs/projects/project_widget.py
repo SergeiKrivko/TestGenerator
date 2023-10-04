@@ -44,6 +44,7 @@ class ProjectWidget(SidePanelWidget):
         self.dialog = None
 
         self.bm.finishChangingProject.connect(self.update_projects)
+        self._opening_project = False
 
         # self.update_projects()
         # self.looper = None
@@ -54,11 +55,10 @@ class ProjectWidget(SidePanelWidget):
         # if self.temp_project:
         #     self.remove_temp_projects()
 
-    def select_project(self, project):
+    def select_project(self, project: Project):
         for i in range(self.list_widget.count()):
-            if self.list_widget.item(i).text() == project:
-                if self.list_widget.item(i).text() != self.sm.project:
-                    self.list_widget.setCurrentRow(i)
+            if self.list_widget.item(i).project == project:
+                self.list_widget.setCurrentRow(i)
                 break
 
     def find_project(self, path):
@@ -99,6 +99,7 @@ class ProjectWidget(SidePanelWidget):
         self.jump_to_code.emit(path)
 
     def update_projects(self):
+        self._opening_project = True
         self.list_widget.clear()
         for pr in self.sm.projects.values():
             item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS.get(pr.get('language'), 'unknown_file'))
@@ -108,7 +109,8 @@ class ProjectWidget(SidePanelWidget):
             if self.sm.project == pr:
                 self.list_widget.setCurrentItem(item)
         self.list_widget.sortItems()
-        self.select_project(self.sm.project)
+        self._opening_project = False
+        self.select_project(self.sm.main_project)
 
     def rename_project(self):
         self.dialog = RenameProjectDialog(self.sm.project, self.tm)
@@ -124,32 +126,34 @@ class ProjectWidget(SidePanelWidget):
     def delete_project(self, forced=False):
         self.dialog = DeleteProjectDialog(self.sm.project, self.tm)
         if forced or self.dialog.exec():
-            self.sm.delete_project(main_dir=not forced and self.dialog.check_box.isChecked())
+            self.sm.delete_main_project(directory=not forced and self.dialog.check_box.isChecked())
             self.update_projects()
 
     def new_project(self):
         dialog = NewProjectDialog(self.sm, self.tm)
         if dialog.exec():
-            project = dialog.options_widget['Название проекта:']
+            project_name = dialog.options_widget['Название проекта:']
             path = dialog.dir_edit.text()
             if not dialog.checkbox.isChecked():
-                path = os.path.join(path, project)
+                path = os.path.join(path, project_name)
                 os.makedirs(path, exist_ok=True)
 
-            self.sm.add_project(project, path)
+            project = self.sm.add_main_project(path)
             self.update_projects()
             self.select_project(project)
 
-            self.sm.set('language', dialog.options_widget.widgets["Язык:"].currentText(), project=project)
-            self.sm.set('struct', dialog.options_widget["Структура проекта:"], project=project)
-            self.sm.set('func_tests_in_project', dialog.options_widget["Сохранять тесты в папке проекта"],
-                        project=project)
+            project['language'] = dialog.options_widget.widgets["Язык:"].currentText()
+            project['func_tests_in_project'] = dialog.options_widget["Сохранять тесты в папке проекта"]
             self.update_projects()
 
     def open_project(self, forced=False):
+        if self._opening_project:
+            return
         if self.list_widget.currentItem() is None:
             return
-        self.bm.open_project(self.list_widget.currentItem().text())
+        if self.list_widget.currentItem().project == self.sm.main_project:
+            return
+        self.bm.open_main_project(self.list_widget.currentItem().project)
 
     def project_to_zip(self):
         path, _ = QFileDialog.getSaveFileName(None, "Выберите путь", self.sm.path + '.7z', '7z (*.7z)')
@@ -530,8 +534,6 @@ class NewProjectDialog(QDialog):
         self.options_widget = OptionsWidget({
             "Название проекта:": {'type': str, 'width': 300},
             "Язык:": {'type': 'combo', 'values': ['C', 'Python'], 'name': OptionsWidget.NAME_LEFT},
-            "Структура проекта:": {'type': 'combo', 'values': ['Лаба - задание - вариант', 'Без структуры'],
-                                   'name': OptionsWidget.NAME_LEFT, 'width': 220},
             "Сохранять тесты в папке проекта": {'type': bool, 'name': OptionsWidget.NAME_RIGHT}
         })
         main_layout.addWidget(self.options_widget)
@@ -558,7 +560,7 @@ class NewProjectDialog(QDialog):
 
     def set_path(self):
         path = QFileDialog.getExistingDirectory(directory=self.dir_edit.text() if os.path.isdir(
-            self.dir_edit.text()) else self.sm._path)
+            self.dir_edit.text()) else self.sm.project.path())
         self.dir_edit.setText(path)
         if self.checkbox.isChecked():
             self.options_widget.set_value("Название проекта:", os.path.basename(path))

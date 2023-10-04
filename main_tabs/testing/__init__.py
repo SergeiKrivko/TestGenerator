@@ -155,7 +155,10 @@ class TestingWidget(MainTab):
             if isinstance(self.current_item, FuncTest):
                 pass
                 # self.current_item.unload()
-            self.current_item = self.bm.get_func_test('all', index)
+            try:
+                self.current_item = self.bm.get_func_test('all', index)
+            except IndexError:
+                return
             # self.current_item.load()
         if isinstance(self.current_item, FuncTest):
             current_in, current_out = self.current_item.get('current_in', 0), self.current_item.get('current_out', 0)

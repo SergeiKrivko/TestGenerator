@@ -37,8 +37,8 @@ class TestingPanel(SidePanelWidget):
     def update_items(self, tests: list[FuncTest]):
         self._completed = 0
         self.clear()
-        for el in tests:
-            self.add_item(el)
+        for i, el in enumerate(tests):
+            self.add_item(el, i)
         self.set_theme()
 
     def _on_item_changed(self):
@@ -52,8 +52,10 @@ class TestingPanel(SidePanelWidget):
         for i in range(self._completed, self.list_widget.count()):
             self.list_widget.item(i).set_status(FuncTest.TERMINATED)
 
-    def add_item(self, test):
-        self.list_widget.addItem(item := TestingPanelItem(test, self.tm))
+    def add_item(self, test, index):
+        if test.type() != 'pos':
+            index -= self.bm.func_tests_count('pos')
+        self.list_widget.addItem(item := TestingPanelItem(test, f"{test.type()}{index + 1}", self.tm))
         self.items.append(item)
 
     def set_status(self, test: FuncTest):
@@ -84,10 +86,10 @@ class TestingPanelItem(QListWidgetItem):
              FuncTest.TIMEOUT: 'TIMEOUT',
              FuncTest.TERMINATED: 'terminated'}
 
-    def __init__(self, test, tm):
+    def __init__(self, test, name, tm):
         super().__init__()
         self.test = test
-        self.name = test.name()
+        self.name = name
         self.tm = tm
         self.status = 0
         self.set_status(FuncTest.IN_PROGRESS)

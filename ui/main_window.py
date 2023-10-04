@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
 from backend.backend_manager import BackendManager
+from other.report.report_window import ReportWindow
 from side_tabs.console import ConsolePanel
 from side_tabs.files.files_widget import FilesWidget
 from side_tabs.terminal_tab import TerminalTab
@@ -15,7 +16,6 @@ from side_tabs.telegram.telegram_widget import TelegramWidget
 from side_tabs.todo_panel import TODOPanel
 from side_tabs.projects.project_widget import ProjectWidget
 from main_tabs.tests.generator_window import GeneratorTab
-from backend.macros_converter import background_process_manager
 from side_tabs.tests.testing_panel import TestingPanel
 from ui.main_menu import MainMenu
 from ui.main_tab import MainTab
@@ -84,6 +84,7 @@ class MainWindow(QMainWindow):
             'run': ConsolePanel(self.sm, self.tm, self.cm),
             'chat': ChatPanel(self.sm, self.tm),
             'telegram': TelegramWidget(self.sm, self.tm),
+            'document': ReportWindow(self.bm, self.sm, self.tm)
         }.items():
             self.side_bar.add_tab(item, key)
 
@@ -162,23 +163,19 @@ class MainWindow(QMainWindow):
         self._tabs[tab].command(*args, **kwargs)
 
     def closeEvent(self, a0):
+        self.bm.close_project()
         self.sm.store()
-        if len(background_process_manager.dict):
+        if not self.bm.all_finished():
             dialog = ExitDialog(self.tm)
-            background_process_manager.all_finished.connect(dialog.accept)
+            self.bm.allProcessFinished.connect(dialog.accept)
             if dialog.exec():
-                for process in background_process_manager.dict.values():
-                    process.close()
-                # self.sm.start_change_task()
+                self.bm.terminate_all()
                 self.side_panel.finish_work()
-                self.side_panel.tabs['projects'].remove_temp_projects()
                 super(MainWindow, self).close()
             else:
                 a0.ignore()
         else:
-            # self.sm.start_change_task()
             self.side_panel.finish_work()
-            self.side_panel.tabs['projects'].remove_temp_projects()
             super(MainWindow, self).close()
 
 

@@ -4,8 +4,10 @@ from PyQt5.QtCore import QObject, pyqtSignal, QThread
 
 from backend.func_testing import TestingLooper
 from backend.load_task import Loader
+from backend.macros_converter import MacrosConverter
 from backend.types.build import Build
 from backend.types.project import Project
+from backend.types.unit_tests_module import UnitTestsModule
 from side_tabs.builds.commands_list import CommandsList
 from language.languages import languages
 from backend.settings_manager import SettingsManager
@@ -24,6 +26,9 @@ class BackendManager(QObject):
     deleteFuncTest = pyqtSignal(FuncTest, int)
     clearFuncTests = pyqtSignal()
     changeTestStatus = pyqtSignal(FuncTest)
+
+    addUnitTestModule = pyqtSignal(UnitTestsModule)
+    clearUnitTests = pyqtSignal()
 
     startTesting = pyqtSignal(list)
     testingError = pyqtSignal(str)
@@ -46,7 +51,7 @@ class BackendManager(QObject):
 
         self.func_tests = {'pos': [], 'neg': []}
         self.builds = dict()
-        self.unit_tests = []
+        self.unit_tests_modules: list[UnitTestsModule] = []
 
         self.func_test_completed = 0
 
@@ -69,7 +74,13 @@ class BackendManager(QObject):
             return
         self.changing_project = True
         self.startChangingProject.emit()
+        self.run_macros_converter()
         self._run_loader(project)
+
+    def close_project(self):
+        self.changing_project = True
+        self.startChangingProject.emit()
+        self._run_loader(None)
 
     def open_main_project(self, project: Project):
         if isinstance(project, str):
@@ -81,6 +92,7 @@ class BackendManager(QObject):
             return
         self.changing_project = True
         self.startChangingProject.emit()
+        self.run_macros_converter()
         self._run_loader(project, main=True)
 
     def _run_loader(self, project: Project, main=False):
@@ -88,7 +100,7 @@ class BackendManager(QObject):
         self._loader.finished.connect(self._on_loader_finished)
         self._loader.updateProgress.connect(self.updateProgress.emit)
         self._loader.loadingStart.connect(self.loadingStart.emit)
-        self.run_process(self._loader, 'load', project.path())
+        self.run_process(self._loader, 'load', None if project is None else project.path())
 
     def _on_loader_finished(self):
         if self.changing_project:
@@ -104,8 +116,9 @@ class BackendManager(QObject):
         self.addFuncTest.emit(test, index)
 
     def delete_func_test(self, type: Literal['pos', 'neg'], index: int):
+        test = self.func_tests[type][index]
         self.func_tests[type].pop(index)
-        self.deleteFuncTest.emit(type, index)
+        self.deleteFuncTest.emit(test, index)
 
     def clear_func_tests(self):
         self.func_tests['pos'].clear()
@@ -124,12 +137,19 @@ class BackendManager(QObject):
     def move_func_test(self, type: Literal['pos', 'neg'], direction: Literal['up', 'down'], index: int):
         match direction:
             case 'up':
-                if index == 0:
+                if index <= 0:
                     return
                 test = self.get_func_test(type, index)
                 self.delete_func_test(type, index)
                 index -= 1
-                self.addFuncTest(test, index)
+                self.add_func_test(test, index)
+            case 'down':
+                if index >= len(self.func_tests[type]) - 1:
+                    return
+                test = self.get_func_test(type, index)
+                self.delete_func_test(type, index)
+                index += 1
+                self.add_func_test(test, index)
 
     def func_tests_count(self, type: Literal['pos', 'neg', 'all'] = 'all'):
         match type:
@@ -140,9 +160,19 @@ class BackendManager(QObject):
             case 'all':
                 return len(self.func_tests['pos']) + len(self.func_tests['neg'])
 
+    def run_macros_converter(self):
+        if self.sm.project is None:
+            return
+        if not self.func_tests['pos'] and not self.func_tests['neg']:
+            return
+        looper = MacrosConverter(self.sm.project, {'pos': self.func_tests['pos'].copy(),
+                                                   'neg': self.func_tests['neg'].copy()}, self.sm)
+        self.run_process(looper, 'macros_converter', self.sm.project.path())
+
     # -------------------------- TESTING --------------------------------
 
     def start_testing(self):
+        self.run_macros_converter()
         self.startTesting.emit(self.func_tests['pos'] + self.func_tests['neg'])
         self.func_test_completed = 0
         self._testing_looper = TestingLooper(self.sm, self.sm.project, self,
@@ -189,6 +219,19 @@ class BackendManager(QObject):
 
     def get_build(self, name: str):
         return self.builds[name]
+
+    # ------------------- UNIT TESTING -------------------------
+
+    def add_module(self, module: UnitTestsModule):
+        self.unit_tests_modules.append(module)
+        self.addUnitTestModule.emit(module)
+
+    def convert_unit_tests(self):
+        pass
+
+    def clear_unit_tests(self):
+        self.unit_tests_modules.clear()
+        self.clearUnitTests.emit()
 
     # --------------------- running ----------------------------
 
@@ -253,6 +296,14 @@ class BackendManager(QObject):
             self._background_processes[group].pop(name)
         if self._background_process_count == 0:
             self.allProcessFinished.emit()
+
+    def all_finished(self):
+        return self._background_process_count == 0
+
+    def terminate_all(self):
+        for item in self._background_processes.values():
+            for el in item.values():
+                el.terminate()
 
     # --------------------- tabs ----------------------------
 

@@ -3,49 +3,26 @@ from json import loads, JSONDecodeError
 
 from PyQt5.QtCore import QThread, pyqtSignal, QObject
 
+from backend.types.func_test import FuncTest
+from backend.types.project import Project
 from other.binary_redactor.convert_binary import convert as convert_binary
 
 
-class BackgroundProcessManager(QObject):
-    all_finished = pyqtSignal()
-
-    def __init__(self):
-        super(BackgroundProcessManager, self).__init__()
-        self.dict = dict()
-
-    def add_process(self, key, process):
-        if key in self.dict:
-            self.dict[key].terminate()
-        self.dict[key] = process
-        process.finished.connect(lambda: self.process_finished(key))
-
-    def process_finished(self, key):
-        if key in self.dict:
-            self.dict.pop(key)
-        if len(self.dict) == 0:
-            self.all_finished.emit()
-
-
-background_process_manager = BackgroundProcessManager()
-
-
 class MacrosConverter(QThread):
-    def __init__(self, src_dir, dst_dir, project, sm, readme=None):
+    def __init__(self, project: Project, tests: dict[str: list[FuncTest]], sm):
         super(MacrosConverter, self).__init__()
 
-        self.src_dir = src_dir
-        self.dst_dir = dst_dir
+        self.src_dir = f"{project.data_path()}/func_tests"
+        self.dst_dir = project.path()
         self.project = project
+        self.tests = tests
         self.sm = sm
-        self.readme = readme
+        self.readme = open(project.readme_path(), 'w', encoding='utf-8')
         self._file = None
         self.closed = False
 
         self.line_sep = sm.line_sep
-        self.lab_path = sm.lab_path()
-        self.data_path = sm.data_lab_path()
-        self.lab = self.sm.get('lab'), self.sm.get('task'), self.sm.get('var')
-        background_process_manager.add_process(src_dir, self)
+        self.data_path = project.data_path()
 
     @staticmethod
     def convert_txt(text, path, line_sep):
@@ -109,94 +86,81 @@ class MacrosConverter(QThread):
         self._file = open(f"{self.data_path}/files.txt", 'w', encoding='utf-8')
         self.finished.connect(self._file.close)
 
-        for file in sorted(os.listdir(f"{self.src_dir}/{tests_type}"), key=lambda s: int(s.rstrip('.json'))):
+        for index, test in enumerate(self.tests[tests_type]):
             if self.closed:
                 return
-            if not file.rstrip('.json').isdigit():
-                continue
-            index = int(file.rstrip('.json'))
-            with open(f"{self.src_dir}/{tests_type}/{file}", encoding='utf-8') as f:
-                try:
-                    data = loads(f.read())
-                    data = data if isinstance(data, dict) else dict()
-                except JSONDecodeError:
-                    data = dict()
 
-            self.readme.write(f"- {index + 1:0>2} - {data.get('desc', '-')}\n")
-            self.convert_txt(data.get('in', ''),
-                             self.sm.test_in_path(tests_type, index, lab=self.lab, project=self.project),
+            self.readme.write(f"- {index + 1:0>2} - {test.get('desc', '-')}\n")
+            self.convert_txt(test.get('in', ''),
+                             self.project.test_in_path(tests_type, index),
                              self.line_sep)
-            self.add_file(self.sm.test_in_path(tests_type, index, lab=self.lab, project=self.project))
-            self.convert_txt(data.get('out', ''),
-                             self.sm.test_out_path(tests_type, index, lab=self.lab, project=self.project),
+            self.add_file(self.project.test_in_path(tests_type, index))
+            self.convert_txt(test.get('out', ''),
+                             self.project.test_out_path(tests_type, index),
                              self.line_sep)
-            self.add_file(self.sm.test_out_path(tests_type, index, lab=self.lab, project=self.project))
+            self.add_file(self.project.test_out_path(tests_type, index))
 
             in_files = dict()
             out_files = dict()
 
-            for i, el in enumerate(data.get('in_files', [])):
+            for i, el in enumerate(test.get('in_files', [])):
                 if el.get('type', 'txt') == 'txt':
                     self.convert_txt(el['text'],
-                                     s := self.sm.test_in_file_path(tests_type, index, i, False, lab=self.lab,
-                                                                    project=self.project),
+                                     s := self.project.test_in_file_path(tests_type, index, i, False),
                                      self.line_sep)
                     self.add_file(s)
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
                     if 'check' in el:
                         self.convert_txt(el['check'],
-                                         s := self.sm.test_check_file_path(tests_type, index, i, False, lab=self.lab,
-                                                                           project=self.project),
+                                         s := self.project.test_check_file_path(tests_type, index, i, False),
                                          self.line_sep)
                         self.add_file(s)
                 else:
                     self.convert_bin(el['text'],
-                                     s := self.sm.test_in_file_path(tests_type, index, i, True, lab=self.lab,
-                                                                    project=self.project))
+                                     s := self.project.test_in_file_path(tests_type, index, i, True))
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
                     self.add_file(s)
                     if 'check' in el:
                         self.convert_bin(el['check'],
-                                         s := self.sm.test_check_file_path(tests_type, index, i, True, lab=self.lab,
-                                                                           project=self.project))
+                                         s := self.project.test_check_file_path(tests_type, index, i, True))
                         self.add_file(s)
 
-            for i, el in enumerate(data.get('out_files', [])):
+            for i, el in enumerate(test.get('out_files', [])):
                 if el.get('type', 'txt') == 'txt':
                     self.convert_txt(el['text'],
-                                     s := self.sm.test_out_file_path(tests_type, index, i, False, lab=self.lab,
-                                                                     project=self.project),
+                                     s := self.project.test_out_file_path(tests_type, index, i, False),
                                      self.line_sep)
                     self.add_file(s)
                     out_files[i + 1] = os.path.relpath(s, self.dst_dir)
                 else:
                     self.convert_bin(el['text'],
-                                     s := self.sm.test_out_file_path(tests_type, index, i, True, lab=self.lab,
-                                                                     project=self.project))
+                                     s := self.project.test_out_file_path(tests_type, index, i, True))
                     out_files[i + 1] = os.path.relpath(s, self.dst_dir)
                     self.add_file(s)
 
-            if data.get('args', ''):
-                self.convert_args(data.get('args', ''),
-                                  self.sm.test_args_path(tests_type, index, lab=self.lab, project=self.project),
-                                  tests_type, index, in_files, out_files, self.sm.get('temp_files_dir', '.'),
+            if test.get('args', ''):
+                self.convert_args(test.get('args', ''),
+                                  self.project.test_args_path(tests_type, index),
+                                  tests_type, index, in_files, out_files, self.project.get('temp_files_dir', '.'),
                                   self.line_sep)
-                self.add_file(self.sm.test_args_path(tests_type, index, lab=self.lab, project=self.project))
+                self.add_file(self.project.test_args_path(tests_type, index))
 
     def close(self):
         self.closed = True
 
     def run(self):
+        print(self.tests)
         # for test_type in ['pos', 'neg']:
-        #     for d in [self.sm.test_in_path(test_type, 0), self.sm.test_out_path(test_type, 0),
-        #               self.sm.test_args_path(test_type, 0), self.sm.test_in_file_path(test_type, 0, 1, False),
-        #               self.sm.test_out_file_path(test_type, 0, 1, False),
-        #               self.sm.test_check_file_path(test_type, 0, 1, False)]:
+        #     for d in [self.project.test_in_path(test_type, 0), self.project.test_out_path(test_type, 0),
+        #               self.project.test_args_path(test_type, 0), self.project.test_in_file_path(test_type, 0, 1, False),
+        #               self.project.test_out_file_path(test_type, 0, 1, False),
+        #               self.project.test_check_file_path(test_type, 0, 1, False)]:
         #         try:
         #             shutil.rmtree(d := os.path.split(d)[0])
         #             os.makedirs(d, exist_ok=True)
         #         except Exception:
         #             pass
+        self.readme.write(f"\n# Тесты для {self.project.name()}:\n")
 
         self.readme.write("\n## Позитивные тесты:\n")
         self.convert_tests('pos')

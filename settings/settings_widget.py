@@ -80,6 +80,8 @@ class _Widget(QWidget):
         self.valueChanged.emit(value)
 
     def _del(self):
+        if self._key is None:
+            return
         if self._key_type == KEY_DICT:
             if self._key in self._dict:
                 self._dict.pop(self._key)

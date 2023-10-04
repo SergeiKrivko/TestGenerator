@@ -122,31 +122,21 @@ class TestEditWidget(QWidget):
         self.cmd_args_edit.setText(data.get('args', ''))
         self.exit_code_edit.setText(str(data.get('exit', '')))
         self.test_in_edit.clear()
-        self.test_in_edit.add_tab('STDIN', data['in'])
+        self.test_in_edit.add_tab('STDIN', data.get('in', ''))
         self.test_out_edit.clear()
-        self.test_out_edit.add_tab('STDOUT', data['out'])
+        self.test_out_edit.add_tab('STDOUT', data.get('out', ''))
         
         if not isinstance(data.get('in_files'), list):
             data['in_files'] = []
         if not isinstance(data.get('out_files'), list):
             data['out_files'] = []
-        try:
-            for key, item in data['check_files'].items():
-                data['in_files'][int(key) - 1]['check'] = item['text']
-            data.pop('check_files')
-        except KeyError:
-            pass
-        except ValueError:
-            pass
-        except IndexError:
-            pass
             
-        for i, el in enumerate(data['in_files']):
+        for i, el in enumerate(data.get('in_files')):
             self.test_in_edit.add_tab(f"in_file_{i + 1}.{el['type']}", el['text'])
             if 'check' in el:
                 self.test_out_edit.add_tab(f"check_file_{i + 1}.{el['type']}", el['check'])
 
-        for i, el in enumerate(data['out_files']):
+        for i, el in enumerate(data.get('out_files')):
             self.test_out_edit.add_tab(f"out_file_{i + 1}.{el['type']}", el['text'])
 
         self.test_in_edit.select_tab(current_in)

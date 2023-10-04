@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from PyQt5.QtCore import QSettings, pyqtSignal, QObject
 from json import dumps, loads, JSONDecodeError
@@ -78,7 +79,10 @@ class SettingsManager(QObject):
         self.main_project = project
         project.load_projects()
         self.mainProjectChanged.emit()
-        self.set_project(project.children()[project.get('selected_project')])
+        if project.has_item('selected_project'):
+            self.set_project(project.children()[project.get('selected_project')])
+        else:
+            self.set_project(project)
         self.store_projects_list()
 
     def set_project(self, project: Project):
@@ -125,25 +129,51 @@ class SettingsManager(QObject):
         for item in self.projects.values():
             item.save_settings()
 
-    def add_project(self, name, path, temp=False):
-        if name in self.projects:
-            print(f"Project \"{name}\" already exists!")
-            return
-        project = Project(name, path, temp=temp, data_path=f"{self.app_data_dir}/projects")
-        self.projects[name] = project
-        project.create_gitignore()
+    def find_project(self, path):
+        while True:
+            path, name = os.path.split(path)
+            if not name:
+                break
+            if os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR)):
+                if path in self.all_projects:
+                    return self.all_projects[path]
+                else:
+                    project = Project(path, self, load=True)
+                    return project
 
-    def delete_project(self, name=None, main_dir=False):
-        if name is None:
-            name = self.project
-        if name not in self.projects:
+    def add_main_project(self, path):
+        if path in self.projects:
+            return self.projects[path]
+        if path in self.all_projects:
+            self.projects[path] = self.all_projects[path]
+            return self.all_projects[path]
+        else:
+            project = Project(path, self, makedirs=True)
+            self.projects[path] = project
+            return project
+
+    def add_project(self, path):
+        if path in self.all_projects:
+            return self.all_projects[path]
+        project = Project(path, self, makedirs=True)
+        return project
+
+    def delete_main_project(self, project=None, directory=False, data=False):
+        if project is None:
+            project = self.project
+
+        if project.path() not in self.projects:
             return
-        self.projects[name].delete(main_dir)
-        self.projects.pop(name)
-        if name == self.project:
-            self.project = ''
-            self.current_project = None
-        self.store_projects_list()
+
+        if data:
+            project.delete(directory)
+        self.projects.pop(project.path())
+
+    def delete_project(self, project: Project, directory=False):
+        project.delete(directory)
+        self.all_projects.pop(project.path())
+        if project.path() in self.projects:
+            self.all_projects.pop(project.path())
 
     def rename_project(self, new_name: str, name=None):
         if name is None:
