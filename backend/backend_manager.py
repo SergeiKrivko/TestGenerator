@@ -7,7 +7,10 @@ from backend.load_task import Loader
 from backend.macros_converter import MacrosConverter
 from backend.types.build import Build
 from backend.types.project import Project
+from backend.types.unit_test import UnitTest
 from backend.types.unit_tests_module import UnitTestsModule
+from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
+from main_tabs.unit_testing.check_converter import CheckConverter
 from side_tabs.builds.commands_list import CommandsList
 from language.languages import languages
 from backend.settings_manager import SettingsManager
@@ -227,7 +230,38 @@ class BackendManager(QObject):
         self.addUnitTestModule.emit(module)
 
     def convert_unit_tests(self):
-        pass
+        converter = CheckConverter(self.sm.project.unit_tests_path(), self.unit_tests_modules.copy())
+        converter.convert()
+
+    def run_unit_tests(self):
+        self.run_process(lambda: self._unit_testing(self.sm.project), 'unit_testing', self.sm.project.path())
+
+    def _unit_testing(self, project):
+        self.convert_unit_tests()
+
+        command = project.get('build', dict()).get('data', '')
+        res, errors = self.compile(command, project, False)
+        # if not res:
+        #     dialog = CompilerErrorWindow(errors, self.tm, languages[
+        #         self.sm.get('language', 'C')].get('compiler_mask'))
+        #     dialog.exec()
+        #     return
+        print(res, errors)
+
+        res = cmd_command(f"{project.path()}/app.exe", shell=True, cwd=project.path())
+
+        items = []
+        for module in self.unit_tests_modules:
+            for suite in module.suits():
+                for el in suite.tests():
+                    items.append(el)
+        i = 0
+        for line in res.stdout.split('\n'):
+            if line.count(':') >= 6:
+                lst = line.split(':')
+                items[i]['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
+                items[i]['test_res'] = ':'.join(lst[6:])
+                i += 1
 
     def clear_unit_tests(self):
         self.unit_tests_modules.clear()
@@ -277,7 +311,7 @@ class BackendManager(QObject):
 
     # --------------------- process ----------------------------
 
-    def run_process(self, thread, group: str, name: str):
+    def run_process(self, thread: QThread, group: str, name: str):
         if not isinstance(thread, QThread):
             thread = Looper(thread)
         if group not in self._background_processes:

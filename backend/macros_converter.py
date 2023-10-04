@@ -160,7 +160,7 @@ class MacrosConverter(QThread):
         #             os.makedirs(d, exist_ok=True)
         #         except Exception:
         #             pass
-        self.readme.write(f"\n# Тесты для {self.project.name()}:\n")
+        self.readme.write(f"# Тесты для {self.project.name()}:\n")
 
         self.readme.write("\n## Позитивные тесты:\n")
         self.convert_tests('pos')

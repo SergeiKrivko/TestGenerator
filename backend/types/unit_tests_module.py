@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import Literal
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -33,6 +34,26 @@ class UnitTestsModule(QObject):
     def delete_suite(self, index):
         self._suits.pop(index)
         self.deleteSuite.emit(index)
+
+    def move_suite(self, direction: Literal['up', 'down'], index: int):
+        match direction:
+            case 'up':
+                if index <= 0:
+                    return
+                test = self._suits[index]
+                self.delete_suite(index)
+                index -= 1
+                self.insert_suite(test, index)
+            case 'down':
+                if index >= len(self._suits) - 1:
+                    return
+                test = self._suits[index]
+                self.delete_suite(index)
+                index += 1
+                self.insert_suite(test, index)
+
+    def has_suits(self):
+        return bool(len(self._suits))
 
     def load(self, path: str):
         self._suits.clear()

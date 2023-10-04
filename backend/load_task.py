@@ -10,6 +10,7 @@ from backend.types.project import Project
 from backend.types.unit_tests_module import UnitTestsModule
 from language.languages import languages
 from language.utils import get_files
+from main_tabs.unit_testing.check_converter import CheckConverter
 
 
 class Loader(QThread):
@@ -51,6 +52,7 @@ class Loader(QThread):
                 el.store()
 
     def store_unit_tests(self):
+        self._manager.convert_unit_tests()
         path = f"{self._old_data_path}/unit_tests"
         for module in self._manager.unit_tests_modules:
             module.store(path)

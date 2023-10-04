@@ -110,6 +110,7 @@ class ProjectWidget(SidePanelWidget):
                 self.list_widget.setCurrentItem(item)
         self.list_widget.sortItems()
         self._opening_project = False
+        print(f"select({self.sm.main_project.path()})")
         self.select_project(self.sm.main_project)
 
     def rename_project(self):
@@ -153,6 +154,7 @@ class ProjectWidget(SidePanelWidget):
             return
         if self.list_widget.currentItem().project == self.sm.main_project:
             return
+        print(f"ProjectWidget: open({repr(self.list_widget.currentItem().project.path())})")
         self.bm.open_main_project(self.list_widget.currentItem().project)
 
     def project_to_zip(self):
@@ -560,7 +562,7 @@ class NewProjectDialog(QDialog):
 
     def set_path(self):
         path = QFileDialog.getExistingDirectory(directory=self.dir_edit.text() if os.path.isdir(
-            self.dir_edit.text()) else self.sm.project.path())
+            self.dir_edit.text()) else os.getcwd() if self.sm.project is None else self.sm.project.path())
         self.dir_edit.setText(path)
         if self.checkbox.isChecked():
             self.options_widget.set_value("Название проекта:", os.path.basename(path))

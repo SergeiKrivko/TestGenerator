@@ -178,7 +178,7 @@ class TestSuiteEdit(QScrollArea):
         if not isinstance(self._suite, UnitTestsSuite):
             return
         self._suite.set_name(self._name_edit.text())
-        self._suite.set_code(self._code_edit.text())
+        self._suite.set_code(self._code_edit.text().replace('\r\n', '\n'))
 
     def _resize_code_edits(self):
         for el in [self._code_edit]:

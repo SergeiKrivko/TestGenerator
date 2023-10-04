@@ -16,8 +16,8 @@ class SettingsManager(QObject):
 
     def __init__(self):
         super().__init__()
-        self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
-        # self.q_settings = QSettings()
+        # self.q_settings = QSettings('settings.ini', QSettings.IniFormat)
+        self.q_settings = QSettings()
         self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko").replace('\\', '/')
 
         self.projects = dict()
@@ -65,9 +65,11 @@ class SettingsManager(QObject):
             self.project.pop(key)
 
     def set_main_project(self, project: Project):
+        print(f"set_main_project({repr(project.name())})")
         if project == self.main_project:
             return
 
+        print(project.path() in self.projects, self.projects)
         if project is None or project.path() not in self.projects:
             self.project = None
             self.main_project = None
@@ -86,6 +88,7 @@ class SettingsManager(QObject):
         self.store_projects_list()
 
     def set_project(self, project: Project):
+        print(f"set_project({repr(project.name())})")
         if project == self.project:
             return
 
@@ -142,6 +145,7 @@ class SettingsManager(QObject):
                     return project
 
     def add_main_project(self, path):
+        path = os.path.abspath(path)
         if path in self.projects:
             return self.projects[path]
         if path in self.all_projects:
@@ -153,6 +157,7 @@ class SettingsManager(QObject):
             return project
 
     def add_project(self, path):
+        path = os.path.abspath(path)
         if path in self.all_projects:
             return self.all_projects[path]
         project = Project(path, self, makedirs=True)

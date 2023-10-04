@@ -63,11 +63,13 @@ class UnitTestingWidget(MainTab):
         self.button_up = Button(self.tm, 'button_up', css='Bg')
         self.button_up.setFixedHeight(22)
         self.button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.button_up.clicked.connect(self.move_up)
         buttons_layout.addWidget(self.button_up)
 
         self.button_down = Button(self.tm, 'button_down', css='Bg')
         self.button_down.setFixedHeight(22)
         self.button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.button_down.clicked.connect(self.move_down)
         buttons_layout.addWidget(self.button_down)
 
         self.button_copy = Button(self.tm, 'copy', css='Bg')
@@ -109,7 +111,7 @@ class UnitTestingWidget(MainTab):
         self._tree_widget.clear()
 
     def run_tests(self):
-        pass
+        self.bm.run_unit_tests()
 
     def _on_test_selected(self):
         item = self._tree_widget.currentItem()
@@ -126,13 +128,9 @@ class UnitTestingWidget(MainTab):
             self._test_edit.open_test(None)
 
     def delete_item(self):
-        selected = self._tree_widget.selectedItems()
-        if len(selected) == 0:
-            return
-        selected = selected[0]
         self._test_edit.open_test(None)
         for i in range(self._tree_widget.topLevelItemCount()):
-            if self._tree_widget.topLevelItem(i).delete(selected):
+            if self._tree_widget.topLevelItem(i).delete_item():
                 break
 
     def add_test(self):
@@ -143,6 +141,16 @@ class UnitTestingWidget(MainTab):
     def add_suite(self):
         for i in range(self._tree_widget.topLevelItemCount()):
             if self._tree_widget.topLevelItem(i).add_suite():
+                return
+
+    def move_up(self):
+        for i in range(self._tree_widget.topLevelItemCount()):
+            if self._tree_widget.topLevelItem(i).move('up'):
+                return
+
+    def move_down(self):
+        for i in range(self._tree_widget.topLevelItemCount()):
+            if self._tree_widget.topLevelItem(i).move('down'):
                 return
 
     def set_theme(self):
@@ -197,6 +205,15 @@ class TreeModuleItem(QTreeWidgetItem):
                 return True
         return False
 
+    def move(self, direction):
+        for i in range(self.childCount()):
+            if self.child(i).isSelected():
+                self.module.move_suite(direction, i)
+                return True
+            if self.child(i).move(direction):
+                return True
+        return False
+
     def _on_suite_add(self, suite, index):
         self.insertChild(index, TreeSuiteItem(self._tm, suite))
 
@@ -231,7 +248,7 @@ class TreeSuiteItem(QTreeWidgetItem):
 
         for i in range(self.childCount()):
             if self.child(i).isSelected():
-                self.suite.insert_test(UnitTest('-'), i)
+                self.suite.insert_test(UnitTest('-'), i + 1)
                 return True
         return False
 
@@ -239,6 +256,13 @@ class TreeSuiteItem(QTreeWidgetItem):
         for i in range(self.childCount()):
             if self.child(i).isSelected():
                 self.suite.delete_test(i)
+                return True
+        return False
+
+    def move(self, direction):
+        for i in range(self.childCount()):
+            if self.child(i).isSelected():
+                self.suite.move_test(direction, i)
                 return True
         return False
 

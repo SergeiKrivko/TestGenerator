@@ -1,6 +1,7 @@
 import json
 import os.path
 import shutil
+from typing import Literal
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -47,6 +48,23 @@ class UnitTestsSuite(QObject):
     def delete_test(self, index):
         self._tests.pop(index)
         self.deleteTest.emit(index)
+
+    def move_test(self, direction: Literal['up', 'down'], index: int):
+        match direction:
+            case 'up':
+                if index <= 0:
+                    return
+                test = self._tests[index]
+                self.delete_test(index)
+                index -= 1
+                self.insert_test(test, index)
+            case 'down':
+                if index >= len(self._tests) - 1:
+                    return
+                test = self._tests[index]
+                self.delete_test(index)
+                index += 1
+                self.insert_test(test, index)
 
     def load(self, path: str):
         self._tests.clear()

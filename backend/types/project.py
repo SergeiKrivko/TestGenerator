@@ -12,7 +12,7 @@ class Project:
         sm.all_projects[self._path] = self
 
         if makedirs:
-            os.makedirs(os.path.join(self._path, Project.TEST_GENERATOR_DIR))
+            os.makedirs(os.path.join(self._path, Project.TEST_GENERATOR_DIR), exist_ok=True)
         elif not os.path.isdir(os.path.join(self._path, Project.TEST_GENERATOR_DIR)):
             raise FileNotFoundError
 
@@ -168,6 +168,9 @@ class Project:
         if not self.get('func_tests_in_project', True):
             return f"{self.data_path()}/func_tests_readme.md"
         return os.path.join(self._path, self.get('readme_pattern', "func_tests/readme.md"))
+
+    def unit_tests_path(self):
+        return os.path.join(self._path, self.get('unit_tests_dir', "unit_tests"))
 
     def create_gitignore(self):
         os.makedirs(self.data_path(), exist_ok=True)
