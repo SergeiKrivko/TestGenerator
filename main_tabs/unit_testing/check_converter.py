@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from backend.types.unit_test import UnitTest
 from backend.types.unit_tests_module import UnitTestsModule
@@ -11,7 +12,18 @@ class CheckConverter:
 
         self._modules = modules
 
+    def _check_tests_count(self):
+        for module in self._modules:
+            for suite in module.suits():
+                for test in suite.tests():
+                    return True
+        return False
+
     def convert(self):
+        if os.path.isdir(self._data_path):
+            shutil.rmtree(self._data_path)
+        if not self._check_tests_count():
+            return
         os.makedirs(self._data_path, exist_ok=True)
         suits = []
         for module in self._modules:

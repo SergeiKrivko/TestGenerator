@@ -232,6 +232,9 @@ class TestingLooper(QThread):
         self.clear_after_run(test, index)
 
     def run(self):
+        if self._project.get('build') is None:
+            self.compileFailed.emit("Invalid build data!")
+            return
         res, errors = self._manager.compile_build(self._project.get('build'), self._project, coverage=self._coverage)
         if not res:
             self.compileFailed.emit(errors)
