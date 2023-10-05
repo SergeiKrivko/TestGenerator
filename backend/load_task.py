@@ -4,6 +4,7 @@ from time import sleep
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from backend.commands import get_sorted_jsons
 from backend.types.build import Build
 from backend.types.func_test import FuncTest
 from backend.types.project import Project
@@ -58,12 +59,11 @@ class Loader(QThread):
             module.store(path)
 
     def store_builds(self):
-        if os.path.isdir(data_path := f"{self._old_data_path}/scenarios/builds"):
+        if os.path.isdir(data_path := f"{self._old_data_path}/scenarios"):
             shutil.rmtree(data_path)
         for key, item in self._manager.builds.items():
             path = f"{data_path}/{key}.json"
-            item.path = path
-            item.store()
+            item.store(path)
 
     def clear_all(self):
         self._manager.clear_func_tests()
@@ -112,13 +112,12 @@ class Loader(QThread):
                 self._manager.add_module(module)
 
     def load_builds(self):
-        path = f"{self._new_data_path}/scenarios/builds"
+        path = f"{self._new_data_path}/scenarios"
         if not os.path.isdir(path):
             return
-        for el in os.listdir(path):
-            if el.endswith('.json'):
-                path = os.path.join(path, el)
-                self._manager.add_build(Build(path))
+        for el in get_sorted_jsons(path):
+            build_path = os.path.join(path, el)
+            self._manager.add_build(Build(int(el.rstrip('.json')), build_path))
 
     def next_step(self):
         self.progress += 1

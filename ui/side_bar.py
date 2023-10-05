@@ -144,6 +144,8 @@ class SideBar(QWidget):
                            f"border-right: 1px solid {self.tm['BorderColor']};")
         for el in self.buttons.values():
             el.set_theme(self.tm)
+        for el in self._windows.values():
+            el.set_theme()
 
 
 class SideBarButton(Button):

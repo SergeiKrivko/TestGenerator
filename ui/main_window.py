@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogB
 
 from backend.backend_manager import BackendManager
 from other.report.report_window import ReportWindow
+from side_tabs.builds import BuildWindow
 from side_tabs.console import ConsolePanel
 from side_tabs.files.files_widget import FilesWidget
 from side_tabs.terminal_tab import TerminalTab
@@ -75,7 +76,7 @@ class MainWindow(QMainWindow):
         for key, item in {
             'projects': ProjectWidget(self.sm, self.bm, self.tm),
             'files': FilesWidget(self.sm, self.bm, self.tm),
-            'build': BuildPanel(self.sm, self.bm, self.tm),
+            'build': BuildWindow(self.bm, self.sm, self.tm),
             'tests': TestingPanel(self.sm, self.bm, self.tm),
             'todo': TODOPanel(self.sm, self.cm, self.tm),
             'git': GitPanel(self.sm, self.cm, self.tm),

@@ -2,11 +2,10 @@ import os
 import shutil
 
 from backend.commands import cmd_command
-from backend.types.build import Build
 from language.utils import get_files
 
 
-def c_compile(project, build: Build, sm, coverage=False):
+def c_compile(project, build, sm, coverage=False):
     if os.name == 'nt' and project.get("C_wsl", False):
         compiler = "wsl -e gcc"
     else:
@@ -15,7 +14,7 @@ def c_compile(project, build: Build, sm, coverage=False):
     temp_dir = f"{sm.temp_dir()}/build"
     path = project.path()
     try:
-        os.remove(f"{sm.temp_dir()}/app.exe")
+        os.remove(f"{sm.temp_dir()}/{build.get('app_file')}")
     except FileNotFoundError:
         pass
     if os.path.isdir(temp_dir):
@@ -24,7 +23,8 @@ def c_compile(project, build: Build, sm, coverage=False):
 
     c_files = []
     h_dirs = set()
-    for key in build.files:
+    print(build.get('name'), build.get('files', []))
+    for key in build.get('files', []):
         if key.endswith('.c'):
             c_files.append(os.path.join(path, key))
         else:
@@ -35,7 +35,7 @@ def c_compile(project, build: Build, sm, coverage=False):
     errors = []
     code = True
 
-    compiler_keys = build.keys
+    compiler_keys = build.get('keys', '')
     for c_file, o_file in zip(c_files, o_files):
         command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} {h_dirs} -c -o {o_file} {c_file}"
         res = cmd_command(command, shell=True)
@@ -44,8 +44,8 @@ def c_compile(project, build: Build, sm, coverage=False):
         errors.append(res.stderr)
 
     if code:
-        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/app.exe " \
-                  f"{' '.join(o_files)} {build.linker_keys}"
+        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/{build.get('app_file')} " \
+                  f"{' '.join(o_files)} {build.get('linker_keys', '')}"
         res = cmd_command(command, shell=True)
         if res.returncode:
             code = False
@@ -54,11 +54,11 @@ def c_compile(project, build: Build, sm, coverage=False):
     return code, ''.join(errors)
 
 
-def c_run(path, project, sm, args='', coverage=False):
+def c_run(project, build, args=''):
     # temp_dir = sm.temp_dir()
     if os.name == 'nt' and project.get("C_wsl", False):
-        return f"wsl -e {path}/app.exe {args}"
-    return f"{os.path.join(path, 'app.exe')} {args}"
+        return f"wsl -e {project.path()}/{build.get('app_file')} {args}"
+    return f"{os.path.join(project.path(), build.get('app_file'))} {args}"
 
 
 def c_clear_coverage_files(path):

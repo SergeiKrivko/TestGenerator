@@ -1,3 +1,4 @@
+import random
 from typing import Literal
 
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
@@ -199,29 +200,25 @@ class BackendManager(QObject):
     # --------------------------- BUILDS --------------------------------
 
     def add_build(self, build: Build):
-        self.builds[build.name] = build
+        self.builds[build.id] = build
         self.addBuild.emit(build)
 
-    def delete_build(self, name: str):
-        build = self.builds[name]
-        self.builds.pop(name)
+    def generate_build_id(self):
+        while (res := random.randint(0, 2**31)) in self.builds:
+            pass
+        return res
+
+    def delete_build(self, id: int):
+        build = self.builds[id]
+        self.builds.pop(id)
         self.deleteBuild.emit(build)
 
     def clear_builds(self):
         self.builds.clear()
         self.clearBuilds.emit()
 
-    def rename_build(self, name: str, new_name: str):
-        if new_name in self.builds:
-            return
-        build = self.builds[name]
-        build.set_name(new_name)
-        self.builds.pop(name)
-        self.builds[new_name] = build
-        self.renameBuild.emit(build, new_name)
-
-    def get_build(self, name: str):
-        return self.builds[name]
+    def get_build(self, id: int):
+        return self.builds[id]
 
     # ------------------- UNIT TESTING -------------------------
 
@@ -246,7 +243,6 @@ class BackendManager(QObject):
         #         self.sm.get('language', 'C')].get('compiler_mask'))
         #     dialog.exec()
         #     return
-        print(res, errors)
 
         res = cmd_command(f"{project.path()}/app.exe", shell=True, cwd=project.path())
 
@@ -269,44 +265,34 @@ class BackendManager(QObject):
 
     # --------------------- running ----------------------------
 
-    def compile(self, build: Build | str, project: Project = None, coverage=False):
+    def compile_build(self, build_id: int, project=None, coverage=False):
         if project is None:
             project = self.sm.project
-        if isinstance(build, str):
-            try:
-                build = self.get_build(build)
-            except KeyError:
-                return False, "Invalid build data"
-        return languages[self.sm.get('language', 'C')].get(
-            'compile', lambda *args: (False, 'Can\'t compile this file'))(project, build, self.sm, coverage)
+        return self.builds[build_id].compile(project, self.sm, coverage)
 
-    def run_main_code(self, args='', in_data=None, project=None, coverage=False):
+    def run_build(self, build_id, args='', in_data=None, project=None, coverage=False):
         if project is None:
             project = self.sm.project
+        command = self.builds[build_id].run(project, args, coverage)
         if in_data is not None:
-            return cmd_command(languages[self.sm.get('language', 'C')].get('run')(
-                project.path(), project, self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)),
-                shell=True, input=in_data, cwd=project.path())
-        return cmd_command(languages[self.sm.get('language', 'C')].get('run')(
-            project.path(), project, self.sm, args, coverage), timeout=float(self.sm.get('time_limit', 3)),
-            shell=True, cwd=project.path())
+            return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, input=in_data,
+                               cwd=project.path())
+        return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, cwd=project.path())
+
+    def execute_build(self, build_id, args='', in_data=None, project=None, coverage=False):
+        res, errors = self.compile_build(build_id, project, coverage)
+        if not res:
+            return res, errors
+        return self.run_build(build_id, args, in_data, project, coverage)
+
+    def run_scenarios(self, builds: list[int], args='', in_data=None, project=None, coverage=False):
+        lst = []
+        for el in builds:
+            lst.append(self.execute_build(el, args, in_data, project, coverage))
+        return lst
 
     def collect_coverage(self):
         res = languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)
-        return res
-
-    def run_scenarios(self, data: list | dict, cwd=None):
-        if isinstance(data, dict):
-            data = [data]
-        if cwd is None:
-            cwd = self.sm.lab_path()
-        res = []
-        for scenario in data:
-            match scenario['type']:
-                case CommandsList.TYPE_CMD:
-                    res.append(self.cmd_command(scenario['data'], shell=True, cwd=cwd))
-                case CommandsList.TYPE_BUILD:
-                    res.append(self.compile(scenario['data'], cwd))
         return res
 
     # --------------------- process ----------------------------

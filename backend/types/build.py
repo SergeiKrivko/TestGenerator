@@ -1,62 +1,45 @@
 import json
-import os
+import os.path
+
+from backend.commands import read_json
+
+import language.testing.c as c
 
 
 class Build:
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, id, path=None):
+        self._data = dict() if path is None else read_json(path)
+        self.id = id
 
-        self.name = '-'
-        self.language = 'C'
-        self.keys = ''
-        self.linker_keys = ''
-        self.files = set()
+    def get(self, key, default=None):
+        return self._data.get(key, default)
 
-        self.load()
+    def store(self, path):
+        os.makedirs(os.path.split(path)[0], exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(self._data))
 
-    def set_name(self, name):
-        self.name = name
+    def __getitem__(self, item):
+        return self._data[item]
 
-    def set_language(self, language):
-        self.language = language
+    def __setitem__(self, key, value):
+        self._data[key] = value
 
-    def set_keys(self, keys):
-        self.keys = keys
+    def pop(self, key):
+        self._data.pop(key)
 
-    def set_lkeys(self, keys):
-        self.linker_keys = keys
+    def compile(self, project, sm, coverage):
+        match self.get('type', 'C'):
+            case 'C':
+                return c.c_compile(project, self, sm, coverage)
 
-    def set_file_status(self, file, status):
-        if status:
-            self.files.add(file)
-        else:
-            self.files.remove(file)
+    def run_preproc(self):
+        pass
 
-    def load(self):
-        try:
-            with open(self.path, encoding='utf-8') as f:
-                data = json.loads(f.read())
-                if not isinstance(data, dict):
-                    data = dict()
-        except FileNotFoundError:
-            data = dict()
-        except json.JSONDecodeError:
-            data = dict()
+    def run(self, project, args, coverage=False):
+        match self.get('type', 'C'):
+            case 'C':
+                return c.c_run(project, self, args)
 
-        self.set_name(data.get('name', ''))
-        self.language = data.get('language', 'C')
-        self.files = set(data.get('files', []))
-        self.keys = data.get('keys', '')
-        self.linker_keys = data.get('linker_keys', '')
-
-    def store(self):
-        data = {
-            'name': self.name,
-            'language': self.language,
-            'files': list(self.files),
-            'keys': self.keys,
-            'linker_keys': self.keys
-        }
-        os.makedirs(os.path.split(self.path)[0], exist_ok=True)
-        with open(self.path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(data))
+    def run_postproc(self):
+        pass

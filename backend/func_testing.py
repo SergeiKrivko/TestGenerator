@@ -217,7 +217,8 @@ class TestingLooper(QThread):
     def run_test(self, test: FuncTest, index: int):
         self.prepare_test(test, index)
         try:
-            res = self._manager.run_main_code(test.args, test.get('in', ''), coverage=self._coverage)
+            res = self._manager.run_build(self._project.get('build'), test.args, test.get('in', ''),
+                                          coverage=self._coverage)
             test.exit = res.returncode
             test.prog_out = {'STDOUT': res.stdout}
             self.run_comparators(test, index)
@@ -231,9 +232,7 @@ class TestingLooper(QThread):
         self.clear_after_run(test, index)
 
     def run(self):
-        command = self._project.get('build', dict()).get('data', '')
-        # res = self.cm.run_scenarios(command, self.path)
-        res, errors = self._manager.compile(command, coverage=self._coverage)
+        res, errors = self._manager.compile_build(self._project.get('build'), self._project, coverage=self._coverage)
         if not res:
             self.compileFailed.emit(errors)
             return

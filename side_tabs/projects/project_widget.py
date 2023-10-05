@@ -110,7 +110,6 @@ class ProjectWidget(SidePanelWidget):
                 self.list_widget.setCurrentItem(item)
         self.list_widget.sortItems()
         self._opening_project = False
-        print(f"select({self.sm.main_project.path()})")
         self.select_project(self.sm.main_project)
 
     def rename_project(self):

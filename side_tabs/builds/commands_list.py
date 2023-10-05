@@ -163,6 +163,7 @@ class MakeScenarioBox(QComboBox):
         super().__init__()
         self._sm = sm
         self._bm = bm
+        self._builds = []
         self._default = default
         if self._default:
             self.addItem("")
@@ -173,24 +174,21 @@ class MakeScenarioBox(QComboBox):
         self._bm.renameBuild.connect(self.load_data)
         self._bm.clearBuilds.connect(self.load_data)
 
-    def _load_make(self):
-        self.clear()
-        if self._default:
-            self.addItem("")
-        self.addItems(list(self._bm.builds.keys()))
-
     def load_data(self):
-        self._load_make()
+        self.clear()
+        self._builds = list(self._bm.builds.keys())
+        if self._default:
+            self._builds.insert(0, None)
+            self.addItem("")
+        self.addItems([item.get('name') for item in self._bm.builds.values()])
 
-    def load(self, data: dict | None):
+    def load(self, value):
         self.load_data()
-        if data is None:
-            self.setCurrentText("")
-        elif 'data' in data:
-            self.setCurrentText(data['data'])
+        self.setCurrentIndex(self._builds.index(value))
 
     def current_scenario(self) -> dict | None:
-        return {'type': CommandsList.TYPE_BUILD, 'data': self.currentText()}
+        print(self._builds, self.currentIndex())
+        return self._builds[self.currentIndex()]
 
 
 class _ListWidgetItem(QListWidgetItem):
