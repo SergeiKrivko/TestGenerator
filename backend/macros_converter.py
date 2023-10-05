@@ -17,6 +17,7 @@ class MacrosConverter(QThread):
         self.project = project
         self.tests = tests
         self.sm = sm
+        os.makedirs(os.path.split(project.readme_path())[0], exist_ok=True)
         self.readme = open(project.readme_path(), 'w', encoding='utf-8')
         self._file = None
         self.closed = False
