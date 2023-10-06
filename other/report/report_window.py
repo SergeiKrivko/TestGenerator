@@ -35,7 +35,6 @@ class ReportWindow(SideBarWindow):
             f.write(json.dumps(self._main_document.store()))
 
     def convert_file(self):
-        print(f"{self.sm.project.path()}/report.docx")
         converter = DocxConverter(self._main_document.store(), f"{self.sm.project.path()}/report.docx")
         converter.convert()
 

@@ -1,9 +1,11 @@
 import json
 import os.path
+import shutil
 
 from backend.commands import read_json
 
-import language.testing.c as c
+from language.testing.c import *
+from language.testing.python import *
 
 
 class Build:
@@ -28,18 +30,42 @@ class Build:
     def pop(self, key):
         self._data.pop(key)
 
-    def compile(self, project, sm, coverage):
-        match self.get('type', 'C'):
+    def clear(self, sm):
+        temp_dir = f"{sm.temp_dir()}/build{self.id}"
+        if os.path.isdir(temp_dir):
+            shutil.rmtree(temp_dir)
+
+    def compile(self, project, sm):
+        match self.get('type'):
             case 'C':
-                return c.c_compile(project, self, sm, coverage)
+                return c_compile(project, self, sm)
+            case _:
+                return True, ''
 
     def run_preproc(self):
         pass
 
-    def run(self, project, args, coverage=False):
+    def run(self, project, sm, args):
+        match self.get('type'):
+            case 'C':
+                return c_run(project, self, args)
+            case 'python':
+                return python_run(project, self, args)
+            case 'python_coverage':
+                return python_run_coverage(project, sm, self, args)
+            case _:
+                return ""
+
+    def collect_coverage(self, project, sm):
+        print(self, self['type'])
         match self.get('type', 'C'):
             case 'C':
-                return c.c_run(project, self, args)
+                print(c_collect_coverage(sm, self))
+                return c_collect_coverage(sm, self)
+            case 'python_coverage':
+                return python_collect_coverage(sm, self)
+            case _:
+                return None
 
     def run_postproc(self):
         pass

@@ -25,11 +25,12 @@ class TestingLooper(QThread):
         self._project = project
         self._manager = manager
         self._tests = tests
-        self._coverage = self._project.get('coverage')
         self.path = self._project.path()
         self.util_res = dict()
         self.util_output = dict()
         self.utils = []
+        self.coverage = None
+        self._temp_dir = f"{self.sm.temp_dir()}/out"
 
     def prepare_test(self, test: FuncTest, index: int):
         if self._project.get('func_tests_in_project'):
@@ -40,8 +41,7 @@ class TestingLooper(QThread):
                 {j + 1: self._project.test_in_file_path(test.type(), index, j, binary=d.get('type', 'txt') == 'bin')
                  for j, d in enumerate(test.get('in_files', []))},
                 {j + 1: self._project.test_out_file_path(test.type(), index, j, binary=d.get('type', 'txt') == 'bin')
-                 for j, d in enumerate(test.get('out_files', []))},
-                f"{self.sm.app_data_dir}/temp_files")
+                 for j, d in enumerate(test.get('out_files', []))}, self._temp_dir)
             self.convert_test_files('in', test, test.type(), index)
             self.convert_test_files('out', test, test.type(), index)
             self.convert_test_files('check', test, test.type(), index)
@@ -100,8 +100,8 @@ class TestingLooper(QThread):
         test.results['Exit code'] = code_res
 
         for j, file in enumerate(test.get('out_files', [])):
-            path = self._project.get('temp_files_dir', '.') + '/' if self._project.get('func_tests_in_project') else \
-                f"{self.sm.app_data_dir}/temp_files/"
+            path = self._project.temp_dir() + '/' if self._project.get('func_tests_in_project') else \
+                f"{self._temp_dir}/"
             if file.get('type', 'txt') == 'txt':
                 text = read_file(f"{path}temp_{j + 1}.txt", '')
                 test.results[f"out_file_{j + 1}.txt"] = self.comparator(test, file['text'], text)
@@ -129,8 +129,8 @@ class TestingLooper(QThread):
     def clear_after_run(self, test: FuncTest, index: int):
         if self._project.get('func_tests_in_project'):
             self.convert_test_files('in', test, test.type(), index)
-        elif os.path.isdir(f"{self.sm.app_data_dir}/temp_files"):
-            shutil.rmtree(f"{self.sm.app_data_dir}/temp_files")
+        elif os.path.isdir(self._temp_dir):
+            shutil.rmtree(self._temp_dir)
 
     @staticmethod
     def parse_util_name(data: dict):
@@ -147,7 +147,7 @@ class TestingLooper(QThread):
         if data.get('type', 0) != 1:
             return
         name = self.parse_util_name(data)
-        temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
+        temp_path = f"{self._temp_dir}/dist.txt"
         res = self._manager.cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                                        files=' '.join(get_files(self.path, '.c'))),
                                         shell=True, cwd=self.path)
@@ -173,7 +173,7 @@ class TestingLooper(QThread):
         if data.get('type', 0) != 2:
             return
         name = self.parse_util_name(data)
-        temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
+        temp_path = f"{self._temp_dir}/dist.txt"
         res = cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                          files=' '.join(get_files(self.path, '.c'))),
                           shell=True, cwd=self.path)
@@ -196,7 +196,7 @@ class TestingLooper(QThread):
         if util_data.get('type', 0) != 0:
             return
         name = self.parse_util_name(util_data)
-        temp_path = f"{self.sm.app_data_dir}/temp_files/dist.txt"
+        temp_path = f"{self._temp_dir}/dist.txt"
         res = cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
                                                               args=test.args, dict=temp_path),
                           shell=True, input=test['in'], cwd=self.path)
@@ -217,8 +217,7 @@ class TestingLooper(QThread):
     def run_test(self, test: FuncTest, index: int):
         self.prepare_test(test, index)
         try:
-            res = self._manager.run_build(self._project.get('build'), test.args, test.get('in', ''),
-                                          coverage=self._coverage)
+            res = self._manager.run_build(self._project.get('build'), test.args, test.get('in', ''))
             test.exit = res.returncode
             test.prog_out = {'STDOUT': res.stdout}
             self.run_comparators(test, index)
@@ -235,7 +234,7 @@ class TestingLooper(QThread):
         if self._project.get('build') is None:
             self.compileFailed.emit("Invalid build data!")
             return
-        res, errors = self._manager.compile_build(self._project.get('build'), self._project, coverage=self._coverage)
+        res, errors = self._manager.compile_build(self._project.get('build'), self._project)
         if not res:
             self.compileFailed.emit(errors)
             return
@@ -269,6 +268,8 @@ class TestingLooper(QThread):
             self.run_postproc_util(util)
         command = self._project.get('postprocessor', '')
         self._manager.run_scenarios(command, self.path)
+
+        self.coverage = self._manager.collect_coverage(self._project.get('build'), self._project)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':

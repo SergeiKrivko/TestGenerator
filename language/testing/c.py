@@ -1,29 +1,21 @@
 import os
-import shutil
 
 from backend.commands import cmd_command
 from language.utils import get_files
 
 
-def c_compile(project, build, sm, coverage=False):
-    if os.name == 'nt' and project.get("C_wsl", False):
-        compiler = "wsl -e gcc"
-    else:
+def c_compile(project, build, sm):
+    coverage = build.get('coverage', False)
+    compiler = build.get('compiler')
+    if compiler is None:
         compiler = project.get('gcc', 'gcc')
 
-    temp_dir = f"{sm.temp_dir()}/build"
     path = project.path()
-    try:
-        os.remove(f"{sm.temp_dir()}/{build.get('app_file')}")
-    except FileNotFoundError:
-        pass
-    if os.path.isdir(temp_dir):
-        shutil.rmtree(temp_dir)
+    temp_dir = f"{sm.temp_dir()}/build{build.id}"
     os.makedirs(temp_dir, exist_ok=True)
 
     c_files = []
     h_dirs = set()
-    print(build.get('name'), build.get('files', []))
     for key in build.get('files', []):
         if key.endswith('.c'):
             c_files.append(os.path.join(path, key))
@@ -61,30 +53,14 @@ def c_run(project, build, args=''):
     return f"{os.path.join(project.path(), build.get('app_file'))} {args}"
 
 
-def c_clear_coverage_files(path):
-    if not os.path.isdir(path):
-        return
-    for file in get_files(path, '.gcda'):
-        os.remove(file)
-    for file in get_files(path, '.gcno'):
-        os.remove(file)
-    for file in get_files(path, 'temp.txt'):
-        os.remove(file)
-    for file in get_files(path, '.gcov'):
-        os.remove(file)
-
-
-def c_collect_coverage(path, sm, cm):
+def c_collect_coverage(sm, build):
     total_count = 0
     count = 0
 
-    temp_dir = f"{sm.temp_dir()}/build"
+    temp_dir = f"{sm.temp_dir()}/build{build.id}"
 
-    for file in get_files(path, '.c'):
-        if os.name == 'nt' and sm.get("C_wsl", False):
-            res = cm.cmd_command(f"wsl -e gcov {file} -o {temp_dir}", shell=True)
-        else:
-            res = cm.cmd_command(f"{sm.get('gcov', 'gcov')} {file} -o {temp_dir}", shell=True)
+    for file in build.get('files', []):
+        res = cmd_command(f"{sm.get('gcov', 'gcov')} {file} -o {temp_dir}", shell=True, cwd=temp_dir)
 
         for line in res.stdout.split('\n'):
             if "Lines executed:" in line:

@@ -150,7 +150,6 @@ class MacrosConverter(QThread):
         self.closed = True
 
     def run(self):
-        print(self.tests)
         # for test_type in ['pos', 'neg']:
         #     for d in [self.project.test_in_path(test_type, 0), self.project.test_out_path(test_type, 0),
         #               self.project.test_args_path(test_type, 0), self.project.test_in_file_path(test_type, 0, 1, False),

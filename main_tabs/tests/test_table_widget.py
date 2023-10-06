@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
     QPushButton
 
-from side_tabs.builds.commands_list import CommandsList, MakeScenarioBox
+from side_tabs.builds.commands_list import CommandsList, ScenarioBox
 from main_tabs.tests.in_data_window import InDataWindow
 from ui.button import Button
 from ui.options_window import OptionsWidget
@@ -14,15 +14,16 @@ BUTTONS_MAX_WIDTH = 30
 class TestTableWidget(QWidget):
     def __init__(self, tm, sm, bm, cm):
         super(TestTableWidget, self).__init__()
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
         self.tm = tm
         self.sm = sm
         self.bm = bm
         self.cm = cm
         self.labels = []
         self._windows = []
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
 
         # Positive tests
 
@@ -37,19 +38,10 @@ class TestTableWidget(QWidget):
         self.in_data_edit = QLineEdit()
         in_data_layout.addWidget(self.in_data_edit)
 
-        self.options_window = TestingOptionsDialog(self.sm, self.bm, self.tm)
-
-        self.options_button = Button(self.tm, 'plus', css='Bg')
-        self.options_button.setFixedHeight(22)
-        self.options_button.clicked.connect(self.options_window.exec)
-        in_data_layout.addWidget(self.options_button)
-
-        self.in_data_window = InDataWindow(self.sm, self.tm)
-
-        self.in_data_button = Button(self.tm, 'plus', css='Bg')
-        self.in_data_button.setFixedHeight(22)
-        self.in_data_button.clicked.connect(self.in_data_window.exec)
-        in_data_layout.addWidget(self.in_data_button)
+        self._build_box = ScenarioBox(self.sm, self.bm, self.tm)
+        self._build_box.currentIndexChanged.connect(self._on_build_changed)
+        self.sm.projectChanged.connect(lambda: self._build_box.load(self.sm.get('build')))
+        in_data_layout.addWidget(self._build_box)
 
         pos_buttons_layout = QHBoxLayout()
         pos_layout.addLayout(pos_buttons_layout)
@@ -108,6 +100,13 @@ class TestTableWidget(QWidget):
 
         out_data_layout = QHBoxLayout()
         neg_layout.addLayout(out_data_layout)
+
+        self.in_data_window = InDataWindow(self.sm, self.tm)
+
+        self.in_data_button = Button(self.tm, 'plus', css='Bg')
+        self.in_data_button.setFixedHeight(22)
+        self.in_data_button.clicked.connect(self.in_data_window.exec)
+        out_data_layout.addWidget(self.in_data_button)
 
         self._export_dialog = ExportDialog(self.sm, self.cm, self.tm)
 
@@ -178,6 +177,9 @@ class TestTableWidget(QWidget):
         neg_comparator_layout.addWidget(self.neg_comparator_widget)
         neg_layout.addLayout(neg_comparator_layout)
 
+    def _on_build_changed(self):
+        self.sm.set('build', self._build_box.current_scenario())
+
     def save_pos_comparator(self):
         dct = self.sm.get('pos_comparators')
         if not isinstance(dct, dict):
@@ -218,10 +220,11 @@ class TestTableWidget(QWidget):
                    self.pos_button_copy, self.in_data_edit, self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.out_data_edit,
                    self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
-                   self.neg_button_generate, self.export_button, self.options_button]:
+                   self.neg_button_generate, self.export_button]:
             self.tm.auto_css(el)
         for label in self.labels:
             label.setFont(self.tm.font_medium)
+        self._build_box.set_theme()
         for el in self._windows:
             if hasattr(el, 'set_theme'):
                 el.set_theme()
@@ -310,59 +313,3 @@ class ExportDialog(QDialog):
                 table.cell(i, j).text = str(lst[i][j])
 
         document.save(self._options_widget["Путь:"])
-
-
-class TestingOptionsDialog(QDialog):
-    def __init__(self, sm, bm, tm):
-        super().__init__()
-        self.sm = sm
-        self.bm = bm
-        self.tm = tm
-
-        self.setFixedSize(600, 400)
-        self._labels = []
-
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-
-        layout_h1 = QHBoxLayout()
-        main_layout.addLayout(layout_h1)
-        layout_h1.setContentsMargins(0, 0, 0, 0)
-        layout_h1.setAlignment(Qt.AlignLeft)
-        label = QLabel("Сценарий сборки:")
-        layout_h1.addWidget(label)
-        self._labels.append(label)
-        self._build_box = MakeScenarioBox(self.sm, self.bm, default=True)
-        layout_h1.addWidget(self._build_box)
-
-        self._preproc_list = CommandsList(self.sm, self.tm, "Препроцессор")
-        main_layout.addWidget(self._preproc_list)
-
-        self._postproc_list = CommandsList(self.sm, self.tm, "Постпроцессор")
-        main_layout.addWidget(self._postproc_list)
-
-        self.set_theme()
-
-    def load(self):
-        self._build_box.load(self.sm.get('build', None))
-        self._preproc_list.load(self.sm.get('preprocessor', []))
-        self._postproc_list.load(self.sm.get('postprocessor', []))
-
-    def store(self):
-        self.sm.set('build', self._build_box.current_scenario())
-        self.sm.set('preprocessor', self._preproc_list.store())
-        self.sm.set('postprocessor', self._postproc_list.store())
-
-    def exec(self) -> int:
-        self.load()
-        res = super().exec()
-        self.store()
-        return res
-
-    def set_theme(self):
-        for el in [self._preproc_list, self._postproc_list]:
-            el.set_theme()
-        for el in [self._build_box]:
-            self.tm.auto_css(el)
-        for el in self._labels:
-            self.tm.auto_css(el)

@@ -1,4 +1,5 @@
 import random
+import sys
 from typing import Literal
 
 from PyQt5.QtCore import QObject, pyqtSignal, QThread
@@ -37,7 +38,7 @@ class BackendManager(QObject):
     startTesting = pyqtSignal(list)
     testingError = pyqtSignal(str)
     testingUtilError = pyqtSignal(str)
-    endTesting = pyqtSignal()
+    endTesting = pyqtSignal(object)
 
     addBuild = pyqtSignal(Build)
     deleteBuild = pyqtSignal(Build)
@@ -99,7 +100,7 @@ class BackendManager(QObject):
         self.run_macros_converter()
         self._run_loader(project, main=True)
 
-    def _run_loader(self, project: Project, main=False):
+    def _run_loader(self, project: Project | None, main=False):
         self._loader = Loader(self, project, main)
         self._loader.finished.connect(self._on_loader_finished)
         self._loader.updateProgress.connect(self.updateProgress.emit)
@@ -182,7 +183,7 @@ class BackendManager(QObject):
         self._testing_looper = TestingLooper(self.sm, self.sm.project, self,
                                              self.func_tests['pos'] + self.func_tests['neg'])
         self._testing_looper.testStatusChanged.connect(self.func_test_set_status)
-        self._testing_looper.finished.connect(self.endTesting.emit)
+        self._testing_looper.finished.connect(lambda: self.endTesting.emit(self._testing_looper.coverage))
         self._testing_looper.compileFailed.connect(self.testingError.emit)
         self._testing_looper.utilFailed.connect(self.testingUtilError.emit)
         self.run_process(self._testing_looper, 'testing', 'main')
@@ -265,35 +266,39 @@ class BackendManager(QObject):
 
     # --------------------- running ----------------------------
 
-    def compile_build(self, build_id: int, project=None, coverage=False):
-        if project is None:
-            project = self.sm.project
-        return self.builds[build_id].compile(project, self.sm, coverage)
+    def clear_build_data(self, build_id: int):
+        self.builds[build_id].clear(self.sm)
 
-    def run_build(self, build_id, args='', in_data=None, project=None, coverage=False):
+    def compile_build(self, build_id: int, project=None):
         if project is None:
             project = self.sm.project
-        command = self.builds[build_id].run(project, args, coverage)
+        return self.builds[build_id].compile(project, self.sm)
+
+    def run_build(self, build_id, args='', in_data=None, project=None):
+        if project is None:
+            project = self.sm.project
+        command = self.builds[build_id].run(project, self.sm, args)
         if in_data is not None:
             return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, input=in_data,
                                cwd=project.path())
         return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, cwd=project.path())
 
-    def execute_build(self, build_id, args='', in_data=None, project=None, coverage=False):
-        res, errors = self.compile_build(build_id, project, coverage)
+    def execute_build(self, build_id, args='', in_data=None, project=None):
+        res, errors = self.compile_build(build_id, project)
         if not res:
             return res, errors
-        return self.run_build(build_id, args, in_data, project, coverage)
+        return self.run_build(build_id, args, in_data, project)
 
-    def run_scenarios(self, builds: list[int], args='', in_data=None, project=None, coverage=False):
+    def run_scenarios(self, builds: list[int], args='', in_data=None, project=None):
         lst = []
         for el in builds:
-            lst.append(self.execute_build(el, args, in_data, project, coverage))
+            lst.append(self.execute_build(el, args, in_data, project))
         return lst
 
-    def collect_coverage(self):
-        res = languages[self.sm.get('language', 'C')].get('coverage', lambda *args: 0)(self.path, self.sm, self)
-        return res
+    def collect_coverage(self, build_id, project=None):
+        if project is None:
+            project = self.sm.project
+        return self.builds[build_id].collect_coverage(project, self.sm)
 
     # --------------------- process ----------------------------
 

@@ -1,4 +1,6 @@
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QDialog, QComboBox, QPushButton
 
 from backend.types.build import Build
 from side_tabs.builds.build_edit import BuildEdit
@@ -10,9 +12,10 @@ class BuildWindow(SideBarWindow):
     def __init__(self, bm, sm, tm):
         super().__init__(bm, sm, tm)
 
-        self.setFixedSize(640, 480)
+        self.setFixedSize(720, 480)
 
         layout = QHBoxLayout()
+        layout.setContentsMargins(10, 10, 0, 10)
         self.setLayout(layout)
 
         right_layout = QVBoxLayout()
@@ -31,7 +34,7 @@ class BuildWindow(SideBarWindow):
         self.button_delete = Button(self.tm, 'delete', css='Main')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(40)
-        self.button_delete.clicked.connect(self.new_build)
+        self.button_delete.clicked.connect(self._on_delete_pressed)
         buttons_layout.addWidget(self.button_delete, 1)
 
         self._list_widget = QListWidget()
@@ -40,12 +43,19 @@ class BuildWindow(SideBarWindow):
         right_layout.addWidget(self._list_widget)
 
         self._build_edit = BuildEdit(self.bm, self.sm, self.tm)
+        self._build_edit.nameChanged.connect(self._update_item_text)
         layout.addWidget(self._build_edit)
 
         self.bm.addBuild.connect(self.add_build)
+        self.bm.deleteBuild.connect(self.delete_build)
+        self.bm.clearBuilds.connect(self.clear)
 
     def add_build(self, build):
         self._list_widget.addItem(ListWidgetItem(self.tm, build))
+
+    def clear(self):
+        self._list_widget.clear()
+        self._build_edit.open(None)
 
     def delete_build(self, build):
         for i in range(self._list_widget.count()):
@@ -55,11 +65,28 @@ class BuildWindow(SideBarWindow):
 
     def _on_build_selected(self):
         item = self._list_widget.currentItem()
+        if not isinstance(item, ListWidgetItem):
+            return
         self._build_edit.open(item.build)
 
+    def _update_item_text(self, text):
+        item = self._list_widget.currentItem()
+        if not isinstance(item, ListWidgetItem):
+            return
+        item.setText(text)
+
     def new_build(self):
-        build = Build(self.bm.generate_build_id())
-        self.bm.add_build(build)
+        dialog = BuildTypeDialog(self.tm)
+        if dialog.exec():
+            build = Build(self.bm.generate_build_id())
+            build['type'] = dialog.value()
+            self.bm.add_build(build)
+
+    def _on_delete_pressed(self):
+        item = self._list_widget.currentItem()
+        if not isinstance(item, ListWidgetItem):
+            return
+        self.bm.delete_build(item.build.id)
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
@@ -71,6 +98,62 @@ class BuildWindow(SideBarWindow):
         self._build_edit.store_build()
 
 
+class BuildTypeDialog(QDialog):
+    ITEMS = {'C': "Сборка C", "python": "Python", "python_coverage": "Python Coverage",
+             'script': "Сценарий командной строки", 'bash': "Скрипт Bash", 'command': "Команда"}
+    ITEMS_REVERSED = {item: key for key, item in ITEMS.items()}
+    IMAGES = {'C': 'c',
+              'python': 'py',
+              'python_coverage': 'py',
+              'bash': 'sh',
+              'script': 'bat',
+              'command': 'cmd'}
+
+    def __init__(self, tm):
+        super().__init__()
+        self.tm = tm
+
+        self.setFixedSize(250, 85)
+
+        layout = QVBoxLayout()
+        layout.setSpacing(20)
+        self.setLayout(layout)
+
+        self._combo_box = QComboBox()
+        self._combo_box.addItems(BuildTypeDialog.ITEMS.values())
+        for i, item in enumerate(self.IMAGES.values()):
+            self._combo_box.setItemIcon(i, QIcon(self.tm.get_image(item)))
+        layout.addWidget(self._combo_box)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.setSpacing(4)
+        buttons_layout.setAlignment(Qt.AlignRight)
+        layout.addLayout(buttons_layout)
+
+        self._button_ok = QPushButton("Создать")
+        self._button_ok.setFixedSize(80, 22)
+        self._button_ok.clicked.connect(self.accept)
+        buttons_layout.addWidget(self._button_ok)
+
+        self._button_cancel = QPushButton("Отмена")
+        self._button_cancel.setFixedSize(80, 22)
+        self._button_cancel.clicked.connect(self.reject)
+        buttons_layout.addWidget(self._button_cancel)
+
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
+        self.set_theme()
+
+    def value(self):
+        return BuildTypeDialog.ITEMS_REVERSED[self._combo_box.currentText()]
+
+    def set_theme(self):
+        self.setStyleSheet(self.tm.bg_style_sheet)
+        for el in [self._button_cancel, self._button_ok, self._combo_box]:
+            self.tm.auto_css(el)
+
+
 class ListWidgetItem(QListWidgetItem):
     def __init__(self, tm, build: Build):
         super().__init__()
@@ -78,6 +161,10 @@ class ListWidgetItem(QListWidgetItem):
         self.build = build
         self.set_theme()
 
+    def update_name(self):
+        self.setText(self.build.get('name', '-'))
+
     def set_theme(self):
-        self.setText(self.build.get('name'))
+        self.update_name()
         self.setFont(self.tm.font_medium)
+        self.setIcon(QIcon(self.tm.get_image(BuildTypeDialog.IMAGES.get(self.build.get('type')), 'unknown_file')))

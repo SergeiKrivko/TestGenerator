@@ -11,7 +11,7 @@ from backend.types.unit_tests_module import UnitTestsModule
 from backend.types.unit_tests_suite import UnitTestsSuite
 from main_tabs.tests.commands import CommandManager
 from main_tabs.unit_testing.test_edit import UnitTestEdit, TestSuiteEdit
-from side_tabs.builds.commands_list import MakeScenarioBox
+from side_tabs.builds.commands_list import ScenarioBox
 from ui.button import Button
 from ui.main_tab import MainTab
 
@@ -35,7 +35,7 @@ class UnitTestingWidget(MainTab):
         left_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(left_layout, 1)
 
-        self.scenario_box = MakeScenarioBox(self.sm, self.bm)
+        self.scenario_box = ScenarioBox(self.sm, self.bm, self.tm)
         left_layout.addWidget(self.scenario_box)
 
         buttons_layout = QHBoxLayout()
@@ -154,7 +154,7 @@ class UnitTestingWidget(MainTab):
                 return
 
     def set_theme(self):
-        for el in [self._tree_widget, self.button_add, self.button_delete, self.button_down, self.scenario_box,
+        for el in [self._tree_widget, self.button_add, self.button_delete, self.button_down,
                    self.button_up, self.button_copy, self.button_add_dir, self.button_run]:
             self.tm.auto_css(el)
         for i in range(self._tree_widget.topLevelItemCount()):
@@ -162,6 +162,7 @@ class UnitTestingWidget(MainTab):
             if not isinstance(item, TreeModuleItem):
                 continue
             item.set_theme()
+        self.scenario_box.set_theme()
         self._test_edit.set_theme()
         self._test_suite_edit.set_theme()
 

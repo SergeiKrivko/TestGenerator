@@ -159,7 +159,6 @@ class FilesWidget(SidePanelWidget):
 
     def open_task(self):
         self.path = self.sm.project.path()
-        print('open task', self.path)
         self.update_files_list()
 
     def create_file(self, *args):

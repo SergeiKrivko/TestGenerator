@@ -1,9 +1,11 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QDialog, QComboBox, \
     QLineEdit, QPushButton
 
 from backend.settings_manager import SettingsManager
+from backend.types.build import Build
+from side_tabs.builds import BuildTypeDialog
 from ui.button import Button
 
 
@@ -115,7 +117,7 @@ class NewCommandDialog(QDialog):
         main_layout.addWidget(self._line_edit)
         self._line_edit.hide()
 
-        self._make_box = MakeScenarioBox(self.sm)
+        self._make_box = ScenarioBox(self.sm)
         main_layout.addWidget(self._make_box)
 
         buttons_layout = QHBoxLayout()
@@ -158,37 +160,59 @@ class NewCommandDialog(QDialog):
             self.tm.auto_css(el)
 
 
-class MakeScenarioBox(QComboBox):
-    def __init__(self, sm: SettingsManager, bm, default=False):
+class ScenarioBox(QComboBox):
+    currentChanged = pyqtSignal(int)
+
+    def __init__(self, sm: SettingsManager, bm, tm, default=False):
         super().__init__()
         self._sm = sm
         self._bm = bm
+        self._tm = tm
         self._builds = []
         self._default = default
         if self._default:
             self.addItem("")
         self.setMinimumWidth(150)
         self.load_data()
-        self._bm.addBuild.connect(self.load_data)
-        self._bm.deleteBuild.connect(self.load_data)
-        self._bm.renameBuild.connect(self.load_data)
-        self._bm.clearBuilds.connect(self.load_data)
+        self.currentIndexChanged.connect(self._on_index_changed)
+        self._loading = False
+        # self._bm.addBuild.connect(self.load_data)
+        # self._bm.deleteBuild.connect(self.load_data)
+        # self._bm.renameBuild.connect(self.load_data)
+        # self._bm.clearBuilds.connect(self.load_data)
 
     def load_data(self):
+        self._loading = True
         self.clear()
         self._builds = list(self._bm.builds.keys())
         if self._default:
             self._builds.insert(0, None)
             self.addItem("")
         self.addItems([item.get('name') for item in self._bm.builds.values()])
+        self._loading = False
+        self.set_theme()
+
+    def _on_index_changed(self):
+        if not self._loading:
+            self.currentChanged.emit(self.current_scenario())
 
     def load(self, value):
         self.load_data()
-        self.setCurrentIndex(self._builds.index(value))
+        try:
+            self.setCurrentIndex(self._builds.index(value))
+        except ValueError:
+            pass
 
     def current_scenario(self) -> dict | None:
-        print(self._builds, self.currentIndex())
         return self._builds[self.currentIndex()]
+
+    def set_theme(self):
+        self._tm.auto_css(self)
+        for i, build in enumerate(self._builds):
+            if build is not None:
+                build = self._bm.builds[build]
+                self.setItemIcon(i, QIcon(self._tm.get_image(BuildTypeDialog.IMAGES.get(build.get('type')),
+                                                             'unknown_file')))
 
 
 class _ListWidgetItem(QListWidgetItem):

@@ -131,6 +131,7 @@ class TestingWidget(MainTab):
         self.bm.testingError.connect(self.testing_is_terminated)
         self.bm.testingUtilError.connect(self.util_failed)
         self.bm.endTesting.connect(self.end_testing)
+        self.bm.changeTestStatus.connect(self.set_tests_status)
 
     def set_theme(self):
         for el in [self.button, self.progress_bar, self.prog_out_combo_box, self.in_data_combo_box,
@@ -238,14 +239,14 @@ class TestingWidget(MainTab):
         self.progress_bar.setMaximum(self.bm.func_tests_count('all'))
         self.progress_bar.setValue(0)
 
-    def end_testing(self):
+    def end_testing(self, coverage):
         self.progress_bar.hide()
         self.coverage_bar.show()
 
-        # if self.sm.get_smart('coverage', False):
-        #     self.coverage_bar.setText(f"Coverage: {self.cm.collect_coverage():.1f}%")
-        # else:
-        #     self.coverage_bar.setText("")
+        if coverage is not None:
+            self.coverage_bar.setText(f"Coverage: {coverage:.1f}%")
+        else:
+            self.coverage_bar.setText("")
         self.test_mode(False)
 
     def util_failed(self, name, errors, mask):
@@ -263,7 +264,7 @@ class TestingWidget(MainTab):
                     self.jump_to_code.emit(os.path.join(self.sm.lab_path(), dialog.goto[0]),
                                            dialog.goto[1], dialog.goto[2])
 
-        self.end_testing()
+        self.end_testing(None)
 
 
 class SimpleField(QWidget):
@@ -398,8 +399,8 @@ class TestInfoWidget(QScrollArea):
 
     def open_test_info(self):
         self.clear()
-        self.add_widget(LineField(self._tm, "Описание:", self._test['desc']))
-        self.add_widget(LineField(self._tm, "Аргументы:", self._test['args']))
+        self.add_widget(LineField(self._tm, "Описание:", self._test.get('desc', '')))
+        self.add_widget(LineField(self._tm, "Аргументы:", self._test.get('args', '')))
         if self._test.status() in (FuncTest.PASSED, FuncTest.FAILED):
             if self._test.get('exit', ''):
                 self.add_widget(SimpleField(self._tm, "Код возврата:", f"{self._test.exit} ({self._test['exit']})"))

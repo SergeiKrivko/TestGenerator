@@ -172,6 +172,9 @@ class Project:
     def unit_tests_path(self):
         return os.path.join(self._path, self.get('unit_tests_dir', "unit_tests"))
 
+    def temp_dir(self):
+        return os.path.join(self._path, self.get('temp_files_dir', "temp"))
+
     def create_gitignore(self):
         os.makedirs(self.data_path(), exist_ok=True)
         with open(os.path.join(self.data_path(), ".gitignore"), 'w', encoding='utf-8') as f:

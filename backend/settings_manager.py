@@ -65,11 +65,9 @@ class SettingsManager(QObject):
             self.project.pop(key)
 
     def set_main_project(self, project: Project):
-        print(f"set_main_project({repr(project.name())})")
         if project == self.main_project:
             return
 
-        print(project.path() in self.projects, self.projects)
         if project is None or project.path() not in self.projects:
             self.project = None
             self.main_project = None
@@ -82,13 +80,12 @@ class SettingsManager(QObject):
         project.load_projects()
         self.mainProjectChanged.emit()
         if project.has_item('selected_project'):
-            self.set_project(project.children()[project.get('selected_project')])
+            self.set_project(self.all_projects[project.get('selected_project')])
         else:
             self.set_project(project)
         self.store_projects_list()
 
     def set_project(self, project: Project):
-        print(f"set_project({repr(project.name())})")
         if project == self.project:
             return
 
@@ -125,7 +122,8 @@ class SettingsManager(QObject):
 
     def store_projects_list(self):
         self.set_general('projects', dumps(list(self.projects.keys())))
-        self.set_general('project', None if self.main_project is None else self.main_project.path())
+        if self.main_project is not None:
+            self.set_general('project', self.main_project.path())
 
     def store(self):
         self.store_projects_list()
