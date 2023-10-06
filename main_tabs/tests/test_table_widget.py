@@ -181,20 +181,10 @@ class TestTableWidget(QWidget):
         self.sm.set('build', self._build_box.current_scenario())
 
     def save_pos_comparator(self):
-        dct = self.sm.get('pos_comparators')
-        if not isinstance(dct, dict):
-            dct = dict()
-            self.sm.set('pos_comparators', dct)
-        dct[f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}"] = \
-            self.pos_comparator_widget.currentIndex() - 1
+        self.sm.get('pos_comparator', self.pos_comparator_widget.currentIndex() - 1)
 
     def save_neg_comparator(self):
-        dct = self.sm.get('neg_comparators')
-        if not isinstance(dct, dict):
-            dct = dict()
-            self.sm.set('neg_comparators', dct)
-        dct[f"{self.sm.get('lab')}_{self.sm.get('task')}_{self.sm.get('var')}"] = \
-            self.neg_comparator_widget.currentIndex() - 1
+        self.sm.get('neg_comparator', self.neg_comparator_widget.currentIndex() - 1)
 
     def move_selection(self, test_type, direction):
         list_widget = self.pos_test_list if test_type == 'pos' else self.neg_test_list

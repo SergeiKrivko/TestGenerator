@@ -88,7 +88,7 @@ class TestEditWidget(QWidget):
         self.test_out_edit = RedactorWidget(self.tm)
         layout2.addWidget(self.test_out_edit)
 
-        self.data = dict()
+        self.data: FuncTest = dict()
         self.test_name_edit.textEdited.connect(self.set_test_name)
         self.test_in_edit.textChanged.connect(self.set_test_in)
         self.test_out_edit.textChanged.connect(self.set_test_out)
