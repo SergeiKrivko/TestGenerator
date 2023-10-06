@@ -53,6 +53,12 @@ class Build:
                 return python_run(project, self, args)
             case 'python_coverage':
                 return python_run_coverage(project, sm, self, args)
+            case 'bash':
+                return f"{sm.get_general('bash', 'usr/bin/bash')} \"{self.get('file')}\" {args}"
+            case 'script':
+                return f"{self.get('file')} {args}"
+            case 'command':
+                return self.get('command')
             case _:
                 return ""
 

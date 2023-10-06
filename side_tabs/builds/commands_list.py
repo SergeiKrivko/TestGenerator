@@ -169,6 +169,7 @@ class ScenarioBox(QComboBox):
         self._bm = bm
         self._tm = tm
         self._builds = []
+        self._loading = 0
         self._default = default
         if self._default:
             self.addItem("")
@@ -176,10 +177,10 @@ class ScenarioBox(QComboBox):
         self.load_data()
         self.currentIndexChanged.connect(self._on_index_changed)
         self._loading = False
-        self._bm.addBuild.connect(self.load_data)
-        self._bm.deleteBuild.connect(self.load_data)
+        # self._bm.addBuild.connect(self.load_data)
+        # self._bm.deleteBuild.connect(self.load_data)
         self._bm.renameBuild.connect(self.load_data)
-        self._bm.clearBuilds.connect(self.load_data)
+        # self._bm.clearBuilds.connect(self.load_data)
 
     def load_data(self):
         self._loading = True

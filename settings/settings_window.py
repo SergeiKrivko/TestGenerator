@@ -4,7 +4,8 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from settings.lib_dialog import LibWidget
-from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
+from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, \
+    KEY_LOCAL, \
     SwitchBox, ProgramEdit, ListWidget
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
@@ -44,6 +45,7 @@ class SettingsWindow(QDialog):
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Языки']))
         item.addChild(QTreeWidgetItem(['C']))
         item.addChild(QTreeWidgetItem(['Python']))
+        item.addChild(QTreeWidgetItem(['Bash']))
 
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Тестирование ']))
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Библиотеки']))
@@ -158,6 +160,14 @@ class SettingsWindow(QDialog):
         )
         self.python_settings_widget.hide()
         layout.addWidget(self.python_settings_widget)
+
+        self.bash_settings_widget = SettingsWidget(
+            self.sm, self.tm,
+            LineEdit("Интерпретатор Bash:", 'usr/bin/bash', 'bash', width=300),
+            key_type=KEY_GLOBAL,
+        )
+        self.bash_settings_widget.hide()
+        layout.addWidget(self.bash_settings_widget)
 
         self.testing_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -283,6 +293,7 @@ class SettingsWindow(QDialog):
         self.main_settings_widget.set_theme()
         self.c_settings_widget.set_theme()
         self.python_settings_widget.set_theme()
+        self.bash_settings_widget.set_theme()
         self.testing_settings_widget.set_theme()
         self.project_struct_widget.set_theme()
         self.project_testing_widget.set_theme()
@@ -306,6 +317,7 @@ class SettingsWindow(QDialog):
             self.project_testing_widget.hide()
             self.c_settings_widget.hide()
             self.python_settings_widget.hide()
+            self.bash_settings_widget.hide()
             self.testing_settings_widget.hide()
             self.libs_widget.hide()
 
@@ -321,6 +333,8 @@ class SettingsWindow(QDialog):
                 self.c_settings_widget.show()
             if tab == 'Python':
                 self.python_settings_widget.show()
+            if tab == 'Bash':
+                self.bash_settings_widget.show()
             if tab == 'Тестирование ':
                 self.testing_settings_widget.show()
             if tab == 'Библиотеки':
