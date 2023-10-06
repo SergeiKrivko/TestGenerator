@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
         # self.sm.finish_change_task()
         self.show_tab('code')
 
-        self.bm.open_main_project(self.sm.get_general('project'))
+        self.bm.parse_cmd_args(argv)
 
     def add_tab(self, widget: MainTab, identifier: str, name: str):
         self._layout.addWidget(widget, 1)

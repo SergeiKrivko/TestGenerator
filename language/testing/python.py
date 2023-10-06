@@ -7,7 +7,7 @@ def python_run(project, build, args=''):
     interpreter = build.get('interpreter')
     if interpreter is None:
         interpreter = project.get('python', 'python')
-    return f"{interpreter} {build.get('file', 'main.py')} {args}"
+    return f"{interpreter} {os.path.join(project.path(), build.get('file', 'main.py'))} {args}"
 
 
 def python_run_coverage(project, sm, build, args=''):
@@ -19,7 +19,7 @@ def python_run_coverage(project, sm, build, args=''):
         key_a = '-a'
     os.makedirs(f"{sm.temp_dir()}/build{build.id}", exist_ok=True)
     return f"{interpreter} run {key_a} --data-file={sm.temp_dir()}/build{build.id}/.coverage " \
-           f"{build.get('file', 'main.py')} {args}"
+           f"{os.path.join(project.path(), build.get('file', 'main.py'))} {args}"
 
 
 def python_collect_coverage(sm, build):
@@ -32,3 +32,10 @@ def python_collect_coverage(sm, build):
     except Exception as ex:
         pass
     return 0
+
+
+def python_coverage_html(sm, build):
+    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    res = cmd_command(f"coverage html --data-file={temp_dir}/.coverage --directory={temp_dir}/htmlcov", shell=True)
+    if res.returncode == 0:
+        return f"{temp_dir}/htmlcov/index.html"

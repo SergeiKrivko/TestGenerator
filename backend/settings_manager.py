@@ -20,7 +20,7 @@ class SettingsManager(QObject):
         self.q_settings = QSettings()
         self.app_data_dir = appdirs.user_data_dir("TestGenerator", "SergeiKrivko").replace('\\', '/')
 
-        self.projects = dict()
+        self.projects: dict[str: Project] = dict()
         self.all_projects = dict()
         self.project: Project | None = None
         self.main_project: Project | None = None
@@ -64,7 +64,7 @@ class SettingsManager(QObject):
         if self.project is not None:
             self.project.pop(key)
 
-    def set_main_project(self, project: Project):
+    def set_main_project(self, project: Project, subproject: Project = None):
         if project == self.main_project:
             return
 
@@ -79,7 +79,9 @@ class SettingsManager(QObject):
         self.main_project = project
         project.load_projects()
         self.mainProjectChanged.emit()
-        if project.has_item('selected_project'):
+        if subproject:
+            self.set_project(subproject)
+        elif project.has_item('selected_project') and project.get('selected_project') in self.all_projects:
             self.set_project(self.all_projects[project.get('selected_project')])
         else:
             self.set_project(project)
@@ -142,6 +144,30 @@ class SettingsManager(QObject):
                     project = Project(path, self, load=True)
                     return project
 
+    def find_main_project(self, path):
+        first_path = path
+        first_project = None
+        while True:
+            if os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR)):
+                if first_project is None:
+                    first_project = path
+                if path in self.projects:
+                    main_project = self.projects[path]
+                    main_project.load_projects()
+                    first_project = main_project if first_project not in self.all_projects else \
+                        self.all_projects[first_project]
+                    return main_project, first_project
+
+            path, name = os.path.split(path)
+            if not name:
+                break
+
+        if first_project is None:
+            first_project = first_path
+
+        main_project = self.add_main_project(first_project)
+        return main_project, main_project
+
     def add_main_project(self, path):
         path = os.path.abspath(path)
         if path in self.projects:
@@ -150,7 +176,7 @@ class SettingsManager(QObject):
             self.projects[path] = self.all_projects[path]
             return self.all_projects[path]
         else:
-            project = Project(path, self, makedirs=True)
+            project = Project(path, self, makedirs=True, load=True)
             self.projects[path] = project
             return project
 

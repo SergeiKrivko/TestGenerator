@@ -38,7 +38,7 @@ class BackendManager(QObject):
     startTesting = pyqtSignal(list)
     testingError = pyqtSignal(str)
     testingUtilError = pyqtSignal(str)
-    endTesting = pyqtSignal(object)
+    endTesting = pyqtSignal(object, object)
 
     addBuild = pyqtSignal(Build)
     deleteBuild = pyqtSignal(Build)
@@ -87,7 +87,7 @@ class BackendManager(QObject):
         self.startChangingProject.emit()
         self._run_loader(None)
 
-    def open_main_project(self, project: Project):
+    def open_main_project(self, project: Project, subproject: Project = None):
         if isinstance(project, str):
             project = os.path.abspath(project)
             if project not in self.sm.projects:
@@ -98,7 +98,10 @@ class BackendManager(QObject):
         self.changing_project = True
         self.startChangingProject.emit()
         self.run_macros_converter()
-        self._run_loader(project, main=True)
+        if subproject:
+            self._run_loader(subproject, main=project)
+        else:
+            self._run_loader(project, main=True)
 
     def _run_loader(self, project: Project | None, main=False):
         self._loader = Loader(self, project, main)
@@ -183,7 +186,8 @@ class BackendManager(QObject):
         self._testing_looper = TestingLooper(self.sm, self.sm.project, self,
                                              self.func_tests['pos'] + self.func_tests['neg'])
         self._testing_looper.testStatusChanged.connect(self.func_test_set_status)
-        self._testing_looper.finished.connect(lambda: self.endTesting.emit(self._testing_looper.coverage))
+        self._testing_looper.finished.connect(lambda: self.endTesting.emit(self._testing_looper.coverage,
+                                                                           self._testing_looper.coverage_html))
         self._testing_looper.compileFailed.connect(self.testingError.emit)
         self._testing_looper.utilFailed.connect(self.testingUtilError.emit)
         self.run_process(self._testing_looper, 'testing', 'main')
@@ -277,11 +281,13 @@ class BackendManager(QObject):
     def run_build(self, build_id, args='', in_data=None, project=None):
         if project is None:
             project = self.sm.project
-        command = self.builds[build_id].run(project, self.sm, args)
+        build = self.builds[build_id]
+        command = build.run(project, self.sm, args)
+        cwd = build.get('cwd', '.') if os.path.isabs(build.get('cwd', '.')) else \
+            os.path.join(project.path(), build.get('cwd', '.'))
         if in_data is not None:
-            return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, input=in_data,
-                               cwd=project.path())
-        return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, cwd=project.path())
+            return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, input=in_data, cwd=cwd)
+        return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, cwd=cwd)
 
     def execute_build(self, build_id, args='', in_data=None, project=None):
         res, errors = self.compile_build(build_id, project)
@@ -298,7 +304,9 @@ class BackendManager(QObject):
     def collect_coverage(self, build_id, project=None):
         if project is None:
             project = self.sm.project
-        return self.builds[build_id].collect_coverage(project, self.sm)
+        cov = self.builds[build_id].collect_coverage(project, self.sm)
+        html_page = self.builds[build_id].coverage_html(project, self.sm)
+        return cov, html_page
 
     # --------------------- process ----------------------------
 
@@ -343,6 +351,18 @@ class BackendManager(QObject):
 
     def side_tab_show(self, tab: str):
         self.showSideTab.emit(tab)
+
+    # ------------------- cmd args --------------------------
+
+    def parse_cmd_args(self, args):
+        if len(args) == 2 and os.path.isfile(args[1]):
+            pass
+        if len(args) == 3 and args[1] == '-d' and os.path.isdir(args[2]):
+            path = os.path.abspath(args[2])
+            self.open_main_project(*self.sm.find_main_project(path))
+            return
+
+        self.open_main_project(self.sm.get_general('project'))
 
 
 class Looper(QThread):

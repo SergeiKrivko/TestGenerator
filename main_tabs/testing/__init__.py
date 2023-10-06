@@ -1,7 +1,8 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, Qt, QUrl
 from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
 
@@ -24,6 +25,7 @@ class TestingWidget(MainTab):
         self.bm = bm
         self.tm = tm
         self.labels = []
+        self._coverage_html = None
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -42,9 +44,12 @@ class TestingWidget(MainTab):
         self.progress_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.progress_bar)
 
-        self.coverage_bar = QLabel()
-        self.labels.append(self.coverage_bar)
-        self.coverage_bar.setAlignment(Qt.AlignCenter)
+        self._coverage_window = QWebEngineView()
+        self._coverage_window.resize(720, 480)
+
+        self.coverage_bar = QPushButton()
+        self.coverage_bar.clicked.connect(self.show_coverage_html)
+        # self.coverage_bar.setAlignment(Qt.AlignCenter)
         self.coverage_bar.hide()
         self.coverage_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.coverage_bar)
@@ -137,6 +142,7 @@ class TestingWidget(MainTab):
         for el in [self.button, self.progress_bar, self.prog_out_combo_box, self.in_data_combo_box,
                    self.out_data_combo_box]:
             self.tm.auto_css(el)
+        self.tm.auto_css(self.coverage_bar, palette='Bg', border=False)
         for el in [self.prog_out, self.in_data, self.out_data]:
             self.tm.auto_css(el, code_font=True)
         for label in self.labels:
@@ -239,7 +245,7 @@ class TestingWidget(MainTab):
         self.progress_bar.setMaximum(self.bm.func_tests_count('all'))
         self.progress_bar.setValue(0)
 
-    def end_testing(self, coverage):
+    def end_testing(self, coverage, html_page):
         self.progress_bar.hide()
         self.coverage_bar.show()
 
@@ -247,6 +253,9 @@ class TestingWidget(MainTab):
             self.coverage_bar.setText(f"Coverage: {coverage:.1f}%")
         else:
             self.coverage_bar.setText("")
+
+        self._coverage_html = html_page
+
         self.test_mode(False)
 
     def util_failed(self, name, errors, mask):
@@ -264,7 +273,13 @@ class TestingWidget(MainTab):
                     self.jump_to_code.emit(os.path.join(self.sm.lab_path(), dialog.goto[0]),
                                            dialog.goto[1], dialog.goto[2])
 
-        self.end_testing(None)
+        self.end_testing(None, None)
+
+    def show_coverage_html(self):
+        if self._coverage_html is None:
+            return
+        self._coverage_window.setUrl(QUrl(f"file:///{self._coverage_html}"))
+        self._coverage_window.show()
 
 
 class SimpleField(QWidget):

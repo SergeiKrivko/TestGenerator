@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidg
 
 from backend.settings_manager import SettingsManager
 from backend.types.build import Build
-from side_tabs.builds import BuildTypeDialog
+import side_tabs.builds as builds
 from ui.button import Button
 
 
@@ -13,9 +13,10 @@ class CommandsList(QWidget):
     TYPE_BUILD = 0
     TYPE_CMD = 1
 
-    def __init__(self, sm, tm, name="", fixed_type=None):
+    def __init__(self, sm, bm, tm, name="", fixed_type=None):
         super().__init__()
         self.sm = sm
+        self.bm = bm
         self.tm = tm
         self._fixed_type = fixed_type
 
@@ -57,9 +58,9 @@ class CommandsList(QWidget):
         mail_layout.addWidget(self._list_widget)
 
     def add_scenario(self):
-        dialog = NewCommandDialog(self.sm, self.tm, self._fixed_type)
+        dialog = NewCommandDialog(self.sm, self.bm, self.tm, self._fixed_type)
         if dialog.exec():
-            self._list_widget.addItem(_ListWidgetItem(self.tm, *dialog.get_result()))
+            self._list_widget.addItem(_ListWidgetItem(self.bm, self.tm, *dialog.get_result()))
 
     def delete_scenario(self):
         item = self._list_widget.takeItem(self._list_widget.currentRow())
@@ -88,7 +89,7 @@ class CommandsList(QWidget):
     def load(self, data: list):
         self._list_widget.clear()
         for el in data:
-            self._list_widget.addItem(_ListWidgetItem(self.tm, el['type'], el['data']))
+            self._list_widget.addItem(_ListWidgetItem(self.bm, self.tm, el['type'], el['data']))
 
     def set_theme(self):
         for el in [self._label, self.button_add, self.button_delete, self.button_up, self.button_down,
@@ -97,9 +98,10 @@ class CommandsList(QWidget):
 
 
 class NewCommandDialog(QDialog):
-    def __init__(self, sm, tm, fixed_type=None):
+    def __init__(self, sm, bm, tm, fixed_type=None):
         super().__init__()
         self.sm = sm
+        self.bm = bm
         self.tm = tm
         self._fixed_type = fixed_type
 
@@ -117,7 +119,7 @@ class NewCommandDialog(QDialog):
         main_layout.addWidget(self._line_edit)
         self._line_edit.hide()
 
-        self._make_box = ScenarioBox(self.sm)
+        self._make_box = ScenarioBox(self.sm, self.bm, self.tm)
         main_layout.addWidget(self._make_box)
 
         buttons_layout = QHBoxLayout()
@@ -150,12 +152,13 @@ class NewCommandDialog(QDialog):
             case CommandsList.TYPE_CMD:
                 res = self._line_edit.text()
             case CommandsList.TYPE_BUILD:
-                res = self._make_box.current_scenario()['data']
+                res = self._make_box.current_scenario()
             case _:
                 raise IndexError
         return self._type_box.currentIndex(), res
 
     def set_theme(self):
+        self.setStyleSheet(self.tm.bg_style_sheet)
         for el in [self._type_box, self._line_edit, self._make_box, self._button]:
             self.tm.auto_css(el)
 
@@ -212,14 +215,15 @@ class ScenarioBox(QComboBox):
         for i, build in enumerate(self._builds):
             if build is not None:
                 build = self._bm.builds[build]
-                self.setItemIcon(i, QIcon(self._tm.get_image(BuildTypeDialog.IMAGES.get(build.get('type')),
+                self.setItemIcon(i, QIcon(self._tm.get_image(builds.BuildTypeDialog.IMAGES.get(build.get('type')),
                                                              'unknown_file')))
 
 
 class _ListWidgetItem(QListWidgetItem):
-    def __init__(self, tm, type, data):
+    def __init__(self, bm, tm, type, data):
         super().__init__()
         self._tm = tm
+        self.bm = bm
         self._type = type
         self._data = data
 
@@ -228,7 +232,7 @@ class _ListWidgetItem(QListWidgetItem):
                 self.setText(self._data)
                 self.setIcon(QIcon(self._tm.get_image('cmd')))
             case CommandsList.TYPE_BUILD:
-                self.setText(self._data['name'])
+                self.setText(self.bm.get_build(self._data).get('name', '-'))
                 self.setIcon(QIcon(self._tm.get_image('icon_build')))
 
     def store(self):

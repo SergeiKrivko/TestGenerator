@@ -36,6 +36,7 @@ class Build:
             shutil.rmtree(temp_dir)
 
     def compile(self, project, sm):
+        self.clear(sm)
         match self.get('type'):
             case 'C':
                 return c_compile(project, self, sm)
@@ -54,9 +55,10 @@ class Build:
             case 'python_coverage':
                 return python_run_coverage(project, sm, self, args)
             case 'bash':
-                return f"{sm.get_general('bash', 'usr/bin/bash')} \"{self.get('file')}\" {args}"
+                return f"{sm.get_general('bash', 'usr/bin/bash')} " \
+                       f"\"{os.path.join(project.path(), self.get('file'))}\" {args}"
             case 'script':
-                return f"{self.get('file')} {args}"
+                return f"{os.path.join(project.path(), self.get('file'))} {args}"
             case 'command':
                 return self.get('command')
             case _:
@@ -65,10 +67,18 @@ class Build:
     def collect_coverage(self, project, sm):
         match self.get('type', 'C'):
             case 'C':
-                print(c_collect_coverage(sm, self))
                 return c_collect_coverage(sm, self)
             case 'python_coverage':
                 return python_collect_coverage(sm, self)
+            case _:
+                return None
+
+    def coverage_html(self, project, sm):
+        match self.get('type', 'C'):
+            case 'C':
+                return None
+            case 'python_coverage':
+                return python_coverage_html(sm, self)
             case _:
                 return None
 

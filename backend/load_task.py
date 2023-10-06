@@ -133,7 +133,9 @@ class Loader(QThread):
         if self._project:
             self.clear_all()
             self.loadingStart.emit(self._project)
-            if self._main_project:
+            if isinstance(self._main_project, Project):
+                self._sm.set_main_project(self._main_project, self._project)
+            elif self._main_project:
                 self._sm.set_main_project(self._project)
             else:
                 self._sm.set_project(self._project)
