@@ -30,6 +30,7 @@ class TestingLooper(QThread):
         self.util_output = dict()
         self.utils = []
         self.coverage = None
+        self.coverage_html = None
         self._temp_dir = f"{self.sm.temp_dir()}/out"
 
     def prepare_test(self, test: FuncTest, index: int):
@@ -148,7 +149,7 @@ class TestingLooper(QThread):
             return
         name = self.parse_util_name(data)
         temp_path = f"{self._temp_dir}/dist.txt"
-        res = self._manager.cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
+        res = cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                                        files=' '.join(get_files(self.path, '.c'))),
                                         shell=True, cwd=self.path)
         if data.get('1_output_format', 0) == 0:
@@ -219,7 +220,7 @@ class TestingLooper(QThread):
         try:
             res = self._manager.run_build(self._project.get('build'), test.args, test.get('in', ''))
             test.exit = res.returncode
-            test.prog_out = {'STDOUT': res.stdout}
+            test.prog_out = {'STDOUT': res.stdout, 'STDERR': res.stderr}
             self.run_comparators(test, index)
             self.clear_after_run(test, index)
 
@@ -269,7 +270,7 @@ class TestingLooper(QThread):
         command = self._project.get('postprocessor', '')
         self._manager.run_scenarios(command, self.path)
 
-        self.coverage = self._manager.collect_coverage(self._project.get('build'), self._project)
+        self.coverage, self.coverage_html = self._manager.collect_coverage(self._project.get('build'), self._project)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':
