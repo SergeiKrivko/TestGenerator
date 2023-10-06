@@ -73,6 +73,8 @@ class BuildWindow(SideBarWindow):
         item = self._list_widget.currentItem()
         if not isinstance(item, ListWidgetItem):
             return
+        item.build['name'] = text
+        self.bm.renameBuild.emit(item.build)
         item.setText(text)
 
     def new_build(self):

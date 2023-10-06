@@ -57,7 +57,6 @@ class Build:
                 return ""
 
     def collect_coverage(self, project, sm):
-        print(self, self['type'])
         match self.get('type', 'C'):
             case 'C':
                 print(c_collect_coverage(sm, self))

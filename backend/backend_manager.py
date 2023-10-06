@@ -42,7 +42,7 @@ class BackendManager(QObject):
 
     addBuild = pyqtSignal(Build)
     deleteBuild = pyqtSignal(Build)
-    renameBuild = pyqtSignal(Build, str)
+    renameBuild = pyqtSignal(Build)
     clearBuilds = pyqtSignal()
 
     showMainTab = pyqtSignal(str)

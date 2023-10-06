@@ -11,7 +11,7 @@ class CompilerErrorWindow(QDialog):
         self.setWindowTitle(name)
         self.setStyleSheet(tm.bg_style_sheet)
         self.tm = tm
-        if '{file}' in mask and '{line}' in mask:
+        if isinstance(mask, str) and '{file}' in mask and '{line}' in mask:
             self._mask = mask
             self._prefix = self._mask[:self._mask.index("{file}")]
             self._sep = self._mask[self._mask.index("{file}") + len("{file}"):self._mask.index("{line}")]
