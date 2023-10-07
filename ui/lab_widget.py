@@ -9,12 +9,15 @@ from backend.settings_manager import SettingsManager
 from backend.backend_manager import BackendManager
 
 
-class LabWidget(QMenuBar):
+class LabWidget(QPushButton):
     def __init__(self, tm, sm: SettingsManager, bm: BackendManager):
         super().__init__()
         self.tm = tm
         self.bm = bm
         self.sm = sm
+
+        self.setFixedHeight(26)
+        self.setMinimumWidth(200)
 
         self._project = None
         self._menu = QMenu()
@@ -26,35 +29,17 @@ class LabWidget(QMenuBar):
         self._project = self.sm.main_project
         if not isinstance(self._project, Project):
             return
-        self.clear()
         self._menu = ProjectMenu(self.tm, self.bm, self._project, self)
         self._menu.setMaximumWidth(200)
         self._menu.updateRequested.connect(self.full_update)
         self.set_theme()
-        self.addMenu(self._menu)
+        self.setMenu(self._menu)
 
     def update_current(self):
-        self._menu.setTitle(os.path.relpath(self.sm.project.path(), self._project.path()))
+        self.setText(os.path.relpath(self.sm.project.path(), self._project.path()))
 
     def set_theme(self):
-        self.setFont(self.tm.font_medium)
-        self.setStyleSheet(f"""
-QMenuBar {{
-    border: none;
-}}
-
-QMenuBar::item {{
-    {self.tm.base_css(palette='Bg')}
-    padding: 4px 16px;
-}}
-
-QMenuBar::item:selected {{
-    background: {self.tm['BgHoverColor']};
-}}
-
-QMenuBar::item:pressed {{
-    background: {self.tm['BgSelectedColor']};
-}}""")
+        self.tm.auto_css(self, palette='Bg', border=True, padding=True)
         if hasattr(self._menu, 'set_theme'):
             self._menu.set_theme()
 
@@ -103,31 +88,7 @@ class ProjectMenu(QMenu):
 
     def set_theme(self):
         self.setFont(self._tm.font_medium)
-        self.setStyleSheet(f"""
-QMenu {{
-    color: {self._tm['TextColor']};
-    background-color: {self._tm['BgColor']};
-    border: 1px solid {self._tm['BorderColor']};
-    border-radius: 6px;
-    spacing: 4px;
-    padding: 3px;
-}}
-
-QMenu::item {{
-    border: 0px solid {self._tm['BorderColor']};
-    background-color: transparent;
-    border-radius: 8px;
-    padding: 4px 16px;
-}}
-
-QMenu::item:selected {{
-    background-color: {self._tm['BgHoverColor']};
-}}
-QMenu::separator {{
-    height: 1px;
-    background: {self._tm['BorderColor']};
-    margin: 4px 10px;
-}}""")
+        self._tm.auto_css(self, palette='Bg')
         for el in self._menu:
             el.set_theme()
 

@@ -74,20 +74,20 @@ class MainWindow(QMainWindow):
         self._layout.addWidget(self.side_panel, 100)
 
         for key, item in {
-            'projects': ProjectWidget(self.sm, self.bm, self.tm),
-            'files': FilesWidget(self.sm, self.bm, self.tm),
-            'build': BuildWindow(self.bm, self.sm, self.tm),
-            'tests': TestingPanel(self.sm, self.bm, self.tm),
-            'todo': TODOPanel(self.sm, self.cm, self.tm),
-            'git': GitPanel(self.sm, self.cm, self.tm),
-            'generator': GeneratorTab(self.sm, self.cm, self.tm),
-            'terminal': TerminalTab(self.sm, self.tm),
-            'run': ConsolePanel(self.sm, self.tm, self.bm),
-            'chat': ChatPanel(self.sm, self.tm),
-            'telegram': TelegramWidget(self.sm, self.tm),
-            'document': ReportWindow(self.bm, self.sm, self.tm)
+            'projects': (ProjectWidget(self.sm, self.bm, self.tm), "Проекты"),
+            'files': (FilesWidget(self.sm, self.bm, self.tm), "Файлы"),
+            'build': (BuildWindow(self.bm, self.sm, self.tm), "Конфигурации"),
+            'tests': (TestingPanel(self.sm, self.bm, self.tm), "Тестирование"),
+            'todo': (TODOPanel(self.sm, self.cm, self.tm), "TODO"),
+            'git': (GitPanel(self.sm, self.cm, self.tm), "Git"),
+            'generator': (GeneratorTab(self.sm, self.cm, self.tm), "Генерация тестов"),
+            'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
+            'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
+            'chat': (ChatPanel(self.sm, self.tm), "Чат"),
+            'telegram': (TelegramWidget(self.sm, self.tm), "Telegram"),
+            'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет")
         }.items():
-            self.side_bar.add_tab(item, key)
+            self.side_bar.add_tab(key, *item)
 
         self.code_widget = CodeWidget(self.sm, self.bm, self.tm)
         self.add_tab(self.code_widget, 'code', "Код")
@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         self.unit_testing_widget = UnitTestingWidget(self.sm, self.bm, self.cm, self.tm)
         self.add_tab(self.unit_testing_widget, 'unit_tests', 'Модульное тестирование')
 
-        self.settings_widget = SettingsWindow(self.sm, self.tm)
+        self.settings_widget = SettingsWindow(self.sm, self.tm, self.side_bar)
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide()
         self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)

@@ -15,7 +15,7 @@ line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 class SettingsWindow(QDialog):
     change_theme = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm, tm, side_bar):
         super(SettingsWindow, self).__init__()
         self.sm = sm
         self.tm = tm
@@ -37,6 +37,7 @@ class SettingsWindow(QDialog):
         self.tree_widget.setFixedWidth(200)
 
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Основные']))
+        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Интерфейс']))
 
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Проект']))
         item.addChild(QTreeWidgetItem(['Структура']))
@@ -56,12 +57,19 @@ class SettingsWindow(QDialog):
         self.main_settings_widget = SettingsWidget(
             self.sm, self.tm,
             ComboBox("Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
-            ComboBox("Тема: ", list(self.tm.themes.keys()), key='theme', text_mode=True,
-                     on_state_changed=self.change_theme.emit),
             CheckBox("Поиск программ при каждом запуске", key='search_after_start'),
             CheckBox("Не предлагать создание проекта при открытии файла", key='not_create_project'),
             key_type=KEY_GLOBAL)
         layout.addWidget(self.main_settings_widget)
+
+        self.ui_settings_widget = SettingsWidget(
+            self.sm, self.tm,
+            ComboBox("Тема: ", list(self.tm.themes.keys()), key='theme', text_mode=True,
+                     on_state_changed=self.change_theme.emit),
+            *[CheckBox(item, True, f'side_button_{key}') for key, item in side_bar.desc.items()],
+            key_type=KEY_GLOBAL)
+        self.ui_settings_widget.hide()
+        layout.addWidget(self.ui_settings_widget)
 
         self.project_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -291,6 +299,7 @@ class SettingsWindow(QDialog):
         self.libs_widget.set_theme()
         self.project_settings_widget.set_theme()
         self.main_settings_widget.set_theme()
+        self.ui_settings_widget.set_theme()
         self.c_settings_widget.set_theme()
         self.python_settings_widget.set_theme()
         self.bash_settings_widget.set_theme()
@@ -312,6 +321,7 @@ class SettingsWindow(QDialog):
                 return
 
             self.main_settings_widget.hide()
+            self.ui_settings_widget.hide()
             self.project_settings_widget.hide()
             self.project_struct_widget.hide()
             self.project_testing_widget.hide()
@@ -323,6 +333,8 @@ class SettingsWindow(QDialog):
 
             if tab == 'Основные':
                 self.main_settings_widget.show()
+            if tab == 'Интерфейс':
+                self.ui_settings_widget.show()
             if tab == 'Проект':
                 self.project_settings_widget.show()
             if tab == 'Структура':

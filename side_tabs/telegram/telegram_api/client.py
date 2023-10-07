@@ -97,7 +97,7 @@ class TgClient(Client):
         while True:
             event_dict = self.tdjson.receive()
             if event_dict:
-                self.module.feed_event(event_dict)
+                # self.module.feed_event(event_dict)
                 if not self.authorized:
                     self.authenticate_user(event_dict)
 
