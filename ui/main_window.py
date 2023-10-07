@@ -1,21 +1,35 @@
 from sys import argv
+import os
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
-from tests.macros_converter import background_process_manager
+from backend.backend_manager import BackendManager
+from other.report.report_window import ReportWindow
+from side_tabs.builds import BuildWindow
+from side_tabs.console import ConsolePanel
+from side_tabs.files.files_widget import FilesWidget
+from side_tabs.terminal_tab import TerminalTab
+from side_tabs.builds.build_panel import BuildPanel
+from other.chat_widget import ChatPanel
+from side_tabs.git.git_panel import GitPanel
+from side_tabs.telegram.telegram_widget import TelegramWidget
+from side_tabs.todo_panel import TODOPanel
+from side_tabs.projects.project_widget import ProjectWidget
+from main_tabs.tests.generator_window import GeneratorTab
+from side_tabs.tests.testing_panel import TestingPanel
 from ui.main_menu import MainMenu
+from ui.main_tab import MainTab
+from ui.progress_dialog import ProgressDialog
 from ui.side_bar import SideBar, SidePanel
 from ui.themes import ThemeManager
-from code_tab.code_widget import CodeWidget
+from main_tabs.code_tab.code_widget import CodeWidget
 from settings.settings_window import SettingsWindow
-from tests.testing_widget import TestingWidget
-from tests.tests_widget import TestsWidget
-from tests.commands import CommandManager
-from settings.settings_manager import SettingsManager
-import os
+from main_tabs.testing import TestingWidget
+from main_tabs.tests import TestsWidget
+from main_tabs.tests.commands import CommandManager
 
-from unit_testing.unit_testing_widget import UnitTestingWidget
+from main_tabs.unit_testing.unit_testing_widget import UnitTestingWidget
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +40,12 @@ class MainWindow(QMainWindow):
 
         self.setWindowFlags(Qt.CustomizeWindowHint)
 
-        self.sm = SettingsManager()
+        self.bm = BackendManager()
+        self.sm = self.bm.sm
+        self.cm = CommandManager(self.sm)
+        self.tm = ThemeManager(self.sm, self.sm.get_general('theme'))
+
+        self._tabs = dict()
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -35,10 +54,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.cm = CommandManager(self.sm)
-        self.tm = ThemeManager(self.sm, self.sm.get_general('theme'))
-
-        self.menu_bar = MainMenu(self.sm, self.tm)
+        self.menu_bar = MainMenu(self.sm, self.bm, self.tm)
         self.menu_bar.tab_changed.connect(self.show_tab)
         self.menu_bar.closeButtonClicked.connect(self.close)
         self.menu_bar.moveWindow.connect(lambda point: self.move(self.pos() + point))
@@ -47,64 +63,74 @@ class MainWindow(QMainWindow):
         self.menu_bar.hideWindow.connect(lambda: self.setWindowState(Qt.WindowState.WindowMinimized))
         main_layout.addWidget(self.menu_bar)
 
-        layout = QHBoxLayout()
-        main_layout.addLayout(layout)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self._layout = QHBoxLayout()
+        main_layout.addLayout(self._layout)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.central_widget.setLayout(main_layout)
 
-        self.side_panel = SidePanel(self.sm, self.tm, self.cm)
+        self.side_panel = SidePanel(self.sm, self.bm, self.tm, self.cm)
         self.side_bar = SideBar(self.sm, self.tm, self.side_panel)
-        self.side_panel.tabs['projects'].jump_to_code.connect(self.jump_to_code)
-        layout.addWidget(self.side_bar)
-        layout.addWidget(self.side_panel, 100)
+        self._layout.addWidget(self.side_bar)
+        self._layout.addWidget(self.side_panel, 100)
 
-        self.tests_widget = TestsWidget(self.sm, self.cm, self.tm)
-        self.tests_widget.hide()
-        layout.addWidget(self.tests_widget, 1)
+        for key, item in {
+            'projects': (ProjectWidget(self.sm, self.bm, self.tm), "Проекты"),
+            'files': (FilesWidget(self.sm, self.bm, self.tm), "Файлы"),
+            'build': (BuildWindow(self.bm, self.sm, self.tm), "Конфигурации"),
+            'tests': (TestingPanel(self.sm, self.bm, self.tm), "Тестирование"),
+            'todo': (TODOPanel(self.sm, self.cm, self.tm), "TODO"),
+            'git': (GitPanel(self.sm, self.cm, self.tm), "Git"),
+            'generator': (GeneratorTab(self.sm, self.cm, self.tm), "Генерация тестов"),
+            'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
+            'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
+            'chat': (ChatPanel(self.sm, self.tm), "Чат"),
+            'telegram': (TelegramWidget(self.sm, self.tm), "Telegram"),
+            'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет")
+        }.items():
+            self.side_bar.add_tab(key, *item)
 
-        self.testing_widget = TestingWidget(self.sm, self.cm, self.tm, self.side_panel)
-        layout.addWidget(self.testing_widget, 1)
-        self.testing_widget.jump_to_code.connect(self.jump_to_code)
-        self.testing_widget.hide()
-        self.testing_widget.showTab.connect(lambda: self.side_bar.select_tab('tests'))
-        self.testing_widget.startTesting.connect(self.tests_widget.save_tests)
-        self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
-        self.side_panel.tabs['tests'].buttons['cancel'].clicked.connect(self.testing_widget.button_pressed)
-        self.side_panel.tabs['tests'].jump_to_testing.connect(
-            lambda index, show_tab: None if not show_tab else self.show_tab(MainMenu.TAB_TESTING))
+        self.code_widget = CodeWidget(self.sm, self.bm, self.tm)
+        self.add_tab(self.code_widget, 'code', "Код")
 
-        self.code_widget = CodeWidget(self.sm, self.cm, self.tm, self.side_bar, self.side_panel)
-        layout.addWidget(self.code_widget, 1)
-        self.code_widget.testing_signal.connect(self.testing_widget.testing)
-        self.code_widget.hide()
+        self.tests_widget = TestsWidget(self.sm, self.bm, self.tm)
+        self.add_tab(self.tests_widget, 'tests', "Тесты")
 
-        self.unit_testing_widget = UnitTestingWidget(self.sm, self.cm, self.tm)
-        layout.addWidget(self.unit_testing_widget)
+        self.testing_widget = TestingWidget(self.sm, self.bm, self.tm)
+        self.add_tab(self.testing_widget, 'testing', "Тестирование")
+        # self.testing_widget.showTab.connect(lambda: self.side_bar.select_tab('tests'))
+        # self.testing_widget.startTesting.connect(self.tests_widget.save_tests)
+        # self.side_panel.tabs['tests'].buttons['run'].clicked.connect(self.testing_widget.button_pressed)
+        # self.side_panel.tabs['tests'].buttons['cancel'].clicked.connect(self.testing_widget.button_pressed)
+        # self.side_panel.tabs['tests'].jump_to_testing.connect(
+        #     lambda index, show_tab: None if not show_tab else self.show_tab(MainMenu.TAB_TESTING))
 
-        self.settings_widget = SettingsWindow(self.sm, self.tm)
+        self.unit_testing_widget = UnitTestingWidget(self.sm, self.bm, self.cm, self.tm)
+        self.add_tab(self.unit_testing_widget, 'unit_tests', 'Модульное тестирование')
+
+        self.settings_widget = SettingsWindow(self.sm, self.tm, self.side_bar)
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide()
         self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)
 
         self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
+        self.bm.loadingStart.connect(lambda pr: ProgressDialog(self.bm, self.tm, pr).exec())
+        self.bm.showMainTab.connect(self.show_tab)
+        self.bm.showSideTab.connect(self.side_bar.select_tab)
+        self.bm.mainTabCommand.connect(self.tab_command)
+        self.bm.sideTabCommand.connect(self.side_panel.tab_command)
 
         self.resize(1100, 700)
 
-        # if not os.path.isdir(self.sm.project) or not self.side_panel.tabs['projects'].list_widget.count():
-        #     self.show_tab('project_widget')
-        # else:
-        #     self.show_tab('project_widget')
+        # self.sm.finish_change_task()
+        self.show_tab('code')
 
-        if len(argv) == 2 and os.path.isfile(argv[1]):
-            if argv[1].endswith('.7z'):
-                self.side_panel.tabs['projects'].project_from_zip(argv[1])
-            else:
-                self.side_panel.tabs['projects'].open_as_project(argv[1])
-        else:
-            self.side_panel.tabs['projects'].open_project(forced=True)
+        self.bm.parse_cmd_args(argv)
 
-        self.sm.finish_change_task()
-        self.show_tab(MainMenu.TAB_CODE)
+    def add_tab(self, widget: MainTab, identifier: str, name: str):
+        self._layout.addWidget(widget, 1)
+        self._tabs[identifier] = widget
+        self.menu_bar.add_tab(identifier, name)
+        widget.hide()
 
     def set_theme(self):
         self.tm.set_theme(self.sm.get_general('theme', 'basic'))
@@ -118,78 +144,31 @@ class MainWindow(QMainWindow):
         self.side_panel.set_theme()
         self.unit_testing_widget.set_theme()
 
-    def jump_to_code(self, path, line=None, pos=None):
-        path = os.path.abspath(path)
-        self.show_tab(MainMenu.TAB_CODE)
-        if self.sm.get('struct', 0) == 1:
-            self.code_widget.open_code(path, line, pos)
-            return
-        if not os.path.isdir(self.sm.data_path):
-            return
-        for dir1 in os.listdir(self.sm.data_path):
-            if not dir1.isdigit():
-                continue
-            for dir2 in os.listdir(f"{self.sm.data_path}/{dir1}"):
-                for dir3 in os.listdir(f"{self.sm.data_path}/{dir1}/{dir2}"):
-                    lab_path = os.path.abspath(self.sm.lab_path(int(dir1), int(dir2), int(dir3)))
-                    if path.startswith(lab_path):
-                        self.menu_bar.lab_widget.lab_spin_box.setValue(int(dir1))
-                        self.menu_bar.lab_widget.task_spin_box.setValue(int(dir2))
-                        self.menu_bar.lab_widget.var_spin_box.setValue(int(dir3))
-                        self.code_widget.open_code(path, line, pos)
+    def show_tab(self, tab):
+        for key, item in self._tabs.items():
+            if key == tab:
+                item.show()
+            else:
+                item.hide()
+        self.menu_bar.select_tab(tab, True)
 
-    def show_tab(self, index):
-        self.code_widget.hide()
-        self.tests_widget.hide()
-        self.testing_widget.hide()
-        self.unit_testing_widget.hide()
-        if index == MainMenu.TAB_CODE:
-            self.code_widget.show()
-            self.menu_bar.button_code.setChecked(True)
-        else:
-            self.menu_bar.button_code.setChecked(False)
-        if index == MainMenu.TAB_TESTS:
-            self.tests_widget.show()
-            self.menu_bar.button_tests.setChecked(True)
-        else:
-            self.menu_bar.button_tests.setChecked(False)
-        if index == MainMenu.TAB_TESTING:
-            self.testing_widget.show()
-            self.menu_bar.button_testing.setChecked(True)
-        else:
-            self.menu_bar.button_testing.setChecked(False)
-        if index == MainMenu.TAB_UNIT_TESTING:
-            self.unit_testing_widget.show()
-            self.menu_bar.button_unit_testing.setChecked(True)
-        else:
-            self.menu_bar.button_unit_testing.setChecked(False)
-
-    def open_test_from_code(self):
-        index = 0
-        self.testing_widget.get_path()
-        self.testing_widget.tests_list.setCurrentRow(index)
-        self.testing_widget.open_test_info()
-        self.show_tab('testing_widget')
+    def tab_command(self, tab, args: tuple, kwargs: dict):
+        self._tabs[tab].command(*args, **kwargs)
 
     def closeEvent(self, a0):
-        self.tests_widget.save_tests()
+        self.bm.close_project()
         self.sm.store()
-        if len(background_process_manager.dict):
+        if not self.bm.all_finished():
             dialog = ExitDialog(self.tm)
-            background_process_manager.all_finished.connect(dialog.accept)
+            self.bm.allProcessFinished.connect(dialog.accept)
             if dialog.exec():
-                for process in background_process_manager.dict.values():
-                    process.close()
-                self.sm.start_change_task()
+                self.bm.terminate_all()
                 self.side_panel.finish_work()
-                self.side_panel.tabs['projects'].remove_temp_projects()
                 super(MainWindow, self).close()
             else:
                 a0.ignore()
         else:
-            self.sm.start_change_task()
             self.side_panel.finish_work()
-            self.side_panel.tabs['projects'].remove_temp_projects()
             super(MainWindow, self).close()
 
 

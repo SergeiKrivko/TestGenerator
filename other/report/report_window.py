@@ -5,13 +5,12 @@ from PyQt5.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QScrollArea
 from other.report.docx_converter import DocxConverter
 from other.report.widgets import ReportMainDocument
 from ui.message_box import MessageBox
+from ui.side_bar_window import SideBarWindow
 
 
-class ReportWindow(QWidget):
-    def __init__(self, sm, tm):
-        super().__init__()
-        self.sm = sm
-        self.tm = tm
+class ReportWindow(SideBarWindow):
+    def __init__(self, bm, sm, tm):
+        super().__init__(bm, sm, tm)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(10, 10, 0, 10)
@@ -32,17 +31,16 @@ class ReportWindow(QWidget):
         self.set_theme()
 
     def save_file(self):
-        with open(f"{self.sm.data_lab_path()}/report.json", 'w', encoding='utf-8') as f:
+        with open(f"{self.sm.project.data_path()}/report.json", 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._main_document.store()))
 
     def convert_file(self):
-        print(f"{self.sm.lab_path()}/report.docx")
-        converter = DocxConverter(self._main_document.store(), f"{self.sm.lab_path()}/report.docx")
+        converter = DocxConverter(self._main_document.store(), f"{self.sm.project.path()}/report.docx")
         converter.convert()
 
     def load_file(self):
         try:
-            with open(f"{self.sm.data_lab_path()}/report.json", encoding='utf-8') as f:
+            with open(f"{self.sm.project.data_path()}/report.json", encoding='utf-8') as f:
                 self._main_document.load(json.loads(f.read()))
         except FileNotFoundError:
             pass

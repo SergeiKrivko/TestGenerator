@@ -1,87 +1,70 @@
 import os
-import shutil
 
-from language.build.make_command import MakeCommand
+from backend.commands import cmd_command, wsl_path
 from language.utils import get_files
 
 
-def c_compile(path, cm, sm, data, coverage=False):
-    if os.name == 'nt' and sm.get_smart("C_wsl", False):
-        compiler = "wsl -e gcc"
-    else:
-        compiler = sm.get_smart('gcc', 'gcc')
+def c_compile(project, build, sm):
+    coverage = build.get('coverage', False)
+    compiler = build.get('compiler')
+    if compiler is None:
+        compiler = project.get('gcc', 'gcc')
+    if build.get('wsl') and not compiler.startswith('wsl -e'):
+        compiler = 'wsl -e ' + compiler
 
-    temp_dir = f"{sm.temp_dir()}/build"
-    try:
-        os.remove(f"{sm.temp_dir()}/app.exe")
-    except FileNotFoundError:
-        pass
-    os.makedirs(temp_dir, exist_ok=True)
+    path = wsl_path(project.path(), build)
+    temp_dir = wsl_path(f"{sm.temp_dir()}/build{build.id}", build)
+    os.makedirs(f"{sm.temp_dir()}/build{build.id}", exist_ok=True)
 
     c_files = []
     h_dirs = set()
-    for key in data['files']:
+    for key in build.get('files', []):
         if key.endswith('.c'):
-            c_files.append(os.path.join(path, key))
+            c_files.append(f"{path}/{key}")
         else:
-            h_dirs.add(os.path.join(path, os.path.split(key)[0]))
+            h_dirs.add(f"{path}/{os.path.split(key)[0]}")
     o_files = [f"{temp_dir}/{os.path.basename(el)[:-2]}.o" for el in c_files]
 
     h_dirs = '-I ' + ' -I '.join(h_dirs)
     errors = []
     code = True
 
-    compiler_keys = data.get('keys', '')
+    compiler_keys = build.get('keys', '')
     for c_file, o_file in zip(c_files, o_files):
         command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} {h_dirs} -c -o {o_file} {c_file}"
-        res = cm.cmd_command(command)
+        res = cmd_command(command, shell=True)
         if res.returncode:
             code = False
         errors.append(res.stderr)
 
     if code:
-        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/app.exe " \
-                  f"{' '.join(o_files)} {data.get('linker_keys', '')}"
-        res = cm.cmd_command(command)
+        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/{build.get('app_file')} " \
+                  f"{' '.join(o_files)} {build.get('linker_keys', '')}"
+        res = cmd_command(command, shell=True)
         if res.returncode:
             code = False
         errors.append(res.stderr)
 
-    shutil.rmtree(temp_dir)
     return code, ''.join(errors)
 
 
-def c_run(path, sm, args='', coverage=False):
-    # temp_dir = sm.temp_dir()
-    if os.name == 'nt' and sm.get_smart("C_wsl", False):
-        return f"wsl -e {path}/app.exe {args}"
-    return f"{os.path.join(path, 'app.exe')} {args}"
+def c_run(project, build, args=''):
+    path = wsl_path(project.path(), build)
+    return f"{'wsl -e ' if build.get('wsl') else ''}{path}/{build.get('app_file')} {args}"
 
 
-def c_clear_coverage_files(path):
-    if not os.path.isdir(path):
-        return
-    for file in get_files(path, '.gcda'):
-        os.remove(file)
-    for file in get_files(path, '.gcno'):
-        os.remove(file)
-    for file in get_files(path, 'temp.txt'):
-        os.remove(file)
-    for file in get_files(path, '.gcov'):
-        os.remove(file)
-
-
-def c_collect_coverage(path, sm, cm):
+def c_collect_coverage(sm, build):
     total_count = 0
     count = 0
+    gcov = sm.get('gcov', 'gcov')
+    if build.get('wsl') and not gcov.startswith('wsl -e'):
+        gcov = 'wsl -e gcov'
 
-    temp_dir = f"{sm.temp_dir()}/build"
+    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    temp_dir_wsl = wsl_path(f"{sm.temp_dir()}/build{build.id}", build)
 
-    for file in get_files(path, '.c'):
-        if os.name == 'nt' and sm.get_smart("C_wsl", False):
-            res = cm.cmd_command(f"wsl -e gcov {file} -o {temp_dir}", shell=True)
-        else:
-            res = cm.cmd_command(f"{sm.get_smart('gcov', 'gcov')} {file} -o {temp_dir}", shell=True)
+    for file in build.get('files', []):
+        res = cmd_command(f"{gcov} {file} -o {temp_dir_wsl}", shell=True, cwd=temp_dir)
 
         for line in res.stdout.split('\n'):
             if "Lines executed:" in line:
@@ -95,26 +78,27 @@ def c_collect_coverage(path, sm, cm):
     return count / total_count * 100
 
 
-def convert_make(sm, data: dict):
-    c_files = []
-    h_dirs = set()
-    for key in data['files']:
-        if key.endswith('.c'):
-            c_files.append(key)
-        else:
-            h_dirs.add(os.path.split(key)[0])
-    o_files = [f"{sm.get('temp_files_dir', '')}/{os.path.basename(el)[:-2]}.o" for el in c_files]
+def c_coverage_html(sm, build):
+    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    temp_dir_wsl = wsl_path(f"{sm.temp_dir()}/build{build.id}", build)
 
-    if os.name == 'nt' and sm.get_smart("C_wsl", False):
-        compiler = "wsl -e gcc"
-    else:
-        compiler = sm.get_smart('gcc', 'gcc')
-    compiler_keys = sm.get_smart('c_compiler_keys', '')
+    lcov = sm.get('lcov', 'lcov')
+    if build.get('wsl') and not lcov.startswith('wsl -e'):
+        lcov = 'wsl -e lcov'
 
-    res = [MakeCommand(data['name'], o_files, f"{compiler} --coverage -g {' '.join(o_files)} -o {data['name']} "
-                                              f"{data['keys']}")]
-    for c_file, o_file in zip(c_files, o_files):
-        res.append(MakeCommand(
-            o_file, c_file, f"{compiler} {compiler_keys} {' '.join(map(lambda s: '-I ' + s, h_dirs))} "
-                            f"--coverage -g -c {c_file} -o {o_file}"))
-    return res
+    genhtml = sm.get('genhtml', 'genhtml')
+    if build.get('wsl') and not genhtml.startswith('wsl -e'):
+        genhtml = 'wsl -e genhtml'
+
+    try:
+        res = cmd_command(f"{lcov} -t \"{build.get('name', '')}\" "
+                          f"-o {temp_dir_wsl}/coverage.info -c -d {temp_dir_wsl}")
+        if res.returncode:
+            return None
+
+        res = cmd_command(f"{genhtml} -o {temp_dir_wsl}/report {temp_dir_wsl}/coverage.info")
+        if res.returncode:
+            return None
+        return f"{temp_dir}/report/index.html"
+    except FileNotFoundError:
+        return None

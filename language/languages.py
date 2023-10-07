@@ -6,8 +6,8 @@ from language.autocomplition.python import CodeAutocompletionManager as AcMPytho
 import language.testing.c
 import language.testing.python
 import language.testing.shell
-from binary_redactor.lexer import LexerBin
-from tests.convert_binary import convert as convert_binary
+from other.binary_redactor.lexer import LexerBin
+from other.binary_redactor.convert_binary import convert as convert_binary
 
 languages = {
     'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
@@ -30,9 +30,7 @@ languages = {
         },
         'compile': language.testing.c.c_compile,
         'run': language.testing.c.c_run,
-        'to_make': language.testing.c.convert_make,
         'coverage': language.testing.c.c_collect_coverage,
-        'clear_coverage': language.testing.c.c_clear_coverage_files,
         'fast_run': True,
         'compiler_mask': "{file}:{line}:",
     },
@@ -59,10 +57,8 @@ languages = {
             QsciLexerPython.TripleDoubleQuotedFString: 'String',
             QsciLexerPython.TripleSingleQuotedFString: 'String',
         },
-        'compile': language.testing.python.python_compile,
         'run': language.testing.python.python_run,
         'coverage': language.testing.python.python_collect_coverage,
-        'clear_coverage': language.testing.python.python_clear_coverage_files,
         'fast_run': True,
     },
     'C++': {'lexer': QsciLexerCPP, 'files': ['.cpp', '.h'], 'autocompletion': AcMAbstract, 'colors': {

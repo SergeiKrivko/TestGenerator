@@ -4,8 +4,9 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from settings.lib_dialog import LibWidget
-from ui.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, KEY_LOCAL, \
-    KEY_SMART, SwitchBox, ProgramEdit, ListWidget
+from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, \
+    KEY_LOCAL, \
+    SwitchBox, ProgramEdit, ListWidget
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
@@ -14,7 +15,7 @@ line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 class SettingsWindow(QDialog):
     change_theme = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm, tm, side_bar):
         super(SettingsWindow, self).__init__()
         self.sm = sm
         self.tm = tm
@@ -36,6 +37,7 @@ class SettingsWindow(QDialog):
         self.tree_widget.setFixedWidth(200)
 
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Основные']))
+        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Интерфейс']))
 
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Проект']))
         item.addChild(QTreeWidgetItem(['Структура']))
@@ -44,6 +46,7 @@ class SettingsWindow(QDialog):
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Языки']))
         item.addChild(QTreeWidgetItem(['C']))
         item.addChild(QTreeWidgetItem(['Python']))
+        item.addChild(QTreeWidgetItem(['Bash']))
 
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Тестирование ']))
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Библиотеки']))
@@ -54,12 +57,19 @@ class SettingsWindow(QDialog):
         self.main_settings_widget = SettingsWidget(
             self.sm, self.tm,
             ComboBox("Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
-            ComboBox("Тема: ", list(self.tm.themes.keys()), key='theme', text_mode=True,
-                     on_state_changed=self.change_theme.emit),
             CheckBox("Поиск программ при каждом запуске", key='search_after_start'),
             CheckBox("Не предлагать создание проекта при открытии файла", key='not_create_project'),
             key_type=KEY_GLOBAL)
         layout.addWidget(self.main_settings_widget)
+
+        self.ui_settings_widget = SettingsWidget(
+            self.sm, self.tm,
+            ComboBox("Тема: ", list(self.tm.themes.keys()), key='theme', text_mode=True,
+                     on_state_changed=self.change_theme.emit),
+            *[CheckBox(item, True, f'side_button_{key}') for key, item in side_bar.desc.items()],
+            key_type=KEY_GLOBAL)
+        self.ui_settings_widget.hide()
+        layout.addWidget(self.ui_settings_widget)
 
         self.project_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -135,7 +145,7 @@ class SettingsWindow(QDialog):
                 CheckBox("Coverage", key='coverage'),
                 SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             ]}),
-            key_type=KEY_SMART
+            key_type=KEY_LOCAL
         )
         self.project_testing_widget.hide()
         layout.addWidget(self.project_testing_widget)
@@ -158,6 +168,14 @@ class SettingsWindow(QDialog):
         )
         self.python_settings_widget.hide()
         layout.addWidget(self.python_settings_widget)
+
+        self.bash_settings_widget = SettingsWidget(
+            self.sm, self.tm,
+            LineEdit("Интерпретатор Bash:", 'usr/bin/bash', 'bash', width=300),
+            key_type=KEY_GLOBAL,
+        )
+        self.bash_settings_widget.hide()
+        layout.addWidget(self.bash_settings_widget)
 
         self.testing_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -281,8 +299,10 @@ class SettingsWindow(QDialog):
         self.libs_widget.set_theme()
         self.project_settings_widget.set_theme()
         self.main_settings_widget.set_theme()
+        self.ui_settings_widget.set_theme()
         self.c_settings_widget.set_theme()
         self.python_settings_widget.set_theme()
+        self.bash_settings_widget.set_theme()
         self.testing_settings_widget.set_theme()
         self.project_struct_widget.set_theme()
         self.project_testing_widget.set_theme()
@@ -301,16 +321,20 @@ class SettingsWindow(QDialog):
                 return
 
             self.main_settings_widget.hide()
+            self.ui_settings_widget.hide()
             self.project_settings_widget.hide()
             self.project_struct_widget.hide()
             self.project_testing_widget.hide()
             self.c_settings_widget.hide()
             self.python_settings_widget.hide()
+            self.bash_settings_widget.hide()
             self.testing_settings_widget.hide()
             self.libs_widget.hide()
 
             if tab == 'Основные':
                 self.main_settings_widget.show()
+            if tab == 'Интерфейс':
+                self.ui_settings_widget.show()
             if tab == 'Проект':
                 self.project_settings_widget.show()
             if tab == 'Структура':
@@ -321,6 +345,8 @@ class SettingsWindow(QDialog):
                 self.c_settings_widget.show()
             if tab == 'Python':
                 self.python_settings_widget.show()
+            if tab == 'Bash':
+                self.bash_settings_widget.show()
             if tab == 'Тестирование ':
                 self.testing_settings_widget.show()
             if tab == 'Библиотеки':

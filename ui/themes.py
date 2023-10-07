@@ -4,7 +4,7 @@ import shutil
 from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
-    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget
+    QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu
 import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
@@ -687,7 +687,7 @@ class ThemeManager:
             else:
                 item.setFont(font if font else self.font_medium)
 
-    def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True):
+    def auto_css(self, widget: QWidget, code_font=False, palette='Main', border=True, border_radius=True, padding=False):
         if code_font:
             widget.setFont(self.code_font)
         else:
@@ -708,7 +708,7 @@ class ThemeManager:
         elif isinstance(widget, Button):
             widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
-            widget.setStyleSheet(self.button_css(palette, border, border_radius))
+            widget.setStyleSheet(self.button_css(palette, border, border_radius, padding))
         elif isinstance(widget, QLabel):
             widget.setStyleSheet('border: none;')
         elif isinstance(widget, QSpinBox):
@@ -725,6 +725,8 @@ class ThemeManager:
             self.set_theme_to_list_widget(widget, palette=palette, border=border, border_radius=border_radius)
         elif isinstance(widget, QCheckBox):
             widget.setStyleSheet(self.checkbox_css(palette))
+        elif isinstance(widget, QMenu):
+            widget.setStyleSheet(self.menu_css(palette))
 
     def css_to_options_widget(self, widget):
         widget.setFont(self.font_medium)
@@ -1141,6 +1143,12 @@ QPushButton::disabled {{
 QPushButton::checked {{
     background-color: {self[f'{palette}SelectedColor']};
 }}
+QPushButton::menu-indicator {{
+    image: url({self.get_image('down_arrow')});
+    subcontrol-origin: padding;
+    padding-right: 5px;
+    subcontrol-position: right;
+}}
 """
 
     def tab_bar_css(self, palette='Main'):
@@ -1207,6 +1215,33 @@ QCheckBox::indicator:checked:hover {{
 }}
 QCheckBox::indicator:checked:pressed {{
     image: url({self.get_image('checkbox')});
+}}"""
+
+    def menu_css(self, palette='Bg'):
+        return f"""
+QMenu {{
+    color: {self['TextColor']};
+    background-color: {self[f'{palette}Color']};
+    border: 1px solid {self['BorderColor']};
+    border-radius: 6px;
+    spacing: 4px;
+    padding: 3px;
+}}
+
+QMenu::item {{
+    border: 0px solid {self['BorderColor']};
+    background-color: transparent;
+    border-radius: 8px;
+    padding: 4px 16px;
+}}
+
+QMenu::item:selected {{
+    background-color: {self[f'{palette}HoverColor']};
+}}
+QMenu::separator {{
+    height: 1px;
+    background: {self['BorderColor']};
+    margin: 4px 10px;
 }}"""
 
     def get_image(self, name: str, default=None, color=None):

@@ -1,26 +1,18 @@
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMenu
 
-from code_tab.files_widget import FilesWidget
-from code_tab.terminal_tab import TerminalTab
-from language.build.build_panel import BuildPanel
-from other.chat_widget import ChatPanel
-from other.git_panel import GitPanel
-from other.telegram.telegram_widget import TelegramWidget
-from other.todo_panel import TODOPanel
-from settings.project_widget import ProjectWidget
-from code_tab.console import ConsolePanel
-from tests.generator_window import GeneratorTab
-from tests.testing_panel import TestingPanel
 from ui.button import Button
+from ui.side_bar_window import SideBarDialog, SideBarWindow
 from ui.side_panel_widget import SidePanelWidget
 
 
 class SidePanel(QWidget):
-    def __init__(self, sm, tm, cm):
+    def __init__(self, sm, bm, tm, cm):
         super().__init__()
         self.sm = sm
+        self.bm = bm
         self.tm = tm
         self.cm = cm
 
@@ -30,46 +22,32 @@ class SidePanel(QWidget):
         strange_widget = QWidget()
         strange_layout.addWidget(strange_widget)
 
-        layout = QHBoxLayout()
-        layout.setSpacing(5)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignTop)
-        strange_widget.setLayout(layout)
+        self._layout = QHBoxLayout()
+        self._layout.setSpacing(5)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setAlignment(Qt.AlignTop)
+        strange_widget.setLayout(self._layout)
 
-        self.tabs = {
-            'projects': ProjectWidget(self.sm, self.tm),
-            'files': FilesWidget(self.sm, self.cm, self.tm),
-            'build': BuildPanel(self.sm, self.tm),
-            'tests': TestingPanel(self.sm, self.tm),
-            'todo': TODOPanel(self.sm, self.cm, self.tm),
-            'git': GitPanel(self.sm, self.cm, self.tm),
-            'generator': GeneratorTab(self.sm, self.cm, self.tm),
-            'terminal': TerminalTab(self.sm, self.tm),
-            'run': ConsolePanel(self.sm, self.tm, self.cm),
-            'chat': ChatPanel(self.sm, self.tm),
-            'telegram': TelegramWidget(self.sm, self.tm),
-        }
-        self.tab_width = {'projects': 225, 'files': 225, 'tests': 225, 'git': 300, 'todo': 300, 'chat': 300,
-                          'telegram': 300, 'build': 300}
-
-        for key, el in self.tabs.items():
-            if isinstance(el, SidePanelWidget):
-                el.hide()
-                el.startResizing.connect(self.start_resizing)
-                layout.addWidget(el)
+        self.tabs: dict[str: SidePanelWidget] = dict()
 
         self.resizing = False
-        self.current_tab = None
+        self.current_tab: SidePanelWidget | None = None
         self.current_tab_key = None
         self.mouse_x = None
 
         self.hide()
 
+    def add_tab(self, key, widget: SidePanelWidget):
+        self.tabs[key] = widget
+        widget.hide()
+        widget.startResizing.connect(self.start_resizing)
+        self._layout.addWidget(widget)
+
     def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
         if self.resizing and isinstance(self.current_tab, QWidget):
             if self.mouse_x is not None:
                 self.setMaximumWidth(max(200, self.width() + a0.x() - self.mouse_x))
-                self.tab_width[self.current_tab_key] = self.maximumWidth()
+                self.current_tab.side_panel_width = self.maximumWidth()
             self.mouse_x = a0.x()
 
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
@@ -86,8 +64,10 @@ class SidePanel(QWidget):
         self.current_tab_key = key
         self.current_tab = self.tabs[key]
         self.current_tab.show()
-        if key in self.tab_width:
-            self.setMaximumWidth(self.tab_width[key])
+        self.setMaximumWidth(self.current_tab.side_panel_width)
+
+    def tab_command(self, tab, args, kwargs):
+        self.tabs[tab].command(*args, **kwargs)
 
     def finish_work(self):
         for el in self.tabs.values():
@@ -104,6 +84,9 @@ class SidePanel(QWidget):
 
 
 class SideBar(QWidget):
+    SPACING = 5
+    BUTTON_SIZE = 30
+
     def __init__(self, sm, tm, side_panel: SidePanel):
         super().__init__()
         self.sm = sm
@@ -117,17 +100,93 @@ class SideBar(QWidget):
         strange_widget = QWidget()
         strange_layout.addWidget(strange_widget)
 
-        layout = QVBoxLayout()
-        layout.setSpacing(5)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setAlignment(Qt.AlignTop)
-        strange_widget.setLayout(layout)
+        self._layout = QVBoxLayout()
+        self._layout.setSpacing(SideBar.SPACING)
+        self._layout.setContentsMargins(5, 5, 5, 5)
+        self._layout.setAlignment(Qt.AlignTop)
+        strange_widget.setLayout(self._layout)
 
-        self.buttons = {el: SideBarButton(self.tm, f'button_{el}') for el in [
-            'projects', 'files', 'build', 'tests', 'git', 'todo', 'generator', 'terminal', 'run', 'chat', 'telegram']}
-        for el in self.buttons.values():
-            layout.addWidget(el)
-            el.clicked.connect(self.connect_button(el))
+        self._button_more = SideBarButton(tm, 'more', 'button_more')
+        self._button_more.hide()
+        self._button_more.setCheckable(False)
+        self._layout.addWidget(self._button_more)
+
+        self._menu = SideBarMenu()
+        self._menu.activated.connect(self.move_menu)
+        self._button_more.setMenu(self._menu)
+
+        self.buttons = dict()
+        self.actions = dict()
+        self.desc = dict()
+        self._windows = dict()
+
+    def move_menu(self):
+        pos = self.mapToGlobal(self._button_more.pos())
+        self._menu.move(pos.x() + SideBar.BUTTON_SIZE + 5, pos.y())
+
+    def add_tab(self, name: str, widget: SidePanelWidget | SideBarWindow | SideBarDialog, desc: str = ''):
+        button = SideBarButton(self.tm, name, f'button_{name}')
+        self.buttons[name] = button
+        self.desc[name] = desc
+        if desc:
+            button.setToolTip(desc)
+
+        action = self._menu.addAction(QIcon(self.tm.get_image(f'button_{name}')), desc)
+        self.actions[name] = action
+        action.setVisible(False)
+
+        self._layout.insertWidget(self._layout.count() - 1, button)
+        if isinstance(widget, SidePanelWidget):
+            button.clicked.connect(lambda flag: self.button_clicked(button.name, flag))
+            action.triggered.connect(lambda: self.button_clicked(button.name, True))
+            self.side_panel.add_tab(name, widget)
+        elif isinstance(widget, SideBarWindow):
+            button.setCheckable(False)
+            button.clicked.connect(lambda flag: self.window_button_clicked(button.name))
+            action.triggered.connect(lambda flag: self.window_button_clicked(button.name))
+            self._windows[name] = widget
+
+    def calc_visible_buttons(self):
+        count = 0
+        hidden = 0
+        for key, item in self.buttons.items():
+            if item.isChecked() or self.sm.get_general(f'side_button_{key}', True):
+                count += 1
+            else:
+                hidden += 1
+        return count, hidden
+
+    def calc_max_buttons_count(self):
+        return (self.height() + SideBar.SPACING) / (SideBar.BUTTON_SIZE + SideBar.SPACING)
+
+    def show_buttons(self):
+        visible, hidden = self.calc_visible_buttons()
+        max_visible = self.calc_max_buttons_count()
+        if max_visible < visible or hidden:
+            max_visible -= 1
+            self._button_more.show()
+        else:
+            self._button_more.hide()
+
+        count = 0
+        last_key = None
+        for key, item in self.buttons.items():
+            if count <= (max_visible - 1) and (item.isChecked() or self.sm.get_general(f'side_button_{key}', True)):
+                item.show()
+                last_key = key
+                count += 1
+                self.actions[key].setVisible(False)
+            elif item.isChecked() and last_key:
+                self.buttons[last_key].hide()
+                self.actions[last_key].setVisible(True)
+                item.show()
+                self.actions[key].setVisible(False)
+            else:
+                item.hide()
+                self.actions[key].setVisible(True)
+
+    def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
+        self.show_buttons()
 
     def button_clicked(self, key: str, flag: bool):
         for _key, item in self.buttons.items():
@@ -136,9 +195,14 @@ class SideBar(QWidget):
 
         if key in self.buttons:
             if flag:
+                self.buttons[key].setChecked(True)
                 self.side_panel.show_tab(key)
             else:
                 self.side_panel.hide()
+        self.show_buttons()
+
+    def window_button_clicked(self, key):
+        self._windows[key].show()
 
     def select_tab(self, key):
         for _key, item in self.buttons.items():
@@ -148,18 +212,55 @@ class SideBar(QWidget):
                 item.setChecked(True)
         self.side_panel.show_tab(key)
 
-    def connect_button(self, button):
-        return lambda flag: self.button_clicked(button.image_name[7:], flag)
-
     def set_theme(self):
         self.setStyleSheet(f"background-color: {self.tm['MenuColor']}; "
                            f"border-right: 1px solid {self.tm['BorderColor']};")
         for el in self.buttons.values():
             el.set_theme(self.tm)
+        self._button_more.set_theme()
+        self.tm.auto_css(self._menu, palette='Menu')
+        for el in self._windows.values():
+            el.set_theme()
+        self._menu.setStyleSheet(f"""
+QMenu {{
+    color: {self.tm['TextColor']};
+    background-color: {self.tm['MenuColor']};
+    border: 1px solid {self.tm['BorderColor']};
+    border-radius: 6px;
+    spacing: 5px;
+    padding: 5px;
+}}
+
+QMenu::item {{
+    border: 0px solid {self.tm['BorderColor']};
+    background-color: transparent;
+    border-radius: 8px;
+    height: 30px;
+    padding: 0px 8px;
+    alignment: left;
+}}
+
+QMenu::item:selected {{
+    background-color: {self.tm['MenuHoverColor']};
+}}
+QMenu::separator {{
+    height: 1px;
+    background: {self.tm['BorderColor']};
+    margin: 4px 10px;
+}}""")
 
 
 class SideBarButton(Button):
-    def __init__(self, tm, image):
+    def __init__(self, tm, name, image):
         super().__init__(tm, image, css='Menu', color='TextColor')
-        self.setFixedSize(30, 30)
+        self.name = name
+        self.setFixedSize(SideBar.BUTTON_SIZE, SideBar.BUTTON_SIZE)
         self.setCheckable(True)
+
+
+class SideBarMenu(QMenu):
+    activated = pyqtSignal()
+
+    def showEvent(self, a0: QtGui.QShowEvent) -> None:
+        super().showEvent(a0)
+        self.activated.emit()
