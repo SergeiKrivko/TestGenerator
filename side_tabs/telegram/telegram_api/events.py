@@ -438,3 +438,19 @@ class TgUpdateChatOnlineMemberCount(TgEvent):
         self.online_member_count = data.get('online_member_count')
 
 
+class TgUpdateChatPhoto(TgEvent):
+    def __init__(self, data: dict, client):
+        if data['@type'] .lower() != self.__class__.__name__[2:].lower():
+            raise TypeError('TgType error')
+        self.chat_id = data.get('chat_id')
+        self.photo = None if 'photo' not in data else _types.TgChatPhotoInfo(data.get('photo'), client)
+
+
+class TgUpdateChatTitle(TgEvent):
+    def __init__(self, data: dict, client):
+        if data['@type'] .lower() != self.__class__.__name__[2:].lower():
+            raise TypeError('TgType error')
+        self.chat_id = data.get('chat_id')
+        self.title = data.get('title')
+
+

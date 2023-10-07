@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 import side_tabs.telegram.telegram_api.types as types
 import side_tabs.telegram.telegram_api.events as events
-from side_tabs.telegram.telegram_api.class_converter import Module
+# from side_tabs.telegram.telegram_api.class_converter import Module
 
 
 class TgClient(Client):
@@ -27,8 +27,8 @@ class TgClient(Client):
         self._authorization_state = None
         self._authorization_handler = None
 
-        self.module = Module(r"C:\Users\sergi\PycharmProjects\TestGenerator\other\telegram\telegram_api\types.py",
-                             r"C:\Users\sergi\PycharmProjects\TestGenerator\other\telegram\telegram_api\events.py")
+        # self.module = Module(r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\types.py",
+        #                      r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\events.py")
 
     def send(self, data: dict):
         self.tdjson.send(data)

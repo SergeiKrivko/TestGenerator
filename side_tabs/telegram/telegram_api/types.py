@@ -1515,3 +1515,20 @@ class TgUserStatusLastWeek:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         pass
+class TgTextEntityTypeMediaTimestamp:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.media_timestamp = data.get('media_timestamp')
+
+
+class TgTextEntityTypeMentionName:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.user_id = data.get('user_id')
+
+
+class TgChatActionBarAddContact:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        pass
+

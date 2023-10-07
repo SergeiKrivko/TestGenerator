@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
             'git': GitPanel(self.sm, self.cm, self.tm),
             'generator': GeneratorTab(self.sm, self.cm, self.tm),
             'terminal': TerminalTab(self.sm, self.tm),
-            'run': ConsolePanel(self.sm, self.tm, self.cm),
+            'run': ConsolePanel(self.sm, self.tm, self.bm),
             'chat': ChatPanel(self.sm, self.tm),
             'telegram': TelegramWidget(self.sm, self.tm),
             'document': ReportWindow(self.bm, self.sm, self.tm)
@@ -120,14 +120,6 @@ class MainWindow(QMainWindow):
         self.bm.sideTabCommand.connect(self.side_panel.tab_command)
 
         self.resize(1100, 700)
-
-        if len(argv) == 2 and os.path.isfile(argv[1]):
-            if argv[1].endswith('.7z'):
-                self.side_panel.tabs['projects'].project_from_zip(argv[1])
-            else:
-                self.side_panel.tabs['projects'].open_as_project(argv[1])
-        else:
-            self.side_panel.tabs['projects'].open_project(forced=True)
 
         # self.sm.finish_change_task()
         self.show_tab('code')

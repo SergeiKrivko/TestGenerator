@@ -15,7 +15,7 @@ class ProgressDialog(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self._label = QLabel(f"Открытие проекта {project.path()}")
+        self._label = QLabel(f"Открытие проекта\n{project.path()}")
         self._label.setWordWrap(True)
         layout.addWidget(self._label)
 
@@ -23,7 +23,7 @@ class ProgressDialog(QDialog):
         self._progress_bar.setFixedHeight(30)
         layout.addWidget(self._progress_bar)
 
-        self.setFixedSize(250, 100)
+        self.setFixedSize(320, 125)
 
         self._bm.updateProgress.connect(self.update_progress)
         self._bm.finishChangingProject.connect(self._on_loading_complete)

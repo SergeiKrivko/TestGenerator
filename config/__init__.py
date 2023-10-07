@@ -1,6 +1,6 @@
 try:
     from config.secret import *
-    secret_data = False
+    secret_data = True
 except ImportError:
     secret_data = False
 

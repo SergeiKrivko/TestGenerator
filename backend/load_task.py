@@ -11,7 +11,6 @@ from backend.types.project import Project
 from backend.types.unit_tests_module import UnitTestsModule
 from language.languages import languages
 from language.utils import get_files
-from main_tabs.unit_testing.check_converter import CheckConverter
 
 
 class Loader(QThread):
@@ -104,12 +103,16 @@ class Loader(QThread):
                     modules[el] = module
                     module.load(f"{path}/{el}")
 
-        for el in get_files(self._sm.project.path(), languages[self._sm.project.get('language', 'C')].get('files')[0]):
-            el = os.path.basename(el)
-            if el not in modules:
-                module = UnitTestsModule(el)
-                modules[el] = module
-                self._manager.add_module(module)
+        try:
+            for el in get_files(self._sm.project.path(), languages[self._sm.project.get('language', 'C')].get(
+                    'files')[0]):
+                el = os.path.basename(el)
+                if el not in modules:
+                    module = UnitTestsModule(el)
+                    modules[el] = module
+                    self._manager.add_module(module)
+        except KeyError:
+            pass
 
     def load_builds(self):
         path = f"{self._new_data_path}/scenarios"

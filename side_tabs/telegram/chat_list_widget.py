@@ -119,7 +119,7 @@ class TelegramListWidgetItem(QWidget):
                 self._photo.download()
             manager.updateFile.connect(self.update_icon)
             if self._photo.local.is_downloading_completed:
-                self._icon_label.setPixmap(QPixmap(self._photo.local._path).scaled(44, 44))
+                self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
         main_layout.addWidget(self._icon_label)
 
         layout = QVBoxLayout()
@@ -164,7 +164,7 @@ class TelegramListWidgetItem(QWidget):
     def update_icon(self, image: types.TgFile):
         if isinstance(self._photo, types.TgFile) and image.id == self._photo.id and \
                 self._photo.local.is_downloading_completed:
-            self._icon_label.setPixmap(QPixmap(self._photo.local._path).scaled(44, 44))
+            self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         if a0.button() == Qt.LeftButton:

@@ -41,20 +41,20 @@ class SidePanelWidget(QWidget):
         layout.setSpacing(5)
         main_layout.addLayout(layout)
 
-        __top_layout = QHBoxLayout()
-        __top_layout.setSpacing(2)
+        self._top_layout = QHBoxLayout()
+        self._top_layout.setSpacing(2)
 
-        self.__name_label = QLabel(name)
-        __top_layout.addWidget(self.__name_label)
+        self._name_label = QLabel(name)
+        self._top_layout.addWidget(self._name_label)
 
         self.buttons = dict()
 
         for el in buttons:
             button = self.__Buttons[el](self.tm)
             self.buttons[el] = button
-            __top_layout.addWidget(button)
+            self._top_layout.addWidget(button)
 
-        layout.addLayout(__top_layout)
+        layout.addLayout(self._top_layout)
 
         self._resize_widget = _ResizeWidget(self.tm)
         self._resize_widget.pressed.connect(self.startResizing.emit)
@@ -74,7 +74,7 @@ class SidePanelWidget(QWidget):
     def set_theme(self):
         self._resize_widget.set_theme()
         self.setStyleSheet(f"border: none;")
-        self.tm.auto_css(self.__name_label)
+        self.tm.auto_css(self._name_label)
         for el in self.buttons.values():
             el.set_theme()
 

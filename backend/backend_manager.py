@@ -1,3 +1,4 @@
+import os.path
 import random
 import sys
 from typing import Literal
@@ -289,6 +290,13 @@ class BackendManager(QObject):
             return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, input=in_data, cwd=cwd)
         return cmd_command(command, timeout=float(self.sm.get('time_limit', 3)), shell=True, cwd=cwd)
 
+    def build_running_command(self, build_id, args='', project=None):
+        if project is None:
+            project = self.sm.project
+        build = self.builds[build_id]
+        command = build.run(project, self.sm, args)
+        return command
+
     def execute_build(self, build_id, args='', in_data=None, project=None):
         res, errors = self.compile_build(build_id, project)
         if not res:
@@ -356,7 +364,14 @@ class BackendManager(QObject):
 
     def parse_cmd_args(self, args):
         if len(args) == 2 and os.path.isfile(args[1]):
-            pass
+            path = os.path.abspath(os.path.split(args[1])[0])
+            main_project, subproject = self.sm.find_main_project(path)
+            lst = subproject.get('opened_files', [])
+            lst.append(os.path.abspath(args[1]))
+            subproject.set('opened_files', lst)
+            subproject.save_settings()
+            self.open_main_project(main_project, subproject)
+            return
         if len(args) == 3 and args[1] == '-d' and os.path.isdir(args[2]):
             path = os.path.abspath(args[2])
             self.open_main_project(*self.sm.find_main_project(path))
