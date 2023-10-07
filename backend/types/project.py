@@ -13,6 +13,7 @@ class Project:
 
         if makedirs:
             os.makedirs(os.path.join(self._path, Project.TEST_GENERATOR_DIR), exist_ok=True)
+            self.create_gitignore()
         elif not os.path.isdir(os.path.join(self._path, Project.TEST_GENERATOR_DIR)):
             raise FileNotFoundError
 
