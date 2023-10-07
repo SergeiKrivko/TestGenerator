@@ -1,3 +1,5 @@
+import os
+
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QFileDialog
 
@@ -31,6 +33,7 @@ class BuildEdit(QScrollArea):
         layout.addLayout(self._layout)
 
         self._cwd_label = QLabel("Рабочая директория:")
+        self._cwd_label.hide()
         layout.addWidget(self._cwd_label)
 
         cwd_layout = QHBoxLayout()
@@ -38,22 +41,30 @@ class BuildEdit(QScrollArea):
 
         self._cwd_line = QLineEdit()
         self._cwd_line.editingFinished.connect(self._on_cwd_changed)
+        self._cwd_line.hide()
         cwd_layout.addWidget(self._cwd_line)
 
         self._cwd_button = QPushButton("Обзор")
         self._cwd_button.setFixedSize(60, 22)
         self._cwd_button.clicked.connect(self._select_cwd)
+        self._cwd_button.hide()
         cwd_layout.addWidget(self._cwd_button)
 
         self._preproc_widget = CommandsList(self.sm, self.bm, self.tm, "Перед выполнением:")
         self._preproc_widget.setFixedHeight(200)
         self._preproc_widget.set_theme()
+        self._preproc_widget.hide()
         layout.addWidget(self._preproc_widget)
 
         self._postproc_widget = CommandsList(self.sm, self.bm, self.tm, "После выполнения:")
         self._postproc_widget.setFixedHeight(200)
         self._postproc_widget.set_theme()
+        self._postproc_widget.hide()
         layout.addWidget(self._postproc_widget)
+
+        self._wsl_widget = CheckboxField(self.tm, 'wsl', False, "Использовать WSL")
+        self._wsl_widget.hide()
+        layout.addWidget(self._wsl_widget)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
@@ -79,6 +90,8 @@ class BuildEdit(QScrollArea):
                 el.store(self._build)
             self._build['preproc'] = self._preproc_widget.store()
             self._build['postproc'] = self._postproc_widget.store()
+            if os.name == 'nt':
+                self._wsl_widget.store(self._build)
 
     def _load_struct(self, *args: BuildField):
         self.clear()
@@ -128,9 +141,18 @@ class BuildEdit(QScrollArea):
             case _:
                 self._load_struct(name_edit := LineField(self.tm, 'name', '-', "Название:"))
 
+        self._cwd_label.show()
+        self._cwd_line.show()
+        self._cwd_button.show()
+        self._preproc_widget.show()
+        self._postproc_widget.show()
+        if os.name == 'nt':
+            self._wsl_widget.show()
+
         self._cwd_line.setText(self._build.get('cwd', '.'))
         self._preproc_widget.load(self._build.get('preproc', []))
         self._postproc_widget.load(self._build.get('postproc', []))
+        self._wsl_widget.load(self._build)
 
         if name_edit is not None:
             name_edit.valueChanged.connect(self.nameChanged.emit)
@@ -161,3 +183,4 @@ class BuildEdit(QScrollArea):
             self.tm.auto_css(el)
         self._preproc_widget.set_theme()
         self._postproc_widget.set_theme()
+        self._wsl_widget.set_theme()

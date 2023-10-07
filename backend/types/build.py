@@ -76,7 +76,7 @@ class Build:
     def coverage_html(self, project, sm):
         match self.get('type', 'C'):
             case 'C':
-                return None
+                return c_coverage_html(sm, self)
             case 'python_coverage':
                 return python_coverage_html(sm, self)
             case _:

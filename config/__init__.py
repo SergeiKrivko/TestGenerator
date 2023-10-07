@@ -1,7 +1,12 @@
+import os
+
 try:
     from config.secret import *
     secret_data = True
 except ImportError:
+    secret_data = False
+
+if os.name == 'posix':
     secret_data = False
 
 ORGANISATION_NAME = "SergeiKrivko"

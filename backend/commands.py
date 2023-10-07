@@ -55,3 +55,14 @@ def get_sorted_jsons(path: str):
     lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(path)))
     lst.sort(key=lambda el: int(el.rstrip('.json')))
     return lst
+
+
+def wsl_path(path: str, build):
+    if not build.get('wsl'):
+        return path
+    path = path.replace('\\', '/')
+    if len(path) <= 2:
+        return path
+    if path[1] == ':':
+        path = f"/mnt/{path[0].lower()}{path[2:]}"
+    return path
