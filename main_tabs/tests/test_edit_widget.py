@@ -8,6 +8,7 @@ from other.binary_redactor.redactor import RedactorWidget
 
 class TestEditWidget(QWidget):
     test_edited = pyqtSignal()
+    testNameChanged = pyqtSignal()
 
     def __init__(self, tm):
         super(TestEditWidget, self).__init__()
@@ -172,6 +173,7 @@ class TestEditWidget(QWidget):
     def set_test_name(self, name):
         self.data['desc'] = name
         self.test_edited.emit()
+        self.testNameChanged.emit()
 
     def test_in_selected(self, index):
         self.data['current_in'] = index

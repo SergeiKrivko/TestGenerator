@@ -244,6 +244,8 @@ class TelegramTopWidget(QWidget):
         return datetime.datetime.fromtimestamp(t).strftime("%H:%M")
 
     def _on_user_status_updated(self, user_id: str | int):
+        if not isinstance(self._chat, types.TgChat):
+            return
         user_id = int(user_id)
         if isinstance(self._chat.type, types.TgChatTypePrivate):
             self._status_label.show()

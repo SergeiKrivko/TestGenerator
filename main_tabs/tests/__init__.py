@@ -44,6 +44,7 @@ class TestsWidget(MainTab):
 
         self.test_edit_widget = TestEditWidget(self.tm)
         self.test_edit_widget.test_edited.connect(self.set_tests_changed)
+        self.test_edit_widget.testNameChanged.connect(self.update_test_name)
         # self.test_edit_widget.button_generate.clicked.connect(self.generate_test)
         layout.addWidget(self.test_edit_widget)
 
@@ -136,18 +137,22 @@ class TestsWidget(MainTab):
     def set_tests_changed(self):
         self.tests_changed = True
 
+    def update_test_name(self):
+        if isinstance(self.current_test, Test):
+            self.current_test.setText(self.current_test.test.get('desc'))
+
     def select_pos_test(self):
         item = self.test_list_widget.pos_test_list.currentItem()
         if isinstance(item, Test):
             self.test_list_widget.neg_test_list.setCurrentItem(None)
-            self.current_test = item.test
+            self.current_test = item
             self.test_edit_widget.open_test(item.test)
 
     def select_neg_test(self):
         item = self.test_list_widget.neg_test_list.currentItem()
         if isinstance(item, Test):
             self.test_list_widget.pos_test_list.setCurrentItem(None)
-            self.current_test = item.test
+            self.current_test = item
             self.test_edit_widget.open_test(item.test)
 
     def move_pos_test_up(self):
