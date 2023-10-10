@@ -7,6 +7,7 @@ from settings.lib_dialog import LibWidget
 from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, \
     KEY_LOCAL, \
     SwitchBox, ProgramEdit, ListWidget
+from settings.utils_edit import UtilsEdit
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
@@ -15,9 +16,10 @@ line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 class SettingsWindow(QDialog):
     change_theme = pyqtSignal()
 
-    def __init__(self, sm, tm, side_bar):
+    def __init__(self, sm, bm, tm, side_bar):
         super(SettingsWindow, self).__init__()
         self.sm = sm
+        self.bm = bm
         self.tm = tm
 
         self.setWindowTitle("TestGenerator - настройки")
@@ -49,6 +51,7 @@ class SettingsWindow(QDialog):
         item.addChild(QTreeWidgetItem(['Bash']))
 
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Тестирование ']))
+        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Сторонние утилиты']))
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Библиотеки']))
 
         self.tree_widget.currentItemChanged.connect(self.select_tab)
@@ -122,12 +125,10 @@ class SettingsWindow(QDialog):
                 False: SwitchBox(lambda: self.sm.get('language'), {
                     'C': [
                         self.c_settings(),
-                        self.utils_settings('C'),
                     ],
                     'Python': [
                         ProgramEdit("Python:", 'python.exe', 'python'),
                         ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
-                        self.utils_settings('Python'),
                     ],
                 })
             }),
@@ -153,7 +154,6 @@ class SettingsWindow(QDialog):
         self.c_settings_widget = SettingsWidget(
             self.sm, self.tm,
             self.c_settings(),
-            self.utils_settings('C'),
             key_type=KEY_GLOBAL
         )
         self.c_settings_widget.hide()
@@ -163,7 +163,6 @@ class SettingsWindow(QDialog):
             self.sm, self.tm,
             ProgramEdit("Python:", 'python.exe', 'python'),
             ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
-            self.utils_settings('Python'),
             key_type=KEY_GLOBAL
         )
         self.python_settings_widget.hide()
@@ -195,6 +194,10 @@ class SettingsWindow(QDialog):
         self.testing_settings_widget.hide()
         layout.addWidget(self.testing_settings_widget)
 
+        self.utils_widget = UtilsEdit(self.bm, self.tm)
+        self.utils_widget.hide()
+        layout.addWidget(self.utils_widget)
+
         self.libs_widget = LibWidget(self.sm, self.tm)
         self.libs_widget.hide()
         layout.addWidget(self.libs_widget)
@@ -213,26 +216,6 @@ class SettingsWindow(QDialog):
         # buttons_layout.addWidget(self.button_ok)
 
         self.setLayout(main_layout)
-
-    @staticmethod
-    def utils_settings(language='C'):
-        return ListWidget("Сторонние утилиты:", children=lambda: [
-            LineEdit("Строка запуска: ", key='program', width=400),
-            ComboBox("Тип:", ["Для теста", "Перед тестированием", "После тестирования"], children={
-                0: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='output_format'),
-                    CheckBox("Наличие вывода считается отрицательным результатом", key='output_res'),
-                    CheckBox("Ненулевой код возврата считается отрицательным результатом", key='exit_code_res')],
-                1: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='1_output_format'),
-                    CheckBox("Наличие вывода считается отрицательным результатом", key='1_output_res'),
-                    CheckBox("Ненулевой код возврата считается отрицательным результатом", key='1_exit_code_res'),
-                    LineEdit("Маска (Файл - строка)", key='1_mask', text='{file}:{line}:', one_line=True),
-                    # CheckBox("Продолжить тестирование", key='1_continue_testing'), TODO: починить это опцию
-                    ],
-                2: [ComboBox("Тип вывода:", ["STDOUT", "STDERR", "Файл ({dist})"], key='2_output_format'),
-                    CheckBox("Наличие вывода считается отрицательным результатом", key='2_output_res'),
-                    CheckBox("Ненулевой код возврата считается отрицательным результатом", key='2_exit_code_res'),
-                    ],
-            }, key='type', width=250)], key=f'{language}_utils')
 
     @staticmethod
     def c_settings():
@@ -306,6 +289,7 @@ class SettingsWindow(QDialog):
         self.testing_settings_widget.set_theme()
         self.project_struct_widget.set_theme()
         self.project_testing_widget.set_theme()
+        self.utils_widget.set_theme()
 
     def exec(self) -> int:
         self.set_theme()
@@ -330,6 +314,7 @@ class SettingsWindow(QDialog):
             self.bash_settings_widget.hide()
             self.testing_settings_widget.hide()
             self.libs_widget.hide()
+            self.utils_widget.hide()
 
             if tab == 'Основные':
                 self.main_settings_widget.show()
@@ -351,3 +336,5 @@ class SettingsWindow(QDialog):
                 self.testing_settings_widget.show()
             if tab == 'Библиотеки':
                 self.libs_widget.show()
+            if tab == 'Сторонние утилиты':
+                self.utils_widget.show()

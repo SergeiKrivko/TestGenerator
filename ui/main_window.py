@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         self.unit_testing_widget = UnitTestingWidget(self.sm, self.bm, self.cm, self.tm)
         self.add_tab(self.unit_testing_widget, 'unit_tests', 'Модульное тестирование')
 
-        self.settings_widget = SettingsWindow(self.sm, self.tm, self.side_bar)
+        self.settings_widget = SettingsWindow(self.sm, self.bm, self.tm, self.side_bar)
         self.settings_widget.change_theme.connect(self.set_theme)
         self.settings_widget.hide()
         self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)

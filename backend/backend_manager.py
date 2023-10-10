@@ -12,6 +12,7 @@ from backend.types.build import Build
 from backend.types.project import Project
 from backend.types.unit_test import UnitTest
 from backend.types.unit_tests_module import UnitTestsModule
+from backend.types.util import Util
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from main_tabs.unit_testing.check_converter import CheckConverter
 from side_tabs.builds.commands_list import CommandsList
@@ -46,6 +47,11 @@ class BackendManager(QObject):
     renameBuild = pyqtSignal(Build)
     clearBuilds = pyqtSignal()
 
+    addUtil = pyqtSignal(Util)
+    deleteUtil = pyqtSignal(Util)
+    renameUtil = pyqtSignal(Util)
+    clearUtils = pyqtSignal()
+
     showMainTab = pyqtSignal(str)
     showSideTab = pyqtSignal(str)
     mainTabCommand = pyqtSignal(str, tuple, dict)
@@ -57,6 +63,7 @@ class BackendManager(QObject):
 
         self.func_tests = {'pos': [], 'neg': []}
         self.builds = dict()
+        self.utils = dict()
         self.unit_tests_modules: list[UnitTestsModule] = []
 
         self.func_test_completed = 0
@@ -225,6 +232,29 @@ class BackendManager(QObject):
 
     def get_build(self, id: int):
         return self.builds[id]
+
+    # --------------------------- UTILS --------------------------------
+
+    def add_util(self, util: Util):
+        self.utils[util.id] = util
+        self.addUtil.emit(util)
+
+    def generate_util_id(self):
+        while (res := random.randint(0, 2**31)) in self.utils:
+            pass
+        return res
+
+    def delete_util(self, id: int):
+        util = self.utils[id]
+        self.utils.pop(id)
+        self.deleteUtil.emit(util)
+
+    def clear_utils(self):
+        self.utils.clear()
+        self.clearUtils.emit()
+
+    def get_util(self, id: int):
+        return self.utils[id]
 
     # ------------------- UNIT TESTING -------------------------
 

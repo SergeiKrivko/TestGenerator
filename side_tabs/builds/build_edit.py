@@ -50,6 +50,12 @@ class BuildEdit(QScrollArea):
         self._cwd_button.hide()
         cwd_layout.addWidget(self._cwd_button)
 
+        self._utils_widget = CommandsList(self.sm, self.bm, self.tm, "Утилиты:", fixed_type=CommandsList.TYPE_UTIL)
+        self._utils_widget.setFixedHeight(200)
+        self._utils_widget.set_theme()
+        self._utils_widget.hide()
+        layout.addWidget(self._utils_widget)
+
         self._preproc_widget = CommandsList(self.sm, self.bm, self.tm, "Перед выполнением:")
         self._preproc_widget.setFixedHeight(200)
         self._preproc_widget.set_theme()
@@ -88,6 +94,7 @@ class BuildEdit(QScrollArea):
         if self._build is not None:
             for el in self._widgets:
                 el.store(self._build)
+            self._build['utils'] = self._utils_widget.store()
             self._build['preproc'] = self._preproc_widget.store()
             self._build['postproc'] = self._postproc_widget.store()
             if os.name == 'nt':
@@ -144,12 +151,14 @@ class BuildEdit(QScrollArea):
         self._cwd_label.show()
         self._cwd_line.show()
         self._cwd_button.show()
+        self._utils_widget.show()
         self._preproc_widget.show()
         self._postproc_widget.show()
         if os.name == 'nt':
             self._wsl_widget.show()
 
         self._cwd_line.setText(self._build.get('cwd', '.'))
+        self._utils_widget.load(self._build.get('utils', []))
         self._preproc_widget.load(self._build.get('preproc', []))
         self._postproc_widget.load(self._build.get('postproc', []))
         self._wsl_widget.load(self._build)

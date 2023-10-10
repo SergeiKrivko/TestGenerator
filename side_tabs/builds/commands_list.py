@@ -12,6 +12,7 @@ from ui.button import Button
 class CommandsList(QWidget):
     TYPE_BUILD = 0
     TYPE_CMD = 1
+    TYPE_UTIL = 2
 
     def __init__(self, sm, bm, tm, name="", fixed_type=None):
         super().__init__()
@@ -111,7 +112,7 @@ class NewCommandDialog(QDialog):
         self.setLayout(main_layout)
 
         self._type_box = QComboBox()
-        self._type_box.addItems(["Сценарий Make", "Команда"])
+        self._type_box.addItems(["Конфигурация запуска", "Команда", "Утилита"])
         self._type_box.currentIndexChanged.connect(self._on_type_changed)
         main_layout.addWidget(self._type_box)
 
@@ -121,6 +122,12 @@ class NewCommandDialog(QDialog):
 
         self._make_box = ScenarioBox(self.sm, self.bm, self.tm)
         main_layout.addWidget(self._make_box)
+
+        self._utils_box = QComboBox()
+        self._utils_box.hide()
+        self._utils_box.addItems([item.get('name', '') for item in self.bm.utils.values()])
+        self._utils = list(self.bm.utils.keys())
+        main_layout.addWidget(self._utils_box)
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setAlignment(Qt.AlignRight)
@@ -142,10 +149,16 @@ class NewCommandDialog(QDialog):
         match self._type_box.currentIndex():
             case CommandsList.TYPE_BUILD:
                 self._line_edit.hide()
+                self._utils_box.hide()
                 self._make_box.show()
             case CommandsList.TYPE_CMD:
                 self._make_box.hide()
+                self._utils_box.hide()
                 self._line_edit.show()
+            case CommandsList.TYPE_UTIL:
+                self._make_box.hide()
+                self._line_edit.hide()
+                self._utils_box.show()
 
     def get_result(self):
         match self._type_box.currentIndex():
@@ -153,13 +166,15 @@ class NewCommandDialog(QDialog):
                 res = self._line_edit.text()
             case CommandsList.TYPE_BUILD:
                 res = self._make_box.current_scenario()
+            case CommandsList.TYPE_UTIL:
+                res = self._utils[self._utils_box.currentIndex()]
             case _:
                 raise IndexError
         return self._type_box.currentIndex(), res
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
-        for el in [self._type_box, self._line_edit, self._make_box, self._button]:
+        for el in [self._type_box, self._line_edit, self._make_box, self._utils_box, self._button]:
             self.tm.auto_css(el)
 
 
@@ -234,6 +249,9 @@ class _ListWidgetItem(QListWidgetItem):
             case CommandsList.TYPE_BUILD:
                 self.setText(self.bm.get_build(self._data).get('name', '-'))
                 self.setIcon(QIcon(self._tm.get_image('icon_build')))
+            case CommandsList.TYPE_UTIL:
+                self.setText(self.bm.get_util(self._data).get('name', '-'))
+                self.setIcon(QIcon(self._tm.get_image('passed')))
 
     def store(self):
         return {'type': self._type, 'data': self._data}

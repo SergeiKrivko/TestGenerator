@@ -9,6 +9,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from backend.commands import read_file, read_binary, cmd_command
 from backend.types.func_test import FuncTest
 from backend.types.project import Project
+from backend.types.util import Util
 from language.utils import get_files
 from other.binary_redactor.binary_decoder import decode, comparator as bytes_comparator
 from backend.macros_converter import MacrosConverter
@@ -32,6 +33,10 @@ class TestingLooper(QThread):
         self.coverage = None
         self.coverage_html = None
         self._temp_dir = f"{self.sm.temp_dir()}/out"
+        self._build_id = self._project.get('build')
+        self._build = None
+        if self._build_id is not None:
+            self._build = self._manager.get_build(self._build_id)
 
     def prepare_test(self, test: FuncTest, index: int):
         if self._project.get('func_tests_in_project'):
@@ -150,8 +155,8 @@ class TestingLooper(QThread):
         name = self.parse_util_name(data)
         temp_path = f"{self._temp_dir}/dist.txt"
         res = cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
-                                                                       files=' '.join(get_files(self.path, '.c'))),
-                                        shell=True, cwd=self.path)
+                                                         files=' '.join(get_files(self.path, '.c'))),
+                          shell=True, cwd=self.path)
         if data.get('1_output_format', 0) == 0:
             output = res.stdout
         elif data.get('1_output_format', 0) == 1:
@@ -193,26 +198,14 @@ class TestingLooper(QThread):
             el.utils_output[name] = output
             el.results[name] = result
 
-    def run_test_util(self, test: FuncTest, index: int, util_data: dict):
-        if util_data.get('type', 0) != 0:
+    def run_test_util(self, test: FuncTest, index: int, util: Util):
+        if util.get('type', 1) != 1:
             return
-        name = self.parse_util_name(util_data)
+        name = util.get('name', '-')
         temp_path = f"{self._temp_dir}/dist.txt"
-        res = cmd_command(util_data.get('program', '').format(app='./app.exe', file='main.c',
-                                                              args=test.args, dict=temp_path),
-                          shell=True, input=test['in'], cwd=self.path)
-        if util_data.get('output_format', 0) == 0:
-            output = res.stdout
-        elif util_data.get('output_format', 0) == 1:
-            output = res.stderr
-        else:
-            output = read_file(temp_path, default='')
+        res, output = util.run(self._project, self._build, test.args, input=test['in'])
+        test.results[name] = res
         test.utils_output[name] = output
-        test.results[name] = True
-        if util_data.get('output_res', False):
-            test.results[name] = test.results[name] and not bool(output)
-        if util_data.get('exit_code_res', False):
-            test.results[name] = test.results[name] and res.returncode == 0
         self.clear_after_run(test, index)
 
     def run_test(self, test: FuncTest, index: int):
@@ -232,22 +225,17 @@ class TestingLooper(QThread):
         self.clear_after_run(test, index)
 
     def run(self):
-        if self._project.get('build') is None:
+        if self._build is None:
             self.compileFailed.emit("Invalid build data!")
             return
-        res, errors = self._manager.compile_build(self._project.get('build'), self._project)
+        res, errors = self._manager.compile_build(self._build_id, self._project)
         if not res:
             self.compileFailed.emit(errors)
             return
         command = self._project.get('preprocessor', [])
         self._manager.run_scenarios(command, self.path)
-        self.utils = self._project.get(f"{self._project.get('language', 'C')}_utils", [])
-        if isinstance(self.utils, str):
-            try:
-                self.utils = json.loads(self.utils)
-            except json.JSONDecodeError:
-                self.utils = []
 
+        self.utils = [self._manager.get_util(item['data']) for item in self._build.get('utils', [])]
         for util in self.utils:
             self.run_preproc_util(util)
 

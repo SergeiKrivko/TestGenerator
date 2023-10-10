@@ -9,6 +9,7 @@ from backend.types.build import Build
 from backend.types.func_test import FuncTest
 from backend.types.project import Project
 from backend.types.unit_tests_module import UnitTestsModule
+from backend.types.util import Util
 from language.languages import languages
 from language.utils import get_files
 
@@ -61,6 +62,13 @@ class Loader(QThread):
         if os.path.isdir(data_path := f"{self._old_data_path}/scenarios"):
             shutil.rmtree(data_path)
         for key, item in self._manager.builds.items():
+            path = f"{data_path}/{key}.json"
+            item.store(path)
+
+    def store_utils(self):
+        if os.path.isdir(data_path := f"{self._sm.app_data_dir}/utils"):
+            shutil.rmtree(data_path)
+        for key, item in self._manager.utils.items():
             path = f"{data_path}/{key}.json"
             item.store(path)
 
@@ -122,6 +130,14 @@ class Loader(QThread):
             build_path = os.path.join(path, el)
             self._manager.add_build(Build(int(el.rstrip('.json')), build_path))
 
+    def load_utils(self):
+        path = f"{self._sm.app_data_dir}/utils"
+        if not os.path.isdir(path):
+            return
+        for el in get_sorted_jsons(path):
+            util_path = os.path.join(path, el)
+            self._manager.add_util(Util(int(el.rstrip('.json')), util_path))
+
     def next_step(self):
         self.progress += 1
         self.updateProgress.emit(self.progress, 7)
@@ -132,6 +148,8 @@ class Loader(QThread):
 
         if self._old_data_path:
             self.store_task()
+        else:
+            self.load_utils()
 
         if self._project:
             self.clear_all()
@@ -149,3 +167,4 @@ class Loader(QThread):
                 self.load_task()
         else:
             self._sm.project.save_settings()
+            self.store_utils()
