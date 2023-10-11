@@ -217,6 +217,9 @@ class UtilOptionsEdit(QWidget):
         self._util['returncode_res'] = self._checkbox1.isChecked()
         self._util['output_res'] = self._checkbox2.isChecked()
 
+    def hideEvent(self, a0) -> None:
+        self.store_util()
+
     def set_theme(self):
         for el in [self._name_edit, self._command_edit, self._type_edit, self._output_edit, self._checkbox1,
                    self._checkbox2]:

@@ -410,7 +410,7 @@ class CodeAutocompletionManager(QThread):
         lib_path3 = f"{os.path.split(os.path.split(self._sm.get('python', ''))[0])[0]}/Lib"
         lib_path4 = f"{lib_path3}/site-packages"
         if os.path.isfile(f"{self._sm.app_data_dir}/global_libs/builtins.py"):
-            with open('C:/Users/sergi/PycharmProjects/TestGenerator/lib/builtins.py', encoding='utf-8') as f:
+            with open(f"{self._sm.app_data_dir}/global_libs/builtins.py", encoding='utf-8') as f:
                 self.builtins = PythonModule('__builtins__', f.read(), [], dict())
         else:
             self.builtins = PythonModule('__builtins__', '', [], dict())
