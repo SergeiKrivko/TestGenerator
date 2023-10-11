@@ -25,7 +25,7 @@ def c_compile(project, build, sm):
             h_dirs.add(f"{path}/{os.path.split(key)[0]}")
     o_files = [f"{temp_dir}/{os.path.basename(el)[:-2]}.o" for el in c_files]
 
-    h_dirs = '-I ' + ' -I '.join(h_dirs)
+    h_dirs = '-I ' + ' -I '.join(h_dirs) if h_dirs else ''
     errors = []
     code = True
 
