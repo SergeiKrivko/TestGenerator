@@ -313,11 +313,6 @@ class TestsWidget(MainTab):
                 test.store()
                 self.test_list_widget.neg_test_list.addItem(test)
 
-    def show(self) -> None:
-        if self.isHidden() and self.current_test:
-            self.current_test.load()
-        super().show()
-
 
 class Test(QListWidgetItem):
     def __init__(self, test: FuncTest, tm):
