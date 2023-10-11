@@ -61,7 +61,10 @@ class CommandsList(QWidget):
     def add_scenario(self):
         dialog = NewCommandDialog(self.sm, self.bm, self.tm, self._fixed_type)
         if dialog.exec():
-            self._list_widget.addItem(_ListWidgetItem(self.bm, self.tm, *dialog.get_result()))
+            scenario_type, data = dialog.get_result()
+            if data is None:
+                return
+            self._list_widget.addItem(_ListWidgetItem(self.bm, self.tm, scenario_type, data))
 
     def delete_scenario(self):
         item = self._list_widget.takeItem(self._list_widget.currentRow())
@@ -90,6 +93,10 @@ class CommandsList(QWidget):
     def load(self, data: list):
         self._list_widget.clear()
         for el in data:
+            if el['type'] == CommandsList.TYPE_UTIL and el['data'] not in self.bm.utils:
+                continue
+            if el['type'] == CommandsList.TYPE_BUILD and el['data'] not in self.bm.builds:
+                continue
             self._list_widget.addItem(_ListWidgetItem(self.bm, self.tm, el['type'], el['data']))
 
     def set_theme(self):
@@ -167,7 +174,10 @@ class NewCommandDialog(QDialog):
             case CommandsList.TYPE_BUILD:
                 res = self._make_box.current_scenario()
             case CommandsList.TYPE_UTIL:
-                res = self._utils[self._utils_box.currentIndex()]
+                try:
+                    res = self._utils[self._utils_box.currentIndex()]
+                except IndexError:
+                    res = None
             case _:
                 raise IndexError
         return self._type_box.currentIndex(), res

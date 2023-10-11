@@ -92,11 +92,11 @@ def c_coverage_html(sm, build):
 
     try:
         res = cmd_command(f"{lcov} -t \"{build.get('name', '')}\" "
-                          f"-o {temp_dir_wsl}/coverage.info -c -d {temp_dir_wsl}")
+                          f"-o {temp_dir_wsl}/coverage.info -c -d {temp_dir_wsl}", shell=True)
         if res.returncode:
             return None
 
-        res = cmd_command(f"{genhtml} -o {temp_dir_wsl}/report {temp_dir_wsl}/coverage.info")
+        res = cmd_command(f"{genhtml} -o {temp_dir_wsl}/report {temp_dir_wsl}/coverage.info", shell=True)
         if res.returncode:
             return None
         return f"{temp_dir}/report/index.html"

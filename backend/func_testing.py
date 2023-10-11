@@ -149,61 +149,67 @@ class TestingLooper(QThread):
             name = os.path.basename(name.split()[0])
         return name
 
-    def run_preproc_util(self, data: dict):
-        if data.get('type', 0) != 1:
+    def run_preproc_util(self, util: Util):
+        if util is None:
             return
-        name = self.parse_util_name(data)
+        if util.get('type', 0) != 1:
+            return
+        name = self.parse_util_name(util)
         temp_path = f"{self._temp_dir}/dist.txt"
-        res = cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
+        res = cmd_command(util.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                          files=' '.join(get_files(self.path, '.c'))),
                           shell=True, cwd=self.path)
-        if data.get('1_output_format', 0) == 0:
+        if util.get('1_output_format', 0) == 0:
             output = res.stdout
-        elif data.get('1_output_format', 0) == 1:
+        elif util.get('1_output_format', 0) == 1:
             output = res.stderr
         else:
             output = read_file(temp_path, default='')
         result = True
-        if data.get('1_output_res', False):
+        if util.get('1_output_res', False):
             result = result and not bool(output)
-        if data.get('1_exit_code_res', False):
+        if util.get('1_exit_code_res', False):
             result = result and res.returncode == 0
         # self.util_res[name] = result
         # self.util_output[name] = output
         if not result:
-            self.utilFailed.emit(name, output, data.get('1_mask', ''))
-            # if not data.get('1_continue_testing', True):
+            self.utilFailed.emit(name, output, util.get('1_mask', ''))
+            # if not util.get('1_continue_testing', True):
             #     self.terminate()
 
-    def run_postproc_util(self, data: dict):
-        if data.get('type', 0) != 2:
+    def run_postproc_util(self, util: Util):
+        if util is None:
             return
-        name = self.parse_util_name(data)
+        if util.get('type', 0) != 2:
+            return
+        name = self.parse_util_name(util)
         temp_path = f"{self._temp_dir}/dist.txt"
-        res = cmd_command(data.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
+        res = cmd_command(util.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
                                                          files=' '.join(get_files(self.path, '.c'))),
                           shell=True, cwd=self.path)
-        if data.get('2_output_format', 0) == 0:
+        if util.get('2_output_format', 0) == 0:
             output = res.stdout
-        elif data.get('2_output_format', 0) == 1:
+        elif util.get('2_output_format', 0) == 1:
             output = res.stderr
         else:
             output = read_file(temp_path, default='')
         result = True
-        if data.get('2_output_res', False):
+        if util.get('2_output_res', False):
             result = result and not bool(output)
-        if data.get('2_exit_code_res', False):
+        if util.get('2_exit_code_res', False):
             result = result and res.returncode == 0
         for el in self._tests:
             el.utils_output[name] = output
             el.results[name] = result
 
     def run_test_util(self, test: FuncTest, index: int, util: Util):
+        if util is None:
+            return
         if util.get('type', 1) != 1:
             return
         name = util.get('name', '-')
         temp_path = f"{self._temp_dir}/dist.txt"
-        res, output = util.run(self._project, self._build, test.args, input=test['in'])
+        res, output = util.run(self._project, self._build, test.args, input=test.get('in', ''))
         test.results[name] = res
         test.utils_output[name] = output
         self.clear_after_run(test, index)

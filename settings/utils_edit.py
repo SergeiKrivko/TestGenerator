@@ -13,6 +13,7 @@ class UtilsEdit(QWidget):
         self.tm = tm
 
         layout = QHBoxLayout()
+        layout.setAlignment(Qt.AlignLeft)
         layout.setContentsMargins(10, 10, 10, 10)
         self.setLayout(layout)
 
@@ -191,9 +192,15 @@ class UtilOptionsEdit(QWidget):
         self._labels.append(label)
         layout.addWidget(label)
 
+        self.hide()
+
     def open_util(self, util: Util):
         self.store_util()
         self._util = util
+        if not isinstance(self._util, Util):
+            self.hide()
+            return
+        self.show()
         self._name_edit.setText(util.get('name', '-'))
         self._command_edit.setText(util.get('command', ''))
         self._type_edit.setCurrentIndex(util.get('type', 0))

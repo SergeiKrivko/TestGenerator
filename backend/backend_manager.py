@@ -231,7 +231,7 @@ class BackendManager(QObject):
         self.clearBuilds.emit()
 
     def get_build(self, id: int):
-        return self.builds[id]
+        return self.builds.get(id)
 
     # --------------------------- UTILS --------------------------------
 
@@ -254,7 +254,7 @@ class BackendManager(QObject):
         self.clearUtils.emit()
 
     def get_util(self, id: int):
-        return self.utils[id]
+        return self.utils.get(id)
 
     # ------------------- UNIT TESTING -------------------------
 
