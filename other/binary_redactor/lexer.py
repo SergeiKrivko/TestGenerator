@@ -62,7 +62,7 @@ class LexerBin(QsciLexerCustom):
 
         self.startStyling(start)
 
-        text = self.parent().text()[start:end]
+        text = self.parent().text().encode('utf-8')[start:end].decode('utf-8')
         for line in text.split('\n'):
             if '//' in line:
                 comment_len = len(line) - (ind := line.rindex('//'))
@@ -106,16 +106,16 @@ class LexerBin(QsciLexerCustom):
                         j = 0
                         while j < len(split_line[i]):
                             if split_line[i][j] == '\\':
-                                self.setStyling(2, LexerBin.Mask)
+                                self.setStyling(1 + len(split_line[i][j + 1].encode('utf-8')), LexerBin.Mask)
                                 j += 2
                             else:
-                                self.setStyling(1, LexerBin.Value)
+                                self.setStyling(len(split_line[i][j].encode('utf-8')), LexerBin.Value)
                                 j += 1
                     except ValueError:
-                        self.setStyling(len(split_line[i]), LexerBin.InvalidValue)
+                        self.setStyling(len(split_line[i].encode('utf-8')), LexerBin.InvalidValue)
                     except IndexError:
-                        self.setStyling(len(split_line[i]), LexerBin.InvalidValue)
-                self.setStyling(len(line), LexerBin.Value)
+                        self.setStyling(len(split_line[i].encode('utf-8')), LexerBin.InvalidValue)
+                self.setStyling(len(line.encode('utf-8')), LexerBin.Value)
 
             self.setStyling(comment_len + 1, LexerBin.Comment)
 
