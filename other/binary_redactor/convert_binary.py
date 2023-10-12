@@ -189,11 +189,14 @@ class BinaryConverter:
             if elem:
                 elem.append(el)
                 if el.endswith('"') and (len(el) <= 1 or (el[-2] != '\\' or len(el) >= 2 and (el[-3] == '\\'))):
-                    res.append(' '.join(elem))
+                    res.append(' '.join(elem).strip('\r\n'))
                     elem = []
             elif el.strip():
                 if el.startswith('"'):
-                    elem.append(el)
+                    if len(el) > 1 and el.endswith('"'):
+                        res.append(el)
+                    else:
+                        elem.append(el)
                 else:
                     res.append(el)
         if elem:
