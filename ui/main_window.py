@@ -14,6 +14,7 @@ from side_tabs.builds.build_panel import BuildPanel
 from other.chat_widget import ChatPanel
 from side_tabs.git.git_panel import GitPanel
 from side_tabs.telegram.telegram_widget import TelegramWidget
+from side_tabs.time import TimePanel
 from side_tabs.todo_panel import TODOPanel
 from side_tabs.projects.project_widget import ProjectWidget
 from main_tabs.tests.generator_window import GeneratorTab
@@ -85,7 +86,8 @@ class MainWindow(QMainWindow):
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
             'chat': (ChatPanel(self.sm, self.tm), "Чат"),
             'telegram': (TelegramWidget(self.sm, self.tm), "Telegram"),
-            'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет")
+            'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет"),
+            'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
         }.items():
             self.side_bar.add_tab(key, *item)
 

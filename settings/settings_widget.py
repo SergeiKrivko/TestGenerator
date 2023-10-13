@@ -184,12 +184,9 @@ class CheckBox(_Widget):
         else:
             self.setLayout(layout)
 
-        self._checkbox = QCheckBox()
+        self._checkbox = QCheckBox(name)
         self._checkbox.stateChanged.connect(self._on_state_changed)
         layout.addWidget(self._checkbox)
-
-        self._label = QLabel(name)
-        layout.addWidget(self._label)
 
         if children is not None:
             children_layout = QVBoxLayout()
@@ -229,7 +226,6 @@ class CheckBox(_Widget):
 
     def set_theme(self):
         self._tm.auto_css(self._checkbox)
-        self._tm.auto_css(self._label)
         for item in self._children.values():
             for el in item:
                 el.set_theme()
