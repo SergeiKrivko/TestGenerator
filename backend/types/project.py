@@ -2,6 +2,8 @@ import json
 import os
 import shutil
 
+from config import APP_VERSION
+
 
 class Project:
     TEST_GENERATOR_DIR = ".TestGenerator"
@@ -86,6 +88,7 @@ class Project:
 
     def save_settings(self):
         os.makedirs(self._path, exist_ok=True)
+        self['version'] = APP_VERSION
         with open(os.path.join(self.data_path(), Project.SETTINGS_FILE), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._data, indent=2))
 

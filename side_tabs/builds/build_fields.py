@@ -210,12 +210,9 @@ class ProgramField(BuildField):
         checkbox_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(checkbox_layout)
 
-        self._checkbox = QCheckBox()
+        self._checkbox = QCheckBox("По умолчанию")
         self._checkbox.stateChanged.connect(self._on_state_changed)
         checkbox_layout.addWidget(self._checkbox)
-
-        self._checkbox_label = QLabel("По умолчанию")
-        checkbox_layout.addWidget(self._checkbox_label)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -304,7 +301,7 @@ class ProgramField(BuildField):
         return self.combo_box.currentText()
 
     def set_theme(self):
-        for el in [self.combo_box, self.button_update, self.button_add, self._checkbox_label, self.label,
+        for el in [self.combo_box, self.button_update, self.button_add, self.label,
                    self._checkbox]:
             self.tm.auto_css(el)
 

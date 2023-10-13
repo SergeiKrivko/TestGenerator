@@ -117,7 +117,7 @@ class ProjectWidget(SidePanelWidget):
                 self.update_projects()
 
     def delete_project(self):
-        dialog = DeleteProjectDialog(self.sm.project.name(), self.tm)
+        dialog = DeleteProjectDialog(self.sm.main_project.name(), self.tm)
         if dialog.exec():
             self.sm.delete_main_project(directory=dialog.result() == DeleteProjectDialog.DELETE_ALL,
                                         data=dialog.result() == DeleteProjectDialog.DELETE_DATA)
