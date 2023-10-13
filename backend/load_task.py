@@ -165,6 +165,6 @@ class Loader(QThread):
             if self._sm.project and self._sm.project.path() in self._sm.all_projects:
                 self._new_data_path = self._sm.project.data_path()
                 self.load_task()
-        else:
+        elif self._sm.project:
             self._sm.project.save_settings()
             self.store_utils()

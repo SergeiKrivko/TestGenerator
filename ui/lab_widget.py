@@ -2,7 +2,7 @@ import os.path
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog, QLineEdit, \
-    QPushButton, QMenuBar, QMenu
+    QPushButton, QMenuBar, QMenu, QCheckBox
 
 from backend.types.project import Project
 from backend.settings_manager import SettingsManager
@@ -66,7 +66,7 @@ class ProjectMenu(QMenu):
         if isinstance(parent, ProjectMenu):
             self.setTitle(os.path.relpath(self._project.path(), parent._project.path()))
             self._delete_action = self.addAction("Удалить")
-            self._delete_action.triggered.connect(self.new_subproject)
+            self._delete_action.triggered.connect(self.delete_subproject)
         else:
             self.setTitle(os.path.basename(self._project.path()))
 
@@ -84,6 +84,12 @@ class ProjectMenu(QMenu):
         dialog = NewSubProjectDialog(self._tm)
         if dialog.exec():
             self._project.add_child(dialog.line_edit.text())
+            self.updateRequested.emit()
+
+    def delete_subproject(self):
+        dialog = DeleteSubProjectDialog(self._tm, self._project)
+        if dialog.exec():
+            self._bm.sm.delete_project(self._project, directory=dialog.checkbox.isChecked())
             self.updateRequested.emit()
 
     def set_theme(self):
@@ -129,3 +135,44 @@ class NewSubProjectDialog(QDialog):
         for el in [self.label, self.line_edit, self.button_cancel, self.button_ok]:
             self.tm.auto_css(el)
 
+
+class DeleteSubProjectDialog(QDialog):
+    def __init__(self, tm, project):
+        super().__init__()
+        self.tm = tm
+        self.project = project
+
+        self.setFixedSize(340, 140)
+
+        layout = QVBoxLayout()
+
+        self.checkbox = QCheckBox()
+        self.checkbox.setText("Удалить папку подпроекта")
+        layout.addWidget(self.checkbox)
+
+        self.label = QLabel("Эта операция приведет к безвозвратному удалению данных подпроекта. Вы действительно "
+                            f"хотите удалить подпроект \"{project.name()}\"?")
+        self.label.setWordWrap(True)
+        layout.addWidget(self.label)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setAlignment(Qt.AlignRight)
+        layout.addLayout(buttons_layout)
+
+        self.button_ok = QPushButton("Ок")
+        self.button_ok.setFixedSize(80, 22)
+        self.button_ok.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.button_ok)
+
+        self.button_cancel = QPushButton("Отмена")
+        self.button_cancel.setFixedSize(80, 22)
+        self.button_cancel.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.button_cancel)
+
+        self.setLayout(layout)
+        self.set_theme()
+
+    def set_theme(self):
+        self.setStyleSheet(self.tm.bg_style_sheet)
+        for el in [self.label, self.button_cancel, self.button_ok, self.checkbox]:
+            self.tm.auto_css(el)

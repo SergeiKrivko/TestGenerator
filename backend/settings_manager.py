@@ -194,15 +194,21 @@ class SettingsManager(QObject):
         if project.path() not in self.projects:
             return
 
-        if data:
+        if data or directory:
             project.delete(directory)
         self.projects.pop(project.path())
+        if project == self.main_project:
+            self.main_project = None
+            self.project = None
 
     def delete_project(self, project: Project, directory=False):
         project.delete(directory)
         self.all_projects.pop(project.path())
         if project.path() in self.projects:
             self.all_projects.pop(project.path())
+        if project == self.project:
+            self.project = None
+            self.set_project(self.main_project)
 
     def rename_project(self, new_name: str, name=None):
         if name is None:

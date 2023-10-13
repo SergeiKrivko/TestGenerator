@@ -6,7 +6,7 @@ import sys
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox
+    QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
 import py7zr
 
 from backend.types.project import Project
@@ -46,14 +46,7 @@ class ProjectWidget(SidePanelWidget):
         self.bm.finishChangingProject.connect(self.update_projects)
         self._opening_project = False
 
-        # self.update_projects()
-        # self.looper = None
-        # try:
-        #     self.temp_project = json.loads(self.sm.get_general('temp_projects', '[]'))
-        # except json.JSONDecodeError:
-        #     self.temp_project = []
-        # if self.temp_project:
-        #     self.remove_temp_projects()
+        self.update_projects()
 
     def select_project(self, project: Project):
         for i in range(self.list_widget.count()):
@@ -113,7 +106,7 @@ class ProjectWidget(SidePanelWidget):
         self.select_project(self.sm.main_project)
 
     def rename_project(self):
-        self.dialog = RenameProjectDialog(self.sm.project, self.tm)
+        self.dialog = RenameProjectDialog(self.sm.project.name(), self.tm)
         if self.dialog.exec():
             new_name = self.dialog.line_edit.text()
             if new_name in self.sm.projects:
@@ -123,10 +116,11 @@ class ProjectWidget(SidePanelWidget):
                 self.sm.rename_project(new_name)
                 self.update_projects()
 
-    def delete_project(self, forced=False):
-        self.dialog = DeleteProjectDialog(self.sm.project, self.tm)
-        if forced or self.dialog.exec():
-            self.sm.delete_main_project(directory=not forced and self.dialog.check_box.isChecked())
+    def delete_project(self):
+        dialog = DeleteProjectDialog(self.sm.project.name(), self.tm)
+        if dialog.exec():
+            self.sm.delete_main_project(directory=dialog.result() == DeleteProjectDialog.DELETE_ALL,
+                                        data=dialog.result() == DeleteProjectDialog.DELETE_DATA)
             self.update_projects()
 
     def new_project(self):
@@ -281,31 +275,29 @@ class RenameProjectDialog(QDialog):
 
 
 class DeleteProjectDialog(QDialog):
+    DELETE_FROM_LIST = 0
+    DELETE_DATA = 1
+    DELETE_ALL = 2
+
     def __init__(self, name, tm):
         super(DeleteProjectDialog, self).__init__()
         self.name = name
-        self.setWindowTitle("Удалить проект")
-        self.setMinimumWidth(300)
-
-        h_layout = QHBoxLayout()
-        h_layout.setAlignment(Qt.AlignLeft)
-        self.check_box = QCheckBox()
-        tm.auto_css(self.check_box)
-        self.check_box.setChecked(True)
-        h_layout.addWidget(self.check_box)
-
-        label = QLabel("Удалить папку проекта")
-        label.setFont(tm.font_medium)
-        h_layout.addWidget(label)
+        self.setWindowTitle("Удаление проекта")
+        self.setFixedSize(350, 170)
 
         layout = QVBoxLayout()
-        layout.addLayout(h_layout)
         layout.setSpacing(15)
-        label = QLabel(f"Эта операция приведет к безвозвратному удалению всех данных проекта. "
-                       f"Удалить проект {self.name}?")
-        label.setWordWrap(True)
-        label.setFont(tm.font_medium)
-        layout.addWidget(label)
+
+        self._combo_box = QComboBox()
+        self._combo_box.addItems(['Удалить проект из списка', 'Удалить данные проекта', 'Полностью удалить проект'])
+        self._combo_box.currentIndexChanged.connect(self._on_item_changed)
+        layout.addWidget(self._combo_box)
+        tm.auto_css(self._combo_box)
+
+        self._label = QLabel()
+        self._label.setWordWrap(True)
+        self._label.setFont(tm.font_medium)
+        layout.addWidget(self._label)
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
@@ -327,6 +319,23 @@ class DeleteProjectDialog(QDialog):
         self.button_no.setFont(tm.font_medium)
         self.button_no.setStyleSheet(tm.button_css())
         self.button_no.setFont(tm.font_medium)
+
+        self._on_item_changed()
+
+    def _on_item_changed(self):
+        match self._combo_box.currentIndex():
+            case DeleteProjectDialog.DELETE_FROM_LIST:
+                self._label.setText(f"Проект пропадет из списка, но все данные будут сохранены. Вы сможете снова "
+                                    f"добавить этот проект.\nУдалить проект {self.name}?")
+            case DeleteProjectDialog.DELETE_DATA:
+                self._label.setText(f"Эта операция приведет к безвозвратному удалению папки .TestGenerator из этого "
+                                    f"проекта. Все прочие файлы останутся доступны.\nУдалить проект {self.name}?")
+            case DeleteProjectDialog.DELETE_ALL:
+                self._label.setText(f"Эта операция приведет к безвозвратному удалению папки проекта."
+                                    f"\nУдалить проект {self.name}?")
+
+    def result(self):
+        return self._combo_box.currentIndex()
 
 
 class ProjectFromZipDialog(QDialog):

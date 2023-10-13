@@ -182,6 +182,8 @@ class Project:
             f.write('# Created by TestGenerator\n*\n')
 
     def delete(self, dir=False):
+        if isinstance(self._parent, Project):
+            self._parent.children().pop(self.path())
         if dir:
             shutil.rmtree(self.path())
         else:
