@@ -102,14 +102,15 @@ class BuildWindow(SideBarWindow):
 
 class BuildTypeDialog(QDialog):
     ITEMS = {'C': "Сборка C", "python": "Python", "python_coverage": "Python Coverage",
-             'script': "Сценарий командной строки", 'bash': "Скрипт Bash", 'command': "Команда"}
+             'script': "Сценарий командной строки", 'bash': "Скрипт Bash", 'command': "Команда", 'report': "Отчет"}
     ITEMS_REVERSED = {item: key for key, item in ITEMS.items()}
     IMAGES = {'C': 'c',
               'python': 'py',
               'python_coverage': 'py',
               'bash': 'sh',
               'script': 'bat',
-              'command': 'cmd'}
+              'command': 'cmd',
+              'report': 'md'}
 
     def __init__(self, tm):
         super().__init__()

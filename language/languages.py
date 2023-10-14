@@ -117,6 +117,8 @@ languages = {
         QsciLexerMarkdown.Header4: 'Keyword',
         QsciLexerMarkdown.Header5: 'Keyword',
         QsciLexerMarkdown.Header6: 'Keyword',
+        QsciLexerMarkdown.OrderedListItem: 'Keyword',
+        QsciLexerMarkdown.UnorderedListItem: 'Keyword',
         QsciLexerMarkdown.Link: 'String',
         QsciLexerMarkdown.Default: 'Identifier'
     }, 'preview': True},

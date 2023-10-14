@@ -188,6 +188,7 @@ class BackendManager(QObject):
     # -------------------------- TESTING --------------------------------
 
     def start_testing(self):
+        print('start testing')
         self.run_macros_converter()
         self.startTesting.emit(self.func_tests['pos'] + self.func_tests['neg'])
         self.func_test_completed = 0
@@ -199,6 +200,7 @@ class BackendManager(QObject):
         self._testing_looper.compileFailed.connect(self.testingError.emit)
         self._testing_looper.utilFailed.connect(self.testingUtilError.emit)
         self.run_process(self._testing_looper, 'testing', 'main')
+        return self._testing_looper
 
     def stop_testing(self):
         if isinstance(self._testing_looper, TestingLooper) and self._testing_looper.isRunning():
@@ -307,7 +309,7 @@ class BackendManager(QObject):
     def compile_build(self, build_id: int, project=None):
         if project is None:
             project = self.sm.project
-        return self.builds[build_id].compile(project, self.sm)
+        return self.builds[build_id].compile(project, self)
 
     def run_build(self, build_id, args='', in_data=None, project=None):
         if project is None:

@@ -25,7 +25,7 @@ class TestingLooper(QThread):
         self.sm = sm
         self._project = project
         self._manager = manager
-        self._tests = tests
+        self.tests = tests
         self.path = self._project.path()
         self.util_res = dict()
         self.util_output = dict()
@@ -198,7 +198,7 @@ class TestingLooper(QThread):
             result = result and not bool(output)
         if util.get('2_exit_code_res', False):
             result = result and res.returncode == 0
-        for el in self._tests:
+        for el in self.tests:
             el.utils_output[name] = output
             el.results[name] = result
 
@@ -246,8 +246,8 @@ class TestingLooper(QThread):
             self.run_preproc_util(util)
 
         pos_count = 0
-        for i, test in enumerate(self._tests):
-            if self._tests[i].type() == 'pos':
+        for i, test in enumerate(self.tests):
+            if self.tests[i].type() == 'pos':
                 pos_count += 1
                 index = i
             else:

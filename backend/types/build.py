@@ -2,10 +2,11 @@ import json
 import os.path
 import shutil
 
-from backend.commands import read_json
+from backend.commands import read_json, read_file
 
 from language.testing.c import *
 from language.testing.python import *
+from other.report.markdown_parser import MarkdownParser
 
 
 class Build:
@@ -35,11 +36,19 @@ class Build:
         if os.path.isdir(temp_dir):
             shutil.rmtree(temp_dir)
 
-    def compile(self, project, sm):
-        self.clear(sm)
+    def compile(self, project, bm):
+        print('compile')
+        self.clear(bm.sm)
         match self.get('type'):
             case 'C':
-                return c_compile(project, self, sm)
+                return c_compile(project, self, bm.sm)
+            case 'report':
+                path = self.get('cwd', '') if os.path.isabs(self.get('cwd', '')) else \
+                    f"{project.path()}/{self.get('cwd', '')}"
+                file = f"{path}/{self.get('file', '')}"
+                out_file = f"{path}/{self.get('output', '')}"
+                converter = MarkdownParser(bm, read_file(file, ''), out_file)
+                converter.convert()
             case _:
                 return True, ''
 

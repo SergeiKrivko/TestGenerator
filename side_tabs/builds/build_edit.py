@@ -145,6 +145,12 @@ class BuildEdit(QScrollArea):
                     name_edit := LineField(self.tm, 'name', '-', "Название:"),
                     LineField(self.tm, 'command', '', "Команда:"),
                 )
+            case 'report':
+                self._load_struct(
+                    name_edit := LineField(self.tm, 'name', '-', "Название:"),
+                    LineField(self.tm, 'file', '', "Файл:"),
+                    LineField(self.tm, 'output', '', "Выходной файл:"),
+                )
             case _:
                 self._load_struct(name_edit := LineField(self.tm, 'name', '-', "Название:"))
 
