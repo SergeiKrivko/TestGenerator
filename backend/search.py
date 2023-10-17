@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtCore import QThread
+from PyQt6.QtCore import QThread
 
 
 def find(path, dct):

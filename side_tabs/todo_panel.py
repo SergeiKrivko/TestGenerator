@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QVBoxLayout, QTreeWidget, QTreeWidgetItem
+from PyQt6.QtWidgets import QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from ui.side_panel_widget import SidePanelWidget
 from ui.tree_widget import TreeWidget

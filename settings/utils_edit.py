@@ -1,5 +1,5 @@
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget, QVBoxLayout, QListWidgetItem, QLabel, QLineEdit, \
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QVBoxLayout, QListWidgetItem, QLabel, QLineEdit, \
     QComboBox, QCheckBox
 
 from backend.types.util import Util
@@ -13,7 +13,7 @@ class UtilsEdit(QWidget):
         self.tm = tm
 
         layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(10, 10, 10, 10)
         self.setLayout(layout)
 
@@ -119,7 +119,7 @@ class UtilOptionsEdit(QWidget):
         self._util = None
 
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(main_layout)
 
@@ -142,7 +142,7 @@ class UtilOptionsEdit(QWidget):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addLayout(layout)
 
         label = QLabel("Тип:")
@@ -155,7 +155,7 @@ class UtilOptionsEdit(QWidget):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addLayout(layout)
 
         label = QLabel("Тип вывода:")
@@ -168,7 +168,7 @@ class UtilOptionsEdit(QWidget):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addLayout(layout)
 
         self._checkbox1 = QCheckBox()
@@ -181,7 +181,7 @@ class UtilOptionsEdit(QWidget):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         main_layout.addLayout(layout)
 
         self._checkbox2 = QCheckBox()

@@ -1,5 +1,5 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import  QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, \
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import  QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, \
     QDialog, QDialogButtonBox
 
 from backend.types.func_test import FuncTest
@@ -284,15 +284,15 @@ class NewInFileDialog(QDialog):
 
         self.setWindowTitle("Копировать тесты")
 
-        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
 
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.button_css())
-        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setStyleSheet(self.tm.button_css())
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setStyleSheet(self.tm.button_css())
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 24)
 
         layout = QVBoxLayout()
 
@@ -317,15 +317,15 @@ class NewOutFileDialog(QDialog):
 
         self.setWindowTitle("Копировать тесты")
 
-        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
 
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.tm.auto_css(self.buttonBox.button(QDialogButtonBox.Ok))
-        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.tm.auto_css(self.buttonBox.button(QDialogButtonBox.Cancel))
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+        self.tm.auto_css(self.buttonBox.button(QDialogButtonBox.StandardButton.Ok))
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 24)
+        self.tm.auto_css(self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel))
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 24)
 
         layout = QVBoxLayout()
 

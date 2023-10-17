@@ -1,8 +1,8 @@
 import os.path
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFontMetrics
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QWidget, QPushButton, QLabel, QScrollArea
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFontMetrics
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QWidget, QPushButton, QLabel, QScrollArea
 
 
 class CompilerErrorWindow(QDialog):
@@ -35,7 +35,7 @@ class CompilerErrorWindow(QDialog):
         self.scroll_layout = QVBoxLayout()
         self.scroll_layout.setSpacing(1)
         # self.scroll_layout.setContentsMargins(0, 0, 0, 0)
-        self.scroll_layout.setAlignment(Qt.AlignTop)
+        self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll_widget.setLayout(self.scroll_layout)
         main_layout.addWidget(self.scroll_area)
 
@@ -52,12 +52,12 @@ class CompilerErrorWindow(QDialog):
             else:
                 self.add_label(line)
 
-        # QBtn = QDialogButtonBox.Ok
+        # QBtn = QDialogButtonBox.StandardButton.Ok
         # self.buttonBox = QDialogButtonBox(QBtn)
         # self.buttonBox.accepted.connect(self.accept)
-        # self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(tm.button_css('Main'))
-        # self.buttonBox.button(QDialogButtonBox.Ok).setFont(tm.font_small)
-        # self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 20)
+        # self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setStyleSheet(tm.button_css('Main'))
+        # self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setFont(tm.font_small)
+        # self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 20)
         # main_layout.addWidget(self.buttonBox)
 
         self.setLayout(main_layout)

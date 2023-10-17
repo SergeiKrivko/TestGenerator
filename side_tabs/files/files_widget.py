@@ -1,9 +1,9 @@
 import os
 import shutil
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QIcon, QColor
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QIcon, QColor
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
     QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem
 
 from language.languages import languages
@@ -22,7 +22,7 @@ class TreeFile(QTreeWidgetItem):
         else:
             self.file_type = self.name[ind + 1:]
 
-        super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
+        super().__init__([self.name])
 
         self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
         self.setFont(0, self.tm.font_medium)
@@ -36,7 +36,7 @@ class TreeDirectory(QTreeWidgetItem):
         self.name = os.path.basename(self.path)
         self.file_type = 'directory'
 
-        super().__init__([self.name], QTreeWidgetItem.DontShowIndicatorWhenChildless)
+        super().__init__([self.name])
 
         self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
         self.setFont(0, self.tm.font_medium)
@@ -96,7 +96,7 @@ class FilesWidget(SidePanelWidget):
         self.buttons['update'].clicked.connect(self.update_files_list)
 
         self.files_list = QTreeWidget()
-        self.files_list.setFocusPolicy(False)
+        # self.files_list.setFocusPolicy(False)
         self.files_list.setHeaderHidden(True)
         files_layout.addWidget(self.files_list)
 
@@ -302,7 +302,7 @@ class DeleteFileDialog(QDialog):
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
-        button_layout.setAlignment(Qt.AlignRight)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.button_ok = QPushButton("Ок")
         self.button_ok.setFixedSize(70, 24)
         self.button_ok.clicked.connect(self.accept)
@@ -339,7 +339,7 @@ class RenameFileDialog(QDialog):
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
-        button_layout.setAlignment(Qt.AlignRight)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.button_ok = QPushButton("Ок")
         self.button_ok.setFixedSize(70, 24)

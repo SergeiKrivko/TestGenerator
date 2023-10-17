@@ -1,9 +1,9 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt, QUrl
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
+from PyQt6.QtCore import pyqtSignal, Qt, QUrl
+from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
 
 from backend.backend_manager import BackendManager
@@ -32,7 +32,7 @@ class TestingWidget(MainTab):
 
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.button = QPushButton('Тестировать')
         top_layout.addWidget(self.button)
@@ -49,7 +49,7 @@ class TestingWidget(MainTab):
 
         self.coverage_bar = QPushButton()
         self.coverage_bar.clicked.connect(self.show_coverage_html)
-        # self.coverage_bar.setAlignment(Qt.AlignCenter)
+        # self.coverage_bar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.coverage_bar.hide()
         self.coverage_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.coverage_bar)
@@ -397,7 +397,7 @@ class TestInfoWidget(QScrollArea):
 
         self._scroll_layout = QVBoxLayout()
         scroll_widget.setLayout(self._scroll_layout)
-        self._scroll_layout.setAlignment(Qt.AlignTop)
+        self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self._widgets = []
 
@@ -443,7 +443,7 @@ class TestCountIndicator(QLabel):
         self._name = name
 
         self.setFixedSize(125, 26)
-        self.setAlignment(Qt.AlignCenter)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self._count = 0
         self._passed = 0

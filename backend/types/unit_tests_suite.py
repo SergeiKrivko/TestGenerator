@@ -3,7 +3,7 @@ import os.path
 import shutil
 from typing import Literal
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal
 
 from backend.commands import write_file, read_json, get_sorted_jsons
 from backend.types.unit_test import UnitTest

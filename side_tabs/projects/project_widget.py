@@ -3,9 +3,9 @@ import os
 import shutil
 import sys
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
     QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
 import py7zr
 
@@ -256,7 +256,7 @@ class RenameProjectDialog(QDialog):
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.button_ok = QPushButton("Ok")
         self.button_ok.setFixedSize(80, 24)
         buttons_layout.addWidget(self.button_ok)
@@ -301,7 +301,7 @@ class DeleteProjectDialog(QDialog):
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setSpacing(5)
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.button_yes = QPushButton("Да")
         self.button_yes.setFixedSize(80, 24)
         buttons_layout.addWidget(self.button_yes)
@@ -373,7 +373,7 @@ class ProjectFromZipDialog(QDialog):
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
-        button_layout.setAlignment(Qt.AlignRight)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.button_ok = QPushButton("Ок")
         self.button_ok.setFixedSize(70, 24)
@@ -522,7 +522,7 @@ class NewProjectDialog(QDialog):
         self.labels = []
 
         layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.checkbox = QCheckBox()
         layout.addWidget(self.checkbox)
         label = QLabel("Из существующей папки")
@@ -550,7 +550,7 @@ class NewProjectDialog(QDialog):
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
-        button_layout.setAlignment(Qt.AlignRight)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         main_layout.addLayout(button_layout)
 
         self.button_ok = QPushButton("Ок")

@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QIcon, QPixmap
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QCheckBox, QVBoxLayout, QPushButton, QScrollArea
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QIcon, QPixmap
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QCheckBox, QVBoxLayout, QPushButton, QScrollArea
 
 from ui.button import Button
 
@@ -27,7 +27,7 @@ class TreeWidgetItemCheckable(TreeWidgetItem):
 
         self._layout = QHBoxLayout()
         self._layout.setSpacing(2)
-        self._layout.setAlignment(Qt.AlignLeft)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._layout.setContentsMargins(25, 3, 3, 3)
 
         self._checkbox = QCheckBox()
@@ -72,13 +72,13 @@ class TreeBranch(QWidget):
 
         main_layout = QVBoxLayout()
         main_layout.setSpacing(0)
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(main_layout)
 
         self._top_layout = QHBoxLayout()
         self._top_layout.setSpacing(5)
-        self._top_layout.setAlignment(Qt.AlignLeft)
+        self._top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._top_layout.setContentsMargins(3, 3, 3, 3)
         if not self._maximize:
             main_layout.addLayout(self._top_layout)

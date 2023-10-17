@@ -3,8 +3,8 @@ import os
 import random
 from copy import deepcopy
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
 
 from backend.types.func_test import FuncTest
@@ -557,15 +557,15 @@ class TestCopyWindow(QDialog):
         self.setFixedSize(600, 480)
         self.setStyleSheet(self.tm.bg_style_sheet)
 
-        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
 
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setStyleSheet(self.tm.button_css())
-        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setStyleSheet(self.tm.button_css())
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setStyleSheet(self.tm.button_css())
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 24)
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -594,7 +594,7 @@ class TestCopyWindow(QDialog):
         self.widget = QWidget()
         self.widget.setStyleSheet(f"background-color: {self.tm['MainColor']};")
         self.scroll_layout = QVBoxLayout()
-        self.scroll_layout.setAlignment(Qt.AlignTop)
+        self.scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.widget.setLayout(self.scroll_layout)
         self.scroll_area.setWidget(self.widget)
         self.scroll_area.setWidgetResizable(True)
@@ -660,7 +660,7 @@ class TestCopyWindow(QDialog):
             widget = QWidget()
             layout = QHBoxLayout()
             layout.setContentsMargins(0, 0, 0, 0)
-            layout.setAlignment(Qt.AlignLeft)
+            layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
             check_box = QCheckBox()
             self.check_boxes.append(check_box)
             layout.addWidget(check_box)

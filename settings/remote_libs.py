@@ -1,6 +1,6 @@
 import requests
 from urllib.parse import quote
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 
 def get_files_list():

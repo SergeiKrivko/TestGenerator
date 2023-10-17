@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, \
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, \
     QLineEdit, QCheckBox, QComboBox, QFileDialog, QPushButton, QApplication, QDialog, QDialogButtonBox
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from settings.program_combo_box import ProgramComboBox
 
@@ -19,7 +19,7 @@ class OptionsWindow(QDialog):
         self.dct = dct
         self.setWindowTitle(name)
 
-        QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
@@ -73,11 +73,11 @@ class OptionsWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         if margins:
             main_layout.setContentsMargins(*margins)
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         for key, item in dct.items():
             if 'h_line' in key:
                 horizontal_layout = QHBoxLayout()
-                horizontal_layout.setAlignment(Qt.AlignLeft)
+                horizontal_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
                 for key2, item2 in item.items():
                     label = QLabel(str(key2))
                     self.labels[key2] = label
@@ -87,16 +87,16 @@ class OptionsWidget(QWidget):
                         h_layout.addWidget(label)
                         h_layout.addWidget(widget)
                         horizontal_layout.addLayout(h_layout)
-                        h_layout.setAlignment(Qt.AlignLeft)
+                        h_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
                     elif item2.get('name') == OptionsWindow.NAME_RIGHT:
                         h_layout = QHBoxLayout()
                         h_layout.addWidget(widget)
                         h_layout.addWidget(label)
                         horizontal_layout.addLayout(h_layout)
-                        h_layout.setAlignment(Qt.AlignLeft)
+                        h_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
                     elif item2.get('name') != OptionsWindow.NAME_SKIP:
                         v_layout = QVBoxLayout()
-                        v_layout.setAlignment(Qt.AlignLeft)
+                        v_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
                         v_layout.addWidget(label)
                         v_layout.addWidget(widget)
                         horizontal_layout.addLayout(v_layout)
@@ -113,19 +113,19 @@ class OptionsWidget(QWidget):
             widget, value = self.get_widget(key, item)
             if item.get('name') == OptionsWindow.NAME_LEFT:
                 h_layout = QHBoxLayout()
-                h_layout.setAlignment(Qt.AlignLeft)
+                h_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
                 h_layout.addWidget(label)
                 h_layout.addWidget(widget)
                 main_layout.addLayout(h_layout)
             elif item.get('name') == OptionsWindow.NAME_RIGHT:
                 h_layout = QHBoxLayout()
-                h_layout.setAlignment(Qt.AlignLeft)
+                h_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
                 h_layout.addWidget(widget)
                 h_layout.addWidget(label)
                 main_layout.addLayout(h_layout)
             elif item.get('name') != OptionsWindow.NAME_SKIP:
                 v_layout = QVBoxLayout()
-                v_layout.setAlignment(Qt.AlignTop)
+                v_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
                 v_layout.addWidget(label)
                 v_layout.addWidget(widget)
                 main_layout.addLayout(v_layout)

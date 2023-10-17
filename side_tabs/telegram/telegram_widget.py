@@ -1,9 +1,9 @@
 import datetime
 import os
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QLineEdit, QPushButton, QFileDialog
+from PyQt6 import QtGui
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QLineEdit, QPushButton, QFileDialog
 
 import config
 from other.chat_widget import ChatWidget, ChatInputArea
@@ -209,7 +209,7 @@ class TelegramTopWidget(QWidget):
         self._chat = None
 
         layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(3, 3, 3, 3)
         self.setLayout(layout)
 
@@ -315,7 +315,7 @@ class PasswordWidget(QDialog):
 
         buttons_layout = QHBoxLayout()
         layout.addLayout(buttons_layout)
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         self._button = QPushButton("OK")

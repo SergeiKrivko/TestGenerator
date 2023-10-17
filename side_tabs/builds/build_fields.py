@@ -1,8 +1,8 @@
 import os
 from typing import Any
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QComboBox, QHBoxLayout, QCheckBox
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QComboBox, QHBoxLayout, QCheckBox
 
 from language.utils import get_files
 from ui.button import Button
@@ -206,7 +206,7 @@ class ProgramField(BuildField):
         main_layout.addWidget(self.label)
 
         checkbox_layout = QHBoxLayout()
-        checkbox_layout.setAlignment(Qt.AlignLeft)
+        checkbox_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         checkbox_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(checkbox_layout)
 
@@ -311,7 +311,7 @@ class CheckboxField(BuildField):
         super().__init__(tm, key, default)
 
         layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 

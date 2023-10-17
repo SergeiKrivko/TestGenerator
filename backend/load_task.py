@@ -2,7 +2,7 @@ import os
 import shutil
 from time import sleep
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from backend.commands import get_sorted_jsons
 from backend.types.build import Build

@@ -1,5 +1,5 @@
 import os
-from PyQt5.QtWidgets import QVBoxLayout
+from PyQt6.QtWidgets import QVBoxLayout
 
 from backend.commands import cmd_command
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow

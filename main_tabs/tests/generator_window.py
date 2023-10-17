@@ -1,7 +1,7 @@
 import os
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QDialog, QListWidget, \
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QDialog, QListWidget, \
     QLineEdit
 
 from side_tabs.console import Console
@@ -225,7 +225,7 @@ class FileDialog(QDialog):
         main_layout.addWidget(self.list_widget)
 
         buttons_layout = QHBoxLayout()
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
 
         self.button_cancel = QPushButton("Отмена")
         buttons_layout.addWidget(self.button_cancel)

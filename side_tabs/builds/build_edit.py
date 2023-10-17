@@ -1,7 +1,7 @@
 import os
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QFileDialog
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QFileDialog
 
 from backend.types.build import Build
 from side_tabs.builds.build_fields import *
@@ -24,11 +24,11 @@ class BuildEdit(QScrollArea):
         self.setWidgetResizable(True)
 
         layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._scroll_widget.setLayout(layout)
 
         self._layout = QVBoxLayout()
-        self._layout.setAlignment(Qt.AlignTop)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(self._layout)
 

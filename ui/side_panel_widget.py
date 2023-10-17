@@ -1,6 +1,6 @@
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QPushButton
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QCursor
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QVBoxLayout, QPushButton
 
 from backend.settings_manager import SettingsManager
 from ui.button import Button
@@ -103,7 +103,7 @@ class _ResizeWidget(QPushButton):
         self.setMaximumHeight(10000)
         self.setFixedWidth(5)
 
-        self.setCursor(QCursor(Qt.SizeHorCursor))
+        self.setCursor(QCursor(Qt.CursorShape.SizeHorCursor))
 
     def mousePressEvent(self, e) -> None:
         if e.button() == Qt.MouseButton.LeftButton:

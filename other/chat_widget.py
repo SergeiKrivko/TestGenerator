@@ -1,10 +1,10 @@
 from random import randint
 from time import sleep
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFontMetrics, QKeyEvent
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QSizePolicy
+from PyQt6 import QtGui
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QFontMetrics, QKeyEvent
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QSizePolicy
 
 from ui.button import Button
 from ui.side_panel_widget import SidePanelWidget
@@ -45,7 +45,7 @@ class ChatWidget(QWidget):
         self._scroll_area.setWidget(scroll_widget)
         self._scroll_area.setWidgetResizable(True)
         self._scroll_layout = QVBoxLayout()
-        self._scroll_layout.setAlignment(Qt.AlignTop)
+        self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         # self._scroll_layout.setContentsMargins(0, 0, 0, 0)
         scroll_widget.setLayout(self._scroll_layout)
 
@@ -129,7 +129,7 @@ class ChatBubble(QWidget):
 
         layout = QHBoxLayout()
         layout.setDirection(QHBoxLayout.LeftToRight if self._side == ChatBubble.SIDE_LEFT else QHBoxLayout.RightToLeft)
-        layout.setAlignment(Qt.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignRight)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignmentFlag.AlignRight)
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 0)
 

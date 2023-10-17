@@ -1,8 +1,8 @@
 import os.path
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
     QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox, QWidget
 
 from settings.remote_libs import ListReader, FileReader
@@ -51,7 +51,7 @@ class LibWidget(QWidget):
         right_layout.setContentsMargins(0, 0, 0, 0)
 
         actions_layout = QHBoxLayout()
-        actions_layout.setAlignment(Qt.AlignLeft)
+        actions_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         self.lib_name_edit = QLineEdit()
         self.lib_name_edit.editingFinished.connect(self.rename_lib)
@@ -189,14 +189,14 @@ class NewLibDialog(QDialog):
         self.setWindowTitle(name)
         self.tm = tm
 
-        QBtn = QDialogButtonBox.Ok
+        QBtn = QDialogButtonBox.StandardButton.Ok
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.return_pressed)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Ok).setFixedSize(80, 20)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setFixedSize(80, 20)
 
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.mode_combo_box = QComboBox()
         self.mode_combo_box.addItems(["Глобальная", "Локальная"])
@@ -242,7 +242,7 @@ class NewLibDialog(QDialog):
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
         for el in [self.mode_combo_box, self.local_line_edit, self.global_list_widget,
-                   self.buttonBox.button(QDialogButtonBox.Ok)]:
+                   self.buttonBox.button(QDialogButtonBox.StandardButton.Ok)]:
             self.tm.auto_css(el)
 
     def exec(self) -> int:
@@ -295,7 +295,7 @@ class LoadFileDialog(QDialog):
         super(LoadFileDialog, self).__init__()
         self.setWindowTitle("Загрузка библиотеки")
 
-        QBtn = QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Cancel
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -306,5 +306,5 @@ class LoadFileDialog(QDialog):
         self.setModal(False)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        tm.auto_css(self.buttonBox.button(QDialogButtonBox.Cancel))
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+        tm.auto_css(self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel))
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 24)

@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QDialog, QComboBox, QTextEdit, QLabel, QSpinBox, QDoubleSpinBox, \
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QDialog, QComboBox, QTextEdit, QLabel, QSpinBox, QDoubleSpinBox, \
     QLineEdit
 
 from side_tabs.builds.commands_list import ScenarioBox
@@ -13,7 +13,7 @@ class TimePanel(SidePanelWidget):
 
         mail_layout = QVBoxLayout()
         mail_layout.setContentsMargins(0, 0, 0, 0)
-        mail_layout.setAlignment(Qt.AlignTop)
+        mail_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(mail_layout)
 
         self._build_edit = ScenarioBox(self.sm, self.bm, self.tm)

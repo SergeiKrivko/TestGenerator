@@ -3,7 +3,7 @@ import random
 import sys
 from typing import Literal
 
-from PyQt5.QtCore import QObject, pyqtSignal, QThread
+from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
 from backend.func_testing import TestingLooper
 from backend.load_task import Loader

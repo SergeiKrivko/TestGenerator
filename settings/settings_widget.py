@@ -1,9 +1,9 @@
 import json
 import os.path
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QResizeEvent, QFontMetrics
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QResizeEvent, QFontMetrics
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
 
 from ui.button import Button
@@ -134,7 +134,7 @@ class LineEdit(_Widget):
 
         layout = QHBoxLayout() if one_line else QVBoxLayout()
         self.setLayout(layout)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._label = QLabel(name)
@@ -174,7 +174,7 @@ class CheckBox(_Widget):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         if children is not None:
             main_layout = QVBoxLayout()
@@ -242,7 +242,7 @@ class ComboBox(_Widget):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         if children is not None:
             main_layout = QVBoxLayout()
@@ -325,7 +325,7 @@ class SpinBox(_Widget):
 
         layout = QHBoxLayout() if width is None or width <= SpinBox.STD_WIDTH else QVBoxLayout()
         self.setLayout(layout)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._label = QLabel(name)
@@ -362,7 +362,7 @@ class FileEdit(_Widget):
 
         layout = QVBoxLayout()
         self.setLayout(layout)
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
 
         self._label = QLabel(name)
@@ -526,7 +526,7 @@ class ListWidget(_Widget):
         self._scroll_area.setWidgetResizable(True)
 
         self._scroll_layout = QVBoxLayout()
-        self._scroll_layout.setAlignment(Qt.AlignTop)
+        self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll_widget.setLayout(self._scroll_layout)
 
     def _add_widget(self, dct: dict = None):
@@ -677,7 +677,7 @@ class SettingsWidget(QScrollArea):
         self.setWidgetResizable(True)
 
         layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.__scroll_widget.setLayout(layout)
 
         for el in args:

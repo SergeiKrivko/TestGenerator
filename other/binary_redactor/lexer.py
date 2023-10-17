@@ -1,6 +1,6 @@
-from PyQt5.Qsci import QsciLexerCustom
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont
+from PyQt6.Qsci import QsciLexerCustom
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
 
 from other.binary_redactor.convert_binary import BinaryConverter
 
@@ -24,13 +24,13 @@ class LexerBin(QsciLexerCustom):
 
         # Initialize colors per style
         # ----------------------------
-        self.setColor(QColor(Qt.blue), LexerBin.Mask)
-        self.setColor(QColor(Qt.black), LexerBin.Value)
-        self.setColor(QColor(Qt.darkYellow), LexerBin.PreProcessor)
-        self.setColor(QColor(Qt.red), LexerBin.InvalidMask)
-        self.setColor(QColor(Qt.red), LexerBin.InvalidValue)
-        self.setColor(QColor(Qt.black), LexerBin.Default)
-        self.setColor(QColor(Qt.gray), LexerBin.Comment)
+        self.setColor(QColor(Qt.GlobalColor.blue), LexerBin.Mask)
+        self.setColor(QColor(Qt.GlobalColor.black), LexerBin.Value)
+        self.setColor(QColor(Qt.GlobalColor.darkYellow), LexerBin.PreProcessor)
+        self.setColor(QColor(Qt.GlobalColor.red), LexerBin.InvalidMask)
+        self.setColor(QColor(Qt.GlobalColor.red), LexerBin.InvalidValue)
+        self.setColor(QColor(Qt.GlobalColor.black), LexerBin.Default)
+        self.setColor(QColor(Qt.GlobalColor.gray), LexerBin.Comment)
 
         self.defines = dict()
         self.bin_code = True

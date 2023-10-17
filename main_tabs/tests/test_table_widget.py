@@ -1,6 +1,6 @@
 import docx
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
     QPushButton
 
 from side_tabs.builds.commands_list import CommandsList, ScenarioBox
@@ -244,7 +244,7 @@ class ExportDialog(QDialog):
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         main_layout.addLayout(buttons_layout)
 
         self._button_export = QPushButton("Экспортировать")

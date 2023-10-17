@@ -1,8 +1,7 @@
 from sys import argv
-import os
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
 
 from backend.backend_manager import BackendManager
 from other.report.report_window import ReportWindow
@@ -10,7 +9,6 @@ from side_tabs.builds import BuildWindow
 from side_tabs.console import ConsolePanel
 from side_tabs.files.files_widget import FilesWidget
 from side_tabs.terminal_tab import TerminalTab
-from side_tabs.builds.build_panel import BuildPanel
 from other.chat_widget import ChatPanel
 from side_tabs.git.git_panel import GitPanel
 from side_tabs.telegram.telegram_widget import TelegramWidget
@@ -39,7 +37,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)
 
-        self.setWindowFlags(Qt.CustomizeWindowHint)
+        self.setWindowFlags(Qt.WindowType.CustomizeWindowHint)
 
         self.bm = BackendManager()
         self.sm = self.bm.sm
@@ -187,15 +185,15 @@ class ExitDialog(QDialog):
         label.setWordWrap(True)
         label.setFont(self.tm.font_medium)
 
-        QBtn = QDialogButtonBox.Close | QDialogButtonBox.Cancel
+        QBtn = QDialogButtonBox.StandardButton.Close | QDialogButtonBox.StandardButton.Cancel
 
         self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.button(QDialogButtonBox.Close).clicked.connect(self.accept)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Close).clicked.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.buttonBox.button(QDialogButtonBox.Close).setStyleSheet(self.tm.button_css())
-        self.buttonBox.button(QDialogButtonBox.Close).setFixedSize(80, 24)
-        self.buttonBox.button(QDialogButtonBox.Cancel).setStyleSheet(self.tm.button_css())
-        self.buttonBox.button(QDialogButtonBox.Cancel).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Close).setStyleSheet(self.tm.button_css())
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Close).setFixedSize(80, 24)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setStyleSheet(self.tm.button_css())
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).setFixedSize(80, 24)
 
         layout.addWidget(label)
         layout.addWidget(self.buttonBox)

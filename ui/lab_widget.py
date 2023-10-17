@@ -1,7 +1,7 @@
 import os.path
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog, QLineEdit, \
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog, QLineEdit, \
     QPushButton, QMenuBar, QMenu, QCheckBox
 
 from backend.types.project import Project
@@ -114,7 +114,7 @@ class NewSubProjectDialog(QDialog):
         layout.addWidget(self.line_edit)
 
         buttons_layout = QHBoxLayout()
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addLayout(buttons_layout)
 
         self.button_ok = QPushButton("Ок")
@@ -156,7 +156,7 @@ class DeleteSubProjectDialog(QDialog):
         layout.addWidget(self.label)
 
         buttons_layout = QHBoxLayout()
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addLayout(buttons_layout)
 
         self.button_ok = QPushButton("Ок")

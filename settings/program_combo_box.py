@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QComboBox, QPushButton, QVBoxLayout, QLabel
 
 from ui.button import Button
 

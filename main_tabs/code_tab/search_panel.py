@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QPushButton, QLabel
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QPushButton, QLabel
 
 from ui.button import Button
 
@@ -45,12 +45,12 @@ class SearchPanel(QWidget):
         main_layout.addLayout(right_layout)
 
         top_layout = QHBoxLayout()
-        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         top_layout.setContentsMargins(0, 2, 0, 0)
         right_layout.addLayout(top_layout)
 
         self.label = QLabel()
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         top_layout.addWidget(self.label)
         self.label.setFixedWidth(120)
 
@@ -66,7 +66,7 @@ class SearchPanel(QWidget):
 
         bottom_layout = QHBoxLayout()
         bottom_layout.setContentsMargins(0, 0, 0, 2)
-        bottom_layout.setAlignment(Qt.AlignLeft)
+        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         right_layout.addLayout(bottom_layout)
 
         self.button_replace = QPushButton("Заменить")

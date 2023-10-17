@@ -1,7 +1,8 @@
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineSettings
-from PyQt5.QtWidgets import QTextEdit, QLabel, QWidget, QHBoxLayout
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWebEngineCore import QWebEngineSettings
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QTextEdit, QLabel, QWidget, QHBoxLayout
 
 
 class PreviewWidget(QWidget):
@@ -18,12 +19,12 @@ class PreviewWidget(QWidget):
         layout.addWidget(self.text_edit)
 
         self.label = QLabel()
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.label)
 
         self.web_engine = QWebEngineView()
-        self.web_engine.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
-        self.web_engine.settings().setAttribute(QWebEngineSettings.PdfViewerEnabled, True)
+        self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
+        self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
         layout.addWidget(self.web_engine)
 
         self.setLayout(layout)

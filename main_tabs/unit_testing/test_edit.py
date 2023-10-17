@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QScrollArea
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QScrollArea
 
 from main_tabs.code_tab.syntax_highlighter import CodeEditor
 from main_tabs.tests.commands import CommandManager
@@ -20,7 +20,7 @@ class UnitTestEdit(QScrollArea):
         self.setWidget(main_widget)
 
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         # main_layout.setContentsMargins(0, 0, 0, 0)
         main_widget.setLayout(main_layout)
 
@@ -139,7 +139,7 @@ class TestSuiteEdit(QScrollArea):
         self.setWidgetResizable(True)
 
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(main_layout)
 
         name_layout = QHBoxLayout()

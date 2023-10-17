@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QVBoxLayout
+from PyQt6.QtWidgets import QVBoxLayout
 
 from other.terminal import Terminal
 from ui.side_panel_widget import SidePanelWidget

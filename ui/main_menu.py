@@ -1,5 +1,5 @@
-from PyQt5.QtCore import pyqtSignal, Qt, QPoint
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
+from PyQt6.QtCore import pyqtSignal, Qt, QPoint
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 from ui.lab_widget import LabWidget
 from ui.button import Button
@@ -83,7 +83,7 @@ class MainMenu(QWidget):
         button = QPushButton(name)
         button.setCheckable(True)
         button.clicked.connect(lambda flag: self.select_tab(identifier, flag))
-        self._buttons_layout.addWidget(button, 1, Qt.AlignLeft)
+        self._buttons_layout.addWidget(button, 1, Qt.AlignmentFlag.AlignLeft)
 
         self._buttons[identifier] = button
 
@@ -91,7 +91,7 @@ class MainMenu(QWidget):
         button.setFont(self.tm.font_medium)
 
     def mouseDoubleClickEvent(self, a0) -> None:
-        if a0.button() == Qt.LeftButton:
+        if a0.button() == Qt.MouseButton.LeftButton:
             if self.maximized:
                 self._on_minimize_clicked()
             else:
@@ -110,12 +110,12 @@ class MainMenu(QWidget):
         self.maximize.emit()
 
     def mousePressEvent(self, a0) -> None:
-        if a0.button() == Qt.LeftButton and not self.maximized:
+        if a0.button() == Qt.MouseButton.LeftButton and not self.maximized:
             self.moving = True
             self.last_pos = a0.pos()
 
     def mouseReleaseEvent(self, a0) -> None:
-        if a0.button() == Qt.LeftButton:
+        if a0.button() == Qt.MouseButton.LeftButton:
             self.moving = False
             self.last_pos = None
 

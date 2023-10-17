@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QDialog, QComboBox, \
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit, QDialog, QComboBox, \
     QPushButton
 
 from ui.button import Button
@@ -37,7 +37,7 @@ class ReportWidget(QWidget):
 
         self._main_layout = QVBoxLayout()
         self._main_layout.setContentsMargins(0, 0, 0, 0)
-        self._main_layout.setAlignment(Qt.AlignTop)
+        self._main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         super().setLayout(self._main_layout)
 
         self._top_layout = QHBoxLayout()
@@ -70,7 +70,7 @@ class ReportWidget(QWidget):
             self._button_plus.hide()
 
         self._children_layout = QVBoxLayout()
-        self._children_layout.setAlignment(Qt.AlignTop)
+        self._children_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._children_layout.setContentsMargins(20, 0, 0, 0)
 
         self._children = []
@@ -300,7 +300,7 @@ class SelectChildDialog(QDialog):
 
         buttons_layout = QHBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         mail_layout.addLayout(buttons_layout)
 
         self._button = QPushButton("Добавить")

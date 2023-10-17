@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFontMetrics
-from PyQt5.QtWidgets import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFontMetrics
+from PyQt6.QtWidgets import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
     QScrollArea, QCheckBox, QSpinBox
 
 from ui.button import Button
@@ -37,7 +37,7 @@ class InDataWindow(QDialog):
         self._scroll_area.setWidget(scroll_widget)
         self._scroll_area.setWidgetResizable(True)
         self._scroll_layout = QVBoxLayout()
-        self._scroll_layout.setAlignment(Qt.AlignTop)
+        self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         scroll_widget.setLayout(self._scroll_layout)
 
         self._widgets = []
@@ -88,7 +88,7 @@ class _RangeEdit(QWidget):
         self._max = "+inf"
 
         layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignLeft)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
@@ -114,7 +114,7 @@ class _RangeEdit(QWidget):
         layout.addWidget(self._line_edit_min)
 
         self._label = QLabel(";")
-        self._label.setAlignment(Qt.AlignCenter)
+        self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._label.setFixedWidth(6)
         layout.addWidget(self._label)
 
@@ -215,7 +215,7 @@ class _StrEdit(QWidget):
 
         bottom_layout = QHBoxLayout()
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setAlignment(Qt.AlignLeft)
+        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addLayout(bottom_layout)
 
         self._checkbox = QCheckBox()
@@ -247,7 +247,7 @@ class _ArrayEdit(QWidget):
         self.setLayout(layout)
 
         top_layout = QHBoxLayout()
-        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         top_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_layout)
 
@@ -269,7 +269,7 @@ class _ArrayEdit(QWidget):
         top_layout.addWidget(self._range_edit)
 
         bottom_layout = QHBoxLayout()
-        bottom_layout.setAlignment(Qt.AlignLeft)
+        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(bottom_layout)
 
@@ -318,7 +318,7 @@ class _StructEdit(QWidget):
         self.setLayout(layout)
 
         top_layout = QHBoxLayout()
-        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         top_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_layout)
 

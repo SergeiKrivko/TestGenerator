@@ -1,7 +1,7 @@
 import os
 
-from PyQt5.QtGui import QColor, QFontMetrics
-from PyQt5.Qsci import QsciScintilla, QsciAPIs, QsciLexer
+from PyQt6.QtGui import QColor, QFontMetrics
+from PyQt6.Qsci import QsciScintilla, QsciAPIs, QsciLexer
 from language.autocomplition.abstract import CodeAutocompletionManager
 from language.languages import languages
 
@@ -31,18 +31,18 @@ class CodeEditor(QsciScintilla):
         # Margin 0 is used for line numbers
         fontmetrics = QFontMetrics(self.tm.code_font_std)
         self.setMarginsFont(self.tm.code_font_std)
-        self.setMarginWidth(0, fontmetrics.width("00000") + 6)
+        self.setMarginWidth(0, fontmetrics.size(0, "00000").width() + 6)
         self.setMarginLineNumbers(0, True)
 
         # Clickable margin 1 for showing markers
         self.setMarginSensitivity(1, True)
-        self.markerDefine(QsciScintilla.RightArrow,
-                          self.ARROW_MARKER_NUM)
+        # self.markerDefine(QsciScintilla.RightArrow,
+        #                   self.ARROW_MARKER_NUM)
 
         # Brace matching: enable for a brace immediately before or after
         # the current position
         #
-        self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+        # self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
 
         # Current line visible with special background color
         self.setCaretLineVisible(True)
@@ -54,12 +54,12 @@ class CodeEditor(QsciScintilla):
         else:
             self._lexer = None
 
-        self.setAutoCompletionSource(QsciScintilla.AcsAPIs)
+        self.setAutoCompletionSource(QsciScintilla.AutoCompletionSource.AcsAPIs)
         self.setAutoCompletionThreshold(1)
         self.setAutoCompletionCaseSensitivity(True)
         self.setAutoCompletionReplaceWord(True)
-        self.setCallTipsStyle(QsciScintilla.CallTipsContext)
-        self.setCallTipsPosition(QsciScintilla.CallTipsAboveText)
+        self.setCallTipsStyle(QsciScintilla.CallTipsStyle.CallTipsContext)
+        self.setCallTipsPosition(QsciScintilla.CallTipsPosition.CallTipsAboveText)
 
         self.setIndentationsUseTabs(False)
         self.setTabWidth(4)
@@ -110,7 +110,7 @@ class CodeEditor(QsciScintilla):
         self.setMarginsFont(self.tm.code_font_std)
         fontmetrics = QFontMetrics(self.tm.code_font_std)
         self.setMarginsFont(self.tm.code_font_std)
-        self.setMarginWidth(0, fontmetrics.width("00000") + 6)
+        self.setMarginWidth(0, fontmetrics.size(0, "00000").width() + 6)
 
         self.setMarkerBackgroundColor(QColor(self.tm['TextColor']), self.ARROW_MARKER_NUM)
         self.setMarginsBackgroundColor(QColor(self.tm['BgColor']))

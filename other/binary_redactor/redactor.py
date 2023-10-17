@@ -1,7 +1,7 @@
-from PyQt5.Qsci import QsciScintilla
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QTabBar, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
+from PyQt6.Qsci import QsciScintilla
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QTabBar, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
 
 from other.binary_redactor.lexer import LexerBin
 from ui.button import Button
@@ -16,9 +16,9 @@ class BinaryRedactor(QsciScintilla):
 
         # 1. Text wrapping
         # -----------------
-        self.setWrapMode(QsciScintilla.WrapWord)
-        self.setWrapVisualFlags(QsciScintilla.WrapFlagByText)
-        self.setWrapIndentMode(QsciScintilla.WrapIndentIndented)
+        self.setWrapMode(QsciScintilla.WrapMode.WrapWord)
+        self.setWrapVisualFlags(QsciScintilla.WrapVisualFlag.WrapFlagByText)
+        self.setWrapIndentMode(QsciScintilla.WrapIndentMode.WrapIndentIndented)
 
         # 3. Indentation
         # ---------------
@@ -85,13 +85,13 @@ class RedactorWidget(QWidget):
         self.tm = tm
 
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignTop)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.setLayout(main_layout)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
         top_layout = QHBoxLayout()
-        top_layout.setAlignment(Qt.AlignLeft)
+        top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(2)
         main_layout.addLayout(top_layout)

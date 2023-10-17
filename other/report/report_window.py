@@ -1,6 +1,6 @@
 import json
 
-from PyQt5.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QScrollArea
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QScrollArea
 
 from other.report.docx_converter import DocxConverter
 from other.report.widgets import ReportMainDocument

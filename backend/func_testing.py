@@ -4,7 +4,7 @@ import shutil
 from subprocess import TimeoutExpired
 from time import sleep
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from backend.commands import read_file, read_binary, cmd_command
 from backend.types.func_test import FuncTest

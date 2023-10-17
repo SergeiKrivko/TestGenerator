@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QWidget, \
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QWidget, \
     QLineEdit
 
 from backend.types.build import Build

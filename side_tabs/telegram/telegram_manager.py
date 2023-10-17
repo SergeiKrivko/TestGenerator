@@ -1,6 +1,6 @@
 import os
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 import config
 from side_tabs.telegram.telegram_api import TgClient, types

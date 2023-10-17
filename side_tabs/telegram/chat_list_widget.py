@@ -1,7 +1,7 @@
-from PyQt5 import QtGui
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea
+from PyQt6 import QtGui
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea
 
 from side_tabs.telegram.telegram_api import types
 from side_tabs.telegram.telegram_manager import TelegramManager
@@ -141,7 +141,7 @@ class TelegramListWidgetItem(QWidget):
         self._unread_count_label = Label(str(self._chat.unread_count))
         self._unread_count_label.mouseMoving.connect(lambda: self.set_hover(True))
         self._unread_count_label.setMinimumWidth(30)
-        self._unread_count_label.setAlignment(Qt.AlignCenter)
+        self._unread_count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         last_message_layout.addWidget(self._unread_count_label, 1)
         if self._chat.unread_count == 0:
             self._unread_count_label.hide()
@@ -167,11 +167,11 @@ class TelegramListWidgetItem(QWidget):
             self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if a0.button() == Qt.LeftButton:
+        if a0.button() == Qt.MouseButton.LeftButton:
             self.set_selected(True)
 
     def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
-        if 0 < a0.x() < self.width() and 0 < a0.y() < self.height():
+        if 0 < a0.pos().x() < self.width() and 0 < a0.pos().y() < self.height():
             self.set_hover(True)
         else:
             self.set_hover(False)

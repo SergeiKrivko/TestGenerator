@@ -1,7 +1,7 @@
 import os
 from json import loads, JSONDecodeError
 
-from PyQt5.QtCore import QThread, pyqtSignal, QObject
+from PyQt6.QtCore import QThread, pyqtSignal, QObject
 
 from backend.types.func_test import FuncTest
 from backend.types.project import Project

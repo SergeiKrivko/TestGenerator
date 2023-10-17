@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QWidget
+from PyQt6.QtWidgets import QDialog, QWidget
 
 
 class SideBarDialog(QDialog):

@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QDialog, QComboBox, QPushButton
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QDialog, QComboBox, QPushButton
 
 from backend.types.build import Build
 from side_tabs.builds.build_edit import BuildEdit
@@ -131,7 +131,7 @@ class BuildTypeDialog(QDialog):
         buttons_layout = QHBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
         buttons_layout.setSpacing(4)
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addLayout(buttons_layout)
 
         self._button_ok = QPushButton("Создать")

@@ -1,7 +1,7 @@
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMenu
+from PyQt6 import QtGui
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMenu
 
 from ui.button import Button
 from ui.side_bar_window import SideBarDialog, SideBarWindow
@@ -25,7 +25,7 @@ class SidePanel(QWidget):
         self._layout = QHBoxLayout()
         self._layout.setSpacing(5)
         self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setAlignment(Qt.AlignTop)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         strange_widget.setLayout(self._layout)
 
         self.tabs: dict[str: SidePanelWidget] = dict()
@@ -46,9 +46,9 @@ class SidePanel(QWidget):
     def mouseMoveEvent(self, a0: QtGui.QMouseEvent) -> None:
         if self.resizing and isinstance(self.current_tab, QWidget):
             if self.mouse_x is not None:
-                self.setMaximumWidth(max(200, self.width() + a0.x() - self.mouse_x))
+                self.setMaximumWidth(max(200, self.width() + a0.pos().x() - self.mouse_x))
                 self.current_tab.side_panel_width = self.maximumWidth()
-            self.mouse_x = a0.x()
+            self.mouse_x = a0.pos().x()
 
     def mouseReleaseEvent(self, a0: QtGui.QMouseEvent) -> None:
         self.resizing = False
@@ -103,7 +103,7 @@ class SideBar(QWidget):
         self._layout = QVBoxLayout()
         self._layout.setSpacing(SideBar.SPACING)
         self._layout.setContentsMargins(5, 5, 5, 5)
-        self._layout.setAlignment(Qt.AlignTop)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         strange_widget.setLayout(self._layout)
 
         self._button_more = SideBarButton(tm, 'more', 'button_more')

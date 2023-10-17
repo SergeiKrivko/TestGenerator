@@ -1,9 +1,9 @@
 import os
 import shutil
 
-from PyQt5.QtGui import QColor, QFont
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu
 import PIL.Image as Image
 
@@ -13,14 +13,14 @@ from ui.options_window import FileWidget
 from ui.resources import resources
 
 basic_theme = {
-    'Identifier': Qt.black,
-    'Preprocessor': Qt.darkYellow,
-    'Comment': Qt.darkGreen,
-    'Keyword': Qt.darkBlue,
-    'Number': Qt.blue,
+    'Identifier': Qt.GlobalColor.black,
+    'Preprocessor': Qt.GlobalColor.darkYellow,
+    'Comment': Qt.GlobalColor.darkGreen,
+    'Keyword': Qt.GlobalColor.darkBlue,
+    'Number': Qt.GlobalColor.blue,
     'String': QColor(255, 50, 120),
 
-    'Paper': QColor(Qt.white),
+    'Paper': QColor(Qt.GlobalColor.white),
     'CaretLineBackgroundColor': QColor('#E5F3FF'),
     'BraceColor': QColor('#373EF0'),
 

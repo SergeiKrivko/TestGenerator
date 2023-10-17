@@ -1,4 +1,4 @@
-from PyQt5.Qsci import QsciLexerCPP, QsciLexerPython, QsciLexerBash, QsciLexerBatch, QsciLexerCSharp, QsciLexerJava, \
+from PyQt6.Qsci import QsciLexerCPP, QsciLexerPython, QsciLexerBash, QsciLexerBatch, QsciLexerCSharp, QsciLexerJava, \
     QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON, QsciLexerXML
 from language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 from language.autocomplition.c import CodeAutocompletionManager as AcMC

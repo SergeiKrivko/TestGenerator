@@ -1,8 +1,8 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog
 
 from main_tabs.code_tab.preview_widgets import PreviewWidget
 from main_tabs.code_tab.search_panel import SearchPanel
@@ -267,7 +267,7 @@ class TopPanelWidget(QWidget):
         strange_layout.addWidget(strange_widget)
 
         main_layout = QHBoxLayout()
-        main_layout.setAlignment(Qt.AlignCenter)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.setContentsMargins(0, 0, 5, 1)
         main_layout.setSpacing(5)
         strange_widget.setLayout(main_layout)
@@ -278,25 +278,25 @@ class TopPanelWidget(QWidget):
         self.tab_bar.tabMoved.connect(self.tab_moved)
         self.tab_bar.setMovable(True)
         self.tab_bar.setTabsClosable(True)
-        main_layout.addWidget(self.tab_bar, 1000, Qt.AlignLeft)
+        main_layout.addWidget(self.tab_bar, 1000, Qt.AlignmentFlag.AlignLeft)
 
         self.button_open = Button(self.tm, 'plus', css='Bg', tooltip='Открыть файл')
         self.button_open.setFixedSize(20, 20)
-        main_layout.addWidget(self.button_open, 1, Qt.AlignLeft)
+        main_layout.addWidget(self.button_open, 1, Qt.AlignmentFlag.AlignLeft)
 
         self.button_search = Button(self.tm, 'search', css='Bg', tooltip='Поиск')
         self.button_search.setFixedSize(20, 20)
         self.button_search.setCheckable(True)
-        main_layout.addWidget(self.button_search, 1, Qt.AlignRight)
+        main_layout.addWidget(self.button_search, 1, Qt.AlignmentFlag.AlignRight)
 
         self.button_run = Button(self.tm, 'run', css='Bg', tooltip='Запустить')
         self.button_run.setFixedSize(20, 20)
-        main_layout.addWidget(self.button_run, 1, Qt.AlignRight)
+        main_layout.addWidget(self.button_run, 1, Qt.AlignmentFlag.AlignRight)
 
         self.button_preview = Button(self.tm, 'button_preview', css='Bg', tooltip='Предпросмотр')
         self.button_preview.setFixedSize(20, 20)
         self.button_preview.setCheckable(True)
-        main_layout.addWidget(self.button_preview, 1, Qt.AlignRight)
+        main_layout.addWidget(self.button_preview, 1, Qt.AlignmentFlag.AlignRight)
 
         self.tabs = []
 

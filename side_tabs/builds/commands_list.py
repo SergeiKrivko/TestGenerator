@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QDialog, QComboBox, \
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QDialog, QComboBox, \
     QLineEdit, QPushButton
 
 from backend.settings_manager import SettingsManager
@@ -137,7 +137,7 @@ class NewCommandDialog(QDialog):
         main_layout.addWidget(self._utils_box)
 
         buttons_layout = QHBoxLayout()
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addLayout(buttons_layout)
 

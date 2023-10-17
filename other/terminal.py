@@ -1,9 +1,9 @@
 import os
 import shlex
 
-from PyQt5.QtCore import QProcess, QByteArray
-from PyQt5.QtGui import QColor, QTextCursor
-from PyQt5.QtWidgets import QTextEdit
+from PyQt6.QtCore import QProcess, QByteArray
+from PyQt6.QtGui import QColor, QTextCursor
+from PyQt6.QtWidgets import QTextEdit
 
 
 class Terminal(QTextEdit):
@@ -26,14 +26,14 @@ class Terminal(QTextEdit):
         self._error_color = "#111111"
 
         self.process = QProcess()
-        self.process.setProcessChannelMode(QProcess.MergedChannels)
+        self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         self.process.setWorkingDirectory(self.current_dir)
         self.process.readyReadStandardOutput.connect(lambda: self.write_text(self.process.readAllStandardOutput()))
         self.process.readyReadStandardError.connect(lambda: self.write_text(self.process.readAllStandardError(),
                                                                             color=self.tm['TestFailed']))
         self.process.finished.connect(self.end_process)
 
-        self.process.error.connect(self.terminate_process)
+        self.process.errorOccurred.connect(self.terminate_process)
 
         self.return_code = 0
 
@@ -81,7 +81,7 @@ class Terminal(QTextEdit):
         self.current_text = self.fixed_html
         self.not_check = False
         cursor = self.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         self.setTextCursor(cursor)
 
     def command(self, command: str):

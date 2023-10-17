@@ -1,7 +1,7 @@
 import os.path
 
-from PyQt5.QtCore import QProcess
-from PyQt5.QtWidgets import QVBoxLayout, QLineEdit
+from PyQt6.QtCore import QProcess
+from PyQt6.QtWidgets import QVBoxLayout, QLineEdit
 
 from ui.message_box import MessageBox
 from ui.side_panel_widget import SidePanelWidget

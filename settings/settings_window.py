@@ -1,7 +1,7 @@
 import os
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from settings.lib_dialog import LibWidget
 from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, \
@@ -35,7 +35,7 @@ class SettingsWindow(QDialog):
 
         self.tree_widget = QTreeWidget()
         self.tree_widget.setHeaderHidden(True)
-        self.tree_widget.setFocusPolicy(False)
+        # self.tree_widget.setFocusPolicy(False)
         self.tree_widget.setFixedWidth(200)
 
         self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Основные']))
@@ -203,7 +203,7 @@ class SettingsWindow(QDialog):
         layout.addWidget(self.libs_widget)
 
         buttons_layout = QHBoxLayout()
-        buttons_layout.setAlignment(Qt.AlignRight)
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
         main_layout.addLayout(buttons_layout)
 
         # self.button_cancel = QPushButton("Отмена")

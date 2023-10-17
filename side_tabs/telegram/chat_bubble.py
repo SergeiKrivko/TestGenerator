@@ -1,9 +1,9 @@
 import shutil
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFontMetrics, QPixmap
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QFileDialog
+from PyQt6 import QtGui
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFontMetrics, QPixmap
+from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QFileDialog
 
 from side_tabs.telegram.telegram_api import types
 from side_tabs.telegram.telegram_manager import TelegramManager
@@ -30,8 +30,9 @@ class TelegramChatBubble(QWidget):
             self._text = ''
 
         main_layout = QHBoxLayout()
-        main_layout.setDirection(QHBoxLayout.RightToLeft if self._right_side else QHBoxLayout.LeftToRight)
-        main_layout.setAlignment(Qt.AlignLeft if self._right_side else Qt.AlignRight)
+        main_layout.setDirection(QHBoxLayout.Direction.RightToLeft if self._right_side else
+                                 QHBoxLayout.Direction.LeftToRight)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft if self._right_side else Qt.AlignmentFlag.AlignRight)
         self.setLayout(main_layout)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -70,7 +71,8 @@ class TelegramChatBubble(QWidget):
         self._label.setContentsMargins(7, 4, 7, 7)
         self._label.setWordWrap(True)
         self._label.setMaximumWidth(font_metrics.size(0, self._text).width() + 20)
-        self._label.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
+        self._label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse |
+                                            Qt.TextInteractionFlag.TextSelectableByKeyboard)
         self._layout.addWidget(self._label, 10)
 
         widget = QWidget()
@@ -133,7 +135,8 @@ class _PhotoLabel(QLabel):
         if isinstance(self._pixmap, QPixmap):
             pixmap = self._pixmap
             if self._pixmap.width() > self.maximumWidth() or self._pixmap.height() > self.MAX_HEIGHT:
-                pixmap = self._pixmap.scaled(self.maximumWidth(), _PhotoLabel.MAX_HEIGHT, Qt.KeepAspectRatio)
+                pixmap = self._pixmap.scaled(self.maximumWidth(), _PhotoLabel.MAX_HEIGHT,
+                                             Qt.AspectRatioMode.KeepAspectRatio)
             self.setPixmap(pixmap)
 
     def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
@@ -202,5 +205,4 @@ class _DocumentWidget(QWidget):
             shutil.copy(self._document.document.local._path, self._path)
         except Exception as ex:
             MessageBox(MessageBox.Warning, "Ошибка", f"Не удалось сохранить файл {self._document.file_name}:\n"
-                                                     f"{ex.__class__.__name__}: {ex}", self._tm)
-
+                                                          f"{ex.__class__.__name__}: {ex}", self._tm)

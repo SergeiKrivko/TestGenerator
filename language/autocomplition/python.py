@@ -2,7 +2,7 @@ import os
 import re
 import time
 
-from PyQt5.QtCore import QThread
+from PyQt6.QtCore import QThread
 
 
 class PythonObject:

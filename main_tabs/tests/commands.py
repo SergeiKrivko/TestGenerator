@@ -4,7 +4,7 @@ from subprocess import run
 import subprocess
 from time import sleep
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from side_tabs.builds.commands_list import CommandsList
 from language.languages import languages
