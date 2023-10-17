@@ -1,3 +1,4 @@
+import re
 from time import sleep
 
 import docx
@@ -7,6 +8,8 @@ from docx.shared import Pt, RGBColor, Mm
 from docx.oxml.ns import qn
 from htmldocx import HtmlToDocx
 from requests import post
+import docx2pdf
+from cairosvg import svg2png
 
 DEFAULT_STILES = {
     'Normal': {'font': 'Times New Roman', 'size': 14, 'color': (0, 0, 0)},
@@ -26,10 +29,11 @@ DEFAULT_PROPERTIES = {
 
 
 class MarkdownParser:
-    def __init__(self, bm, text: str, dist: str, styles=None, properties=None):
+    def __init__(self, bm, text: str, dist: str, to_pdf="", styles=None, properties=None):
         self.bm = bm
         self.text = text
         self.dist = dist
+        self.to_pdf = to_pdf
 
         self.document = docx.Document()
 
@@ -47,7 +51,14 @@ class MarkdownParser:
         lexer = 'python'
         code_lines = None
         for line in self.text.split('\n'):
-            if code_lines is not None:
+
+            if re.match(r"!\[[\w.\\/:]+]\([\w.\\/:]+\)", line.strip()):
+                default_path, image_path = line.strip()[2:-1].split('](')
+                if image_path.endswith('.svg'):
+                    svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
+                self.document.add_picture(image_path)
+
+            elif code_lines is not None:
                 code_lines.append(line)
                 if line.endswith('```'):
                     code_lines[-1] = line.rstrip('```')
@@ -59,9 +70,12 @@ class MarkdownParser:
             elif line.startswith('- '):
                 self.document.add_paragraph(line.lstrip('-').strip(), "List Bullet")
                 paragraph = None
-            elif line.lstrip('1234567890').startswith('. ') and not line.startswith('.'):
-                self.document.add_paragraph(line.lstrip('1234567890.').strip(), "List Number")
-                paragraph = None
+            elif line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
+                level = count_in_start(line, ' ') // 3
+                p = self.document.add_paragraph(line.strip().lstrip('1234567890.').strip(), "List Number")
+                self.list_number(p, paragraph, level=level, num=line.strip().startswith('1.'))
+                paragraph = p
+            # elif re.match("!\[ ]\( \)", line):
             elif line.startswith('```'):
                 code_lines = []
                 lexer = line.lstrip('```').strip()
@@ -93,6 +107,8 @@ class MarkdownParser:
         self.set_margins()
         self._add_page_numbers()
         self.document.save(self.dist)
+        if self.to_pdf:
+            docx2pdf.convert(self.dist, self.to_pdf)
 
     def run_macros(self, line):
         if line.startswith('[tests]: <>'):
@@ -186,7 +202,7 @@ class MarkdownParser:
         table.style = 'Table Grid'
         for row in table.rows:
             row.cells[0].width = Mm(10)
-            row.cells[1].width = Mm(150)
+            row.cells[1].width = Mm(167)
         table.cell(0, 1).paragraphs[0].runs[-1].text = table.cell(0, 1).paragraphs[0].runs[-1].text.rstrip()
         for run in table.cell(0, 0).paragraphs[0].runs:
             run.font.size = Pt(11)
@@ -220,6 +236,106 @@ class MarkdownParser:
             page_num_run._r.append(fldChar2)
 
         add_page_number(self.document.sections[0].footer.paragraphs[0])
+
+    def list_number(self, par, prev=None, level=None, num=True):
+        """
+        Makes a paragraph into a list item with a specific level and
+        optional restart.
+
+        An attempt will be made to retreive an abstract numbering style that
+        corresponds to the style of the paragraph. If that is not possible,
+        the default numbering or bullet style will be used based on the
+        ``num`` parameter.
+
+        Parameters
+        ----------
+        doc : docx.document.Document
+            The document to add the list into.
+        par : docx.paragraph.Paragraph
+            The paragraph to turn into a list item.
+        prev : docx.paragraph.Paragraph or None
+            The previous paragraph in the list. If specified, the numbering
+            and styles will be taken as a continuation of this paragraph.
+            If omitted, a new numbering scheme will be started.
+        level : int or None
+            The level of the paragraph within the outline. If ``prev`` is
+            set, defaults to the same level as in ``prev``. Otherwise,
+            defaults to zero.
+        num : bool
+            If ``prev`` is :py:obj:`None` and the style of the paragraph
+            does not correspond to an existing numbering style, this will
+            determine wether or not the list will be numbered or bulleted.
+            The result is not guaranteed, but is fairly safe for most Word
+            templates.
+        """
+        xpath_options = {
+            True: {'single': 'count(w:lvl)=1 and ', 'level': 0},
+            False: {'single': '', 'level': level},
+        }
+
+        def style_xpath(prefer_single=True):
+            """
+            The style comes from the outer-scope variable ``par.style.name``.
+            """
+            style = par.style.style_id
+            return (
+                'w:abstractNum['
+                '{single}w:lvl[@w:ilvl="{level}"]/w:pStyle[@w:val="{style}"]'
+                ']/@w:abstractNumId'
+            ).format(style=style, **xpath_options[prefer_single])
+
+        def type_xpath(prefer_single=True):
+            """
+            The type is from the outer-scope variable ``num``.
+            """
+            type = 'decimal' if num else 'bullet'
+            return (
+                'w:abstractNum['
+                '{single}w:lvl[@w:ilvl="{level}"]/w:numFmt[@w:val="{type}"]'
+                ']/@w:abstractNumId'
+            ).format(type=type, **xpath_options[prefer_single])
+
+        def get_abstract_id():
+            """
+            Select as follows:
+
+                1. Match single-level by style (get min ID)
+                2. Match exact style and level (get min ID)
+                3. Match single-level decimal/bullet types (get min ID)
+                4. Match decimal/bullet in requested level (get min ID)
+                3. 0
+            """
+            for fn in (style_xpath, type_xpath):
+                for prefer_single in (True, False):
+                    xpath = fn(prefer_single)
+                    ids = numbering.xpath(xpath)
+                    if ids:
+                        return min(int(x) for x in ids)
+            return 0
+
+        if (prev is None or
+                prev._p.pPr is None or
+                prev._p.pPr.numPr is None or
+                prev._p.pPr.numPr.numId is None):
+            if level is None:
+                level = 0
+            numbering = self.document.part.numbering_part.numbering_definitions._numbering
+            # Compute the abstract ID first by style, then by num
+            anum = get_abstract_id()
+            # Set the concrete numbering based on the abstract numbering ID
+            numbr = numbering.add_num(anum)
+            # Make sure to override the abstract continuation property
+            numbr.add_lvlOverride(ilvl=level).add_startOverride(1)
+            # Extract the newly-allocated concrete numbering ID
+            numbr = numbr.numId
+        else:
+            if level is None:
+                level = prev._p.pPr.numPr.ilvl.val
+            # Get the previous concrete numbering ID
+            numbr = prev._p.pPr.numPr.numId.val
+        if num:
+            par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_numId().val = numbr
+        par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
 
 
 def count_in_start(line, symbol):

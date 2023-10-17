@@ -37,7 +37,6 @@ class Build:
             shutil.rmtree(temp_dir)
 
     def compile(self, project, bm):
-        print('compile')
         self.clear(bm.sm)
         match self.get('type'):
             case 'C':
@@ -46,8 +45,13 @@ class Build:
                 path = self.get('cwd', '') if os.path.isabs(self.get('cwd', '')) else \
                     f"{project.path()}/{self.get('cwd', '')}"
                 file = f"{path}/{self.get('file', '')}"
-                out_file = f"{path}/{self.get('output', '')}"
-                converter = MarkdownParser(bm, read_file(file, ''), out_file)
+                if self.get('output', '').endswith('.pdf'):
+                    out_file = f"{bm.sm.temp_dir()}/out.docx"
+                    pdf_file = f"{path}/{self.get('output', '')}"
+                else:
+                    out_file = f"{path}/{self.get('output', '')}"
+                    pdf_file = ''
+                converter = MarkdownParser(bm, read_file(file, ''), out_file, pdf_file)
                 converter.convert()
             case _:
                 return True, ''

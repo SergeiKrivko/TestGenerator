@@ -362,6 +362,7 @@ class BackendManager(QObject):
         self._background_process_count += 1
         thread.finished.connect(lambda: self._on_thread_finished(group, name, thread))
         thread.start()
+        return thread
 
     def _on_thread_finished(self, group, name, process):
         self._background_process_count -= 1
