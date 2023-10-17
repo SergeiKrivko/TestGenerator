@@ -15,11 +15,14 @@ from ui.button import Button
 from ui.side_panel_widget import SidePanelWidget
 
 
+enabled = config.secret_data and os.name != 'posix'
+
+
 class TelegramWidget(SidePanelWidget):
     def __init__(self, sm, tm):
         super().__init__(sm, tm, "Telegram", [])
 
-        if not config.secret_data or os.name == 'posix':
+        if not enabled:
             return
 
         self._manager = TelegramManager(self.sm)
@@ -54,7 +57,7 @@ class TelegramWidget(SidePanelWidget):
         # self._manager.start()
 
     def show(self):
-        if config.secret_data and not self._manager_started:
+        if enabled and not self._manager_started:
             self._manager.start()
             self._manager_started = True
         super().show()
@@ -104,12 +107,12 @@ class TelegramWidget(SidePanelWidget):
             self._manager.authenticate_user(dialog.get_str1(), dialog.get_str2())
 
     def finish_work(self):
-        if config.secret_data:
+        if enabled:
             self._manager.terminate()
 
     def set_theme(self):
         super().set_theme()
-        if not config.secret_data or os.name == 'posix':
+        if not enabled:
             return
         self._top_panel.set_theme()
         self._list_widget.set_theme()
