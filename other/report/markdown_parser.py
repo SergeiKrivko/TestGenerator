@@ -1,7 +1,11 @@
+import json
+import os
 import re
 from time import sleep
 
 import docx
+import requests
+from PIL import Image
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml import OxmlElement, ns
 from docx.shared import Pt, RGBColor, Mm
@@ -10,6 +14,8 @@ from htmldocx import HtmlToDocx
 from requests import post
 import docx2pdf
 from cairosvg import svg2png
+
+import config
 
 DEFAULT_STILES = {
     'Normal': {'font': 'Times New Roman', 'size': 14, 'color': (0, 0, 0)},
@@ -56,7 +62,13 @@ class MarkdownParser:
                 default_path, image_path = line.strip()[2:-1].split('](')
                 if image_path.endswith('.svg'):
                     svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
-                self.document.add_picture(image_path)
+                img = Image.open(image_path)
+                height, width = img.height, img.width
+                if width > 170:
+                    height = height * 170 // width
+                    width = 170
+                img.close()
+                self.document.add_picture(image_path, width=Mm(width), height=Mm(height))
 
             elif code_lines is not None:
                 code_lines.append(line)
@@ -99,16 +111,70 @@ class MarkdownParser:
             else:
                 if paragraph is None:
                     paragraph = self.document.add_paragraph()
-                    paragraph.add_run(line.strip())
+                    self.add_runs(paragraph, line.strip())
                 else:
                     paragraph.add_run(' ')
-                    paragraph.add_run(line.strip())
+                    self.add_runs(paragraph, line.strip())
 
         self.set_margins()
         self._add_page_numbers()
         self.document.save(self.dist)
         if self.to_pdf:
-            docx2pdf.convert(self.dist, self.to_pdf)
+            self.convert_to_pdf()
+
+    def add_runs(self, paragraph, line):
+        words = line.split(' ')
+        code = False
+        bold = False
+        italic = False
+
+        for word in words:
+            text = word
+            if text == '*' or text == '**':
+                pass
+            elif text.startswith('`'):
+                code = True
+                text = text[1:]
+            elif text.startswith('***'):
+                bold = True
+                italic = True
+                text = text[3:]
+            elif text.startswith('**'):
+                bold = True
+                text = text[2:]
+            elif text.startswith('*'):
+                italic = True
+                text = text[1:]
+
+            if text == '*' or text == '**':
+                pass
+            elif text.endswith('`'):
+                text = text[:-1]
+            elif text.endswith('***'):
+                text = text[:-3]
+            elif text.endswith('**'):
+                text = text[:-2]
+            elif text.endswith('*'):
+                text = text[:-1]
+
+            run = paragraph.add_run(text)
+            if code:
+                run.font.name = 'Courier'
+            if italic:
+                run.font.italic = True
+            if bold:
+                run.font.bold = True
+            paragraph.add_run(' ')
+
+            if word.endswith('`'):
+                code = False
+            elif word.endswith('***'):
+                bold = False
+                italic = False
+            elif word.endswith('**'):
+                bold = False
+            elif word.endswith('*'):
+                italic = False
 
     def run_macros(self, line):
         if line.startswith('[tests]: <>'):
@@ -157,7 +223,10 @@ class MarkdownParser:
 
     def _set_styles(self, data: dict):
         for key, item in data.items():
-            style = self.document.styles[key]
+            if key in self.document.styles:
+                style = self.document.styles[key]
+            else:
+                style = self.document.styles.add_style(key, style_type=data.get('type', 1))
             if 'font' in item:
                 style.font.name = item['font']
             if 'size' in item:
@@ -337,6 +406,38 @@ class MarkdownParser:
             par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_numId().val = numbr
         par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
 
+    def convert_to_pdf(self):
+        if os.name == 'nt':
+            docx2pdf.convert(self.dist, self.to_pdf)
+        elif config.secret_data:
+            instructions = {
+                'parts': [
+                    {
+                        'file': 'document'
+                    }
+                ]
+            }
+
+            response = requests.request(
+                'POST',
+                'https://api.pspdfkit.com/build',
+                headers={
+                    'Authorization': f'Bearer {config.PSPDFKIT_API_KEY}'
+                },
+                files={'document': open(self.dist, 'rb')},
+                data={'instructions': json.dumps(instructions)},
+                stream=True
+            )
+
+            if response.ok:
+                with open(self.to_pdf, 'wb') as fd:
+                    for chunk in response.iter_content(chunk_size=8096):
+                        fd.write(chunk)
+            else:
+                raise Exception(response.text)
+        else:
+            raise Exception("can not convert docx to pdf")
+
 
 def count_in_start(line, symbol):
     return len(line) - len(line.lstrip(symbol))
@@ -346,5 +447,10 @@ if __name__ == '__main__':
     from sys import argv
 
     with open(argv[1], encoding='utf-8') as f:
-        converter = MarkdownParser(None, f.read(), argv[2])
+        converter = MarkdownParser(None, f.read(), argv[2], to_pdf='' if len(argv) < 4 else argv[3])
     converter.convert()
+    if len(argv) >= 4:
+        if os.path.isabs(argv[3]):
+            os.system(argv[3])
+        else:
+            os.system(f".{os.sep}{argv[3]}")
