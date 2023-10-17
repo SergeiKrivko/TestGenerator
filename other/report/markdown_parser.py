@@ -30,7 +30,8 @@ DEFAULT_STILES = {
 }
 
 DEFAULT_PROPERTIES = {
-    'margins': (30, 20, 10, 20)
+    'margins': (30, 20, 10, 20),
+    'first_line_indent': 12.5,
 }
 
 
@@ -56,10 +57,11 @@ class MarkdownParser:
         table_rows = 0
         lexer = 'python'
         code_lines = None
+
         for line in self.text.split('\n'):
 
             if re.match(r"!\[[\w.\\/:]+]\([\w.\\/:]+\)", line.strip()):
-                default_path, image_path = line.strip()[2:-1].split('](')
+                default_text, image_path = line.strip()[2:-1].split('](')
                 if image_path.endswith('.svg'):
                     svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
                 img = Image.open(image_path)
@@ -68,7 +70,10 @@ class MarkdownParser:
                     height = height * 170 // width
                     width = 170
                 img.close()
-                self.document.add_picture(image_path, width=Mm(width), height=Mm(height))
+                try:
+                    self.document.add_picture(image_path, width=Mm(width), height=Mm(height))
+                except Exception:
+                    self.document.add_paragraph(default_text)
 
             elif code_lines is not None:
                 code_lines.append(line)
@@ -77,17 +82,19 @@ class MarkdownParser:
                     self.highlight_code('\n'.join(code_lines), lexer)
                     code_lines = None
             elif line.startswith('#'):
-                self.document.add_heading(line.lstrip('#').strip(), count_in_start(line, '#'))
+                p = self.document.add_heading(line.lstrip('#').strip(), count_in_start(line, '#'))
+                p.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
                 paragraph = None
             elif line.startswith('- '):
-                self.document.add_paragraph(line.lstrip('-').strip(), "List Bullet")
+                p = self.document.add_paragraph(line.lstrip('-').strip(), "List Bullet")
+                p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 paragraph = None
             elif line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
                 level = count_in_start(line, ' ') // 3
                 p = self.document.add_paragraph(line.strip().lstrip('1234567890.').strip(), "List Number")
+                p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 self.list_number(p, paragraph, level=level, num=line.strip().startswith('1.'))
                 paragraph = p
-            # elif re.match("!\[ ]\( \)", line):
             elif line.startswith('```'):
                 code_lines = []
                 lexer = line.lstrip('```').strip()
@@ -111,6 +118,8 @@ class MarkdownParser:
             else:
                 if paragraph is None:
                     paragraph = self.document.add_paragraph()
+                    paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+                    paragraph.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
                     self.add_runs(paragraph, line.strip())
                 else:
                     paragraph.add_run(' ')
@@ -245,6 +254,11 @@ class MarkdownParser:
             self.styles[key] = style
 
     def highlight_code(self, code: str, lexer: str = 'c'):
+        def delete_paragraph(paragraph):
+            p = paragraph._element
+            p.getparent().remove(p)
+            paragraph._p = paragraph._element = None
+
         req = {
             'code': code.strip(),
             'lexer': lexer,
@@ -268,6 +282,7 @@ class MarkdownParser:
         else:
             self.html_parser.add_html_to_document(text, self.document)
             table = self.document.tables[-1]
+            delete_paragraph(self.document.paragraphs[-1])
         table.style = 'Table Grid'
         for row in table.rows:
             row.cells[0].width = Mm(10)
@@ -437,6 +452,31 @@ class MarkdownParser:
                 raise Exception(response.text)
         else:
             raise Exception("can not convert docx to pdf")
+
+    def add_table_of_content(self):
+        paragraph = self.document.add_paragraph()
+        run = paragraph.add_run()
+        fldChar = OxmlElement('w:fldChar')  # creates a new element
+        fldChar.set(qn('w:fldCharType'), 'begin')  # sets attribute on element
+        instrText = OxmlElement('w:instrText')
+        instrText.set(qn('xml:space'), 'preserve')  # sets attribute on element
+        instrText.text = 'TOC \\o "1-3" \\h \\z \\u'  # change 1-3 depending on heading levels you need
+
+        fldChar2 = OxmlElement('w:fldChar')
+        fldChar2.set(qn('w:fldCharType'), 'separate')
+        fldChar3 = OxmlElement('w:t')
+        fldChar3.text = "Right-click to update field."
+        fldChar2.append(fldChar3)
+
+        fldChar4 = OxmlElement('w:fldChar')
+        fldChar4.set(qn('w:fldCharType'), 'end')
+
+        r_element = run._r
+        r_element.append(fldChar)
+        r_element.append(instrText)
+        r_element.append(fldChar2)
+        r_element.append(fldChar4)
+        p_element = paragraph._p
 
 
 def count_in_start(line, symbol):
