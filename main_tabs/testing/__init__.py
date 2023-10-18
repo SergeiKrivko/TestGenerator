@@ -335,7 +335,8 @@ class TextField(QWidget):
 
         self._text_edit = QLabel()
         self._text_edit.setText(text)
-        self._text_edit.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
+        self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse |
+                                                Qt.TextInteractionFlag.TextSelectableByKeyboard)
         layout.addWidget(self._text_edit)
 
     def set_theme(self):

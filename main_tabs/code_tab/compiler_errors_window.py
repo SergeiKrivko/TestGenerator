@@ -95,7 +95,8 @@ class CompilerErrorWindow(QDialog):
 
     def add_label(self, text):
         label = QLabel(text)
-        label.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse |
+                                      Qt.TextInteractionFlag.TextSelectableByKeyboard)
         label.setWordWrap(True)
         label.setFont(self.tm.code_font)
         self.scroll_layout.addWidget(label)

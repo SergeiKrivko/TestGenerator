@@ -86,6 +86,7 @@ languages = {
             QsciLexerBash.DoubleQuotedString: 'String',
             QsciLexerBash.SingleQuotedString: 'String',
             QsciLexerBash.ParameterExpansion: 'Preprocessor',
+            QsciLexerBash.Backticks: 'Preprocessor',
             QsciLexerBash.Error: 'Preprocessor'
         },
         'run': language.testing.shell.bash_run,

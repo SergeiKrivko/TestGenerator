@@ -96,8 +96,9 @@ class TelegramListWidgetItem(QWidget):
         self._chat_id = chat.id
         self._selected = False
         self._hover = False
+        self._manager = manager
 
-        self.setFixedHeight(50)
+        self.setFixedHeight(54)
 
         strange_layout = QVBoxLayout()
         strange_layout.setContentsMargins(0, 0, 0, 0)
@@ -106,12 +107,12 @@ class TelegramListWidgetItem(QWidget):
         strange_layout.addWidget(strange_widget)
 
         main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(3, 3, 3, 3)
+        main_layout.setContentsMargins(2, 2, 2, 2)
         strange_widget.setLayout(main_layout)
 
         self._icon_label = Label()
         self._icon_label.mouseMoving.connect(lambda: self.set_hover(True))
-        self._icon_label.setFixedWidth(50)
+        self._icon_label.setFixedWidth(54)
         self._photo = None
         if chat.photo is not None:
             self._photo = chat.photo.small
@@ -119,7 +120,7 @@ class TelegramListWidgetItem(QWidget):
                 self._photo.download()
             manager.updateFile.connect(self.update_icon)
             if self._photo.local.is_downloading_completed:
-                self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
+                self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(48, 48))
         main_layout.addWidget(self._icon_label)
 
         layout = QVBoxLayout()
@@ -135,7 +136,7 @@ class TelegramListWidgetItem(QWidget):
 
         self._last_message_label = LastMessageWidget(self._tm)
         self._last_message_label.mouseMoving.connect(lambda: self.set_hover(True))
-        self._last_message_label.open_message(self._chat.last_message)
+        self.update_last_message(self._chat.last_message)
         last_message_layout.addWidget(self._last_message_label, 10)
 
         self._unread_count_label = Label(str(self._chat.unread_count))
@@ -148,12 +149,21 @@ class TelegramListWidgetItem(QWidget):
 
         manager.updateChat.connect(self.update_chat)
 
+    def update_last_message(self, message):
+        if message is not None and (isinstance(self._chat.type, types.TgChatTypeBasicGroup) or
+                                    isinstance(self._chat.type, types.TgChatTypeSupergroup) and hasattr(
+                    message.sender_id, 'user_id')):
+            sender = self._manager.get_user(message.sender_id.user_id)
+        else:
+            sender = None
+        self._last_message_label.open_message(message, sender)
+
     def update_chat(self, chat_id: str):
         if int(chat_id) != self._chat.id:
             return
         message = self._chat.last_message
         if isinstance(message, types.TgMessage):
-            self._last_message_label.open_message(message)
+            self.update_last_message(message)
 
         self._unread_count_label.setText(str(self._chat.unread_count))
         if self._chat.unread_count == 0:
@@ -231,17 +241,38 @@ class LastMessageWidget(QWidget):
         self._icon_label.mouseMoving.connect(self.mouseMoving.emit)
         layout.addWidget(self._icon_label)
 
+        v_layout = QVBoxLayout()
+        v_layout.setSpacing(1)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(v_layout)
+
+        self._sender_label = Label()
+        self._sender_label.setWordWrap(True)
+        self._sender_label.setFixedHeight(12)
+        self._sender_label.mouseMoving.connect(self.mouseMoving.emit)
+        v_layout.addWidget(self._sender_label)
+
         self._text_label = Label()
-        self._text_label.setFixedHeight(12)
+        self._text_label.setWordWrap(True)
+        self._text_label.setFixedHeight(26)
         self._text_label.mouseMoving.connect(self.mouseMoving.emit)
-        layout.addWidget(self._text_label)
+        v_layout.addWidget(self._text_label)
 
     def set_theme(self):
         self._text_label.setFont(self._tm.font_small)
+        self._sender_label.setFont(self._tm.font_small)
+        self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}")
 
-    def open_message(self, message: types.TgMessage):
+    def open_message(self, message: types.TgMessage, sender: types.TgUser = None):
         text = ""
         icon = None
+
+        if sender:
+            self._sender_label.show()
+            self._sender_label.setText(sender.first_name + ' ' + sender.last_name)
+        else:
+            self._sender_label.hide()
+
         if message is not None:
             match message.content.__class__:
                 case types.TgMessageText:
@@ -253,10 +284,9 @@ class LastMessageWidget(QWidget):
                     else:
                         text = "Фотография"
 
-        self._text_label.setText(text[:40])
+        self._text_label.setText(text[:80])
         if isinstance(icon, types.TgMinithumbnail):
             self._icon_label.show()
             self._icon_label.setPixmap(QPixmap(icon.load()))
         else:
             self._icon_label.hide()
-

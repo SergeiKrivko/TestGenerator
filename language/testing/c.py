@@ -45,7 +45,7 @@ def c_compile(project, build, sm):
             code = False
         errors.append(res.stderr)
 
-    return code, ''.join(errors)
+    return code, ''.join(map(str, errors))
 
 
 def c_run(project, build, args=''):

@@ -16,6 +16,9 @@ import docx2pdf
 from cairosvg import svg2png
 
 import config
+from other.report.docx_api import docx_to_pdf_by_api
+from other.report.pdf_converter import PdfConverter
+from other.report.types import *
 
 DEFAULT_STILES = {
     'Normal': {'font': 'Times New Roman', 'size': 14, 'color': (0, 0, 0)},
@@ -33,6 +36,220 @@ DEFAULT_PROPERTIES = {
     'margins': (30, 20, 10, 20),
     'first_line_indent': 12.5,
 }
+
+
+class MarkdownParser2:
+    def __init__(self, bm, text: str):
+        self.bm = bm
+        self.text = text
+        self.document = Document()
+
+    def convert(self):
+        paragraph = None
+        table = None
+        lst = None
+        table_rows = 0
+        lexer = 'python'
+        code_lines = None
+
+        for line in self.text.split('\n'):
+
+            if re.match(r"!\[[\w.\\/:]+]\([\w.\\/:]+\)", line.strip()):
+                default_text, image_path = line.strip()[2:-1].split('](')
+                if image_path.endswith('.svg'):
+                    svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
+                img = Image.open(image_path)
+                height, width = img.height, img.width
+                if width > 170:
+                    height = height * 170 // width
+                    width = 170
+                img.close()
+                try:
+                    self.document.add_picture(image_path, width=width, height=height)
+                except Exception:
+                    self.document.add_paragraph(default_text)
+
+            elif code_lines is not None:
+                code_lines.append(line)
+                if line.endswith('```'):
+                    code_lines[-1] = line.rstrip('```')
+                    # self.highlight_code('\n'.join(code_lines), lexer)
+                    code_lines = None
+            elif line.startswith('#'):
+                self.document.add_heading(line.lstrip('#').strip(), count_in_start(line, '#'))
+                paragraph = None
+                table = None
+                lst = None
+            elif line.startswith('- '):
+                if lst is None:
+                    lst = self.document.add_list()
+                p = lst.add_paragraph()
+                self.add_runs(p, line.lstrip('-').strip())
+                paragraph = None
+                table = None
+            elif line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
+                if lst is None or line.startswith('1.'):
+                    lst = self.document.add_list(num=True)
+                level = count_in_start(line, ' ') // 3
+                p = lst.add_paragraph()
+                self.add_runs(p, line.lstrip('-').strip())
+                paragraph = None
+                table = None
+            elif line.startswith('```'):
+                code_lines = []
+                lexer = line.lstrip('```').strip()
+            # elif line.startswith('['):
+            #     self.run_macros(line)
+            # elif line.startswith('|'):
+            #     if table is None:
+            #         table_columns = line.strip().count('|') - 1
+            #         table_rows = 1
+            #         table = self.document.add_table(rows=1, cols=table_columns, style='Table Grid')
+            #         for i, text in enumerate(line.strip()[1:-1].split('|')):
+            #             table.cell(0, i).text = text.strip()
+            #     elif line.strip().strip('-|'):
+            #         table.add_row()
+            #         for i, text in enumerate(line.strip()[1:-1].split('|')):
+            #             table.cell(table_rows, i).text = text.strip()
+            #         table_rows += 1
+
+            elif not line.strip():
+                paragraph = None
+                table = None
+                lst = None
+            elif lst is not None:
+                self.add_runs(lst.paragraphs[1], line.strip())
+            else:
+                if paragraph is None:
+                    paragraph = self.document.add_paragraph()
+                    self.add_runs(paragraph, line.strip())
+                else:
+                    paragraph.add_run(' ')
+                    self.add_runs(paragraph, line.strip())
+
+    def add_runs(self, paragraph: Paragraph, line: str):
+        words = line.split(' ')
+        code = False
+        bold = False
+        italic = False
+
+        for word in words:
+            text = word
+            if text == '*' or text == '**':
+                pass
+            elif text.startswith('`'):
+                code = True
+                text = text[1:]
+            elif text.startswith('***'):
+                bold = True
+                italic = True
+                text = text[3:]
+            elif text.startswith('**'):
+                bold = True
+                text = text[2:]
+            elif text.startswith('*'):
+                italic = True
+                text = text[1:]
+
+            if text == '*' or text == '**':
+                pass
+            elif text.endswith('`'):
+                text = text[:-1]
+            elif text.endswith('***'):
+                text = text[:-3]
+            elif text.endswith('**'):
+                text = text[:-2]
+            elif text.endswith('*'):
+                text = text[:-1]
+
+            paragraph.add_run(text, f"{'c' if code else ''}{'b' if bold else ''}{'i' if italic else ''}")
+
+            if word.endswith('`'):
+                code = False
+            elif word.endswith('***'):
+                bold = False
+                italic = False
+            elif word.endswith('**'):
+                bold = False
+            elif word.endswith('*'):
+                italic = False
+
+    def run_macros(self, line):
+        if line.startswith('[tests]: <>'):
+            flags = set(map(str.upper, line[len('[tests]: <>'):].strip().strip('()').split()))
+            lst = ["Описание", "Входные данные"]
+            if 'EXPECTED_OUTPUT' in flags:
+                lst.append("Ожидаемый вывод")
+            if 'REAL_OUTPUT' in flags:
+                lst.append("Фактический вывод")
+            if 'STATUS' in flags:
+                lst.append("Результат")
+            tests = self.bm.func_tests['pos'] + self.bm.func_tests['neg']
+            table = self.document.add_table(rows=len(tests) + 1, cols=len(lst), style='Table Grid')
+            if 'RUN' in flags:
+                looper = self.bm.start_testing()
+                while not looper.isFinished():
+                    sleep(0.1)
+            for i, el in enumerate(lst):
+                table.cell(0, i).text = el
+            for i, test in enumerate(self._prepare_tests_data(tests, flags)):
+                for j, el in enumerate(test):
+                    table.cell(i + 1, j).text = el
+
+    @staticmethod
+    def _prepare_tests_data(tests, flags):
+        for test in tests:
+            lst = [test.get('desc', '').strip(), test.get('in', '').strip()]
+            if 'EXPECTED_OUTPUT' in flags:
+                lst.append(test.get('out', '').strip())
+            if 'REAL_OUTPUT' in flags:
+                if 'RUN' in flags:
+                    lst.append(test.prog_out.get('STDOUT', '').strip())
+                else:
+                    lst.append(test.get('out', ''))
+            if 'STATUS' in flags:
+                lst.append("OK" if 'RUN' not in flags or test.res() else "FAIL")
+            yield lst
+
+    def highlight_code(self, code: str, lexer: str = 'c'):
+        def delete_paragraph(paragraph):
+            p = paragraph._element
+            p.getparent().remove(p)
+            paragraph._p = paragraph._element = None
+
+        req = {
+            'code': code.strip(),
+            'lexer': lexer,
+            'options': [],
+            'style': 'colorful',
+            'linenos': True
+        }
+        try:
+            if not lexer:
+                raise Exception
+            res = post('http://hilite.me/api', req)
+            if res.status_code >= 400:
+                raise Exception(str(res.status_code))
+            text = res.text
+        except Exception as ex:
+            table = self.document.add_table(rows=1, cols=2)
+            table.cell(0, 0).paragraphs[0].text = '\n'.join(map(str, range(1, code.strip().count('\n') + 2)))
+            table.cell(0, 0).paragraphs[0].style = 'Body Text'
+            table.cell(0, 1).paragraphs[0].text = code.strip()
+            table.cell(0, 1).paragraphs[0].style = 'Body Text'
+        else:
+            self.html_parser.add_html_to_document(text, self.document)
+            table = self.document.tables[-1]
+            delete_paragraph(self.document.paragraphs[-1])
+        table.style = 'Table Grid'
+        for row in table.rows:
+            row.cells[0].width = Mm(10)
+            row.cells[1].width = Mm(167)
+        table.cell(0, 1).paragraphs[0].runs[-1].text = table.cell(0, 1).paragraphs[0].runs[-1].text.rstrip()
+        for run in table.cell(0, 0).paragraphs[0].runs:
+            run.font.size = Pt(11)
+        for run in table.cell(0, 1).paragraphs[0].runs:
+            run.font.size = Pt(11)
 
 
 class MarkdownParser:
@@ -425,31 +642,7 @@ class MarkdownParser:
         if os.name == 'nt':
             docx2pdf.convert(self.dist, self.to_pdf)
         elif config.secret_data:
-            instructions = {
-                'parts': [
-                    {
-                        'file': 'document'
-                    }
-                ]
-            }
-
-            response = requests.request(
-                'POST',
-                'https://api.pspdfkit.com/build',
-                headers={
-                    'Authorization': f'Bearer {config.PSPDFKIT_API_KEY}'
-                },
-                files={'document': open(self.dist, 'rb')},
-                data={'instructions': json.dumps(instructions)},
-                stream=True
-            )
-
-            if response.ok:
-                with open(self.to_pdf, 'wb') as fd:
-                    for chunk in response.iter_content(chunk_size=8096):
-                        fd.write(chunk)
-            else:
-                raise Exception(response.text)
+            docx_to_pdf_by_api(self.dist, self.to_pdf)
         else:
             raise Exception("can not convert docx to pdf")
 
@@ -487,10 +680,14 @@ if __name__ == '__main__':
     from sys import argv
 
     with open(argv[1], encoding='utf-8') as f:
-        converter = MarkdownParser(None, f.read(), argv[2], to_pdf='' if len(argv) < 4 else argv[3])
+        # converter = MarkdownParser(None, f.read(), argv[2], to_pdf='' if len(argv) < 4 else argv[3])
+        converter = MarkdownParser2(None, f.read())
     converter.convert()
-    if len(argv) >= 4:
-        if os.path.isabs(argv[3]):
-            os.system(argv[3])
-        else:
-            os.system(f".{os.sep}{argv[3]}")
+    pdf_converter = PdfConverter(converter.document, argv[3])
+    pdf_converter.convert()
+    os.system(f".{os.sep}{argv[3]}")
+    # if len(argv) >= 4:
+    #     if os.path.isabs(argv[3]):
+    #         os.system(argv[3])
+    #     else:
+    #         os.system(f".{os.sep}{argv[3]}")

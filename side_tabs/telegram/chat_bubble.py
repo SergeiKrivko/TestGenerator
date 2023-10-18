@@ -202,7 +202,7 @@ class _DocumentWidget(QWidget):
     def _continue_saving(self):
         self._saving = False
         try:
-            shutil.copy(self._document.document.local._path, self._path)
+            shutil.copy(self._document.document.local.path, self._path)
         except Exception as ex:
-            MessageBox(MessageBox.Warning, "Ошибка", f"Не удалось сохранить файл {self._document.file_name}:\n"
+            MessageBox(MessageBox.Icon.Warning, "Ошибка", f"Не удалось сохранить файл {self._document.file_name}:\n"
                                                           f"{ex.__class__.__name__}: {ex}", self._tm)

@@ -42,17 +42,21 @@ class Build:
             case 'C':
                 return c_compile(project, self, bm.sm)
             case 'report':
-                path = self.get('cwd', '') if os.path.isabs(self.get('cwd', '')) else \
-                    f"{project.path()}/{self.get('cwd', '')}"
-                file = f"{path}/{self.get('file', '')}"
-                if self.get('output', '').endswith('.pdf'):
-                    out_file = f"{bm.sm.temp_dir()}/out.docx"
-                    pdf_file = f"{path}/{self.get('output', '')}"
-                else:
-                    out_file = f"{path}/{self.get('output', '')}"
-                    pdf_file = ''
-                converter = MarkdownParser(bm, read_file(file, ''), out_file, pdf_file)
-                converter.convert()
+                try:
+                    path = self.get('cwd', '') if os.path.isabs(self.get('cwd', '')) else \
+                        f"{project.path()}/{self.get('cwd', '')}"
+                    file = f"{path}/{self.get('file', '')}"
+                    if self.get('output', '').endswith('.pdf'):
+                        out_file = f"{bm.sm.temp_dir()}/out.docx"
+                        pdf_file = f"{path}/{self.get('output', '')}"
+                    else:
+                        out_file = f"{path}/{self.get('output', '')}"
+                        pdf_file = ''
+                    converter = MarkdownParser(bm, read_file(file, ''), out_file, pdf_file)
+                    converter.convert()
+                except Exception as ex:
+                    return False, f"{ex.__class__.__name__}: {ex}"
+                return True, ''
             case _:
                 return True, ''
 
