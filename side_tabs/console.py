@@ -41,12 +41,17 @@ class Console(Terminal):
                         self.start_process(language['run'](path, self.sm, coverage=False))
                         return
 
-    def compile_build(self, build_id):
-        looper = self.bm.run_process(lambda: self.bm.compile_build(build_id), 'compile', str(build_id))
-        looper.finished.connect(lambda: self.run_build(build_id))
-
     def run_build(self, build_id):
-        # self.bm.compile_build(build_id)
+        looper = self.bm.run_process(lambda: self.bm.compile_build(build_id), 'compile', str(build_id))
+        looper.finished.connect(lambda: self._on_looper_finished(build_id, looper.res))
+
+    def _on_looper_finished(self, build_id, compiling_result):
+        if isinstance(compiling_result, tuple):
+            status, errors = compiling_result
+            if not status:
+                CompilerErrorWindow(errors, self.tm).exec()
+                return
+        # self.bm.run_build(build_id)
         self.write_text(command := self.bm.build_running_command(build_id))
         self.start_process(command)
 
@@ -70,7 +75,7 @@ class ConsolePanel(SidePanelWidget):
         self.buttons['cancel'].clicked.connect(self.terminal.terminate_process)
 
     def run_main(self):
-        self.terminal.compile_build(self._build_box.current_scenario())
+        self.terminal.run_build(self._build_box.current_scenario())
         # res, errors = self.cm.compile()
         # if res:
         #     self.terminal.start_process(languages[self.sm.get('language', 'C')]['run'](

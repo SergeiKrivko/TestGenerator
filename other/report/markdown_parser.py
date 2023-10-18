@@ -639,7 +639,7 @@ class MarkdownParser:
         par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
 
     def convert_to_pdf(self):
-        if os.name == 'nt':
+        if os.name == '!nt':
             docx2pdf.convert(self.dist, self.to_pdf)
         elif config.secret_data:
             docx_to_pdf_by_api(self.dist, self.to_pdf)
