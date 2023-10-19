@@ -195,7 +195,8 @@ class TreeModuleItem(QTreeWidgetItem):
         if self.isSelected():
             return True
         for i in range(self.childCount()):
-            return self.child(i).add_test()
+            if self.child(i).add_test():
+                return True
 
     def delete_item(self):
         for i in range(self.childCount()):
