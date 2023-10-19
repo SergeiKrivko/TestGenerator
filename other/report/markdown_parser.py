@@ -11,9 +11,11 @@ from docx.oxml import OxmlElement, ns
 from docx.shared import Pt, RGBColor, Mm
 from docx.oxml.ns import qn
 from htmldocx import HtmlToDocx
+from lxml import etree
 from requests import post
 import docx2pdf
 from cairosvg import svg2png
+import latex2mathml.converter as latex_converter
 
 import config
 from other.report.docx_api import docx_to_pdf_by_api
@@ -274,6 +276,7 @@ class MarkdownParser:
         table_rows = 0
         lexer = 'python'
         code_lines = None
+        formula = None
 
         for line in self.text.split('\n'):
 
@@ -315,6 +318,14 @@ class MarkdownParser:
             elif line.startswith('```'):
                 code_lines = []
                 lexer = line.lstrip('```').strip()
+            elif line.startswith('[formula-start]: <>'):
+                formula = []
+            elif formula is not None:
+                if line.startswith('[formula-end]: <>'):
+                    self.parse_formula('\n'.join(formula))
+                    formula = None
+                else:
+                    formula.append(line)
             elif line.startswith('['):
                 self.run_macros(line)
             elif line.startswith('|'):
@@ -639,7 +650,7 @@ class MarkdownParser:
         par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
 
     def convert_to_pdf(self):
-        if os.name == '!nt':
+        if os.name == 'nt':
             docx2pdf.convert(self.dist, self.to_pdf)
         elif config.secret_data:
             docx_to_pdf_by_api(self.dist, self.to_pdf)
@@ -670,6 +681,18 @@ class MarkdownParser:
         r_element.append(fldChar2)
         r_element.append(fldChar4)
         p_element = paragraph._p
+
+    def parse_formula(self, text):
+        mathml = latex_converter.convert(text)
+        tree = etree.fromstring(mathml)
+        xslt = etree.parse(
+            r"C:\Program Files (x86)\Microsoft Office\Office14\MML2OMML.XSL"
+        )
+        transform = etree.XSLT(xslt)
+        new_dom = transform(tree)
+
+        paragraph = self.document.add_paragraph()
+        paragraph._element.append(new_dom.getroot())
 
 
 def count_in_start(line, symbol):
