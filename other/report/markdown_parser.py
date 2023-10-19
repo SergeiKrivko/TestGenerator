@@ -1,3 +1,4 @@
+import inspect
 import json
 import os
 import re
@@ -5,6 +6,7 @@ from time import sleep
 
 import docx
 import requests
+import win32com.client as win32client
 from PIL import Image
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml import OxmlElement, ns
@@ -278,6 +280,8 @@ class MarkdownParser:
         code_lines = None
         formula = None
 
+        self.add_table_of_content()
+
         for line in self.text.split('\n'):
 
             if re.match(r"!\[[\w.\\/:]+]\([\w.\\/:]+\)", line.strip()):
@@ -318,6 +322,8 @@ class MarkdownParser:
             elif line.startswith('```'):
                 code_lines = []
                 lexer = line.lstrip('```').strip()
+            elif line.startswith('[page-break]: <>'):
+                self.document.add_page_break()
             elif line.startswith('[formula-start]: <>'):
                 formula = []
             elif formula is not None:
@@ -658,6 +664,8 @@ class MarkdownParser:
             raise Exception("can not convert docx to pdf")
 
     def add_table_of_content(self):
+        self.document.add_heading("Оглавление")
+
         paragraph = self.document.add_paragraph()
         run = paragraph.add_run()
         fldChar = OxmlElement('w:fldChar')  # creates a new element
@@ -668,8 +676,8 @@ class MarkdownParser:
 
         fldChar2 = OxmlElement('w:fldChar')
         fldChar2.set(qn('w:fldCharType'), 'separate')
-        fldChar3 = OxmlElement('w:t')
-        fldChar3.text = "Right-click to update field."
+        fldChar3 = OxmlElement('w:updateFields')
+        fldChar3.set(qn('w:val'), 'true')
         fldChar2.append(fldChar3)
 
         fldChar4 = OxmlElement('w:fldChar')
@@ -681,6 +689,8 @@ class MarkdownParser:
         r_element.append(fldChar2)
         r_element.append(fldChar4)
         p_element = paragraph._p
+
+        self.document.add_page_break()
 
     def parse_formula(self, text):
         mathml = latex_converter.convert(text)
