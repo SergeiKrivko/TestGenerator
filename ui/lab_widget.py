@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog, QLineEdit, \
     QPushButton, QMenuBar, QMenu, QCheckBox
 
-from backend.types.project import Project
+from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
 from backend.backend_manager import BackendManager
 

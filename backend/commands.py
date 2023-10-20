@@ -12,6 +12,28 @@ def cmd_command(args, **kwargs):
         return subprocess.run(args, capture_output=True, text=True, **kwargs)
 
 
+def cmd_command_pipe(command, stdout=True, stderr=False):
+    if os.name == 'nt':
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    else:
+        si = None
+
+    try:
+        proc = subprocess.Popen(command, startupinfo=si, text=True,
+                                stdout=subprocess.PIPE if stdout else None,
+                                stderr=subprocess.STDOUT if stderr and stdout else None)
+        for line in iter(proc.stdout.readline, ''):
+            yield line
+    except Exception as ex:
+        raise subprocess.CalledProcessError(1, f"{ex.__class__.__name__}: {ex}")
+
+    proc.stdout.close()
+    exit_code = proc.poll()
+    if exit_code:
+        raise subprocess.CalledProcessError(exit_code, command)
+
+
 def read_file(path, default=None) -> str:
     try:
         file = open(path, encoding='utf-8')

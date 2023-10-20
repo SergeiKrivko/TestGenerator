@@ -1,12 +1,9 @@
-import inspect
-import json
+
 import os
 import re
 from time import sleep
 
 import docx
-import requests
-import win32com.client as win32client
 from PIL import Image
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml import OxmlElement, ns
@@ -21,8 +18,6 @@ import latex2mathml.converter as latex_converter
 
 import config
 from other.report.docx_api import docx_to_pdf_by_api
-from other.report.pdf_converter import PdfConverter
-from other.report.types import *
 
 DEFAULT_STILES = {
     'Normal': {'font': 'Times New Roman', 'size': 14, 'color': (0, 0, 0)},
@@ -42,220 +37,6 @@ DEFAULT_PROPERTIES = {
 }
 
 
-class MarkdownParser2:
-    def __init__(self, bm, text: str):
-        self.bm = bm
-        self.text = text
-        self.document = Document()
-
-    def convert(self):
-        paragraph = None
-        table = None
-        lst = None
-        table_rows = 0
-        lexer = 'python'
-        code_lines = None
-
-        for line in self.text.split('\n'):
-
-            if re.match(r"!\[[\w.\\/:]+]\([\w.\\/:]+\)", line.strip()):
-                default_text, image_path = line.strip()[2:-1].split('](')
-                if image_path.endswith('.svg'):
-                    svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
-                img = Image.open(image_path)
-                height, width = img.height, img.width
-                if width > 170:
-                    height = height * 170 // width
-                    width = 170
-                img.close()
-                try:
-                    self.document.add_picture(image_path, width=width, height=height)
-                except Exception:
-                    self.document.add_paragraph(default_text)
-
-            elif code_lines is not None:
-                code_lines.append(line)
-                if line.endswith('```'):
-                    code_lines[-1] = line.rstrip('```')
-                    # self.highlight_code('\n'.join(code_lines), lexer)
-                    code_lines = None
-            elif line.startswith('#'):
-                self.document.add_heading(line.lstrip('#').strip(), count_in_start(line, '#'))
-                paragraph = None
-                table = None
-                lst = None
-            elif line.startswith('- '):
-                if lst is None:
-                    lst = self.document.add_list()
-                p = lst.add_paragraph()
-                self.add_runs(p, line.lstrip('-').strip())
-                paragraph = None
-                table = None
-            elif line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
-                if lst is None or line.startswith('1.'):
-                    lst = self.document.add_list(num=True)
-                level = count_in_start(line, ' ') // 3
-                p = lst.add_paragraph()
-                self.add_runs(p, line.lstrip('-').strip())
-                paragraph = None
-                table = None
-            elif line.startswith('```'):
-                code_lines = []
-                lexer = line.lstrip('```').strip()
-            # elif line.startswith('['):
-            #     self.run_macros(line)
-            # elif line.startswith('|'):
-            #     if table is None:
-            #         table_columns = line.strip().count('|') - 1
-            #         table_rows = 1
-            #         table = self.document.add_table(rows=1, cols=table_columns, style='Table Grid')
-            #         for i, text in enumerate(line.strip()[1:-1].split('|')):
-            #             table.cell(0, i).text = text.strip()
-            #     elif line.strip().strip('-|'):
-            #         table.add_row()
-            #         for i, text in enumerate(line.strip()[1:-1].split('|')):
-            #             table.cell(table_rows, i).text = text.strip()
-            #         table_rows += 1
-
-            elif not line.strip():
-                paragraph = None
-                table = None
-                lst = None
-            elif lst is not None:
-                self.add_runs(lst.paragraphs[1], line.strip())
-            else:
-                if paragraph is None:
-                    paragraph = self.document.add_paragraph()
-                    self.add_runs(paragraph, line.strip())
-                else:
-                    paragraph.add_run(' ')
-                    self.add_runs(paragraph, line.strip())
-
-    def add_runs(self, paragraph: Paragraph, line: str):
-        words = line.split(' ')
-        code = False
-        bold = False
-        italic = False
-
-        for word in words:
-            text = word
-            if text == '*' or text == '**':
-                pass
-            elif text.startswith('`'):
-                code = True
-                text = text[1:]
-            elif text.startswith('***'):
-                bold = True
-                italic = True
-                text = text[3:]
-            elif text.startswith('**'):
-                bold = True
-                text = text[2:]
-            elif text.startswith('*'):
-                italic = True
-                text = text[1:]
-
-            if text == '*' or text == '**':
-                pass
-            elif text.endswith('`'):
-                text = text[:-1]
-            elif text.endswith('***'):
-                text = text[:-3]
-            elif text.endswith('**'):
-                text = text[:-2]
-            elif text.endswith('*'):
-                text = text[:-1]
-
-            paragraph.add_run(text, f"{'c' if code else ''}{'b' if bold else ''}{'i' if italic else ''}")
-
-            if word.endswith('`'):
-                code = False
-            elif word.endswith('***'):
-                bold = False
-                italic = False
-            elif word.endswith('**'):
-                bold = False
-            elif word.endswith('*'):
-                italic = False
-
-    def run_macros(self, line):
-        if line.startswith('[tests]: <>'):
-            flags = set(map(str.upper, line[len('[tests]: <>'):].strip().strip('()').split()))
-            lst = ["Описание", "Входные данные"]
-            if 'EXPECTED_OUTPUT' in flags:
-                lst.append("Ожидаемый вывод")
-            if 'REAL_OUTPUT' in flags:
-                lst.append("Фактический вывод")
-            if 'STATUS' in flags:
-                lst.append("Результат")
-            tests = self.bm.func_tests['pos'] + self.bm.func_tests['neg']
-            table = self.document.add_table(rows=len(tests) + 1, cols=len(lst), style='Table Grid')
-            if 'RUN' in flags:
-                looper = self.bm.start_testing()
-                while not looper.isFinished():
-                    sleep(0.1)
-            for i, el in enumerate(lst):
-                table.cell(0, i).text = el
-            for i, test in enumerate(self._prepare_tests_data(tests, flags)):
-                for j, el in enumerate(test):
-                    table.cell(i + 1, j).text = el
-
-    @staticmethod
-    def _prepare_tests_data(tests, flags):
-        for test in tests:
-            lst = [test.get('desc', '').strip(), test.get('in', '').strip()]
-            if 'EXPECTED_OUTPUT' in flags:
-                lst.append(test.get('out', '').strip())
-            if 'REAL_OUTPUT' in flags:
-                if 'RUN' in flags:
-                    lst.append(test.prog_out.get('STDOUT', '').strip())
-                else:
-                    lst.append(test.get('out', ''))
-            if 'STATUS' in flags:
-                lst.append("OK" if 'RUN' not in flags or test.res() else "FAIL")
-            yield lst
-
-    def highlight_code(self, code: str, lexer: str = 'c'):
-        def delete_paragraph(paragraph):
-            p = paragraph._element
-            p.getparent().remove(p)
-            paragraph._p = paragraph._element = None
-
-        req = {
-            'code': code.strip(),
-            'lexer': lexer,
-            'options': [],
-            'style': 'colorful',
-            'linenos': True
-        }
-        try:
-            if not lexer:
-                raise Exception
-            res = post('http://hilite.me/api', req)
-            if res.status_code >= 400:
-                raise Exception(str(res.status_code))
-            text = res.text
-        except Exception as ex:
-            table = self.document.add_table(rows=1, cols=2)
-            table.cell(0, 0).paragraphs[0].text = '\n'.join(map(str, range(1, code.strip().count('\n') + 2)))
-            table.cell(0, 0).paragraphs[0].style = 'Body Text'
-            table.cell(0, 1).paragraphs[0].text = code.strip()
-            table.cell(0, 1).paragraphs[0].style = 'Body Text'
-        else:
-            self.html_parser.add_html_to_document(text, self.document)
-            table = self.document.tables[-1]
-            delete_paragraph(self.document.paragraphs[-1])
-        table.style = 'Table Grid'
-        for row in table.rows:
-            row.cells[0].width = Mm(10)
-            row.cells[1].width = Mm(167)
-        table.cell(0, 1).paragraphs[0].runs[-1].text = table.cell(0, 1).paragraphs[0].runs[-1].text.rstrip()
-        for run in table.cell(0, 0).paragraphs[0].runs:
-            run.font.size = Pt(11)
-        for run in table.cell(0, 1).paragraphs[0].runs:
-            run.font.size = Pt(11)
-
-
 class MarkdownParser:
     def __init__(self, bm, text: str, dist: str, to_pdf="", styles=None, properties=None):
         self.bm = bm
@@ -271,99 +52,168 @@ class MarkdownParser:
         self._set_styles(styles if styles else DEFAULT_STILES)
         self.properties = properties if properties else DEFAULT_PROPERTIES
 
-    def convert(self):
-        paragraph = None
-        table = None
-        table_columns = 0
-        table_rows = 0
-        lexer = 'python'
-        code_lines = None
-        formula = None
+        self._lines = self.text.split('\n')
+        self._current_line = -1
 
+    def _next_line(self):
+        self._current_line += 1
+        if self._current_line >= len(self._lines):
+            return None
+        return self._lines[self._current_line]
+
+    def _have_lines(self):
+        return self._current_line < len(self._lines) - 1
+
+    def convert(self):
         self.add_table_of_content()
 
-        for line in self.text.split('\n'):
-
-            if re.match(r"!\[[\w.\\/:]+]\([\w.\\/:]+\)", line.strip()):
-                default_text, image_path = line.strip()[2:-1].split('](')
-                if image_path.endswith('.svg'):
-                    svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
-                img = Image.open(image_path)
-                height, width = img.height, img.width
-                if width > 170:
-                    height = height * 170 // width
-                    width = 170
-                img.close()
-                try:
-                    self.document.add_picture(image_path, width=Mm(width), height=Mm(height))
-                except Exception:
-                    self.document.add_paragraph(default_text)
-
-            elif code_lines is not None:
-                code_lines.append(line)
-                if line.endswith('```'):
-                    code_lines[-1] = line.rstrip('```')
-                    self.highlight_code('\n'.join(code_lines), lexer)
-                    code_lines = None
-            elif line.startswith('#'):
-                p = self.document.add_heading(line.lstrip('#').strip(), count_in_start(line, '#'))
-                p.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
-                paragraph = None
-            elif line.startswith('- '):
-                p = self.document.add_paragraph(line.lstrip('-').strip(), "List Bullet")
-                p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-                paragraph = None
-            elif line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
-                level = count_in_start(line, ' ') // 3
-                p = self.document.add_paragraph(line.strip().lstrip('1234567890.').strip(), "List Number")
-                p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-                self.list_number(p, paragraph, level=level, num=line.strip().startswith('1.'))
-                paragraph = p
-            elif line.startswith('```'):
-                code_lines = []
-                lexer = line.lstrip('```').strip()
-            elif line.startswith('[page-break]: <>'):
-                self.document.add_page_break()
-            elif line.startswith('[formula-start]: <>'):
-                formula = []
-            elif formula is not None:
-                if line.startswith('[formula-end]: <>'):
-                    self.parse_formula('\n'.join(formula))
-                    formula = None
-                else:
-                    formula.append(line)
-            elif line.startswith('['):
-                self.run_macros(line)
-            elif line.startswith('|'):
-                if table is None:
-                    table_columns = line.strip().count('|') - 1
-                    table_rows = 1
-                    table = self.document.add_table(rows=1, cols=table_columns, style='Table Grid')
-                    for i, text in enumerate(line.strip()[1:-1].split('|')):
-                        table.cell(0, i).text = text.strip()
-                elif line.strip().strip('-|'):
-                    table.add_row()
-                    for i, text in enumerate(line.strip()[1:-1].split('|')):
-                        table.cell(table_rows, i).text = text.strip()
-                    table_rows += 1
-
-            elif not line.strip():
-                paragraph = None
-            else:
-                if paragraph is None:
-                    paragraph = self.document.add_paragraph()
-                    paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-                    paragraph.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
-                    self.add_runs(paragraph, line.strip())
-                else:
-                    paragraph.add_run(' ')
-                    self.add_runs(paragraph, line.strip())
+        while (line := self._next_line()) is not None:
+            if self.parse_image(line):
+                continue
+            if self.parse_code(line):
+                continue
+            if self.parse_header(line):
+                continue
+            if self.parse_bullet_list(line):
+                continue
+            if self.parse_num_list(line):
+                continue
+            if self.parse_page_break(line):
+                continue
+            if self.parse_formula(line):
+                continue
+            if self.parse_simple_formula(line):
+                continue
+            if self.parse_tests(line):
+                continue
+            if self.parse_table(line):
+                continue
+            if self.parse_paragraph(line):
+                continue
 
         self.set_margins()
         self._add_page_numbers()
         self.document.save(self.dist)
         if self.to_pdf:
             self.convert_to_pdf()
+
+    def parse_paragraph(self, line):
+        if not line.strip():
+            return False
+        paragraph = self.document.add_paragraph()
+        paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+        paragraph.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
+        self.add_runs(paragraph, line.strip())
+        while (line := self._next_line()) is not None and line.strip():
+            # if self.parse_simple_formula(line):
+            #     continue
+            self.add_runs(paragraph, line.strip())
+        return True
+
+    def parse_header(self, line):
+        if not line.startswith('#'):
+            return False
+        p = self.document.add_heading(line.lstrip('#').strip(), count_in_start(line, '#'))
+        p.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
+        return True
+
+    def parse_bullet_list(self, line):
+        if not line.startswith('- '):
+            return False
+        level = count_in_start(line, ' ') // 2
+        paragraph = self.document.add_paragraph(style="List Bullet")
+        paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+        self.add_runs(paragraph, line.lstrip().lstrip('-').strip())
+        while (line := self._next_line()) is not None and line.strip():
+            if line.strip().startswith('- '):
+                level = count_in_start(line, ' ') // 2
+                print(level, repr(line))
+                paragraph = self.document.add_paragraph(style="List Bullet")
+                paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+                MarkdownParser._billet_list(paragraph, level)
+            self.add_runs(paragraph, line.lstrip().lstrip('-').strip())
+        return True
+
+    def parse_num_list(self, line):
+        if not line.strip().lstrip('1234567890').startswith('. ') or line.strip().startswith('.'):
+            return False
+        level = count_in_start(line, ' ') // 3
+        paragraph = self.document.add_paragraph(style="List Number")
+        paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+        self.add_runs(paragraph, line.strip().lstrip('1234567890.').lstrip())
+        while (line := self._next_line()) is not None and line.strip():
+            if line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
+                level = count_in_start(line, ' ') // 3
+                paragraph = self.document.add_paragraph(style="List Number")
+                paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+                MarkdownParser._num_list(paragraph, level)
+            self.add_runs(paragraph, line.strip().lstrip('1234567890.').lstrip())
+        return True
+
+    def parse_page_break(self, line):
+        if not line.startswith('[page-break]: <>'):
+            return False
+        self.document.add_page_break()
+        return True
+
+    def parse_formula(self, line):
+        if line.startswith('[formula-start]: <>'):
+            lines = []
+            while (line := self._next_line()) is not None and not line.startswith('[formula-end]: <>'):
+                lines.append(line)
+            self.convert_formula('\n'.join(lines))
+            return True
+        return False
+
+    def parse_simple_formula(self, line, paragraph=None):
+        if line.startswith('[formula]: <> ('):
+            self.convert_formula(line[len('[formula]: <> ('):-1], paragraph)
+            return True
+        return False
+
+    def parse_image(self, line):
+        if not re.match(r"!\[[\w.\\/:]*]\([\w.\\/:]+\)", line.strip()):
+            return False
+        default_text, image_path = line.strip()[2:-1].split('](')
+        if image_path.endswith('.svg'):
+            svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
+        img = Image.open(image_path)
+        height, width = img.height, img.width
+        if width > 170:
+            height = height * 170 // width
+            width = 170
+        img.close()
+        try:
+            self.document.add_picture(image_path, width=Mm(width), height=Mm(height))
+        except Exception:
+            self.document.add_paragraph(default_text)
+        return True
+
+    def parse_code(self, line):
+        if not line.startswith('```'):
+            return False
+        lexer = line.lstrip('```').strip()
+        code_lines = []
+        while (line := self._next_line()) is not None and not line.endswith('```'):
+            code_lines.append(line)
+        self.highlight_code('\n'.join(code_lines), lexer)
+        return True
+
+    def parse_table(self, line: str):
+        if not line.startswith('|'):
+            return False
+        table_columns = line.strip().count('|') - 1
+        table_rows = 1
+        table = self.document.add_table(rows=1, cols=table_columns, style='Table Grid')
+        for i, text in enumerate(line.strip()[1:-1].split('|')):
+            table.cell(0, i).text = text.strip()
+        while (line := self._next_line()) is not None and line.startswith('|'):
+            if line.strip().strip('-|'):
+                table.add_row()
+                for i, text in enumerate(line.strip()[1:-1].split('|')):
+                    table.cell(table_rows, i).text = text.strip()
+                table_rows += 1
+        return True
 
     def add_runs(self, paragraph, line):
         words = line.split(' ')
@@ -419,7 +269,7 @@ class MarkdownParser:
             elif word.endswith('*'):
                 italic = False
 
-    def run_macros(self, line):
+    def parse_tests(self, line):
         if line.startswith('[tests]: <>'):
             flags = set(map(str.upper, line[len('[tests]: <>'):].strip().strip('()').split()))
             lst = ["Описание", "Входные данные"]
@@ -440,6 +290,8 @@ class MarkdownParser:
             for i, test in enumerate(self._prepare_tests_data(tests, flags)):
                 for j, el in enumerate(test):
                     table.cell(i + 1, j).text = el
+            return True
+        return False
 
     @staticmethod
     def _prepare_tests_data(tests, flags):
@@ -555,105 +407,34 @@ class MarkdownParser:
 
         add_page_number(self.document.sections[0].footer.paragraphs[0])
 
-    def list_number(self, par, prev=None, level=None, num=True):
-        """
-        Makes a paragraph into a list item with a specific level and
-        optional restart.
+    @staticmethod
+    def _num_list(paragraph, level=0):
+        if level > 0:
+            num_pr = OxmlElement('w:numPr')
 
-        An attempt will be made to retreive an abstract numbering style that
-        corresponds to the style of the paragraph. If that is not possible,
-        the default numbering or bullet style will be used based on the
-        ``num`` parameter.
+            ilvl = OxmlElement('w:ilvl')
+            ilvl.set(ns.qn('w:val'), str(level))
+            num_pr.append(ilvl)
 
-        Parameters
-        ----------
-        doc : docx.document.Document
-            The document to add the list into.
-        par : docx.paragraph.Paragraph
-            The paragraph to turn into a list item.
-        prev : docx.paragraph.Paragraph or None
-            The previous paragraph in the list. If specified, the numbering
-            and styles will be taken as a continuation of this paragraph.
-            If omitted, a new numbering scheme will be started.
-        level : int or None
-            The level of the paragraph within the outline. If ``prev`` is
-            set, defaults to the same level as in ``prev``. Otherwise,
-            defaults to zero.
-        num : bool
-            If ``prev`` is :py:obj:`None` and the style of the paragraph
-            does not correspond to an existing numbering style, this will
-            determine wether or not the list will be numbered or bulleted.
-            The result is not guaranteed, but is fairly safe for most Word
-            templates.
-        """
-        xpath_options = {
-            True: {'single': 'count(w:lvl)=1 and ', 'level': 0},
-            False: {'single': '', 'level': level},
-        }
+            numId = OxmlElement('w:numId')
+            numId.set(ns.qn('w:val'), '10')
+            num_pr.append(numId)
 
-        def style_xpath(prefer_single=True):
-            """
-            The style comes from the outer-scope variable ``par.style.name``.
-            """
-            style = par.style.style_id
-            return (
-                'w:abstractNum['
-                '{single}w:lvl[@w:ilvl="{level}"]/w:pStyle[@w:val="{style}"]'
-                ']/@w:abstractNumId'
-            ).format(style=style, **xpath_options[prefer_single])
+            paragraph._p.pPr.append(num_pr)
 
-        def type_xpath(prefer_single=True):
-            """
-            The type is from the outer-scope variable ``num``.
-            """
-            type = 'decimal' if num else 'bullet'
-            return (
-                'w:abstractNum['
-                '{single}w:lvl[@w:ilvl="{level}"]/w:numFmt[@w:val="{type}"]'
-                ']/@w:abstractNumId'
-            ).format(type=type, **xpath_options[prefer_single])
+    @staticmethod
+    def _billet_list(paragraph, level=0):
+        num_pr = OxmlElement('w:numPr')
 
-        def get_abstract_id():
-            """
-            Select as follows:
+        ilvl = OxmlElement('w:ilvl')
+        ilvl.set(ns.qn('w:val'), str(level))
+        num_pr.append(ilvl)
 
-                1. Match single-level by style (get min ID)
-                2. Match exact style and level (get min ID)
-                3. Match single-level decimal/bullet types (get min ID)
-                4. Match decimal/bullet in requested level (get min ID)
-                3. 0
-            """
-            for fn in (style_xpath, type_xpath):
-                for prefer_single in (True, False):
-                    xpath = fn(prefer_single)
-                    ids = numbering.xpath(xpath)
-                    if ids:
-                        return min(int(x) for x in ids)
-            return 0
+        numId = OxmlElement('w:numId')
+        numId.set(ns.qn('w:val'), str(level + 1))
+        num_pr.append(numId)
 
-        if (prev is None or
-                prev._p.pPr is None or
-                prev._p.pPr.numPr is None or
-                prev._p.pPr.numPr.numId is None):
-            if level is None:
-                level = 0
-            numbering = self.document.part.numbering_part.numbering_definitions._numbering
-            # Compute the abstract ID first by style, then by num
-            anum = get_abstract_id()
-            # Set the concrete numbering based on the abstract numbering ID
-            numbr = numbering.add_num(anum)
-            # Make sure to override the abstract continuation property
-            numbr.add_lvlOverride(ilvl=level).add_startOverride(1)
-            # Extract the newly-allocated concrete numbering ID
-            numbr = numbr.numId
-        else:
-            if level is None:
-                level = prev._p.pPr.numPr.ilvl.val
-            # Get the previous concrete numbering ID
-            numbr = prev._p.pPr.numPr.numId.val
-        if num:
-            par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_numId().val = numbr
-        par._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = level
+        paragraph._p.pPr.append(num_pr)
 
     def convert_to_pdf(self):
         if os.name == 'nt':
@@ -692,7 +473,7 @@ class MarkdownParser:
 
         self.document.add_page_break()
 
-    def parse_formula(self, text):
+    def convert_formula(self, text, paragraph=None):
         mathml = latex_converter.convert(text)
         tree = etree.fromstring(mathml)
         xslt = etree.parse(
@@ -701,7 +482,8 @@ class MarkdownParser:
         transform = etree.XSLT(xslt)
         new_dom = transform(tree)
 
-        paragraph = self.document.add_paragraph()
+        if not paragraph:
+            paragraph = self.document.add_paragraph()
         paragraph._element.append(new_dom.getroot())
 
 
@@ -713,14 +495,13 @@ if __name__ == '__main__':
     from sys import argv
 
     with open(argv[1], encoding='utf-8') as f:
-        # converter = MarkdownParser(None, f.read(), argv[2], to_pdf='' if len(argv) < 4 else argv[3])
-        converter = MarkdownParser2(None, f.read())
+        converter = MarkdownParser(None, f.read(), argv[2], to_pdf='' if len(argv) < 5 else argv[3])
+        # converter = MarkdownParser2(None, f.read())
     converter.convert()
-    pdf_converter = PdfConverter(converter.document, argv[3])
-    pdf_converter.convert()
-    os.system(f".{os.sep}{argv[3]}")
-    # if len(argv) >= 4:
-    #     if os.path.isabs(argv[3]):
-    #         os.system(argv[3])
-    #     else:
-    #         os.system(f".{os.sep}{argv[3]}")
+    # pdf_converter = PdfConverter(converter.document, argv[3])
+    # pdf_converter.convert()
+    if len(argv) >= 5:
+        if os.path.isabs(argv[3]):
+            os.system(argv[3])
+        else:
+            os.system(f".{os.sep}{argv[3]}")

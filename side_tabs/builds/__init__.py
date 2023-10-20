@@ -2,7 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QDialog, QComboBox, QPushButton
 
-from backend.types.build import Build
+from backend.backend_types.build import Build
 from side_tabs.builds.build_edit import BuildEdit
 from ui.button import Button
 from ui.side_bar_window import SideBarWindow

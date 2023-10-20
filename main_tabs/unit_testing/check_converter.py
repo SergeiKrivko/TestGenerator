@@ -1,9 +1,9 @@
 import os
 import shutil
 
-from backend.types.unit_test import UnitTest
-from backend.types.unit_tests_module import UnitTestsModule
-from backend.types.unit_tests_suite import UnitTestsSuite
+from backend.backend_types.unit_test import UnitTest
+from backend.backend_types.unit_tests_module import UnitTestsModule
+from backend.backend_types.unit_tests_suite import UnitTestsSuite
 
 
 class CheckConverter:

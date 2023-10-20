@@ -3,7 +3,7 @@ import os
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QFileDialog
 
-from backend.types.build import Build
+from backend.backend_types.build import Build
 from side_tabs.builds.build_fields import *
 from side_tabs.builds.commands_list import CommandsList
 

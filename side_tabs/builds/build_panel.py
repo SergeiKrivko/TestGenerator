@@ -3,7 +3,7 @@ import os
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetItem, QWidget, \
     QLineEdit
 
-from backend.types.build import Build
+from backend.backend_types.build import Build
 from backend.backend_manager import BackendManager
 from language.languages import languages
 from language.utils import get_files

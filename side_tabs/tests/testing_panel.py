@@ -2,7 +2,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QListWidget, QListWidgetItem
 
-from backend.types.func_test import FuncTest
+from backend.backend_types.func_test import FuncTest
 from backend.backend_manager import BackendManager
 from ui.side_panel_widget import SidePanelWidget
 

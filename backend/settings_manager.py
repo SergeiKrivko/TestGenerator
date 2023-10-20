@@ -5,7 +5,7 @@ from PyQt6.QtCore import QSettings, pyqtSignal, QObject
 from json import dumps, loads, JSONDecodeError
 import appdirs
 
-from backend.types.project import Project
+from backend.backend_types.project import Project
 from backend.search import Searcher
 
 

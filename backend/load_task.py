@@ -5,11 +5,11 @@ from time import sleep
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from backend.commands import get_sorted_jsons
-from backend.types.build import Build
-from backend.types.func_test import FuncTest
-from backend.types.project import Project
-from backend.types.unit_tests_module import UnitTestsModule
-from backend.types.util import Util
+from backend.backend_types.build import Build
+from backend.backend_types.func_test import FuncTest
+from backend.backend_types.project import Project
+from backend.backend_types.unit_tests_module import UnitTestsModule
+from backend.backend_types.util import Util
 from language.languages import languages
 from language.utils import get_files
 

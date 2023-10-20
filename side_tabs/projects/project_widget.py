@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetIt
     QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
 import py7zr
 
-from backend.types.project import Project
+from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget

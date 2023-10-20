@@ -2,7 +2,7 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QVBoxLayout, QListWidgetItem, QLabel, QLineEdit, \
     QComboBox, QCheckBox
 
-from backend.types.util import Util
+from backend.backend_types.util import Util
 from ui.button import Button
 
 

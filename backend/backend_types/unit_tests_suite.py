@@ -6,7 +6,7 @@ from typing import Literal
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from backend.commands import write_file, read_json, get_sorted_jsons
-from backend.types.unit_test import UnitTest
+from backend.backend_types.unit_test import UnitTest
 
 
 class UnitTestsSuite(QObject):

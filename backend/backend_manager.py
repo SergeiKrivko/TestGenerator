@@ -1,6 +1,8 @@
 import os.path
 import random
+import subprocess
 import sys
+from types import FunctionType
 from typing import Literal
 
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
@@ -8,17 +10,17 @@ from PyQt6.QtCore import QObject, pyqtSignal, QThread
 from backend.func_testing import TestingLooper
 from backend.load_task import Loader
 from backend.macros_converter import MacrosConverter
-from backend.types.build import Build
-from backend.types.project import Project
-from backend.types.unit_test import UnitTest
-from backend.types.unit_tests_module import UnitTestsModule
-from backend.types.util import Util
+from backend.backend_types.build import Build
+from backend.backend_types.project import Project
+from backend.backend_types.unit_test import UnitTest
+from backend.backend_types.unit_tests_module import UnitTestsModule
+from backend.backend_types.util import Util
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from main_tabs.unit_testing.check_converter import CheckConverter
 from side_tabs.builds.commands_list import CommandsList
 from language.languages import languages
 from backend.settings_manager import SettingsManager
-from backend.types.func_test import FuncTest
+from backend.backend_types.func_test import FuncTest
 from backend.commands import *
 
 
@@ -36,6 +38,7 @@ class BackendManager(QObject):
 
     addUnitTestModule = pyqtSignal(UnitTestsModule)
     clearUnitTests = pyqtSignal()
+    unitTestingError = pyqtSignal(str)
 
     startTesting = pyqtSignal(list)
     testingError = pyqtSignal(str)
@@ -232,7 +235,7 @@ class BackendManager(QObject):
         self.builds.clear()
         self.clearBuilds.emit()
 
-    def get_build(self, id: int):
+    def get_build(self, id: int) -> Build:
         return self.builds.get(id)
 
     # --------------------------- UTILS --------------------------------
@@ -274,28 +277,35 @@ class BackendManager(QObject):
     def _unit_testing(self, project):
         self.convert_unit_tests()
 
-        command = project.get('build', dict()).get('data', '')
-        res, errors = self.compile(command, project, False)
-        # if not res:
-        #     dialog = CompilerErrorWindow(errors, self.tm, languages[
-        #         self.sm.get('language', 'C')].get('compiler_mask'))
-        #     dialog.exec()
-        #     return
-
-        res = cmd_command(f"{project.path()}/app.exe", shell=True, cwd=project.path())
-
         items = []
         for module in self.unit_tests_modules:
             for suite in module.suits():
                 for el in suite.tests():
+                    el['status'] = UnitTest.CHANGED
                     items.append(el)
+
+        build_id = project.get('build')
+        if build_id is None:
+            self.unitTestingError.emit("Build not found!")
+            return
+        build = self.get_build(build_id)
+
+        res, errors = self.compile_build(build_id, project)
+        if not res:
+            self.unitTestingError.emit(errors)
+            return
+
         i = 0
-        for line in res.stdout.split('\n'):
-            if line.count(':') >= 6:
-                lst = line.split(':')
-                items[i]['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
-                items[i]['test_res'] = ':'.join(lst[6:])
-                i += 1
+        try:
+            for line in cmd_command_pipe(build.run(project, self.sm)):
+                if line.count(':') >= 6:
+                    lst = line.split(':')
+                    items[i]['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
+                    items[i]['test_res'] = ':'.join(lst[6:])
+                    i += 1
+        except subprocess.CalledProcessError as ex:
+            self.unitTestingError.emit(str(ex))
+            return
 
     def clear_unit_tests(self):
         self.unit_tests_modules.clear()
@@ -350,7 +360,7 @@ class BackendManager(QObject):
 
     # --------------------- process ----------------------------
 
-    def run_process(self, thread: QThread, group: str, name: str):
+    def run_process(self, thread: QThread | FunctionType, group: str, name: str):
         if not isinstance(thread, QThread):
             thread = Looper(thread)
         if group not in self._background_processes:

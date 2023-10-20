@@ -27,7 +27,7 @@ class TgClient(Client):
         self._authorization_state = None
         self._authorization_handler = None
 
-        # self.module = Module(r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\types.py",
+        # self.module = Module(r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\backend_types.py",
         #                      r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\events.py")
 
     def send(self, data: dict):

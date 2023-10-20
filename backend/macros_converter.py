@@ -3,8 +3,8 @@ from json import loads, JSONDecodeError
 
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 
-from backend.types.func_test import FuncTest
-from backend.types.project import Project
+from backend.backend_types.func_test import FuncTest
+from backend.backend_types.project import Project
 from other.binary_redactor.convert_binary import convert as convert_binary
 
 

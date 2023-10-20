@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
     QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
 
-from backend.types.func_test import FuncTest
+from backend.backend_types.func_test import FuncTest
 from backend.backend_manager import BackendManager
 from ui.main_tab import MainTab
 from ui.options_window import OptionsWidget

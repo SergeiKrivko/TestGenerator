@@ -6,9 +6,10 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QTreeWidget, \
 
 from backend.backend_manager import BackendManager
 from backend.settings_manager import SettingsManager
-from backend.types.unit_test import UnitTest
-from backend.types.unit_tests_module import UnitTestsModule
-from backend.types.unit_tests_suite import UnitTestsSuite
+from backend.backend_types.unit_test import UnitTest
+from backend.backend_types.unit_tests_module import UnitTestsModule
+from backend.backend_types.unit_tests_suite import UnitTestsSuite
+from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from main_tabs.tests.commands import CommandManager
 from main_tabs.unit_testing.test_edit import UnitTestEdit, TestSuiteEdit
 from side_tabs.builds.commands_list import ScenarioBox
@@ -103,6 +104,12 @@ class UnitTestingWidget(MainTab):
         self.data_dir = ""
         self.bm.addUnitTestModule.connect(self.add_module)
         self.bm.clearUnitTests.connect(self.clear_tests)
+
+        self.bm.unitTestingError.connect(self._on_testing_failed)
+
+    def _on_testing_failed(self, errors):
+        dialog = CompilerErrorWindow(errors, self.tm)
+        dialog.exec()
 
     def add_module(self, module: UnitTestsModule):
         self._tree_widget.addTopLevelItem(TreeModuleItem(self.tm, module))

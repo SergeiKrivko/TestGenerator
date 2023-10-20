@@ -63,7 +63,7 @@ class Build:
     def run_preproc(self):
         pass
 
-    def run(self, project, sm, args):
+    def run(self, project, sm, args=''):
         match self.get('type'):
             case 'C':
                 return c_run(project, self, args)

@@ -2,7 +2,7 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import  QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, \
     QDialog, QDialogButtonBox
 
-from backend.types.func_test import FuncTest
+from backend.backend_types.func_test import FuncTest
 from other.binary_redactor.redactor import RedactorWidget
 
 

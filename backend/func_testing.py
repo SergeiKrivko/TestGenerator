@@ -7,9 +7,9 @@ from time import sleep
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from backend.commands import read_file, read_binary, cmd_command
-from backend.types.func_test import FuncTest
-from backend.types.project import Project
-from backend.types.util import Util
+from backend.backend_types.func_test import FuncTest
+from backend.backend_types.project import Project
+from backend.backend_types.util import Util
 from language.utils import get_files
 from other.binary_redactor.binary_decoder import decode, comparator as bytes_comparator
 from backend.macros_converter import MacrosConverter

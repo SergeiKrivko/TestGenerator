@@ -3,8 +3,8 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 
 from main_tabs.code_tab.syntax_highlighter import CodeEditor
 from main_tabs.tests.commands import CommandManager
-from backend.types.unit_test import UnitTest
-from backend.types.unit_tests_suite import UnitTestsSuite
+from backend.backend_types.unit_test import UnitTest
+from backend.backend_types.unit_tests_suite import UnitTestsSuite
 
 
 class UnitTestEdit(QScrollArea):

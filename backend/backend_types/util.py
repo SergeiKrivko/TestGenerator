@@ -3,7 +3,7 @@ import os.path
 import shutil
 
 from backend.commands import read_json
-from backend.types.build import Build
+from backend.backend_types.build import Build
 
 from language.testing.c import *
 from language.testing.python import *

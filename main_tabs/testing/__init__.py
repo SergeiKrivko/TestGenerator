@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBox
     QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
 
 from backend.backend_manager import BackendManager
-from backend.types.func_test import FuncTest
+from backend.backend_types.func_test import FuncTest
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from language.languages import languages
 from ui.main_tab import MainTab

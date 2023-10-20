@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidg
     QLineEdit, QPushButton
 
 from backend.settings_manager import SettingsManager
-from backend.types.build import Build
+from backend.backend_types.build import Build
 import side_tabs.builds as builds
 from ui.button import Button
 

@@ -4,7 +4,7 @@ from typing import Literal
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from backend.types.unit_tests_suite import UnitTestsSuite
+from backend.backend_types.unit_tests_suite import UnitTestsSuite
 
 
 class UnitTestsModule(QObject):
