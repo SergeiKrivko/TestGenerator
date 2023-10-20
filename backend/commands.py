@@ -12,7 +12,7 @@ def cmd_command(args, **kwargs):
         return subprocess.run(args, capture_output=True, text=True, **kwargs)
 
 
-def cmd_command_pipe(command, stdout=True, stderr=False):
+def cmd_command_pipe(command, stdout=True, stderr=False, **kwargs):
     if os.name == 'nt':
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -22,7 +22,8 @@ def cmd_command_pipe(command, stdout=True, stderr=False):
     try:
         proc = subprocess.Popen(command, startupinfo=si, text=True,
                                 stdout=subprocess.PIPE if stdout else None,
-                                stderr=subprocess.STDOUT if stderr and stdout else None)
+                                stderr=subprocess.STDOUT if stderr and stdout else None,
+                                **kwargs)
         for line in iter(proc.stdout.readline, ''):
             yield line
     except Exception as ex:

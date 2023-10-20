@@ -297,7 +297,7 @@ class BackendManager(QObject):
 
         i = 0
         try:
-            for line in cmd_command_pipe(build.run(project, self.sm)):
+            for line in cmd_command_pipe(build.run(project, self.sm), shell=True):
                 if line.count(':') >= 6:
                     lst = line.split(':')
                     items[i]['status'] = UnitTest.PASSED if lst[2] == 'P' else UnitTest.FAILED
