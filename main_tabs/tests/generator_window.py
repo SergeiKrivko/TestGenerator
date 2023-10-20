@@ -86,7 +86,7 @@ class GeneratorTab(SidePanelWidget):
                                           "path"]
 
     def run_code(self):
-        os.makedirs(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}", exist_ok=True)
+        os.makedirs(f"{self.sm.project.data_path()}/func_tests/{self.test_type}", exist_ok=True)
         file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm.line_sep)
         file.write(self.previous_code())
         file.write(self.code_edit.text())
@@ -113,7 +113,7 @@ class GeneratorTab(SidePanelWidget):
         self.buttons['run'].show()
 
     def show_info(self):
-        MessageBox(MessageBox.Information, "Генерация тестов",
+        MessageBox(MessageBox.Icon.Information, "Генерация тестов",
                    f"class Test:\n"
                    f"    def __init__(self, desc='', in_data='', out_data='', args='', exit='')\n"
                    f"    def set_desc(self, desc)\n"
@@ -170,11 +170,11 @@ class Test:
         self.dict['check_files'][index] = {{'type': type, 'text': text}}
         
         
-for el in {os.listdir(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}")}:
+for el in {os.listdir(f"{self.sm.project.data_path()}/func_tests/{self.test_type}")}:
     if el.rstrip('.json').isdigit():
         test = Test()
         try:
-            with open(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}/{{el}}", encoding='utf-8') as f:
+            with open(f"{self.sm.project.data_path()}/func_tests/{self.test_type}/{{el}}", encoding='utf-8') as f:
                 for key, item in json.loads(f.read()).items():
                     test[key] = item
             __tests_list__.append(test)
@@ -183,8 +183,8 @@ for el in {os.listdir(f"{self.sm.data_lab_path()}/func_tests/{self.test_type}")}
         except ValueError:
             pass
 test_count = len(__tests_list__)
-path = "{self.sm.lab_path()}"
-data_path = "{self.sm.data_lab_path()}"
+path = "{self.sm.project.path()}"
+data_path = "{self.sm.project.data_path()}"
 
 
 def add_test(test: Test, index=None):
