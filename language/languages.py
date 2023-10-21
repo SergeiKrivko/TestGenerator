@@ -142,6 +142,27 @@ languages = {
             QsciLexerHTML.UnknownTag: 'Keyword',
             QsciLexerHTML.UnknownAttribute: 'Preprocessor',
         }},
+    'SVG': {
+        'files': ['.svg'],
+        'autocompletion': AcMAbstract,
+        'lexer': QsciLexerXML,
+        'preview': True,
+        'colors': {
+            QsciLexerXML.Default: 'Identifier',
+            QsciLexerXML.Entity: 'Keyword',
+            QsciLexerXML.HTMLValue: 'Preprocessor',
+            QsciLexerXML.HTMLNumber: 'Number',
+            QsciLexerXML.HTMLComment: 'Comment',
+            QsciLexerXML.HTMLDoubleQuotedString: 'String',
+            QsciLexerXML.HTMLSingleQuotedString: 'String',
+            QsciLexerXML.Attribute: 'Preprocessor',
+            QsciLexerXML.Tag: 'Keyword',
+            QsciLexerXML.OtherInTag: 'Identifier',
+            QsciLexerXML.UnknownTag: 'Keyword',
+            QsciLexerXML.UnknownAttribute: 'Preprocessor',
+        },
+        'show_preview': True
+    },
     'json': {'lexer': QsciLexerJSON, 'files': ['.json', '.dg'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerJSON.Default: 'Identifier',
         QsciLexerJSON.Number: 'Number',

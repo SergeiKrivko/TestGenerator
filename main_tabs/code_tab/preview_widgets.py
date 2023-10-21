@@ -45,7 +45,7 @@ class PreviewWidget(QWidget):
                 with open(file, encoding='utf-8') as f:
                     self.text_edit.setMarkdown(f.read())
                 self.text_edit.show()
-            if file.endswith('.html') or file.endswith('.pdf'):
+            if file.endswith('.html') or file.endswith('.pdf') or file.endswith('.svg'):
                 file = file.replace('\\', '/')
                 self.web_engine.setUrl(QUrl(f"file:///{file}"))
                 self.web_engine.show()

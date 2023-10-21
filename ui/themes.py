@@ -618,7 +618,7 @@ class ThemeManager:
             'light':
                 Theme({
                     'Identifier': QColor('#101010'),
-                    'Preprocessor': QColor('#D1A00C'),
+                    'Preprocessor': QColor('#997509'),
                     'Comment': QColor('#B0B0B0'),
                     'Keyword': QColor('#0057D5'),
                     'Number': QColor('#0057D5'),

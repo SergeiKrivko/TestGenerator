@@ -55,6 +55,8 @@ class MarkdownParser:
         self._lines = self.text.split('\n')
         self._current_line = -1
 
+        self._list_id = 9
+
     def _next_line(self):
         self._current_line += 1
         if self._current_line >= len(self._lines):
@@ -102,7 +104,11 @@ class MarkdownParser:
             return False
         paragraph = self.document.add_paragraph()
         paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-        paragraph.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
+        margin = count_in_start(line, ' ') // 4
+        if margin:
+            paragraph.paragraph_format.left_indent = Mm(12.5 * margin)
+        else:
+            paragraph.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
         self.add_runs(paragraph, line.strip())
         while (line := self._next_line()) is not None and line.strip():
             # if self.parse_simple_formula(line):
@@ -127,7 +133,6 @@ class MarkdownParser:
         while (line := self._next_line()) is not None and line.strip():
             if line.strip().startswith('- '):
                 level = count_in_start(line, ' ') // 2
-                print(level, repr(line))
                 paragraph = self.document.add_paragraph(style="List Bullet")
                 paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 MarkdownParser._billet_list(paragraph, level)
@@ -140,13 +145,14 @@ class MarkdownParser:
         level = count_in_start(line, ' ') // 3
         paragraph = self.document.add_paragraph(style="List Number")
         paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+        self._num_list(paragraph, level, new_list=line.strip().startswith('1.'))
         self.add_runs(paragraph, line.strip().lstrip('1234567890.').lstrip())
         while (line := self._next_line()) is not None and line.strip():
             if line.strip().lstrip('1234567890').startswith('. ') and not line.strip().startswith('.'):
                 level = count_in_start(line, ' ') // 3
                 paragraph = self.document.add_paragraph(style="List Number")
                 paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
-                MarkdownParser._num_list(paragraph, level)
+                self._num_list(paragraph, level)
             self.add_runs(paragraph, line.strip().lstrip('1234567890.').lstrip())
         return True
 
@@ -172,14 +178,22 @@ class MarkdownParser:
         return False
 
     def parse_image(self, line):
-        if not re.match(r"!\[[\w.\\/:]*]\([\w.\\/:]+\)", line.strip()):
+        if not re.match(r"!\[[\w.=\\/:]*]\([\w.\\/:]+\)", line.strip()):
             return False
-        default_text, image_path = line.strip()[2:-1].split('](')
+        default_text, image_path = line.strip()[2:line.index(')')].split('](')
         if image_path.endswith('.svg'):
             svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
         img = Image.open(image_path)
         height, width = img.height, img.width
-        if width > 170:
+        if default_text.startswith('height='):
+            h = int(default_text.lstrip('height='))
+            width = width * h // height
+            height = h
+        elif default_text.startswith('width='):
+            w = int(default_text.lstrip('width='))
+            height = height * w // width
+            width = w
+        elif width > 170:
             height = height * 170 // width
             width = 170
         img.close()
@@ -407,20 +421,20 @@ class MarkdownParser:
 
         add_page_number(self.document.sections[0].footer.paragraphs[0])
 
-    @staticmethod
-    def _num_list(paragraph, level=0):
-        if level > 0:
-            num_pr = OxmlElement('w:numPr')
+    def _num_list(self, paragraph, level=0, new_list=False):
+        if new_list:
+            self._list_id += 1
+        num_pr = OxmlElement('w:numPr')
 
-            ilvl = OxmlElement('w:ilvl')
-            ilvl.set(ns.qn('w:val'), str(level))
-            num_pr.append(ilvl)
+        ilvl = OxmlElement('w:ilvl')
+        ilvl.set(ns.qn('w:val'), str(level))
+        num_pr.append(ilvl)
 
-            numId = OxmlElement('w:numId')
-            numId.set(ns.qn('w:val'), '10')
-            num_pr.append(numId)
+        numId = OxmlElement('w:numId')
+        numId.set(ns.qn('w:val'), str(self._list_id))
+        num_pr.append(numId)
 
-            paragraph._p.pPr.append(num_pr)
+        paragraph._p.pPr.append(num_pr)
 
     @staticmethod
     def _billet_list(paragraph, level=0):

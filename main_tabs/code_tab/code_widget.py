@@ -1,5 +1,6 @@
 import os
 
+from PyQt6.Qsci import QsciLexerCPP
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog
@@ -117,10 +118,15 @@ class CodeWidget(MainTab):
         if self.buttons[path] == 1:
             self.top_panel.button_preview.hide()
             self.top_panel.button_run.show()
-        elif self.buttons[path] == 2:
+        elif self.buttons[path] in [2, 3]:
             self.top_panel.button_run.hide()
             self.top_panel.button_preview.show()
-            self.top_panel.button_preview.setChecked(False)
+            if self.buttons[path] == 3:
+                self.top_panel.button_preview.setChecked(True)
+                self.code_widgets[path].hide()
+                self.preview_widgets[path].show()
+            else:
+                self.top_panel.button_preview.setChecked(False)
         else:
             self.top_panel.button_run.hide()
             self.top_panel.button_preview.hide()
@@ -187,6 +193,8 @@ class CodeWidget(MainTab):
                         preview_widget.set_theme()
                         self.preview_widgets[path] = preview_widget
                         self.buttons[path] = 2 if 'lexer' in language else 0
+                        if language.get('show_preview', False):
+                            self.buttons[path] = 3
                     elif language.get('fast_run', False):
                         self.buttons[path] = 1
                     self.top_panel.open_tab(path)
