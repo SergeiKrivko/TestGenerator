@@ -1,7 +1,5 @@
 import os.path
 import random
-import subprocess
-import sys
 from types import FunctionType
 from typing import Literal
 
@@ -15,10 +13,7 @@ from backend.backend_types.project import Project
 from backend.backend_types.unit_test import UnitTest
 from backend.backend_types.unit_tests_module import UnitTestsModule
 from backend.backend_types.util import Util
-from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from main_tabs.unit_testing.check_converter import CheckConverter
-from side_tabs.builds.commands_list import CommandsList
-from language.languages import languages
 from backend.settings_manager import SettingsManager
 from backend.backend_types.func_test import FuncTest
 from backend.commands import *
@@ -132,16 +127,24 @@ class BackendManager(QObject):
         if index is None:
             index = len(self.func_tests[test.type()])
         self.func_tests[test.type()].insert(index, test)
+        self.sm.set(f'{test.type()}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test.type()]))
         self.addFuncTest.emit(test, index)
+
+    def new_func_test(self, test_type='pos', index=None):
+        test = FuncTest(f"{self.sm.project.data_path()}/func_tests/{test_type}", test_type=test_type)
+        self.add_func_test(test, index)
 
     def delete_func_test(self, type: Literal['pos', 'neg'], index: int):
         test = self.func_tests[type][index]
         self.func_tests[type].pop(index)
+        test.delete()
+        self.sm.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
         self.deleteFuncTest.emit(test, index)
 
     def clear_func_tests(self):
-        self.func_tests['pos'].clear()
-        self.func_tests['neg'].clear()
+        for test_type in ['pos', 'neg']:
+            self.func_tests[test_type].clear()
+            # self.sm.set(f'{test_type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test_type]))
         self.clearFuncTests.emit()
 
     def get_func_test(self, type: Literal['pos', 'neg', 'all'], index: int):
@@ -169,6 +172,7 @@ class BackendManager(QObject):
                 self.delete_func_test(type, index)
                 index += 1
                 self.add_func_test(test, index)
+        self.sm.project.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
 
     def func_tests_count(self, type: Literal['pos', 'neg', 'all'] = 'all'):
         match type:

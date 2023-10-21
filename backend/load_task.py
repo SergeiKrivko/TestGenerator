@@ -43,14 +43,15 @@ class Loader(QThread):
         self.next_step()
 
     def store_func_tests(self):
-        if os.path.isdir(data_path := f"{self._old_data_path}/func_tests"):
-            pass
-            shutil.rmtree(data_path)
-        for pos in ['pos', 'neg']:
-            for i, el in enumerate(self._manager.func_tests[pos]):
-                path = f"{data_path}/{pos}/{i}.json"
-                el.set_path(path)
-                el.store()
+        pass
+        # if os.path.isdir(data_path := f"{self._old_data_path}/func_tests"):
+        #     pass
+        #     shutil.rmtree(data_path)
+        # for pos in ['pos', 'neg']:
+        #     for i, el in enumerate(self._manager.func_tests[pos]):
+        #         path = f"{data_path}/{pos}/{i}.json"
+        #         el.set_path(path)
+        #         el.store()
 
     def store_unit_tests(self):
         self._manager.convert_unit_tests()
@@ -87,19 +88,16 @@ class Loader(QThread):
         self.next_step()
 
     def load_func_tests(self):
-        if os.path.isdir(f"{self._new_data_path}/func_tests/pos"):
-            lst = list(
-                filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self._new_data_path}/func_tests/pos")))
-            lst.sort(key=lambda s: int(s.rstrip('.json')))
-            for i, el in enumerate(lst):
-                self._manager.add_func_test(FuncTest(f"{self._new_data_path}/func_tests/pos/{el}", 'pos'))
-
-        if os.path.isdir(f"{self._new_data_path}/func_tests/neg"):
-            lst = list(
-                filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(f"{self._new_data_path}/func_tests/neg")))
-            lst.sort(key=lambda s: int(s.rstrip('.json')))
-            for i, el in enumerate(lst):
-                self._manager.add_func_test(FuncTest(f"{self._new_data_path}/func_tests/neg/{el}", 'neg'))
+        for test_type in ['pos', 'neg']:
+            if isinstance(lst := self._sm.project.get(f'{test_type}_func_tests'), str):
+                for test_id in lst.split(';'):
+                    if test_id:
+                        self._manager.add_func_test(FuncTest(
+                            f"{self._new_data_path}/func_tests/{test_type}", test_id, test_type=test_type))
+            else:
+                for i, el in enumerate(get_sorted_jsons(f"{self._new_data_path}/func_tests/{test_type}")):
+                    self._manager.add_func_test(FuncTest.from_file(
+                        f"{self._new_data_path}/func_tests/{test_type}/{el}", test_type))
 
     def load_unit_tests(self):
         modules = dict()
@@ -151,8 +149,9 @@ class Loader(QThread):
         else:
             self.load_utils()
 
+        self.clear_all()
+
         if self._project:
-            self.clear_all()
             self.loadingStart.emit(self._project)
             if isinstance(self._main_project, Project):
                 self._sm.set_main_project(self._main_project, self._project)
@@ -165,6 +164,7 @@ class Loader(QThread):
             if self._sm.project and self._sm.project.path() in self._sm.all_projects:
                 self._new_data_path = self._sm.project.data_path()
                 self.load_task()
+
         elif self._sm.project:
             self._sm.project.save_settings()
             self.store_utils()

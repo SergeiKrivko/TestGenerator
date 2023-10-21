@@ -186,11 +186,12 @@ class TestTableWidget(QWidget):
     def save_neg_comparator(self):
         self.sm.get('neg_comparator', self.neg_comparator_widget.currentIndex() - 1)
 
-    def move_selection(self, test_type, direction):
+    def move_selection(self, test_type, direction, index):
+        print(test_type, direction, self.pos_test_list.currentRow())
         list_widget = self.pos_test_list if test_type == 'pos' else self.neg_test_list
-        index = list_widget.currentRow()
+        # index = list_widget.currentRow()
         if direction == 'up':
-            index = max(0, index - 2)
+            index = max(0, index - 1)
         else:
             index = min(list_widget.count() - 1, index + 1)
         list_widget.setCurrentRow(index)

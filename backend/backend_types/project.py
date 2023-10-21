@@ -29,6 +29,7 @@ class Project:
             self.load_projects()
 
         self.load_settings()
+        self['version'] = APP_VERSION
 
     def name(self):
         if 'name' in self._data:
@@ -88,7 +89,6 @@ class Project:
 
     def save_settings(self):
         os.makedirs(self._path, exist_ok=True)
-        self['version'] = APP_VERSION
         with open(os.path.join(self.data_path(), Project.SETTINGS_FILE), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._data, indent=2))
 
@@ -102,6 +102,7 @@ class Project:
 
     def __setitem__(self, key, value):
         self._data[key] = value
+        self.save_settings()
 
     def get(self, key, default=None):
         if key in self._data or self._parent is None:
@@ -110,10 +111,12 @@ class Project:
 
     def set(self, key, value):
         self._data[key] = value
+        self.save_settings()
 
     def pop(self, key):
         if key in self._data:
             self._data.pop(key)
+        self.save_settings()
 
     def get_child(self, name):
         return self._children[name]

@@ -73,6 +73,8 @@ def write_file(path: str, text: str):
 
 
 def get_sorted_jsons(path: str):
+    if not os.path.isdir(path):
+        return []
     lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(path)))
     lst.sort(key=lambda el: int(el.rstrip('.json')))
     return lst

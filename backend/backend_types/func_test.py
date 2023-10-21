@@ -1,5 +1,8 @@
 import json
 import os.path
+from uuid import uuid4, UUID
+
+from backend.commands import read_json
 
 
 class FuncTest:
@@ -9,8 +12,14 @@ class FuncTest:
     TERMINATED = 3
     TIMEOUT = 4
 
-    def __init__(self, path=None, test_type='pos'):
-        self._path = path
+    def __init__(self, directory='', test_id=None, test_type='pos'):
+        if test_id:
+            self.id = UUID(test_id)
+        else:
+            self.id = uuid4()
+
+        self._directory = directory
+        self._path = f"{self._directory}/{self.id}.json"
         self._name = ''
         self._test_type = test_type
         self._data = None
@@ -49,27 +58,36 @@ class FuncTest:
         self._path = path
 
     def load(self):
-        if self._path is None:
+        if self._path is None or not os.path.isfile(self._path):
             self._data = dict()
             return
         try:
             with open(self._path, encoding='utf-8') as f:
                 self._data = json.loads(f.read())
-                self.in_data = {'STDIN': self.get('in', '')}
-                self.out_data = {'STDOUT': self.get('out', '')}
-                for i, el in enumerate(self.get('in_files', [])):
-                    self.in_data[f"in_file_{i + 1}.{el['type']}"] = el['text']
-                    if 'check' in el:
-                        self.out_data[f"check_file_{i + 1}.{el['type']}"] = el['check']
-                for i, el in enumerate(self.get('out_files', [])):
-                    self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
+                self.load_testing_data()
         except json.JSONDecodeError:
             self._data = dict()
+
+    def load_testing_data(self):
+        self.in_data = {'STDIN': self.get('in', '')}
+        self.out_data = {'STDOUT': self.get('out', '')}
+        for i, el in enumerate(self.get('in_files', [])):
+            self.in_data[f"in_file_{i + 1}.{el['type']}"] = el['text']
+            if 'check' in el:
+                self.out_data[f"check_file_{i + 1}.{el['type']}"] = el['check']
+        for i, el in enumerate(self.get('out_files', [])):
+            self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
 
     def unload(self):
         self._data = None
         self.in_data.clear()
         self.out_data.clear()
+
+    def delete(self):
+        try:
+            os.remove(self._path)
+        except FileNotFoundError:
+            pass
 
     def get(self, key, default=None):
         return self._data.get(key, default)
@@ -84,7 +102,15 @@ class FuncTest:
 
     def __setitem__(self, key, value):
         self._data[key] = value
+        self.store()
 
     def pop(self, key):
         self._data.pop(key)
+        self.store()
 
+    @staticmethod
+    def from_file(path: str, test_type):
+        test = FuncTest(os.path.split(path)[0], test_type=test_type)
+        test._data = read_json(path)
+        test.load_testing_data()
+        return test

@@ -88,7 +88,7 @@ class TestsWidget(MainTab):
             index = self.test_list_widget.pos_test_list.currentRow() + 1
         else:
             index = self.test_list_widget.pos_test_list.count()
-        self.bm.add_func_test(FuncTest(test_type='pos'), index)
+        self.bm.new_func_test('pos', index)
         self.test_list_widget.pos_test_list.setCurrentRow(index)
 
     def add_neg_test(self):
@@ -96,7 +96,7 @@ class TestsWidget(MainTab):
             index = self.test_list_widget.neg_test_list.currentRow() + 1
         else:
             index = self.test_list_widget.neg_test_list.count()
-        self.bm.add_func_test(FuncTest(test_type='neg'), index)
+        self.bm.new_func_test('neg', index)
         self.test_list_widget.neg_test_list.setCurrentRow(index)
 
     def delete_pos_test(self):
@@ -157,23 +157,23 @@ class TestsWidget(MainTab):
 
     def move_pos_test_up(self):
         self.tests_changed = True
-        self.bm.move_func_test('pos', 'up', self.test_list_widget.pos_test_list.currentRow())
-        self.test_list_widget.move_selection('pos', 'up')
+        self.bm.move_func_test('pos', 'up', ind := self.test_list_widget.pos_test_list.currentRow())
+        self.test_list_widget.move_selection('pos', 'up', ind)
 
     def move_pos_test_down(self):
         self.tests_changed = True
-        self.bm.move_func_test('pos', 'down', self.test_list_widget.pos_test_list.currentRow())
-        self.test_list_widget.move_selection('pos', 'down')
+        self.bm.move_func_test('pos', 'down', ind := self.test_list_widget.pos_test_list.currentRow())
+        self.test_list_widget.move_selection('pos', 'down', ind)
 
     def move_neg_test_up(self):
         self.tests_changed = True
-        self.bm.move_func_test('neg', 'up', self.test_list_widget.neg_test_list.currentRow())
-        self.test_list_widget.move_selection('neg', 'up')
+        self.bm.move_func_test('neg', 'up', ind := self.test_list_widget.neg_test_list.currentRow())
+        self.test_list_widget.move_selection('neg', 'up', ind)
 
     def move_neg_test_down(self):
         self.tests_changed = True
-        self.bm.move_func_test('neg', 'down', self.test_list_widget.neg_test_list.currentRow())
-        self.test_list_widget.move_selection('neg', 'down')
+        self.bm.move_func_test('neg', 'down', ind := self.test_list_widget.neg_test_list.currentRow())
+        self.test_list_widget.move_selection('neg', 'down', ind)
 
     def get_path(self, from_settings=False):
         self.path = self.sm.lab_path()
