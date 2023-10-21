@@ -37,6 +37,8 @@ class UnitTestingWidget(MainTab):
         main_layout.addLayout(left_layout, 1)
 
         self.scenario_box = ScenarioBox(self.sm, self.bm, self.tm)
+        self.sm.projectChanged.connect(lambda: self.scenario_box.load(self.sm.get('unit_build')))
+        self.scenario_box.currentIndexChanged.connect(self._on_build_changed)
         left_layout.addWidget(self.scenario_box)
 
         buttons_layout = QHBoxLayout()
@@ -110,6 +112,9 @@ class UnitTestingWidget(MainTab):
     def _on_testing_failed(self, errors):
         dialog = CompilerErrorWindow(errors, self.tm)
         dialog.exec()
+
+    def _on_build_changed(self):
+        self.sm.set('unit_build', self.scenario_box.current_scenario())
 
     def add_module(self, module: UnitTestsModule):
         self._tree_widget.addTopLevelItem(TreeModuleItem(self.tm, module))

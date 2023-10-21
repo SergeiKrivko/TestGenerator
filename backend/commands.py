@@ -3,24 +3,22 @@ import os
 import subprocess
 
 
-def cmd_command(args, **kwargs):
+def get_si():
     if os.name == 'nt':
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        return subprocess.run(args, capture_output=True, text=True, startupinfo=si, **kwargs)
+        return si
     else:
-        return subprocess.run(args, capture_output=True, text=True, **kwargs)
+        return None
+
+
+def cmd_command(args, **kwargs):
+        return subprocess.run(args, capture_output=True, text=True, startupinfo=get_si(), **kwargs)
 
 
 def cmd_command_pipe(command, stdout=True, stderr=False, **kwargs):
-    if os.name == 'nt':
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    else:
-        si = None
-
     try:
-        proc = subprocess.Popen(command, startupinfo=si, text=True,
+        proc = subprocess.Popen(command, startupinfo=get_si(), text=True,
                                 stdout=subprocess.PIPE if stdout else None,
                                 stderr=subprocess.STDOUT if stderr and stdout else None,
                                 **kwargs)

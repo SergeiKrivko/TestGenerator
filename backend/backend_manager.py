@@ -284,7 +284,7 @@ class BackendManager(QObject):
                     el['status'] = UnitTest.CHANGED
                     items.append(el)
 
-        build_id = project.get('build')
+        build_id = project.get('unit_build')
         if build_id is None:
             self.unitTestingError.emit("Build not found!")
             return

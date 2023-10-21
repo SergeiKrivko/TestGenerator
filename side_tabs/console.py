@@ -18,15 +18,20 @@ class Console(Terminal):
         pass
 
     def end_process(self):
-        super().end_process()
+        if not super().end_process():
+            return False
         self.write_text(f'\nProcess finished with exit code {self.return_code}\n')
         self.setReadOnly(True)
+        return True
         
     def start_process(self, command):
         self.command_clear()
         self.write_text(command + '\n')
         self.setReadOnly(False)
         super().start_process(command)
+
+    def run_python(self, path):
+        self.start_process(f"{self.sm.get_general('python', 'python3')} {path}")
 
     def run_file(self, path):
         if path.endswith('.exe'):
@@ -36,9 +41,9 @@ class Console(Terminal):
             if language.get('fast_run', False):
                 for el in language['files']:
                     if path.endswith(el):
-                        if 'compile' in language:
-                            language['compile'](os.path.split(path)[0], self.cm, self.sm, coverage=False)
-                        self.start_process(language['run'](path, self.sm, coverage=False))
+                        # if 'compile' in language:
+                        #     language['compile'](os.path.split(path)[0], self.cm, self.sm, coverage=False)
+                        self.start_process(language['run'](path, self.sm))
                         return
 
     def run_build(self, build_id):

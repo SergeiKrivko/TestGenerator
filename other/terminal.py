@@ -1,9 +1,12 @@
 import os
 import shlex
+import subprocess
 
-from PyQt6.QtCore import QProcess, QByteArray
+from PyQt6.QtCore import QProcess, QByteArray, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
+
+from backend.commands import get_si
 
 
 class Terminal(QTextEdit):
@@ -25,15 +28,9 @@ class Terminal(QTextEdit):
         self._prompt_color = "#000000"
         self._error_color = "#111111"
 
-        self.process = QProcess()
-        self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
-        self.process.setWorkingDirectory(self.current_dir)
-        self.process.readyReadStandardOutput.connect(lambda: self.write_text(self.process.readAllStandardOutput()))
-        self.process.readyReadStandardError.connect(lambda: self.write_text(self.process.readAllStandardError(),
-                                                                            color=self.tm['TestFailed']))
-        self.process.finished.connect(self.end_process)
-
-        self.process.errorOccurred.connect(self.terminate_process)
+        self.process = None
+        self.stdout_reader = None
+        self.stderr_reader = None
 
         self.return_code = 0
 
@@ -86,8 +83,7 @@ class Terminal(QTextEdit):
 
     def command(self, command: str):
         if self.current_process:
-            self.process.write(command.encode(encoding='utf-8'))
-            self.process.write(b'\n')
+            self.process.stdin.write(command + '\n')
         elif command.startswith('cd '):
             self.command_cd(command)
         elif (command.startswith('ls ') or command.strip() == 'ls') and os.name == 'nt':
@@ -101,33 +97,40 @@ class Terminal(QTextEdit):
         if not command.strip():
             self.write_prompt()
             return
-        old_dir = os.getcwd()
-        os.chdir(self.current_dir)
-        csi = shlex.split(command, posix=False)
-        program = csi[0]
-        if os.path.isfile(program):
-            program = os.path.abspath(program)
-        os.chdir(old_dir)
-        csi.pop(0)
-        self.current_process = program
-        self.process.start(program, csi)
+
+        self.current_process = command
+        self.process = subprocess.Popen(command, text=True, startupinfo=get_si(), cwd=self.current_dir,
+                                        shell=True, bufsize=1, encoding='utf-8',
+                                        stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.stdout_reader = PipeReader(self.process.stdout)
+        self.stdout_reader.readyToRead.connect(self.write_text)
+        self.stdout_reader.finished.connect(self.end_process)
+        self.stdout_reader.start()
+        self.stderr_reader = PipeReader(self.process.stderr)
+        self.stderr_reader.readyToRead.connect(lambda text: self.write_text(text, self._error_color))
+        self.stderr_reader.finished.connect(self.end_process)
+        self.stderr_reader.start()
 
     def end_process(self):
-        self.return_code = self.process.exitCode()
+        if not self.stdout_reader.isFinished() or not self.stderr_reader.isFinished() or not self.current_process:
+            return False
         self.current_process = ''
+        self.process.stdout.close()
+        self.process.stderr.close()
+        self.return_code = self.process.poll()
         self.write_prompt()
+        return True
 
-    def terminate_process(self, error_type: QProcess.ProcessError = None):
-        if not self.current_process:
+    def terminate_process(self):
+        if not self.current_process or not isinstance(self.process, subprocess.Popen):
             return
-        if error_type is not None:
-            if error_type == QProcess.ProcessError.FailedToStart and self.current_process:
-                self.write_text(f"Имя \"{self.current_process}\" не распознано как имя командлета, функции, "
-                                f"файла сценария или выполняемой программы. Проверьте правильность написания имени, "
-                                f"а также наличие и правильность пути, после чего повторите попытку.\n",
-                                color=self._error_color)
         self.process.kill()
-        self.end_process()
+        self.stdout_reader.terminate()
+        self.stderr_reader.terminate()
+        self.process.stderr.close()
+        self.process.stdout.close()
+        self.return_code = -1
+        self.write_prompt()
 
     def command_ls(self):
         self.write_text('\n'.join(os.listdir(self.current_dir.replace('"', ''))) + "\n")
@@ -164,7 +167,18 @@ class Terminal(QTextEdit):
 
     def select_project(self):
         self.current_dir = self.sm.project.path()
-        self.process.setWorkingDirectory(self.current_dir)
         self.fixed_html = ''
         self.write_prompt()
 
+
+class PipeReader(QThread):
+    readyToRead = pyqtSignal(str)
+
+    def __init__(self, stream):
+        super().__init__()
+        self._stream = stream
+
+    def run(self) -> None:
+        for line in iter(self._stream.readline, ''):
+            if line:
+                self.readyToRead.emit(line)

@@ -14,7 +14,7 @@ class GeneratorTab(SidePanelWidget):
     complete = pyqtSignal()
 
     def __init__(self, sm, cm, tm):
-        super().__init__(sm, tm, 'Генерация тестов', ['load', 'save', 'run', 'close'])
+        super().__init__(sm, tm, 'Генерация тестов', ['delete', 'load', 'save', 'run', 'close'])
         self.setWindowTitle("TestGenerator")
         self.resize(600, 400)
 
@@ -35,7 +35,7 @@ class GeneratorTab(SidePanelWidget):
 
         self.buttons['load'].clicked.connect(self.open_code)
         self.buttons['save'].clicked.connect(self.save_code)
-        # self.buttons['documentation'].clicked.connect(self.show_info)
+        self.buttons['delete'].clicked.connect(self.show_info)
         self.buttons['close'].clicked.connect(self.close_console)
         self.buttons['run'].clicked.connect(self.run_code)
 
@@ -83,7 +83,7 @@ class GeneratorTab(SidePanelWidget):
                                           "test_count",
                                           "set_desc(test_num, desc)",
                                           "add_test(in_data='', out_data='', args='', desc='-', index=None)",
-                                          "path"]
+                                          "path: str"]
 
     def run_code(self):
         os.makedirs(f"{self.sm.project.data_path()}/func_tests/{self.test_type}", exist_ok=True)
@@ -98,7 +98,7 @@ class GeneratorTab(SidePanelWidget):
         self.buttons['run'].hide()
         self.buttons['close'].show()
         self.console.show()
-        self.console.run_file(f'{self.sm.app_data_dir}/temp.py')
+        self.console.run_python(f'{self.sm.app_data_dir}/temp.py')
 
         # self.looper = self.cm.cmd_command_looper([self.sm.get_general('python'), f'{self.sm.app_data_dir}/temp.py'])
         # self.looper.complete.connect(self.run_complete)
@@ -174,7 +174,7 @@ for el in {os.listdir(f"{self.sm.project.data_path()}/func_tests/{self.test_type
     if el.rstrip('.json').isdigit():
         test = Test()
         try:
-            with open(f"{self.sm.project.data_path()}/func_tests/{self.test_type}/{{el}}", encoding='utf-8') as f:
+            with open(rf"{self.sm.project.data_path()}/func_tests/{self.test_type}/{{el}}", encoding='utf-8') as f:
                 for key, item in json.loads(f.read()).items():
                     test[key] = item
             __tests_list__.append(test)
@@ -183,8 +183,8 @@ for el in {os.listdir(f"{self.sm.project.data_path()}/func_tests/{self.test_type
         except ValueError:
             pass
 test_count = len(__tests_list__)
-path = "{self.sm.project.path()}"
-data_path = "{self.sm.project.data_path()}"
+path = r"{self.sm.project.path()}"
+data_path = r"{self.sm.project.data_path()}"
 
 
 def add_test(test: Test, index=None):
@@ -193,7 +193,7 @@ def add_test(test: Test, index=None):
         __tests_list__.append(test)
     else:
         __tests_list[index] = test
-    with open(f"{{data_path}}/func_tests/{self.test_type}/{{index}}.json", 'w', encoding='utf-8') as f:
+    with open(rf"{{data_path}}/func_tests/{self.test_type}/{{index}}.json", 'w', encoding='utf-8') as f:
         f.write(json.dumps(test.dict))
 
 """
