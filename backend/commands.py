@@ -13,7 +13,9 @@ def get_si():
 
 
 def cmd_command(args, **kwargs):
-        return subprocess.run(args, capture_output=True, text=True, startupinfo=get_si(), **kwargs)
+    if 'encoding' not in kwargs:
+        kwargs['encoding'] = 'utf-8'
+    return subprocess.run(args, capture_output=True, text=True, startupinfo=get_si(), **kwargs)
 
 
 def cmd_command_pipe(command, stdout=True, stderr=False, **kwargs):
@@ -59,7 +61,7 @@ def read_binary(path, default=None) -> bytes:
 
 def read_json(path: str, expected_type: type = dict):
     try:
-        res = json.loads(read_file(path))
+        res = json.loads(read_file(path, ''))
         if not isinstance(res, expected_type):
             res = expected_type()
     except json.JSONDecodeError:

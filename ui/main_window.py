@@ -28,7 +28,7 @@ from main_tabs.testing import TestingWidget
 from main_tabs.tests import TestsWidget
 from main_tabs.tests.commands import CommandManager
 
-from main_tabs.unit_testing.unit_testing_widget import UnitTestingWidget
+from main_tabs.unit_testing.__init__ import UnitTestingWidget
 
 
 class MainWindow(QMainWindow):

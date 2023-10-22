@@ -39,6 +39,7 @@ class TestingLooper(QThread):
             self._build = self._manager.get_build(self._build_id)
 
     def prepare_test(self, test: FuncTest, index: int):
+        test.clear_output()
         if self._project.get('func_tests_in_project'):
             test.args = read_file(self._project.test_args_path(test.type(), index), '')
         else:

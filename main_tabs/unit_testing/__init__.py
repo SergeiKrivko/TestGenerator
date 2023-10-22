@@ -1,5 +1,3 @@
-import os
-
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QTreeWidget, \
     QTreeWidgetItem
@@ -7,7 +5,6 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QTreeWidget, \
 from backend.backend_manager import BackendManager
 from backend.settings_manager import SettingsManager
 from backend.backend_types.unit_test import UnitTest
-from backend.backend_types.unit_tests_module import UnitTestsModule
 from backend.backend_types.unit_tests_suite import UnitTestsSuite
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from main_tabs.tests.commands import CommandManager
@@ -48,7 +45,7 @@ class UnitTestingWidget(MainTab):
         self.button_add_dir = Button(self.tm, 'add_dir', css='Bg')
         self.button_add_dir.setFixedHeight(22)
         self.button_add_dir.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        self.button_add_dir.clicked.connect(self.add_suite)
+        self.button_add_dir.clicked.connect(self.bm.new_suite)
         buttons_layout.addWidget(self.button_add_dir)
 
         self.button_add = Button(self.tm, 'plus', css='Bg')
@@ -104,7 +101,8 @@ class UnitTestingWidget(MainTab):
         right_layout.addWidget(self._test_suite_edit)
 
         self.data_dir = ""
-        self.bm.addUnitTestModule.connect(self.add_module)
+        self.bm.addUnitTestSuite.connect(self.add_suite)
+        self.bm.deleteSuite.connect(self._tree_widget.takeTopLevelItem)
         self.bm.clearUnitTests.connect(self.clear_tests)
 
         self.bm.unitTestingError.connect(self._on_testing_failed)
@@ -115,9 +113,6 @@ class UnitTestingWidget(MainTab):
 
     def _on_build_changed(self):
         self.sm.set('unit_build', self.scenario_box.current_scenario())
-
-    def add_module(self, module: UnitTestsModule):
-        self._tree_widget.addTopLevelItem(TreeModuleItem(self.tm, module))
 
     def clear_tests(self):
         self._tree_widget.clear()
@@ -142,18 +137,20 @@ class UnitTestingWidget(MainTab):
     def delete_item(self):
         self._test_edit.open_test(None)
         for i in range(self._tree_widget.topLevelItemCount()):
-            if self._tree_widget.topLevelItem(i).delete_item():
-                break
+            item = self._tree_widget.topLevelItem(i)
+            if isinstance(item, TreeSuiteItem):
+                if item.isSelected():
+                    self.bm.delete_suite(i)
+                if item.delete_item():
+                    break
 
     def add_test(self):
         for i in range(self._tree_widget.topLevelItemCount()):
             if self._tree_widget.topLevelItem(i).add_test():
                 break
 
-    def add_suite(self):
-        for i in range(self._tree_widget.topLevelItemCount()):
-            if self._tree_widget.topLevelItem(i).add_suite():
-                return
+    def add_suite(self, suite):
+        self._tree_widget.addTopLevelItem(TreeSuiteItem(self.tm, suite))
 
     def move_up(self):
         for i in range(self._tree_widget.topLevelItemCount()):
@@ -171,74 +168,12 @@ class UnitTestingWidget(MainTab):
             self.tm.auto_css(el)
         for i in range(self._tree_widget.topLevelItemCount()):
             item = self._tree_widget.topLevelItem(i)
-            if not isinstance(item, TreeModuleItem):
+            if not isinstance(item, TreeSuiteItem):
                 continue
             item.set_theme()
         self.scenario_box.set_theme()
         self._test_edit.set_theme()
         self._test_suite_edit.set_theme()
-
-
-class TreeModuleItem(QTreeWidgetItem):
-    def __init__(self, tm, module: UnitTestsModule):
-        super().__init__()
-        self._tm = tm
-        self.module = module
-        self.setText(0, os.path.basename(module.name()))
-
-        self.module.addSuite.connect(self._on_suite_add)
-        self.module.deleteSuite.connect(self._on_suite_delete)
-
-        for suite in self.module.suits():
-            self.addChild(TreeSuiteItem(self._tm, suite))
-
-    def add_suite(self):
-        if self.isSelected():
-            self.module.insert_suite(UnitTestsSuite('-'), 0)
-            return True
-
-        for i in range(self.childCount()):
-            if self.child(i).isSelected():
-                self.module.insert_suite(UnitTestsSuite('-'), i + 1)
-                return True
-        return False
-
-    def add_test(self):
-        if self.isSelected():
-            return True
-        for i in range(self.childCount()):
-            if self.child(i).add_test():
-                return True
-
-    def delete_item(self):
-        for i in range(self.childCount()):
-            if self.child(i).isSelected():
-                self.module.delete_suite(i)
-                return True
-            if self.child(i).delete_item():
-                return True
-        return False
-
-    def move(self, direction):
-        for i in range(self.childCount()):
-            if self.child(i).isSelected():
-                self.module.move_suite(direction, i)
-                return True
-            if self.child(i).move(direction):
-                return True
-        return False
-
-    def _on_suite_add(self, suite, index):
-        self.insertChild(index, TreeSuiteItem(self._tm, suite))
-
-    def _on_suite_delete(self, index):
-        self.takeChild(index)
-
-    def set_theme(self):
-        self.setIcon(0, QIcon(self._tm.get_image('c')))
-        self.setFont(0, self._tm.font_medium)
-        for i in range(self.childCount()):
-            self.child(i).set_theme()
 
 
 class TreeSuiteItem(QTreeWidgetItem):
@@ -257,12 +192,12 @@ class TreeSuiteItem(QTreeWidgetItem):
 
     def add_test(self):
         if self.isSelected():
-            self.suite.insert_test(UnitTest('-'), 0)
+            self.suite.new_test(0)
             return True
 
         for i in range(self.childCount()):
             if self.child(i).isSelected():
-                self.suite.insert_test(UnitTest('-'), i + 1)
+                self.suite.new_test(i + 1)
                 return True
         return False
 

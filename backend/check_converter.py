@@ -1,32 +1,35 @@
 import os
 import shutil
 
+from backend.backend_types.project import Project
 from backend.backend_types.unit_test import UnitTest
 from backend.backend_types.unit_tests_module import UnitTestsModule
 from backend.backend_types.unit_tests_suite import UnitTestsSuite
+from language.languages import languages
+from language.utils import get_files
 
 
 class CheckConverter:
-    def __init__(self, data_path: str, modules: list[UnitTestsModule]):
+    def __init__(self, data_path: str, project: Project, suites: list[UnitTestsSuite]):
         self._data_path = data_path
 
-        self._modules = modules
-
-    def _check_tests_count(self):
-        for module in self._modules:
-            for suite in module.suits():
-                for test in suite.tests():
-                    return True
-        return False
+        self._tests_count = 0
+        self._modules = {os.path.basename(path): UnitTestsModule(os.path.basename(path)) for path in get_files(
+                project.path(), languages[project.get('language', 'C')].get('files')[0])}
+        for suite in suites:
+            if os.path.basename(suite.module()) not in self._modules:
+                continue
+            self._tests_count += len(list(suite.tests()))
+            self._modules[os.path.basename(suite.module())].add_suite(suite)
 
     def convert(self):
         if os.path.isdir(self._data_path):
             shutil.rmtree(self._data_path)
-        if not self._check_tests_count():
+        if not self._tests_count:
             return
         os.makedirs(self._data_path, exist_ok=True)
         suits = []
-        for module in self._modules:
+        for module in self._modules.values():
             if module.has_suits():
                 for el in module.suits():
                     suits.append(el.name())
@@ -56,14 +59,15 @@ class CheckConverter:
 
 
 def convert_test(file, test: UnitTest):
-    in_code = '\n    '.join(test['in_code'].split('\n'))
-    run_code = '\n    '.join(test['run_code'].split('\n'))
-    out_code = '\n    '.join(test['out_code'].split('\n'))
-    file.write(f"""START_TEST({test['name']})
-{{
-    {in_code}
-    {run_code}
-    {out_code}
+    in_code, run_code, out_code = '', '', ''
+    if test.get('in_code') is not None:
+        in_code = '\n    '.join(test['in_code'].split('\n'))
+    if test.get('out_code') is not None:
+        out_code = '\n\n    '.join(test['out_code'].split('\n'))
+    if test.get('run_code') is not None:
+        run_code = '\n\n    '.join(test['run_code'].split('\n'))
+    file.write(f"""START_TEST({test.get('name')})
+{{{in_code}{run_code}{out_code}
 }}
 END_TEST\n\n""")
 
@@ -81,7 +85,7 @@ def convert_suite(file, suite: UnitTestsSuite):
     tc_core = tcase_create("core");
 """)
     for test in suite.tests():
-        file.write(f"    tcase_add_test(tc_core, {test['name']});\n")
+        file.write(f"    tcase_add_test(tc_core, {test.get('name')});\n")
     file.write(f"""    suite_add_tcase(s, tc_core);
     return s;
 }}\n\n""")

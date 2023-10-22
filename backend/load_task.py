@@ -1,6 +1,5 @@
 import os
 import shutil
-from time import sleep
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -8,10 +7,8 @@ from backend.commands import get_sorted_jsons
 from backend.backend_types.build import Build
 from backend.backend_types.func_test import FuncTest
 from backend.backend_types.project import Project
-from backend.backend_types.unit_tests_module import UnitTestsModule
 from backend.backend_types.util import Util
-from language.languages import languages
-from language.utils import get_files
+from backend.backend_types.unit_tests_suite import UnitTestsSuite
 
 
 class Loader(QThread):
@@ -55,9 +52,9 @@ class Loader(QThread):
 
     def store_unit_tests(self):
         self._manager.convert_unit_tests()
-        path = f"{self._old_data_path}/unit_tests"
-        for module in self._manager.unit_tests_modules:
-            module.store(path)
+        # path = f"{self._old_data_path}/unit_tests"
+        # for module in self._manager.unit_tests_modules:
+        #     module.store(path)
 
     def store_builds(self):
         if os.path.isdir(data_path := f"{self._old_data_path}/scenarios"):
@@ -100,25 +97,11 @@ class Loader(QThread):
                         f"{self._new_data_path}/func_tests/{test_type}/{el}", test_type))
 
     def load_unit_tests(self):
-        modules = dict()
-        path = f"{self._new_data_path}/unit_tests"
-        if os.path.isdir(path):
-            for el in os.listdir(path):
-                if os.path.isdir(os.path.join(path, el)):
-                    self._manager.add_module(module := UnitTestsModule(el))
-                    modules[el] = module
-                    module.load(f"{path}/{el}")
-
-        try:
-            for el in get_files(self._sm.project.path(), languages[self._sm.project.get('language', 'C')].get(
-                    'files')[0]):
-                el = os.path.basename(el)
-                if el not in modules:
-                    module = UnitTestsModule(el)
-                    modules[el] = module
-                    self._manager.add_module(module)
-        except KeyError:
-            pass
+        if isinstance(lst := self._sm.project.get(f'unit_tests'), str):
+            for suite_id in lst.split(';'):
+                if suite_id:
+                    self._manager.add_suite(UnitTestsSuite(f"{self._new_data_path}/unit_tests", suite_id))
+        # TODO: Сделать загрузку старого формата
 
     def load_builds(self):
         path = f"{self._new_data_path}/scenarios"

@@ -2,10 +2,11 @@ import json
 import os.path
 import shutil
 from typing import Literal
+from uuid import uuid4, UUID
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from backend.commands import write_file, read_json, get_sorted_jsons
+from backend.commands import write_file, read_json
 from backend.backend_types.unit_test import UnitTest
 
 
@@ -13,19 +14,41 @@ class UnitTestsSuite(QObject):
     addTest = pyqtSignal(UnitTest, int)
     deleteTest = pyqtSignal(int)
     nameChanged = pyqtSignal()
+    moduleChanged = pyqtSignal()
 
-    def __init__(self, name):
+    def __init__(self, directory, suite_id=None):
         super().__init__()
-        self._name = name
+        if suite_id is None:
+            self.id = uuid4()
+        else:
+            self.id = UUID(suite_id)
+        self._directory = directory
+        self._path = os.path.join(self._directory, str(self.id))
+        self._data_file = os.path.join(self._path, 'data.txt')
+
+        self._removing = False
+
+        self._name = ""
+        self._module = ""
         self._tests = []
         self._code = ""
+        self.load()
 
     def name(self):
         return self._name
 
     def set_name(self, name):
         self._name = name
+        self.store()
         self.nameChanged.emit()
+
+    def module(self):
+        return self._module
+
+    def set_module(self, module):
+        self._module = module
+        self.store()
+        self.moduleChanged.emit()
 
     def tests(self):
         for el in self._tests:
@@ -36,17 +59,26 @@ class UnitTestsSuite(QObject):
 
     def set_code(self, code):
         self._code = code
+        self.store()
 
     def add_test(self, test: UnitTest):
         self._tests.append(test)
+        self.store()
         self.addTest.emit(test, len(self._tests) - 1)
+
+    def new_test(self, index):
+        test = UnitTest(self._path)
+        self.insert_test(test, index)
 
     def insert_test(self, test: UnitTest, index: int):
         self._tests.insert(index, test)
+        self.store()
         self.addTest.emit(test, index)
 
     def delete_test(self, index):
+        self._tests[index].delete()
         self._tests.pop(index)
+        self.store()
         self.deleteTest.emit(index)
 
     def move_test(self, direction: Literal['up', 'down'], index: int):
@@ -66,23 +98,33 @@ class UnitTestsSuite(QObject):
                 index += 1
                 self.insert_test(test, index)
 
-    def load(self, path: str):
+    def load(self):
         self._tests.clear()
-        if not os.path.isdir(path):
+        if not os.path.isdir(self._path):
             return
-        dct = read_json(os.path.join(path, "code.txt"))
+        dct = read_json(self._data_file)
         self.set_code(dct.get('code'))
         self.set_name(dct.get('name'))
-        for el in get_sorted_jsons(path):
-            self.add_test(UnitTest(os.path.join(path, el)))
+        self.set_module(dct.get('module'))
+        for el in dct.get('tests', []):
+            self.add_test(UnitTest(self._path, el))
 
-    def store(self, path):
-        path = os.path.join(path, self._name)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        os.makedirs(path)
-        write_file(os.path.join(path, "code.txt"), json.dumps({'name': self._name, 'code': self._code}))
+    def store(self):
+        if self._removing:
+            return
+        os.makedirs(self._path, exist_ok=True)
+        write_file(self._data_file, json.dumps({
+            'name': self._name,
+            'code': self._code,
+            'module': self._module,
+            'tests': [str(test.id) for test in self._tests]
+        }))
 
-        for i, test in enumerate(self._tests):
-            test.set_path(f"{path}/{i}.json")
-            test.store()
+    def delete(self):
+        self._removing = True
+        try:
+            shutil.rmtree(self._path)
+        except FileNotFoundError:
+            pass
+        except PermissionError:
+            pass

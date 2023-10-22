@@ -5,15 +5,15 @@ from typing import Literal
 
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
+from backend.backend_types.unit_tests_suite import UnitTestsSuite
 from backend.func_testing import TestingLooper
 from backend.load_task import Loader
 from backend.macros_converter import MacrosConverter
 from backend.backend_types.build import Build
 from backend.backend_types.project import Project
 from backend.backend_types.unit_test import UnitTest
-from backend.backend_types.unit_tests_module import UnitTestsModule
 from backend.backend_types.util import Util
-from main_tabs.unit_testing.check_converter import CheckConverter
+from backend.check_converter import CheckConverter
 from backend.settings_manager import SettingsManager
 from backend.backend_types.func_test import FuncTest
 from backend.commands import *
@@ -31,7 +31,8 @@ class BackendManager(QObject):
     clearFuncTests = pyqtSignal()
     changeTestStatus = pyqtSignal(FuncTest)
 
-    addUnitTestModule = pyqtSignal(UnitTestsModule)
+    addUnitTestSuite = pyqtSignal(UnitTestsSuite)
+    deleteSuite = pyqtSignal(int)
     clearUnitTests = pyqtSignal()
     unitTestingError = pyqtSignal(str)
 
@@ -62,7 +63,7 @@ class BackendManager(QObject):
         self.func_tests = {'pos': [], 'neg': []}
         self.builds = dict()
         self.utils = dict()
-        self.unit_tests_modules: list[UnitTestsModule] = []
+        self.unit_tests_suites: list[UnitTestsSuite] = []
 
         self.func_test_completed = 0
 
@@ -267,12 +268,24 @@ class BackendManager(QObject):
 
     # ------------------- UNIT TESTING -------------------------
 
-    def add_module(self, module: UnitTestsModule):
-        self.unit_tests_modules.append(module)
-        self.addUnitTestModule.emit(module)
+    def add_suite(self, suite: UnitTestsSuite):
+        self.unit_tests_suites.append(suite)
+        self.sm.set('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
+        self.addUnitTestSuite.emit(suite)
+
+    def delete_suite(self, index):
+        suite = self.unit_tests_suites[index]
+        suite.delete()
+        self.unit_tests_suites.pop(index)
+        self.sm.set('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
+        self.deleteSuite.emit(index)
+
+    def new_suite(self):
+        self.add_suite(UnitTestsSuite(f"{self.sm.project.data_path()}/unit_tests"))
 
     def convert_unit_tests(self):
-        converter = CheckConverter(self.sm.project.unit_tests_path(), self.unit_tests_modules.copy())
+        converter = CheckConverter(self.sm.project.unit_tests_path(), self.sm.project,
+                                   self.unit_tests_suites.copy())
         converter.convert()
 
     def run_unit_tests(self):
@@ -282,11 +295,10 @@ class BackendManager(QObject):
         self.convert_unit_tests()
 
         items = []
-        for module in self.unit_tests_modules:
-            for suite in module.suits():
-                for el in suite.tests():
-                    el['status'] = UnitTest.CHANGED
-                    items.append(el)
+        for suite in self.unit_tests_suites:
+            for el in suite.tests():
+                el['status'] = UnitTest.CHANGED
+                items.append(el)
 
         build_id = project.get('unit_build')
         if build_id is None:
@@ -312,7 +324,7 @@ class BackendManager(QObject):
             return
 
     def clear_unit_tests(self):
-        self.unit_tests_modules.clear()
+        self.unit_tests_suites.clear()
         self.clearUnitTests.emit()
 
     # --------------------- running ----------------------------

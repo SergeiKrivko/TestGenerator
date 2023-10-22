@@ -78,6 +78,11 @@ class FuncTest:
         for i, el in enumerate(self.get('out_files', [])):
             self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
 
+    def clear_output(self):
+        self.prog_out.clear()
+        self.results.clear()
+        self.utils_output.clear()
+
     def unload(self):
         self._data = None
         self.in_data.clear()
@@ -113,4 +118,5 @@ class FuncTest:
         test = FuncTest(os.path.split(path)[0], test_type=test_type)
         test._data = read_json(path)
         test.load_testing_data()
+        test.store()
         return test
