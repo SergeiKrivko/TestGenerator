@@ -10,6 +10,7 @@ class SidePanelWidget(QWidget):
     startResizing = pyqtSignal()
     __Buttons = {
         'add': lambda tm: SidePanelButton(tm, 'plus', tooltip='Создать'),
+        'add_dir': lambda tm: SidePanelButton(tm, 'add_dir', tooltip='Создать папку'),
         'delete': lambda tm: SidePanelButton(tm, 'button_delete', tooltip='Удалить'),
         'rename': lambda tm: SidePanelButton(tm, 'button_rename', tooltip='Переименовать'),
         'to_zip': lambda tm: SidePanelButton(tm, 'button_to_zip', tooltip='Сжать в zip'),

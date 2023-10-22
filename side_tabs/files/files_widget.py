@@ -1,10 +1,13 @@
 import os
+import platform
 import shutil
+import subprocess
 
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon, QColor
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem
+    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu
+import win32api
 
 from language.languages import languages
 from ui.message_box import MessageBox
@@ -77,12 +80,86 @@ class TreeDirectory(QTreeWidgetItem):
             j += 1
 
 
+class ContextMenu(QMenu):
+    CREATE_FILE = 0
+    CREATE_DIR = 1
+    CREATE_PY = 2
+    CREATE_C = 3
+    CREATE_H = 4
+    CREATE_MD = 5
+    CREATE_T2B = 6
+
+    DELETE_FILE = 100
+    RENAME_FILE = 101
+    OPEN_IN_CODE = 102
+    OPEN_BY_SYSTEM = 103
+    OPEN_IN_TERMINAL = 104
+    OPEN_BY_SYSTEM_TERMINAL = 105
+    OPEN_IN_EXPLORER = 106
+
+    def __init__(self, tm, directory=False):
+        super().__init__()
+        self.tm = tm
+
+        self.setContentsMargins(3, 3, 3, 3)
+        self.setMinimumWidth(150)
+
+        self.create_menu = QMenu()
+        self.create_menu.setMinimumWidth(150)
+        self.create_menu.setIcon(QIcon(self.tm.get_image('plus')))
+        self.create_menu.setTitle("Создать")
+        self.create_menu.addAction(QIcon(self.tm.get_image('plus')), "Файл").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_FILE))
+        self.create_menu.addAction(QIcon(self.tm.get_image('directory')), "Папку").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_DIR))
+        self.create_menu.addAction(QIcon(self.tm.get_image('py')), "Python file").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_PY))
+        self.create_menu.addAction(QIcon(self.tm.get_image('c')), "C source file").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_C))
+        self.create_menu.addAction(QIcon(self.tm.get_image('h')), "Header file").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_H))
+        self.create_menu.addAction(QIcon(self.tm.get_image('md')), "Markdown file").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_MD))
+        self.create_menu.addAction(QIcon(self.tm.get_image('t2b')), "Text-to-Binary file").triggered.connect(
+            lambda: self.set_action(ContextMenu.CREATE_T2B))
+        self.addMenu(self.create_menu)
+
+        self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить").triggered.connect(
+            lambda: self.set_action(ContextMenu.DELETE_FILE))
+        self.addAction(QIcon(self.tm.get_image('button_rename')), "Переименовать").triggered.connect(
+            lambda: self.set_action(ContextMenu.RENAME_FILE))
+
+        self.open_menu = QMenu()
+        self.open_menu.setMinimumWidth(150)
+        self.open_menu.setTitle("Открыть")
+        if directory:
+            self.open_menu.addAction(QIcon(self.tm.get_image('directory')), "Проводник").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_IN_EXPLORER))
+            self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')), "Терминал").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
+            self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')), "Системный терминал").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
+        else:
+            self.open_menu.addAction("Вкладка \"Код\"").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_IN_CODE))
+            self.open_menu.addAction("Система").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM))
+        self.addMenu(self.open_menu)
+
+        for el in [self, self.create_menu, self.open_menu]:
+            self.tm.auto_css(el)
+        self.action = None
+
+    def set_action(self, action):
+        self.action = action
+
+
 class FilesWidget(SidePanelWidget):
     renameFile = pyqtSignal(str)
     ignore_files = []
 
     def __init__(self, sm, bm: BackendManager, tm):
-        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'delete', 'rename', 'update'])
+        super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'add_dir', 'delete', 'rename', 'update'])
         self.bm = bm
 
         # self.setFixedWidth(225)
@@ -98,10 +175,13 @@ class FilesWidget(SidePanelWidget):
         self.files_list = QTreeWidget()
         # self.files_list.setFocusPolicy(False)
         self.files_list.setHeaderHidden(True)
+        self.files_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.files_list.customContextMenuRequested.connect(self.run_context_menu)
         files_layout.addWidget(self.files_list)
 
         self.files_list.doubleClicked.connect(self.open_file)
         self.buttons['add'].clicked.connect(self.create_file)
+        self.buttons['add_dir'].clicked.connect(self.create_directory)
         self.buttons['delete'].clicked.connect(self.delete_file)
 
         self.dialog = None
@@ -145,7 +225,7 @@ class FilesWidget(SidePanelWidget):
             j += 1
 
     def rename_file(self, flag=True):
-        if item := self.files_list.currentItem() is None:
+        if (item := self.files_list.currentItem()) is None:
             return
         self.dialog = RenameFileDialog(item.name, self.tm)
         if self.dialog.exec():
@@ -161,26 +241,106 @@ class FilesWidget(SidePanelWidget):
         self.path = self.sm.project.path()
         self.update_files_list()
 
-    def create_file(self, *args):
-        self.dialog = RenameFileDialog(
-            f"main{languages[self.sm.get('language', 'C')]['files'][0]}"
-            if self.path == self.path and not os.path.isfile(
-                f"{self.path}/main{languages[self.sm.get('language', 'C')]['files'][0]}") else '', self.tm)
+    def run_context_menu(self, point):
+        item = self.files_list.currentItem()
+        if item is None:
+            file = None
+            path = self.sm.project.path()
+        elif isinstance(item, TreeDirectory):
+            path = item.path
+            file = item.path
+        elif isinstance(item, TreeFile):
+            file = item.path
+            path = os.path.split(file)[0]
+        else:
+            raise TypeError("invalid item type")
+
+        menu = ContextMenu(self.tm, directory=isinstance(item, TreeDirectory))
+        menu.move(self.files_list.mapToGlobal(point))
+        menu.exec()
+        match menu.action:
+            case ContextMenu.CREATE_DIR:
+                self.create_file(directory=True, base_path=path)
+            case ContextMenu.CREATE_FILE:
+                self.create_file(base_path=path)
+            case ContextMenu.CREATE_PY:
+                self.create_file(base_path=path, extension='py')
+            case ContextMenu.CREATE_C:
+                self.create_file(base_path=path, extension='c')
+            case ContextMenu.CREATE_H:
+                self.create_file(base_path=path, extension='h')
+            case ContextMenu.CREATE_MD:
+                self.create_file(base_path=path, extension='md')
+            case ContextMenu.CREATE_T2B:
+                self.create_file(base_path=path, extension='t2b')
+            case ContextMenu.DELETE_FILE:
+                self.delete_file()
+            case ContextMenu.RENAME_FILE:
+                self.rename_file()
+            case ContextMenu.OPEN_IN_CODE:
+                self.open_file()
+            case ContextMenu.OPEN_BY_SYSTEM:
+                self.open_by_system(file)
+            case ContextMenu.OPEN_IN_EXPLORER:
+                self.open_by_system(file)
+            case ContextMenu.OPEN_BY_SYSTEM_TERMINAL:
+                self.open_in_system_terminal(file)
+
+    @staticmethod
+    def open_by_system(filepath):
+        if platform.system() == 'Darwin':       # macOS
+            subprocess.call(('open', filepath))
+        elif platform.system() == 'Windows':    # Windows
+            os.startfile(filepath)
+        else:                                   # linux variants
+            subprocess.call(('xdg-open', filepath))
+
+    @staticmethod
+    def open_in_explorer(path):
+        match platform.system():
+            case 'Windows':
+                subprocess.call(['explorer', path])
+            case 'Linux':
+                subprocess.call(['nautilus', '--browser', path])
+
+    @staticmethod
+    def open_in_system_terminal(path):
+        match platform.system():
+            case 'Windows':
+                os.system(f"start cmd /K cd {path}")
+
+    def create_directory(self):
+        self.create_file(directory=True)
+
+    def create_file(self, directory=False, base_path=None, extension=''):
+        if base_path is None:
+            base_path = self.sm.project.path()
+        self.dialog = RenameFileDialog('', self.tm)
         if self.dialog.exec():
-            os.makedirs(self.path, exist_ok=True)
             if not self.dialog.line_edit.text():
-                MessageBox(MessageBox.Warning, "Ошибка", "Невозможно создать файл: имя файла не задано", self.tm)
+                MessageBox(MessageBox.Icon.Warning, "Ошибка",
+                           f"Невозможно создать {'директорию' if directory else 'файл'}: имя файла не задано", self.tm)
                 return
             try:
-                open(f"{self.path}/{self.dialog.line_edit.text()}", 'x').close()
+                path = os.path.join(base_path, self.dialog.line_edit.text())
+                if extension and not path.endswith('.' + extension):
+                    path += '.' + extension
+                if directory:
+                    os.makedirs(path)
+                else:
+                    os.makedirs(self.sm.project.path(), exist_ok=True)
+                    open(path, 'x').close()
             except FileExistsError:
-                MessageBox(MessageBox.Warning, "Ошибка",
-                           "Невозможно создать файл: файл с таким именем уже существует", self.tm)
+                MessageBox(MessageBox.Icon.Warning, "Ошибка",
+                           f"Невозможно создать {'директорию' if directory else 'файл'}: "
+                           f"{'директория' if directory else 'файл'} с таким именем уже существует", self.tm)
             except PermissionError:
-                MessageBox(MessageBox.Warning, "Ошибка", "Невозможно создать файл: недостаточно прав", self.tm)
+                MessageBox(MessageBox.Icon.Warning, "Ошибка",
+                           f"Невозможно создать {'директорию' if directory else 'файл'}: недостаточно прав", self.tm)
             except Exception as ex:
-                MessageBox(MessageBox.Warning, "Ошибка",
-                           f"Невозможно создать файл: {ex.__class__.__name__}: {ex}", self.tm)
+                MessageBox(MessageBox.Icon.Warning, "Ошибка",
+                           f"Невозможно создать {'директорию' if directory else 'файл'}: {ex.__class__.__name__}: {ex}",
+                           self.tm)
             self.update_files_list()
 
     def delete_file(self, *args):

@@ -12,6 +12,10 @@ from language.utils import get_files
 class CheckConverter:
     def __init__(self, data_path: str, project: Project, suites: list[UnitTestsSuite]):
         self._data_path = data_path
+        self._project = project
+
+        if not self.check_language():
+            return
 
         self._tests_count = 0
         self._modules = {os.path.basename(path): UnitTestsModule(os.path.basename(path)) for path in get_files(
@@ -22,10 +26,13 @@ class CheckConverter:
             self._tests_count += len(list(suite.tests()))
             self._modules[os.path.basename(suite.module())].add_suite(suite)
 
+    def check_language(self):
+        return self._project.get('language') in ['C']
+
     def convert(self):
         if os.path.isdir(self._data_path):
             shutil.rmtree(self._data_path)
-        if not self._tests_count:
+        if not self.check_language() or not self._tests_count:
             return
         os.makedirs(self._data_path, exist_ok=True)
         suits = []
