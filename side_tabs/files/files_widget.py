@@ -2,11 +2,13 @@ import os
 import platform
 import shutil
 import subprocess
+import typing
 
+from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon, QColor
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu
+    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu, QWidget
 import win32api
 
 from language.languages import languages
@@ -78,6 +80,51 @@ class TreeDirectory(QTreeWidgetItem):
             else:
                 self.addChild(TreeFile(lst[j], self.tm))
             j += 1
+
+
+class TreeWidget(QTreeWidget):
+    moveFile = pyqtSignal(str, str)
+
+    def __init__(self, tm):
+        super().__init__()
+        self.tm = tm
+        self.moving_item = None
+        self.moving_file = None
+
+    def mouseMoveEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
+        super().mouseMoveEvent(event)
+        if isinstance(self.moving_file, MovedFile):
+            self.moving_file.show()
+            self.moving_file.move(self.mapToGlobal(event.pos()))
+
+    def mousePressEvent(self, e: typing.Optional[QtGui.QMouseEvent]) -> None:
+        super().mousePressEvent(e)
+        if e.button() == Qt.MouseButton.LeftButton:
+            item = self.currentItem()
+            if isinstance(item, TreeDirectory):
+                self.moving_file = MovedFile(self.tm, item.name)
+            elif isinstance(item, TreeFile):
+                self.moving_file = MovedFile(self.tm, item.name)
+            else:
+                return
+            self.moving_item = item
+            self.moving_file.move(self.mapToGlobal(e.pos()))
+
+    def mouseReleaseEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
+        super().mouseReleaseEvent(event)
+        if isinstance(self.moving_file, MovedFile):
+            self.moving_file.close()
+            self.moving_file = None
+            item = self.currentItem()
+            if self.moving_item != item:
+                if isinstance(item, TreeDirectory):
+                    path = item.path
+                elif isinstance(item, TreeFile):
+                    path, _ = os.path.split(item.path)
+                else:
+                    return
+                self.moveFile.emit(self.moving_item.path, path)
+                self.moving_item = None
 
 
 class ContextMenu(QMenu):
@@ -172,11 +219,12 @@ class FilesWidget(SidePanelWidget):
         self.buttons['rename'].clicked.connect(lambda: self.rename_file(False))
         self.buttons['update'].clicked.connect(self.update_files_list)
 
-        self.files_list = QTreeWidget()
+        self.files_list = TreeWidget(self.tm)
         # self.files_list.setFocusPolicy(False)
         self.files_list.setHeaderHidden(True)
         self.files_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.files_list.customContextMenuRequested.connect(self.run_context_menu)
+        self.files_list.moveFile.connect(self.move_file)
         files_layout.addWidget(self.files_list)
 
         self.files_list.doubleClicked.connect(self.open_file)
@@ -223,6 +271,13 @@ class FilesWidget(SidePanelWidget):
             else:
                 self.files_list.addTopLevelItem(TreeFile(lst[j], self.tm))
             j += 1
+
+    def move_file(self, file, dist):
+        try:
+            os.rename(file, os.path.join(dist, os.path.basename(file)))
+        except Exception:
+            pass
+        self.update_files_list()
 
     def rename_file(self, flag=True):
         if (item := self.files_list.currentItem()) is None:
@@ -519,3 +574,25 @@ class RenameFileDialog(QDialog):
             tm.auto_css(el)
 
         self.resize(280, 50)
+
+
+class MovedFile(QWidget):
+    def __init__(self, tm, file):
+        super().__init__()
+        self.tm = tm
+        self._name = file
+
+        self.setFixedHeight(25)
+        self.setMinimumWidth(150)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(5, 5, 5, 5)
+        self.setLayout(layout)
+
+        self.label = QLabel(self._name)
+        layout.addWidget(self.label)
+
+        self.setStyleSheet(f"color: {self.tm['TextColor']}; background-color: {self.tm['BgColor']};")
+        for el in [self.label]:
+            self.tm.auto_css(el)

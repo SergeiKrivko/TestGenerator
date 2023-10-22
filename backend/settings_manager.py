@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from PyQt6.QtCore import QSettings, pyqtSignal, QObject
 from json import dumps, loads, JSONDecodeError
