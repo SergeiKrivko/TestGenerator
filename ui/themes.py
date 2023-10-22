@@ -852,8 +852,12 @@ QListWidget QScrollBar::sub-line, QScrollBar::add-line {{
 QTreeWidget {{
     {self.base_css(palette, border, border_radius)}
 }}
+QTreeView {{
+    show-decoration-selected: 1;
+}}
 QTreeWidget::item {{
-    border-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
 }}
 QTreeWidget::item:hover {{
     background-color: {self[f'{palette}HoverColor']};
@@ -861,8 +865,27 @@ QTreeWidget::item:hover {{
 QTreeWidget::item:selected {{
     color: {self['TextColor']};
     background-color: {self[f'{palette}SelectedColor']};
-    border-radius: 6px;
 }}
+
+QTreeView::branch {{
+    background-color: {self[f'{palette}Color']};
+}}
+QTreeView::branch:hover {{
+    background-color: {self[f'{palette}HoverColor']};
+}}
+QTreeView::branch::selected {{
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+    background-color: {self[f'{palette}SelectedColor']};
+}}
+
+QTreeView::branch:closed:has-children {{
+        image: url({self.get_image('right_arrow')});
+}}
+QTreeView::branch:open:has-children {{
+        image: url({self.get_image('down_arrow')});
+}}
+
 QTreeWidget QScrollBar:vertical {{
     background: {self[f'{palette}Color']};
     border-top-right-radius: 4px;

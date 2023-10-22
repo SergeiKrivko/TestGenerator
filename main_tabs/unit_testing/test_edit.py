@@ -121,10 +121,10 @@ class UnitTestEdit(QScrollArea):
             return
         self._test['name'] = self._name_edit.text()
         self._test['desc'] = self._desc_edit.text()
-        self._test['in_code'] = self._in_edit.text()
-        self._test['run_code'] = self._run_edit.text()
-        self._test['out_code'] = self._out_edit.text()
-        # self._test.store()
+        self._test['in_code'] = self._in_edit.text().replace('\r\n', '\n')
+        self._test['run_code'] = self._run_edit.text().replace('\r\n', '\n')
+        self._test['out_code'] = self._out_edit.text().replace('\r\n', '\n')
+        self._test.store()
 
     def set_theme(self):
         self._tm.auto_css(self, palette='Bg', border=False)

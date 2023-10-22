@@ -15,6 +15,7 @@ class PreviewWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.text_edit = QTextEdit()
+        self.text_edit.setViewportMargins(30, 10, 30, 10)
         self.text_edit.setReadOnly(True)
         layout.addWidget(self.text_edit)
 

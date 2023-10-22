@@ -61,11 +61,11 @@ class CheckConverter:
 def convert_test(file, test: UnitTest):
     in_code, run_code, out_code = '', '', ''
     if test.get('in_code') is not None:
-        in_code = '\n    '.join(test['in_code'].split('\n'))
+        in_code = '\n    ' + '\n    '.join(test['in_code'].split('\n'))
     if test.get('out_code') is not None:
-        out_code = '\n\n    '.join(test['out_code'].split('\n'))
+        out_code = '\n\n    ' + '\n    '.join(test['out_code'].split('\n'))
     if test.get('run_code') is not None:
-        run_code = '\n\n    '.join(test['run_code'].split('\n'))
+        run_code = '\n\n    ' + '\n    '.join(test['run_code'].split('\n'))
     file.write(f"""START_TEST({test.get('name')})
 {{{in_code}{run_code}{out_code}
 }}

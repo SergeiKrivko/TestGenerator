@@ -70,5 +70,4 @@ class UnitTest(QObject):
             self.statusChanged.emit()
 
         self._data[key] = value
-        self.store()
 
