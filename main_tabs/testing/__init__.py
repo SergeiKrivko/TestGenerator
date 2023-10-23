@@ -278,7 +278,7 @@ class TestingWidget(MainTab):
     def show_coverage_html(self):
         if self._coverage_html is None:
             return
-        self._coverage_window.setUrl(QUrl(f"file:///{self._coverage_html}"))
+        self._coverage_window.setUrl(QUrl.fromLocalFile(self._coverage_html))
         self._coverage_window.show()
 
 

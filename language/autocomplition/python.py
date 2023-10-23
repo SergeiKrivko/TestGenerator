@@ -280,7 +280,7 @@ class PythonModule(PythonObject):
                     current_function = PythonClass(self, line[1], parent, i)
                     function_indent = indent
                     self.classes[line[1]] = current_function
-                elif indent == 0 and line[0] == 'import' and self.recursion < MAX_IMPORT_RECURSION:
+                elif indent == 0 and line and line[0] == 'import' and self.recursion < MAX_IMPORT_RECURSION:
                     lst = []
                     name = ''
                     for j in range(1, len(line)):

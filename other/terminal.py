@@ -1,8 +1,7 @@
 import os
-import shlex
 import subprocess
 
-from PyQt6.QtCore import QProcess, QByteArray, QThread, pyqtSignal
+from PyQt6.QtCore import QByteArray, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
 
@@ -10,6 +9,8 @@ from backend.commands import get_si
 
 
 class Terminal(QTextEdit):
+    processFinished = pyqtSignal()
+
     def __init__(self, sm, tm):
         super().__init__(None)
         self.sm = sm
@@ -119,6 +120,7 @@ class Terminal(QTextEdit):
         self.process.stderr.close()
         self.return_code = self.process.poll()
         self.write_prompt()
+        self.processFinished.emit()
         return True
 
     def terminate_process(self):

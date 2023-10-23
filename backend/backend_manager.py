@@ -134,6 +134,7 @@ class BackendManager(QObject):
     def new_func_test(self, test_type='pos', index=None):
         test = FuncTest(f"{self.sm.project.data_path()}/func_tests/{test_type}", test_type=test_type)
         self.add_func_test(test, index)
+        return test
 
     def delete_func_test(self, type: Literal['pos', 'neg'], index: int):
         test = self.func_tests[type][index]

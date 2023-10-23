@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QPushButton, QDialog, QListWidget, \
     QLineEdit
 
+from backend.commands import read_json
 from side_tabs.console import Console
 from ui.message_box import MessageBox
 from main_tabs.code_tab.syntax_highlighter import CodeEditor
@@ -13,12 +14,12 @@ from ui.side_panel_widget import SidePanelWidget
 class GeneratorTab(SidePanelWidget):
     complete = pyqtSignal()
 
-    def __init__(self, sm, cm, tm):
+    def __init__(self, sm, bm, tm):
         super().__init__(sm, tm, 'Генерация тестов', ['delete', 'load', 'save', 'run', 'close'])
         self.setWindowTitle("TestGenerator")
         self.resize(600, 400)
 
-        self.cm = cm
+        self.bm = bm
         self.test_type = 'pos'
 
         main_layout = QVBoxLayout()
@@ -27,8 +28,9 @@ class GeneratorTab(SidePanelWidget):
         self.code_edit = CodeEditor(self.sm, self.tm, language='Python', border=True)
         main_layout.addWidget(self.code_edit)
 
-        self.console = Console(self.sm, self.tm, self.cm)
+        self.console = Console(self.sm, self.tm, self.bm)
         self.console.hide()
+        self.console.processFinished.connect(self.load_tests)
         main_layout.addWidget(self.console)
 
         self.setLayout(main_layout)
@@ -73,6 +75,24 @@ class GeneratorTab(SidePanelWidget):
             except Exception as ex:
                 print(f"{ex.__class__.__name__}: {ex}")
 
+    def load_tests(self):
+        file = f"{self.sm.temp_dir()}/tests.txt"
+        data = read_json(file)
+        if data.get('clear', False):
+            pass
+        for el in data.get('pos', []):
+            test = self.bm.new_func_test('pos')
+            for key, item in el.items():
+                test[key] = item
+        for el in data.get('neg', []):
+            test = self.bm.new_func_test('neg')
+            for key, item in el.items():
+                test[key] = item
+        try:
+            os.remove(file)
+        except FileNotFoundError:
+            pass
+
     def set_autocompletion(self):
         self.code_edit.autocomplitions = ["open_in_file(test_num, mode='w', **kwargs)",
                                           "open_out_file(test_num, mode='w', **kwargs)",
@@ -90,6 +110,7 @@ class GeneratorTab(SidePanelWidget):
         file = open(f'{self.sm.app_data_dir}/temp.py', 'w', encoding='utf-8', newline=self.sm.line_sep)
         file.write(self.previous_code())
         file.write(self.code_edit.text())
+        file.write(self.end_code())
         file.close()
 
         self.code_edit.hide()
@@ -115,7 +136,7 @@ class GeneratorTab(SidePanelWidget):
     def show_info(self):
         MessageBox(MessageBox.Icon.Information, "Генерация тестов",
                    f"class Test:\n"
-                   f"    def __init__(self, desc='', in_data='', out_data='', args='', exit='')\n"
+                   f"    def __init__(self, type, desc='', in_data='', out_data='', args='', exit='')\n"
                    f"    def set_desc(self, desc)\n"
                    f"    def set_in(self, in_data)\n"
                    f"    def set_in(self, text)\n"
@@ -125,17 +146,30 @@ class GeneratorTab(SidePanelWidget):
                    f"    def add_in_file(self, type='txt', text='')\n"
                    f"    def add_out_file(self, type='txt', text='')\n"
                    f"    def add_check_file(self, index: int, type='txt', text='')\n\n"
-                   f"def add_test(test: Test, index=None)", self.tm)
+                   f""
+                   f"def add_test(test: Test)", self.tm)
 
     def previous_code(self):
         return f"""
 import json
 
-__tests_list__ = []
+__pos_tests__ = []
+__neg_tests__ = []
+__clear_tests__ = False
+
+
+def clear_tests():
+    __pos_tests__.clear()
+    __neg_tests__.clear()
+    __clear_tests__ = True
 
 
 class Test:
-    def __init__(self, desc='', in_data='', out_data='', args='', exit=''):
+    POS = 0
+    NEG = 1
+
+    def __init__(self, test_type, desc='', in_data='', out_data='', args='', exit=''):
+        self.type = test_type
         self.dict = {{'desc': desc, 'in': in_data, 'out': out_data, 'args': args, 'exit': exit, 'in_files': [],
                       'out_files': [], 'check_files': dict()}}
 
@@ -169,33 +203,24 @@ class Test:
     def add_check_file(self, index: int, type='txt', text=''):
         self.dict['check_files'][index] = {{'type': type, 'text': text}}
         
-        
-for el in {os.listdir(f"{self.sm.project.data_path()}/func_tests/{self.test_type}")}:
-    if el.rstrip('.json').isdigit():
-        test = Test()
-        try:
-            with open(rf"{self.sm.project.data_path()}/func_tests/{self.test_type}/{{el}}", encoding='utf-8') as f:
-                for key, item in json.loads(f.read()).items():
-                    test[key] = item
-            __tests_list__.append(test)
-        except json.JSONDecodeError:
-            pass
-        except ValueError:
-            pass
-test_count = len(__tests_list__)
+
 path = r"{self.sm.project.path()}"
 data_path = r"{self.sm.project.data_path()}"
 
 
-def add_test(test: Test, index=None):
-    if index is None:
-        index = len(__tests_list__) + 1
-        __tests_list__.append(test)
+def add_test(test: Test):
+    if test.type == Test.POS:
+        __pos_tests__.append(test)
     else:
-        __tests_list[index] = test
-    with open(rf"{{data_path}}/func_tests/{self.test_type}/{{index}}.json", 'w', encoding='utf-8') as f:
-        f.write(json.dumps(test.dict))
+        __neg_tests__.append(test)
+"""
 
+    def end_code(self):
+        return f"""
+with open(\"{self.sm.temp_dir()}/tests.txt\", 'w') as f:
+    f.write(json.dumps({{'clear': __clear_tests__, 
+         'pos': [test.dict for test in __pos_tests__], 
+         'neg': [test.dict for test in __neg_tests__]}}))
 """
 
     def show(self) -> None:

@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
             'tests': (TestingPanel(self.sm, self.bm, self.tm), "Тестирование"),
             'todo': (TODOPanel(self.sm, self.cm, self.tm), "TODO"),
             'git': (GitPanel(self.sm, self.cm, self.tm), "Git"),
-            'generator': (GeneratorTab(self.sm, self.cm, self.tm), "Генерация тестов"),
+            'generator': (GeneratorTab(self.sm, self.bm, self.tm), "Генерация тестов"),
             'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
             'chat': (ChatPanel(self.sm, self.tm), "Чат"),
