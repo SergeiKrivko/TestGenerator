@@ -32,10 +32,11 @@ from main_tabs.unit_testing.__init__ import UnitTestingWidget
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, app):
         super(MainWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)
+        self.app = app
 
         self.setWindowFlags(Qt.WindowType.CustomizeWindowHint)
 
@@ -74,7 +75,7 @@ class MainWindow(QMainWindow):
 
         for key, item in {
             'projects': (ProjectWidget(self.sm, self.bm, self.tm), "Проекты"),
-            'files': (FilesWidget(self.sm, self.bm, self.tm), "Файлы"),
+            'files': (FilesWidget(self.sm, self.bm, self.tm, self.app), "Файлы"),
             'build': (BuildWindow(self.bm, self.sm, self.tm), "Конфигурации"),
             'tests': (TestingPanel(self.sm, self.bm, self.tm), "Тестирование"),
             'todo': (TODOPanel(self.sm, self.cm, self.tm), "TODO"),

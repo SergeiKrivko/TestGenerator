@@ -5,13 +5,14 @@ import subprocess
 import typing
 
 from PyQt6 import QtGui
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QMimeData
 from PyQt6.QtGui import QIcon, QColor
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu, QWidget
-import win32api
+    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu, QWidget, QApplication
+import send2trash
 
 from language.languages import languages
+from side_tabs.files.open_file_options import get_open_file_options
 from ui.message_box import MessageBox
 from ui.side_panel_widget import SidePanelWidget
 from backend.backend_manager import BackendManager
@@ -143,8 +144,15 @@ class ContextMenu(QMenu):
     OPEN_IN_TERMINAL = 104
     OPEN_BY_SYSTEM_TERMINAL = 105
     OPEN_IN_EXPLORER = 106
+    OPEN_BY_COMMAND = 107
+    MOVE_TO_TRASH = 108
 
-    def __init__(self, tm, directory=False):
+    COPY_FILES = 200
+    PASTE_FILES = 201
+    CUT_FILES = 202
+    COPY_PATH = 203
+
+    def __init__(self, tm, path, directory=False):
         super().__init__()
         self.tm = tm
 
@@ -171,10 +179,27 @@ class ContextMenu(QMenu):
             lambda: self.set_action(ContextMenu.CREATE_T2B))
         self.addMenu(self.create_menu)
 
+        self.addSeparator()
+
+        self.addAction(QIcon(self.tm.get_image('cut')), "Вырезать").triggered.connect(
+            lambda: self.set_action(ContextMenu.CUT_FILES))
+        self.addAction(QIcon(self.tm.get_image('copy')), "Копировать").triggered.connect(
+            lambda: self.set_action(ContextMenu.COPY_FILES))
+        self.addAction(QIcon(self.tm.get_image('copy_path')), "Копировать как путь").triggered.connect(
+            lambda: self.set_action(ContextMenu.COPY_PATH))
+        self.addAction(QIcon(self.tm.get_image('paste')), "Вставить").triggered.connect(
+            lambda: self.set_action(ContextMenu.PASTE_FILES))
+
+        self.addSeparator()
+
         self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить").triggered.connect(
             lambda: self.set_action(ContextMenu.DELETE_FILE))
+        self.addAction(QIcon(self.tm.get_image('button_delete')), "Переместить в корзину").triggered.connect(
+            lambda: self.set_action(ContextMenu.MOVE_TO_TRASH))
         self.addAction(QIcon(self.tm.get_image('button_rename')), "Переименовать").triggered.connect(
             lambda: self.set_action(ContextMenu.RENAME_FILE))
+
+        self.addSeparator()
 
         self.open_menu = QMenu()
         self.open_menu.setMinimumWidth(150)
@@ -191,23 +216,37 @@ class ContextMenu(QMenu):
                 lambda: self.set_action(ContextMenu.OPEN_IN_CODE))
             self.open_menu.addAction("Система").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM))
+
+            self.open_menu.addSeparator()
+
+            if '.' in path:
+                for prog_name, prog_icon, prog_command in get_open_file_options(path):
+                    self.add_open_action(prog_name, prog_icon, prog_command)
+
         self.addMenu(self.open_menu)
 
         for el in [self, self.create_menu, self.open_menu]:
             self.tm.auto_css(el)
         self.action = None
+        self.action_data = None
 
-    def set_action(self, action):
+    def add_open_action(self, name, icon, command):
+        self.open_menu.addAction(name).triggered.connect(
+            lambda: self.set_action(ContextMenu.OPEN_BY_COMMAND, command))
+
+    def set_action(self, action, data=None):
         self.action = action
+        self.action_data = data
 
 
 class FilesWidget(SidePanelWidget):
     renameFile = pyqtSignal(str)
     ignore_files = []
 
-    def __init__(self, sm, bm: BackendManager, tm):
+    def __init__(self, sm, bm: BackendManager, tm, app: QApplication):
         super(FilesWidget, self).__init__(sm, tm, 'Файлы', ['add', 'add_dir', 'delete', 'rename', 'update'])
         self.bm = bm
+        self.app = app
 
         # self.setFixedWidth(225)
         files_layout = QVBoxLayout()
@@ -233,6 +272,8 @@ class FilesWidget(SidePanelWidget):
         self.buttons['delete'].clicked.connect(self.delete_file)
 
         self.dialog = None
+        self.ctrl_pressed = False
+        self.shift_pressed = False
         self.sm.projectChanged.connect(self.open_task)
 
     def update_files_list(self):
@@ -290,11 +331,37 @@ class FilesWidget(SidePanelWidget):
                 self.update_files_list()
                 self.renameFile.emit(self.dialog.line_edit.text())
             else:
-                MessageBox(MessageBox.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
+                MessageBox(MessageBox.Icon.Warning, "Ошибка", "Невозможно переименовать файл", self.tm)
 
     def open_task(self):
         self.path = self.sm.project.path()
         self.update_files_list()
+
+    def keyPressEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
+        match a0.key():
+            case Qt.Key.Key_C:
+                if self.ctrl_pressed:
+                    self.copy_file()
+            case Qt.Key.Key_X:
+                if self.ctrl_pressed:
+                    self.copy_file()
+            case Qt.Key.Key_V:
+                if self.ctrl_pressed:
+                    self.paste_files()
+            case Qt.Key.Key_F2:
+                self.rename_file()
+            case Qt.Key.Key_Control:
+                self.ctrl_pressed = True
+            case Qt.Key.Key_Shift:
+                self.shift_pressed = True
+            case Qt.Key.Key_Delete:
+                self.delete_file(to_trash=not self.shift_pressed)
+
+    def keyReleaseEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
+        if a0.key() == Qt.Key.Key_Control:
+            self.ctrl_pressed = False
+        if a0.key() == Qt.Key.Key_Shift:
+            self.shift_pressed = False
 
     def run_context_menu(self, point):
         item = self.files_list.currentItem()
@@ -310,7 +377,7 @@ class FilesWidget(SidePanelWidget):
         else:
             raise TypeError("invalid item type")
 
-        menu = ContextMenu(self.tm, directory=isinstance(item, TreeDirectory))
+        menu = ContextMenu(self.tm, item.path, directory=isinstance(item, TreeDirectory))
         menu.move(self.files_list.mapToGlobal(point))
         menu.exec()
         match menu.action:
@@ -329,7 +396,9 @@ class FilesWidget(SidePanelWidget):
             case ContextMenu.CREATE_T2B:
                 self.create_file(base_path=path, extension='t2b')
             case ContextMenu.DELETE_FILE:
-                self.delete_file()
+                self.delete_file(to_trash=False)
+            case ContextMenu.MOVE_TO_TRASH:
+                self.delete_file(to_trash=True)
             case ContextMenu.RENAME_FILE:
                 self.rename_file()
             case ContextMenu.OPEN_IN_CODE:
@@ -340,6 +409,46 @@ class FilesWidget(SidePanelWidget):
                 self.open_by_system(file)
             case ContextMenu.OPEN_BY_SYSTEM_TERMINAL:
                 self.open_in_system_terminal(file)
+            case ContextMenu.OPEN_BY_COMMAND:
+                subprocess.call(menu.action_data)
+            case ContextMenu.COPY_FILES:
+                self.copy_file()
+            case ContextMenu.CUT_FILES:
+                self.copy_file()
+            case ContextMenu.COPY_PATH:
+                self.copy_path()
+            case ContextMenu.PASTE_FILES:
+                self.paste_files()
+
+    def copy_file(self):
+        item = self.files_list.currentItem()
+        if isinstance(item, TreeFile) or isinstance(item, TreeDirectory):
+            mime_data = QMimeData()
+            mime_data.setUrls([QUrl.fromLocalFile(item.path)])
+            self.app.clipboard().setMimeData(mime_data)
+
+    def copy_path(self):
+        item = self.files_list.currentItem()
+        if isinstance(item, TreeFile) or isinstance(item, TreeDirectory):
+            self.app.clipboard().setText(item.path)
+
+    def paste_files(self):
+        item = self.files_list.currentItem()
+        if isinstance(item, TreeFile):
+            path = os.path.split(item.path)[0]
+        elif isinstance(item, TreeDirectory):
+            path = item.path
+        else:
+            return
+
+        if self.app.clipboard().mimeData().hasUrls():
+            urls = self.app.clipboard().mimeData().urls()
+            for url in urls:
+                try:
+                    shutil.copy(url.toLocalFile(), os.path.join(path, os.path.basename(url.toLocalFile())))
+                except FileExistsError:
+                    pass
+            self.update_files_list()
 
     @staticmethod
     def open_by_system(filepath):
@@ -398,8 +507,12 @@ class FilesWidget(SidePanelWidget):
                            self.tm)
             self.update_files_list()
 
-    def delete_file(self, *args):
+    def delete_file(self, to_trash=True):
         if self.files_list.currentItem() is None:
+            return
+        if to_trash:
+            send2trash.send2trash(self.files_list.currentItem().path)
+            self.update_files_list()
             return
         dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().name}?", self.tm)
         if dlg.exec():
