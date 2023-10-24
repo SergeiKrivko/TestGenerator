@@ -18,6 +18,7 @@ class TestTableWidget(QWidget):
     copyTests = pyqtSignal(str)
     pasteTests = pyqtSignal(str)
     deleteTests = pyqtSignal(str)
+    undo = pyqtSignal()
 
     def __init__(self, tm, sm, bm, cm):
         super(TestTableWidget, self).__init__()
@@ -257,6 +258,9 @@ class TestTableWidget(QWidget):
             case Qt.Key.Key_V:
                 if self.ctrl_pressed:
                     self.pasteTests.emit('')
+            case Qt.Key.Key_Z:
+                if self.ctrl_pressed:
+                    self.undo.emit()
             case Qt.Key.Key_Control:
                 self.ctrl_pressed = True
             case Qt.Key.Key_Shift:

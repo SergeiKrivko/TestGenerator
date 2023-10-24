@@ -7,6 +7,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
 from backend.backend_types.unit_tests_suite import UnitTestsSuite
 from backend.func_testing import TestingLooper
+from backend.history_manager import HistoryManager
 from backend.load_task import Loader
 from backend.macros_converter import MacrosConverter
 from backend.backend_types.build import Build
@@ -75,6 +76,8 @@ class BackendManager(QObject):
 
         self.changing_project = False
 
+        self._func_tests_history = HistoryManager()
+
     # ------------------------- SETTINGS ------------------------------
 
     def open_project(self, project: Project | str):
@@ -124,7 +127,10 @@ class BackendManager(QObject):
 
     # ------------------------ FUNC TESTS -----------------------------
 
-    def add_func_test(self, test: FuncTest, index=None):
+    def add_func_test(self, test: FuncTest, index=None, record=None):
+        if record is None:
+            record = self._func_tests_history.add_record('add')
+        record.add_data(('add', test, index))
         if index is None:
             index = len(self.func_tests[test.type()])
         self.func_tests[test.type()].insert(index, test)
@@ -138,12 +144,20 @@ class BackendManager(QObject):
         self.add_func_test(test, index)
         return test
 
-    def delete_func_test(self, type: Literal['pos', 'neg'], index: int):
+    def delete_func_test(self, type: Literal['pos', 'neg'], index: int, record=None):
         test = self.func_tests[type][index]
+        if record is None:
+            record = self._func_tests_history.add_record('add')
+        record.add_data(('delete', test, index))
         self.func_tests[type].pop(index)
         test.delete()
         self.sm.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
         self.deleteFuncTest.emit(test, index)
+
+    def delete_some_func_tests(self, type: Literal['pos', 'neg'], indexes: list[int]):
+        record = self._func_tests_history.add_record('delete_tests')
+        for ind in sorted(indexes, reverse=True):
+            self.delete_func_test(type, ind, record=record)
 
     def clear_func_tests(self):
         for test_type in ['pos', 'neg']:
@@ -161,21 +175,22 @@ class BackendManager(QObject):
         return self.func_tests[type][index]
 
     def move_func_test(self, type: Literal['pos', 'neg'], direction: Literal['up', 'down'], index: int):
+        record = self._func_tests_history.add_record('move')
         match direction:
             case 'up':
                 if index <= 0:
                     return
                 test = self.get_func_test(type, index)
-                self.delete_func_test(type, index)
+                self.delete_func_test(type, index, record=record)
                 index -= 1
-                self.add_func_test(test, index)
+                self.add_func_test(test, index, record=record)
             case 'down':
                 if index >= len(self.func_tests[type]) - 1:
                     return
                 test = self.get_func_test(type, index)
-                self.delete_func_test(type, index)
+                self.delete_func_test(type, index, record=record)
                 index += 1
-                self.add_func_test(test, index)
+                self.add_func_test(test, index, record=record)
         self.sm.project.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
 
     def func_tests_count(self, type: Literal['pos', 'neg', 'all'] = 'all'):
@@ -196,10 +211,24 @@ class BackendManager(QObject):
                                                    'neg': self.func_tests['neg'].copy()}, self.sm)
         self.run_process(looper, 'macros_converter', self.sm.project.path())
 
+    def undo_func_tests(self, redo=False):
+        if redo:
+            record = self._func_tests_history.get_undo()
+        else:
+            record = self._func_tests_history.get_undo()
+        if record is None:
+            return
+        actions = list(record)
+        record.clear()
+        for action_type, test, index in actions:
+            if action_type == 'delete':
+                self.add_func_test(test, index, record=record)
+            else:
+                self.delete_func_test(test.type(), index, record=record)
+
     # -------------------------- TESTING --------------------------------
 
     def start_testing(self):
-        print('start testing')
         self.run_macros_converter()
         self.startTesting.emit(self.func_tests['pos'] + self.func_tests['neg'])
         self.func_test_completed = 0

@@ -298,8 +298,8 @@ class ComboBox(_Widget):
     def set_value(self, value):
         # print(f"{self._label.text()}: set value {value}")
         if self._text_mode:
-            self._set(str(value))
             self._combo_box.setCurrentText(str(value))
+            self._set(self._combo_box.currentText())
             return
         if not isinstance(value, int):
             self.set_value(0)

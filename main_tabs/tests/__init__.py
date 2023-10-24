@@ -36,6 +36,7 @@ class TestsWidget(MainTab):
         self.test_list_widget.copyTests.connect(self.copy_tests)
         self.test_list_widget.pasteTests.connect(self.paste_tests)
         self.test_list_widget.deleteTests.connect(self.delete_tests)
+        self.test_list_widget.undo.connect(self.bm.undo_func_tests)
 
         self.test_list_widget.neg_button_generate.clicked.connect(self.generate_neg_tests)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
@@ -115,8 +116,7 @@ class TestsWidget(MainTab):
         else:
             test_type = 'pos'
         self.tests_changed = True
-        for ind in sorted([index.row() for index in lst], reverse=True):
-            self.bm.delete_func_test(test_type, ind)
+        self.bm.delete_some_func_tests(test_type, [index.row() for index in lst])
 
     def copy_tests(self, *args):
         if not (items := self.test_list_widget.pos_test_list.selectedItems()):
