@@ -3,9 +3,9 @@ import os
 import random
 from copy import deepcopy
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QMimeData
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
-    QHBoxLayout, QCheckBox, QLabel, QListWidgetItem
+    QHBoxLayout, QCheckBox, QLabel, QListWidgetItem, QApplication
 
 from backend.backend_types.func_test import FuncTest
 from backend.backend_manager import BackendManager
@@ -16,28 +16,28 @@ from main_tabs.tests.test_edit_widget import TestEditWidget
 
 
 class TestsWidget(MainTab):
-    def __init__(self, sm, bm: BackendManager, tm):
+    def __init__(self, sm, bm: BackendManager, app: QApplication, tm):
         super(TestsWidget, self).__init__()
         self.sm = sm
         self.bm = bm
         self.tm = tm
+        self.app = app
 
         layout = QVBoxLayout()
 
         self.test_list_widget = TestTableWidget(self.tm, self.sm, self.bm, self.bm)
         self.test_list_widget.pos_add_button.clicked.connect(self.add_pos_test)
-        self.test_list_widget.pos_delete_button.clicked.connect(self.delete_pos_test)
         self.test_list_widget.neg_add_button.clicked.connect(self.add_neg_test)
-        self.test_list_widget.neg_delete_button.clicked.connect(self.delete_neg_test)
         self.test_list_widget.pos_button_up.clicked.connect(self.move_pos_test_up)
         self.test_list_widget.pos_button_down.clicked.connect(self.move_pos_test_down)
         self.test_list_widget.neg_button_up.clicked.connect(self.move_neg_test_up)
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
-        self.test_list_widget.pos_button_copy.clicked.connect(lambda: self.copy_tests('pos'))
-        self.test_list_widget.neg_button_copy.clicked.connect(lambda: self.copy_tests('neg'))
+
+        self.test_list_widget.copyTests.connect(self.copy_tests)
+        self.test_list_widget.pasteTests.connect(self.paste_tests)
+        self.test_list_widget.deleteTests.connect(self.delete_tests)
+
         self.test_list_widget.neg_button_generate.clicked.connect(self.generate_neg_tests)
-        # self.test_list_widget.pos_button_generate.clicked.connect(self.open_pos_generator_window)
-        # self.test_list_widget.neg_button_generate.clicked.connect(self.open_neg_generator_window)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)
@@ -69,14 +69,22 @@ class TestsWidget(MainTab):
         item.update_name()
         if test.type() == 'pos':
             self.test_list_widget.pos_test_list.insertItem(index, item)
+            self.test_list_widget.pos_test_list.clearSelection()
+            self.test_list_widget.pos_test_list.setCurrentRow(index)
         else:
             self.test_list_widget.neg_test_list.insertItem(index, item)
+            self.test_list_widget.neg_test_list.clearSelection()
+            self.test_list_widget.neg_test_list.setCurrentRow(index)
 
     def _on_test_deleted(self, test: FuncTest, index: int):
         if test.type() == 'pos':
             self.test_list_widget.pos_test_list.takeItem(index)
+            self.test_list_widget.pos_test_list.setCurrentRow(
+                min(index, self.test_list_widget.pos_test_list.count() - 1))
         else:
             self.test_list_widget.neg_test_list.takeItem(index)
+            self.test_list_widget.neg_test_list.setCurrentRow(
+                min(index, self.test_list_widget.neg_test_list.count() - 1))
 
     def _on_tests_cleared(self):
         self.test_list_widget.pos_test_list.clear()
@@ -99,40 +107,54 @@ class TestsWidget(MainTab):
         self.bm.new_func_test('neg', index)
         self.test_list_widget.neg_test_list.setCurrentRow(index)
 
-    def delete_pos_test(self):
+    def delete_tests(self, test_type=''):
+        lst = self.test_list_widget.pos_test_list.selectedIndexes()
+        if test_type == 'neg' or (not test_type and not lst):
+            lst = self.test_list_widget.neg_test_list.selectedIndexes()
+            test_type = 'neg'
+        else:
+            test_type = 'pos'
         self.tests_changed = True
-        ind = self.test_list_widget.pos_test_list.currentRow()
-        if ind == -1:
-            return
-        self.bm.delete_func_test('pos', ind)
+        for ind in sorted([index.row() for index in lst], reverse=True):
+            self.bm.delete_func_test(test_type, ind)
 
-    def delete_neg_test(self):
-        self.tests_changed = True
-        ind = self.test_list_widget.neg_test_list.currentRow()
-        if ind == -1:
-            return
-        self.bm.delete_func_test('neg', ind)
+    def copy_tests(self, *args):
+        if not (items := self.test_list_widget.pos_test_list.selectedItems()):
+            items = self.test_list_widget.neg_test_list.selectedItems()
 
-    def copy_tests(self, test_type='pos'):
-        self.save_tests(deep=False)
-        dlg = TestCopyWindow(self.sm, self.tm)
-        if dlg.exec():
-            self.tests_changed = True
-            for dct in dlg.copy_tests():
-                item = Test(self.create_temp_file(), tm=self.tm)
+        mime_data = QMimeData()
+        mime_data.setData(f'TestGeneratorFuncTests',
+                          json.dumps([item.test.to_dict() for item in items]).encode('utf-8'))
+        self.app.clipboard().setMimeData(mime_data)
 
-                item.set_dict(dct)
-                item['desc'] = dct.get('desc', '-')
-                item.store()
+    def paste_tests(self, tests_type='pos'):
+        if tests_type == '':
+            if self.test_list_widget.pos_test_list.currentItem():
+                tests_type = 'pos'
+            elif self.test_list_widget.neg_test_list.currentItem():
+                tests_type = 'neg'
+            else:
+                return
+        if tests_type == 'pos':
+            index = self.test_list_widget.pos_test_list.currentRow() + 1
+            if index == 0:
+                index = self.test_list_widget.pos_test_list.count()
+        else:
+            index = self.test_list_widget.neg_test_list.currentRow() + 1
+            if index == 0:
+                index = self.test_list_widget.neg_test_list.count()
 
-                if test_type == 'pos':
-                    ind = self.test_list_widget.pos_test_list.currentRow() + 1
-                    self.test_list_widget.pos_test_list.insertItem(ind, item)
-                    self.test_list_widget.pos_test_list.setCurrentRow(ind)
-                else:
-                    ind = self.test_list_widget.neg_test_list.currentRow() + 1
-                    self.test_list_widget.neg_test_list.insertItem(ind, item)
-                    self.test_list_widget.neg_test_list.setCurrentRow(ind)
+        tests = self.app.clipboard().mimeData().data(f'TestGeneratorFuncTests')
+        if tests:
+            try:
+                tests = json.loads(tests.data().decode('utf-8'))
+                for el in tests:
+                    self.bm.new_func_test(tests_type, index, data=el)
+                    index += 1
+            except UnicodeDecodeError:
+                pass
+            except json.JSONDecodeError:
+                pass
 
     def set_tests_changed(self):
         self.tests_changed = True

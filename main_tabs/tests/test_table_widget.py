@@ -1,5 +1,8 @@
+import typing
+
 import docx
-from PyQt6.QtCore import Qt
+from PyQt6 import QtGui
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
     QPushButton
 
@@ -12,6 +15,10 @@ BUTTONS_MAX_WIDTH = 30
 
 
 class TestTableWidget(QWidget):
+    copyTests = pyqtSignal(str)
+    pasteTests = pyqtSignal(str)
+    deleteTests = pyqtSignal(str)
+
     def __init__(self, tm, sm, bm, cm):
         super(TestTableWidget, self).__init__()
         self.tm = tm
@@ -56,6 +63,7 @@ class TestTableWidget(QWidget):
         self.pos_delete_button = Button(self.tm, 'delete', css='Bg')
         self.pos_delete_button.setFixedHeight(22)
         self.pos_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.pos_delete_button.clicked.connect(lambda: self.deleteTests.emit('pos'))
         pos_buttons_layout.addWidget(self.pos_delete_button)
 
         self.pos_button_up = Button(self.tm, 'button_up', css='Bg')
@@ -71,7 +79,14 @@ class TestTableWidget(QWidget):
         self.pos_button_copy = Button(self.tm, 'copy', css='Bg')
         self.pos_button_copy.setFixedHeight(22)
         self.pos_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.pos_button_copy.clicked.connect(lambda: self.copyTests.emit('pos'))
         pos_buttons_layout.addWidget(self.pos_button_copy)
+
+        self.pos_button_paste = Button(self.tm, 'paste', css='Bg')
+        self.pos_button_paste.setFixedHeight(22)
+        self.pos_button_paste.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.pos_button_paste.clicked.connect(lambda: self.pasteTests.emit('pos'))
+        pos_buttons_layout.addWidget(self.pos_button_paste)
 
         # self.pos_button_generate = Button(self.tm, 'generate')
         # self.pos_button_generate.setFixedHeight(22)
@@ -79,6 +94,7 @@ class TestTableWidget(QWidget):
         # pos_buttons_layout.addWidget(self.pos_button_generate)
 
         self.pos_test_list = QListWidget()
+        self.pos_test_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
         pos_layout.addWidget(self.pos_test_list)
 
         pos_comparator_layout = QHBoxLayout()
@@ -134,6 +150,7 @@ class TestTableWidget(QWidget):
         self.neg_delete_button = Button(self.tm, 'delete', css='Bg')
         self.neg_delete_button.setFixedHeight(22)
         self.neg_delete_button.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.neg_delete_button.clicked.connect(lambda: self.deleteTests.emit('neg'))
         neg_buttons_layout.addWidget(self.neg_delete_button)
 
         self.neg_button_up = Button(self.tm, 'button_up', css='Bg')
@@ -149,7 +166,14 @@ class TestTableWidget(QWidget):
         self.neg_button_copy = Button(self.tm, 'copy', css='Bg')
         self.neg_button_copy.setFixedHeight(22)
         self.neg_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.neg_button_copy.clicked.connect(lambda: self.copyTests.emit('neg'))
         neg_buttons_layout.addWidget(self.neg_button_copy)
+
+        self.neg_button_paste = Button(self.tm, 'paste', css='Bg')
+        self.neg_button_paste.setFixedHeight(22)
+        self.neg_button_paste.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.neg_button_paste.clicked.connect(lambda: self.pasteTests.emit('neg'))
+        neg_buttons_layout.addWidget(self.neg_button_paste)
 
         self.neg_button_generate = Button(self.tm, 'generate', css='Bg')
         self.neg_button_generate.setFixedHeight(22)
@@ -162,6 +186,7 @@ class TestTableWidget(QWidget):
         # neg_buttons_layout.addWidget(self.neg_button_generate)
 
         self.neg_test_list = QListWidget()
+        self.neg_test_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
         neg_layout.addWidget(self.neg_test_list)
 
         neg_comparator_layout = QHBoxLayout()
@@ -177,6 +202,9 @@ class TestTableWidget(QWidget):
         neg_comparator_layout.addWidget(self.neg_comparator_widget)
         neg_layout.addLayout(neg_comparator_layout)
 
+        self.ctrl_pressed = False
+        self.shift_pressed = False
+
     def _on_build_changed(self):
         self.sm.set('build', self._build_box.current_scenario())
 
@@ -187,7 +215,6 @@ class TestTableWidget(QWidget):
         self.sm.get('neg_comparator', self.neg_comparator_widget.currentIndex() - 1)
 
     def move_selection(self, test_type, direction, index):
-        print(test_type, direction, self.pos_test_list.currentRow())
         list_widget = self.pos_test_list if test_type == 'pos' else self.neg_test_list
         # index = list_widget.currentRow()
         if direction == 'up':
@@ -208,8 +235,10 @@ class TestTableWidget(QWidget):
         self.tm.set_theme_to_list_widget(self.pos_test_list)
         self.tm.set_theme_to_list_widget(self.neg_test_list)
         for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
-                   self.pos_button_copy, self.in_data_edit, self.neg_add_button, self.neg_delete_button,
-                   self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.out_data_edit,
+                   self.pos_button_copy, self.pos_button_paste, self.in_data_edit,
+                   self.neg_add_button, self.neg_delete_button,
+                   self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_paste,
+                   self.out_data_edit,
                    self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
                    self.neg_button_generate, self.export_button]:
             self.tm.auto_css(el)
@@ -219,6 +248,27 @@ class TestTableWidget(QWidget):
         for el in self._windows:
             if hasattr(el, 'set_theme'):
                 el.set_theme()
+
+    def keyPressEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
+        match a0.key():
+            case Qt.Key.Key_C:
+                if self.ctrl_pressed:
+                    self.copyTests.emit('')
+            case Qt.Key.Key_V:
+                if self.ctrl_pressed:
+                    self.pasteTests.emit('')
+            case Qt.Key.Key_Control:
+                self.ctrl_pressed = True
+            case Qt.Key.Key_Shift:
+                self.shift_pressed = True
+            case Qt.Key.Key_Delete:
+                self.deleteTests.emit('')
+
+    def keyReleaseEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
+        if a0.key() == Qt.Key.Key_Control:
+            self.ctrl_pressed = False
+        if a0.key() == Qt.Key.Key_Shift:
+            self.shift_pressed = False
 
 
 class ExportDialog(QDialog):

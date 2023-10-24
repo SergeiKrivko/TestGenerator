@@ -131,8 +131,10 @@ class BackendManager(QObject):
         self.sm.set(f'{test.type()}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test.type()]))
         self.addFuncTest.emit(test, index)
 
-    def new_func_test(self, test_type='pos', index=None):
+    def new_func_test(self, test_type='pos', index=None, data=None):
         test = FuncTest(f"{self.sm.project.data_path()}/func_tests/{test_type}", test_type=test_type)
+        if data:
+            test.from_dict(data)
         self.add_func_test(test, index)
         return test
 

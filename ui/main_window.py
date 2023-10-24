@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
         self.code_widget = CodeWidget(self.sm, self.bm, self.tm)
         self.add_tab(self.code_widget, 'code', "Код")
 
-        self.tests_widget = TestsWidget(self.sm, self.bm, self.tm)
+        self.tests_widget = TestsWidget(self.sm, self.bm, app, self.tm)
         self.add_tab(self.tests_widget, 'tests', "Тесты")
 
         self.testing_widget = TestingWidget(self.sm, self.bm, self.tm)

@@ -120,3 +120,11 @@ class FuncTest:
         test.load_testing_data()
         test.store()
         return test
+
+    def to_dict(self):
+        return self._data
+
+    def from_dict(self, data: dict):
+        self._data = data
+        self.load_testing_data()
+        self.store()
