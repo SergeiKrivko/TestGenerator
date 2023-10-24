@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QHBoxLayout, QVBoxLayout,
     QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox, QWidget
 
 from settings.remote_libs import ListReader, FileReader
+from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
 
 
@@ -173,7 +174,7 @@ class LibWidget(QWidget):
     def delete_lib(self):
         item = self.lib_list_widget.currentItem()
         if isinstance(item, CustomLib):
-            self.dialog = CustomDialog("Удаление библиотеки",
+            self.dialog = Dialog("Удаление библиотеки",
                                        f"Вы действительно хотите удалить библиотеку {item.name}?", self.tm)
             if self.dialog.exec():
                 path = f"{self.global_libs_dir if item.lib_type == CustomLib.GLOBAL else self.local_libs_dir}/" \
@@ -183,11 +184,10 @@ class LibWidget(QWidget):
                 self.lib_list_widget.takeItem(self.lib_list_widget.currentRow())
 
 
-class NewLibDialog(QDialog):
+class NewLibDialog(CustomDialog):
     def __init__(self, name, tm):
-        super(NewLibDialog, self).__init__()
-        self.setWindowTitle(name)
-        self.tm = tm
+        super(NewLibDialog, self).__init__(tm, name, True)
+        super().set_theme()
 
         QBtn = QDialogButtonBox.StandardButton.Ok
         self.buttonBox = QDialogButtonBox(QBtn)
@@ -268,12 +268,12 @@ class CustomLib(QListWidgetItem):
             self.setForeground(tm['CFile'])
 
 
-class CustomDialog(QDialog):
+class Dialog(CustomDialog):
     def __init__(self, name, message, tm):
-        super(CustomDialog, self).__init__()
-        self.setWindowTitle(name)
+        super(Dialog, self).__init__(tm, name, True)
+        super().set_theme()
 
-        QBtn = QDialogButtonBox.Yes | QDialogButtonBox.No
+        QBtn = QDialogButtonBox.StandardButton.Yes | QDialogButtonBox.StandardButton.No
         self.buttonBox = QDialogButtonBox(QBtn)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
@@ -284,16 +284,16 @@ class CustomDialog(QDialog):
         self.setLayout(layout)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        tm.auto_css(self.buttonBox.button(QDialogButtonBox.Yes))
-        self.buttonBox.button(QDialogButtonBox.Yes).setFixedSize(80, 24)
-        tm.auto_css(self.buttonBox.button(QDialogButtonBox.No))
-        self.buttonBox.button(QDialogButtonBox.No).setFixedSize(80, 24)
+        tm.auto_css(self.buttonBox.button(QDialogButtonBox.StandardButton.Yes))
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Yes).setFixedSize(80, 24)
+        tm.auto_css(self.buttonBox.button(QDialogButtonBox.StandardButton.No))
+        self.buttonBox.button(QDialogButtonBox.StandardButton.No).setFixedSize(80, 24)
 
 
-class LoadFileDialog(QDialog):
+class LoadFileDialog(CustomDialog):
     def __init__(self, lib_name, tm):
-        super(LoadFileDialog, self).__init__()
-        self.setWindowTitle("Загрузка библиотеки")
+        super(LoadFileDialog, self).__init__(tm, "Загрузка библиотеки", True)
+        super().set_theme()
 
         QBtn = QDialogButtonBox.StandardButton.Cancel
         self.buttonBox = QDialogButtonBox(QBtn)

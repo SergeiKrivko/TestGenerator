@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import  QLineEdit, QWidget, QVBoxLayout, QHBoxLayout, QLabe
 
 from backend.backend_types.func_test import FuncTest
 from other.binary_redactor.redactor import RedactorWidget
+from ui.custom_dialog import CustomDialog
 
 
 class TestEditWidget(QWidget):
@@ -277,12 +278,10 @@ class TestEditWidget(QWidget):
         self.test_edited.emit()
 
 
-class NewInFileDialog(QDialog):
+class NewInFileDialog(CustomDialog):
     def __init__(self, tm):
-        super(NewInFileDialog, self).__init__()
-        self.tm = tm
-
-        self.setWindowTitle("Копировать тесты")
+        super(NewInFileDialog, self).__init__(tm, "Новый файл", True)
+        super().set_theme()
 
         QBtn = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
 

@@ -1,12 +1,13 @@
-from PyQt6.QtWidgets import QDialog, QWidget
+from PyQt6.QtWidgets import QWidget
+
+from ui.custom_dialog import CustomDialog
 
 
-class SideBarDialog(QDialog):
+class SideBarDialog(CustomDialog):
     def __init__(self, bm, sm, tm):
-        super().__init__()
+        super().__init__(tm)
         self.sm = sm
         self.bm = bm
-        self.tm = tm
 
     def command(self, *args, **kwargs):
         pass

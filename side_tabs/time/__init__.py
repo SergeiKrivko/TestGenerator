@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QPushButton, QDialog, QComboBox, QTextE
     QLineEdit
 
 from side_tabs.builds.commands_list import ScenarioBox
+from ui.custom_dialog import CustomDialog
 from ui.side_panel_widget import SidePanelWidget
 
 
@@ -88,10 +89,10 @@ class Field:
         return self.values
 
 
-class FieldEditDialog(QDialog):
+class FieldEditDialog(CustomDialog):
     def __init__(self, tm):
-        super().__init__()
-        self.tm = tm
+        super().__init__(tm)
+        super().set_theme()
 
         self.setFixedSize(250, 250)
 

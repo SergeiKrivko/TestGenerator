@@ -17,6 +17,7 @@ from side_tabs.todo_panel import TODOPanel
 from side_tabs.projects.project_widget import ProjectWidget
 from main_tabs.tests.generator_window import GeneratorTab
 from side_tabs.tests.testing_panel import TestingPanel
+from ui.custom_dialog import CustomDialog
 from ui.main_menu import MainMenu
 from ui.main_tab import MainTab
 from ui.progress_dialog import ProgressDialog
@@ -173,12 +174,11 @@ class MainWindow(QMainWindow):
             super(MainWindow, self).close()
 
 
-class ExitDialog(QDialog):
+class ExitDialog(CustomDialog):
     def __init__(self, tm):
-        super(ExitDialog, self).__init__()
+        super(ExitDialog, self).__init__("Выход")
         self.tm = tm
-
-        self.setWindowTitle("Выход")
+        super().set_theme()
 
         layout = QVBoxLayout()
         label = QLabel("В данный момент идет сохранение одного или нескольких наборов тестов."

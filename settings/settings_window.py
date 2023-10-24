@@ -3,26 +3,25 @@ import os
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
+from config import APP_NAME
 from settings.lib_dialog import LibWidget
 from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, \
     KEY_LOCAL, \
     SwitchBox, ProgramEdit, ListWidget
 from settings.utils_edit import UtilsEdit
+from ui.custom_dialog import CustomDialog
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 
 
-class SettingsWindow(QDialog):
+class SettingsWindow(CustomDialog):
     change_theme = pyqtSignal()
 
     def __init__(self, sm, bm, tm, side_bar):
-        super(SettingsWindow, self).__init__()
+        super(SettingsWindow, self).__init__(tm, f"{APP_NAME} - настройки", True, True)
         self.sm = sm
         self.bm = bm
-        self.tm = tm
-
-        self.setWindowTitle("TestGenerator - настройки")
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -274,7 +273,7 @@ class SettingsWindow(QDialog):
             return False
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.bg_style_sheet)
+        super().set_theme()
         # self.button_ok.setStyleSheet(self.tm.button_css('Main'))
         # self.button_ok.setFont(self.tm.font_small)
         self.tree_widget.setStyleSheet(self.tm.tree_widget_css('Bg', border=False))

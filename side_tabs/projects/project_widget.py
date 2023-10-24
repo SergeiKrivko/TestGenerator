@@ -11,6 +11,8 @@ import py7zr
 
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
+from config import APP_NAME
+from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 from ui.side_panel_widget import SidePanelWidget
@@ -238,15 +240,16 @@ class ProjectListWidgetItem(QListWidgetItem):
         self.setIcon(QIcon(self._tm.get_image(self._icon)))
 
 
-class RenameProjectDialog(QDialog):
+class RenameProjectDialog(CustomDialog):
     def __init__(self, path, tm):
-        super(RenameProjectDialog, self).__init__()
+        super(RenameProjectDialog, self).__init__(tm, "Переименование проекта")
         self.path = path
-        self.setWindowTitle("Переименовать проект")
+
+        self.setFixedWidth(220)
 
         layout = QVBoxLayout()
         layout.setSpacing(15)
-        layout.addWidget(QLabel(f"Переименовать проект {os.path.basename(self.path)} в:"))
+        layout.addWidget(label := QLabel(f"Переименовать проект {os.path.basename(self.path)} в:"))
 
         self.line_edit = QLineEdit()
         self.line_edit.setText(os.path.basename(self.path))
@@ -269,20 +272,19 @@ class RenameProjectDialog(QDialog):
         layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
-        self.setStyleSheet(tm.bg_style_sheet)
-        for el in [self.line_edit, self.button_ok, self.button_cancel]:
+        super().set_theme()
+        for el in [self.line_edit, self.button_ok, self.button_cancel, label]:
             tm.auto_css(el)
 
 
-class DeleteProjectDialog(QDialog):
+class DeleteProjectDialog(CustomDialog):
     DELETE_FROM_LIST = 0
     DELETE_DATA = 1
     DELETE_ALL = 2
 
     def __init__(self, name, tm):
-        super(DeleteProjectDialog, self).__init__()
+        super(DeleteProjectDialog, self).__init__(tm, "Удаление проекта")
         self.name = name
-        self.setWindowTitle("Удаление проекта")
         self.setFixedSize(350, 170)
 
         layout = QVBoxLayout()
@@ -314,7 +316,7 @@ class DeleteProjectDialog(QDialog):
         layout.addLayout(buttons_layout)
         self.setLayout(layout)
 
-        self.setStyleSheet(tm.bg_style_sheet)
+        super().set_theme()
         self.button_yes.setStyleSheet(tm.button_css())
         self.button_no.setFont(tm.font_medium)
         self.button_no.setStyleSheet(tm.button_css())
@@ -338,11 +340,10 @@ class DeleteProjectDialog(QDialog):
         return self._combo_box.currentIndex()
 
 
-class ProjectFromZipDialog(QDialog):
+class ProjectFromZipDialog(CustomDialog):
     def __init__(self, name: str, directory: str, tm):
-        super().__init__()
+        super().__init__(tm, "Распаковка проекта")
 
-        self.setWindowTitle("Распаковка проекта")
 
         self.layout = QVBoxLayout()
 
@@ -388,7 +389,7 @@ class ProjectFromZipDialog(QDialog):
         self.layout.addLayout(button_layout)
         self.setLayout(self.layout)
 
-        self.setStyleSheet(tm.bg_style_sheet)
+        super().set_theme()
         for el in [self.button_ok, self.button_cancel, self.line_edit]:
             tm.auto_css(el)
 
@@ -458,11 +459,9 @@ class ProjectUnpacker(QThread):
         shutil.rmtree(self.data_path, ignore_errors=True)
 
 
-class OpenAsProjectDialog(QDialog):
+class OpenAsProjectDialog(CustomDialog):
     def __init__(self, tm, sm, path):
-        super().__init__()
-        self.setWindowTitle("TestGenerator")
-        self.tm = tm
+        super().__init__(tm, APP_NAME)
         self.sm = sm
 
         main_layout = QVBoxLayout()
@@ -494,7 +493,7 @@ class OpenAsProjectDialog(QDialog):
         main_layout.addLayout(buttons_layout)
         self.setLayout(main_layout)
 
-        self.setStyleSheet(self.tm.bg_style_sheet)
+        super().set_theme()
         for el in [self.label, self.line_edit, self.button_cancel, self.button_scip, self.button_create]:
             self.tm.auto_css(el)
         self.create_temp_project = False
@@ -511,12 +510,10 @@ class OpenAsProjectDialog(QDialog):
             self.accept()
 
 
-class NewProjectDialog(QDialog):
+class NewProjectDialog(CustomDialog):
     def __init__(self, sm, tm):
-        super().__init__()
+        super().__init__(tm, "Новый проект")
         self.sm = sm
-        self.tm = tm
-        self.setWindowTitle("Новый проект")
 
         main_layout = QVBoxLayout()
         self.labels = []
@@ -576,7 +573,7 @@ class NewProjectDialog(QDialog):
             self.options_widget.set_value("Название проекта:", os.path.basename(path))
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.bg_style_sheet)
+        super().set_theme()
         for el in [self.checkbox, self.dir_edit, self.dir_button, self.button_ok, self.button_cancel]:
             self.tm.auto_css(el)
         for el in self.labels:

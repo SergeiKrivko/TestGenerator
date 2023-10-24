@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetIt
 from backend.backend_types.build import Build
 from side_tabs.builds.build_edit import BuildEdit
 from ui.button import Button
+from ui.custom_dialog import CustomDialog
 from ui.side_bar_window import SideBarWindow
 
 
@@ -101,7 +102,7 @@ class BuildWindow(SideBarWindow):
         self._build_edit.store_build()
 
 
-class BuildTypeDialog(QDialog):
+class BuildTypeDialog(CustomDialog):
     ITEMS = {'C': "Сборка C", "python": "Python", "python_coverage": "Python Coverage",
              'script': "Сценарий командной строки", 'bash': "Скрипт Bash", 'command': "Команда", 'report': "Отчет"}
     ITEMS_REVERSED = {item: key for key, item in ITEMS.items()}
@@ -114,10 +115,9 @@ class BuildTypeDialog(QDialog):
               'report': 'md'}
 
     def __init__(self, tm):
-        super().__init__()
-        self.tm = tm
+        super().__init__(tm, "Новая конфигурация")
 
-        self.setFixedSize(250, 85)
+        self.setFixedSize(250, 120)
 
         layout = QVBoxLayout()
         layout.setSpacing(20)
@@ -153,7 +153,7 @@ class BuildTypeDialog(QDialog):
         return BuildTypeDialog.ITEMS_REVERSED[self._combo_box.currentText()]
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.bg_style_sheet)
+        super().set_theme()
         for el in [self._button_cancel, self._button_ok, self._combo_box]:
             self.tm.auto_css(el)
 

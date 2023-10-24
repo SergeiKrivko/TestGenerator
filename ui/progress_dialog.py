@@ -2,15 +2,15 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
 
 from backend.backend_types.project import Project
 from backend.backend_manager import BackendManager
+from ui.custom_dialog import CustomDialog
 
 
-class ProgressDialog(QDialog):
+class ProgressDialog(CustomDialog):
     def __init__(self, bm: BackendManager, tm, project: Project):
-        super().__init__()
+        super().__init__(tm)
         self._tm = tm
         self._bm = bm
-
-        self.setWindowTitle(f"Загрузка проекта")
+        super().set_theme()
 
         layout = QVBoxLayout()
         self.setLayout(layout)

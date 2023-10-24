@@ -2,15 +2,15 @@ import os.path
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout, QWidget, QPushButton, QLabel, QScrollArea
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QLabel, QScrollArea
+
+from ui.custom_dialog import CustomDialog
 
 
-class CompilerErrorWindow(QDialog):
+class CompilerErrorWindow(CustomDialog):
     def __init__(self, text: str, tm, mask='', name="Ошибка компиляции"):
-        super().__init__()
-        self.setWindowTitle(name)
-        self.setStyleSheet(tm.bg_style_sheet)
-        self.tm = tm
+        super().__init__(name, True)
+        super().set_theme()
         if isinstance(mask, str) and '{file}' in mask and '{line}' in mask:
             self._mask = mask
             self._prefix = self._mask[:self._mask.index("{file}")]

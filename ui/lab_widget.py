@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog, QLineEdit
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
 from backend.backend_manager import BackendManager
+from ui.custom_dialog import CustomDialog
 
 
 class LabWidget(QPushButton):
@@ -99,10 +100,10 @@ class ProjectMenu(QMenu):
             el.set_theme()
 
 
-class NewSubProjectDialog(QDialog):
+class NewSubProjectDialog(CustomDialog):
     def __init__(self, tm):
-        super().__init__()
-        self.tm = tm
+        super().__init__(tm, "Создание подпроекта", True)
+        super().set_theme()
 
         layout = QVBoxLayout()
 
@@ -136,10 +137,10 @@ class NewSubProjectDialog(QDialog):
             self.tm.auto_css(el)
 
 
-class DeleteSubProjectDialog(QDialog):
+class DeleteSubProjectDialog(CustomDialog):
     def __init__(self, tm, project):
-        super().__init__()
-        self.tm = tm
+        super().__init__(tm, "Удаление подпроекта", True)
+        super().set_theme()
         self.project = project
 
         self.setFixedSize(340, 140)

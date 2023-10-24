@@ -13,6 +13,7 @@ import send2trash
 
 from language.languages import languages
 from side_tabs.files.open_file_options import get_open_file_options
+from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
 from ui.side_panel_widget import SidePanelWidget
 from backend.backend_manager import BackendManager
@@ -649,9 +650,9 @@ class FileListWidgetItem(QListWidgetItem):
         self.setFont(self.tm.font_medium)
 
 
-class DeleteFileDialog(QDialog):
+class DeleteFileDialog(CustomDialog):
     def __init__(self, message, tm):
-        super().__init__()
+        super().__init__(tm)
 
         self.setWindowTitle("Удаление файла")
 
@@ -676,22 +677,17 @@ class DeleteFileDialog(QDialog):
         self.layout.addLayout(button_layout)
         self.setLayout(self.layout)
 
-        self.setStyleSheet(tm.bg_style_sheet)
+        super().set_theme()
         for el in [self.button_cancel, self.button_ok]:
             tm.auto_css(el)
 
 
-class RenameFileDialog(QDialog):
+class RenameFileDialog(CustomDialog):
     def __init__(self, name, directory, tm):
-        super().__init__()
-
         file = 'папки' if directory else 'файла'
-        self.setWindowTitle(f"Переименование {file}" if name else f"Создание {file}")
+        super().__init__(tm, f"Введите новое имя {file}:" if name else f"Введите имя {file}:", False)
 
         self.layout = QVBoxLayout()
-        label = QLabel(f"Введите новое имя {file}:" if name else f"Введите имя {file}:")
-        label.setFont(tm.font_medium)
-        self.layout.addWidget(label)
 
         self.line_edit = QLineEdit()
         self.line_edit.setText(name)
@@ -715,7 +711,7 @@ class RenameFileDialog(QDialog):
         self.layout.addLayout(button_layout)
         self.setLayout(self.layout)
 
-        self.setStyleSheet(tm.bg_style_sheet)
+        super().set_theme()
         for el in [self.button_ok, self.button_cancel, self.line_edit]:
             tm.auto_css(el)
 

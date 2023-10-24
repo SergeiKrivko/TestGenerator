@@ -7,6 +7,7 @@ from backend.settings_manager import SettingsManager
 from backend.backend_types.build import Build
 import side_tabs.builds as builds
 from ui.button import Button
+from ui.custom_dialog import CustomDialog
 
 
 class CommandsList(QWidget):
@@ -105,12 +106,11 @@ class CommandsList(QWidget):
             self.tm.auto_css(el)
 
 
-class NewCommandDialog(QDialog):
+class NewCommandDialog(CustomDialog):
     def __init__(self, sm, bm, tm, fixed_type=None):
-        super().__init__()
+        super().__init__(tm, "Новая команда", True)
         self.sm = sm
         self.bm = bm
-        self.tm = tm
         self._fixed_type = fixed_type
 
         self.setFixedSize(300, 100)
@@ -183,7 +183,7 @@ class NewCommandDialog(QDialog):
         return self._type_box.currentIndex(), res
 
     def set_theme(self):
-        self.setStyleSheet(self.tm.bg_style_sheet)
+        super().set_theme()
         for el in [self._type_box, self._line_edit, self._make_box, self._utils_box, self._button]:
             self.tm.auto_css(el)
 

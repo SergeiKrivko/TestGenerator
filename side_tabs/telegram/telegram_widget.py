@@ -12,6 +12,7 @@ from side_tabs.telegram.chat_list_widget import TelegramListWidget
 from side_tabs.telegram.telegram_api import types
 from side_tabs.telegram.telegram_manager import TelegramManager
 from ui.button import Button
+from ui.custom_dialog import CustomDialog
 from ui.side_panel_widget import SidePanelWidget
 
 
@@ -264,9 +265,10 @@ class TelegramTopWidget(QWidget):
         self._button_back.set_theme()
 
 
-class PasswordWidget(QDialog):
+class PasswordWidget(CustomDialog):
     def __init__(self, tm, state):
-        super().__init__()
+        super().__init__(tm, config.APP_NAME, button_close=True)
+        super().set_theme()
 
         if isinstance(state, types.TgAuthorizationStateWaitPhoneNumber):
             self._text = "Пожалуйста, введите свой номер телефона:"
@@ -333,11 +335,11 @@ class PasswordWidget(QDialog):
         return self._line_edit2.text()
 
 
-class SendFileDialog(QDialog):
+class SendFileDialog(CustomDialog):
     def __init__(self, tm, file, text=''):
-        super().__init__()
+        super().__init__(tm, "Отправка файла")
         self._tm = tm
-        self.setWindowTitle("Отправка файла")
+        super().set_theme()
 
         layout = QVBoxLayout()
         self.setLayout(layout)
