@@ -81,13 +81,9 @@ class GeneratorTab(SidePanelWidget):
         if data.get('clear', False):
             pass
         for el in data.get('pos', []):
-            test = self.bm.new_func_test('pos')
-            for key, item in el.items():
-                test[key] = item
+            test = self.bm.new_func_test('pos', data=el)
         for el in data.get('neg', []):
-            test = self.bm.new_func_test('neg')
-            for key, item in el.items():
-                test[key] = item
+            test = self.bm.new_func_test('neg', data=el)
         try:
             os.remove(file)
         except FileNotFoundError:
