@@ -80,7 +80,8 @@ class BuildWindow(SideBarWindow):
     def new_build(self):
         dialog = BuildTypeDialog(self.tm)
         if dialog.exec():
-            build = Build(self.bm.generate_build_id())
+            build = Build(build_id := self.bm.generate_build_id(),
+                          f"{self.sm.project.data_path()}/scenarios/{build_id}.json")
             build['type'] = dialog.value()
             self.bm.add_build(build)
 

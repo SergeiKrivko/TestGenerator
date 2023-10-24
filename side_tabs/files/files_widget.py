@@ -472,6 +472,8 @@ class FilesWidget(SidePanelWidget):
         match platform.system():
             case 'Windows':
                 os.system(f"start cmd /K cd {path}")
+            case 'Linux':
+                os.system(f"gnome-terminal --working-directory {path}")
 
     def create_directory(self):
         self.create_file(directory=True)

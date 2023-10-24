@@ -60,8 +60,7 @@ class Loader(QThread):
         if os.path.isdir(data_path := f"{self._old_data_path}/scenarios"):
             shutil.rmtree(data_path)
         for key, item in self._manager.builds.items():
-            path = f"{data_path}/{key}.json"
-            item.store(path)
+            item.store()
 
     def store_utils(self):
         if os.path.isdir(data_path := f"{self._sm.app_data_dir}/utils"):

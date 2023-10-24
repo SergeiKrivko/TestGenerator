@@ -13,13 +13,14 @@ class Build:
     def __init__(self, id, path=None):
         self._data = dict() if path is None else read_json(path)
         self.id = id
+        self._path = path
 
     def get(self, key, default=None):
         return self._data.get(key, default)
 
-    def store(self, path):
-        os.makedirs(os.path.split(path)[0], exist_ok=True)
-        with open(path, 'w', encoding='utf-8') as f:
+    def store(self):
+        os.makedirs(os.path.split(self._path)[0], exist_ok=True)
+        with open(self._path, 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._data))
 
     def __getitem__(self, item):
@@ -27,6 +28,7 @@ class Build:
 
     def __setitem__(self, key, value):
         self._data[key] = value
+        self.store()
 
     def pop(self, key):
         self._data.pop(key)
