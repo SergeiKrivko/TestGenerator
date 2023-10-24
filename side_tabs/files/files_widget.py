@@ -345,7 +345,7 @@ class FilesWidget(SidePanelWidget):
     def rename_file(self, flag=True):
         if (item := self.files_list.currentItem()) is None:
             return
-        self.dialog = RenameFileDialog(item.name, self.tm)
+        self.dialog = RenameFileDialog(item.name, directory=isinstance(item, TreeDirectory), tm=self.tm)
         if self.dialog.exec():
             if not os.path.isfile(f"{self.path}/{self.dialog.line_edit.text()}"):
                 os.rename(self.files_list.currentItem().path,
@@ -511,7 +511,7 @@ class FilesWidget(SidePanelWidget):
     def create_file(self, directory=False, base_path=None, extension=''):
         if base_path is None:
             base_path = self.sm.project.path()
-        self.dialog = RenameFileDialog('', self.tm)
+        self.dialog = RenameFileDialog('', directory, self.tm)
         if self.dialog.exec():
             if not self.dialog.line_edit.text():
                 MessageBox(MessageBox.Icon.Warning, "Ошибка",
@@ -682,20 +682,21 @@ class DeleteFileDialog(QDialog):
 
 
 class RenameFileDialog(QDialog):
-    def __init__(self, name, tm):
+    def __init__(self, name, directory, tm):
         super().__init__()
 
-        self.setWindowTitle("Переименование файла" if name else "Создание файла")
+        file = 'папки' if directory else 'файла'
+        self.setWindowTitle(f"Переименование {file}" if name else f"Создание {file}")
 
         self.layout = QVBoxLayout()
-        label = QLabel("Введите новое имя файла:" if name else "Введите имя файла:")
+        label = QLabel(f"Введите новое имя {file}:" if name else f"Введите имя {file}:")
         label.setFont(tm.font_medium)
         self.layout.addWidget(label)
 
         self.line_edit = QLineEdit()
         self.line_edit.setText(name)
         self.layout.addWidget(self.line_edit)
-        self.line_edit.selectAll()
+        self.line_edit.setSelection(0, len(name) if directory or '.' not in name else name.rindex('.'))
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
