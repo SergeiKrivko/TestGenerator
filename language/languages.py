@@ -8,6 +8,7 @@ import language.testing.python
 import language.testing.shell
 from other.binary_redactor.lexer import LexerBin
 from other.binary_redactor.convert_binary import convert as convert_binary
+import other.report.markdown_parser
 
 languages = {
     'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
@@ -59,7 +60,7 @@ languages = {
         },
         'run': language.testing.python.python_run,
         'coverage': language.testing.python.python_collect_coverage,
-        'fast_run': True,
+        'fast_run': [('Запустить', 'run', language.testing.python.python_fast_run)],
     },
     'C++': {'lexer': QsciLexerCPP, 'files': ['.cpp', '.h'], 'autocompletion': AcMAbstract, 'colors': {
         QsciLexerCPP.Identifier: 'Identifier',
@@ -90,7 +91,7 @@ languages = {
             QsciLexerBash.Error: 'Preprocessor'
         },
         'run': language.testing.shell.bash_run,
-        'fast_run': True,
+        'fast_run': [('Запустить', 'run', language.testing.python.python_fast_run)],
     },
     'Batch': {
         'lexer': QsciLexerBatch,
@@ -106,23 +107,33 @@ languages = {
             QsciLexerBatch.Default: 'Identifier'
         },
         'run': language.testing.shell.batch_run,
-        'fast_run': True, },
-    'Markdown': {'lexer': QsciLexerMarkdown, 'files': ['.md'], 'autocompletion': AcMAbstract, 'colors': {
-        QsciLexerMarkdown.BlockQuote: 'Keyword',
-        QsciLexerMarkdown.CodeBlock: 'Preprocessor',
-        QsciLexerMarkdown.CodeBackticks: 'Preprocessor',
-        QsciLexerMarkdown.CodeDoubleBackticks: 'Preprocessor',
-        QsciLexerMarkdown.Header1: 'Keyword',
-        QsciLexerMarkdown.Header2: 'Keyword',
-        QsciLexerMarkdown.Header3: 'Keyword',
-        QsciLexerMarkdown.Header4: 'Keyword',
-        QsciLexerMarkdown.Header5: 'Keyword',
-        QsciLexerMarkdown.Header6: 'Keyword',
-        QsciLexerMarkdown.OrderedListItem: 'Keyword',
-        QsciLexerMarkdown.UnorderedListItem: 'Keyword',
-        QsciLexerMarkdown.Link: 'String',
-        QsciLexerMarkdown.Default: 'Identifier'
-    }, 'preview': True},
+        'fast_run': [('Запустить', 'run', language.testing.python.python_fast_run)],
+    },
+    'Markdown': {
+        'lexer': QsciLexerMarkdown,
+        'files': ['.md'],
+        'autocompletion': AcMAbstract,
+        'colors': {
+            QsciLexerMarkdown.BlockQuote: 'Keyword',
+            QsciLexerMarkdown.CodeBlock: 'Preprocessor',
+            QsciLexerMarkdown.CodeBackticks: 'Preprocessor',
+            QsciLexerMarkdown.CodeDoubleBackticks: 'Preprocessor',
+            QsciLexerMarkdown.Header1: 'Keyword',
+            QsciLexerMarkdown.Header2: 'Keyword',
+            QsciLexerMarkdown.Header3: 'Keyword',
+            QsciLexerMarkdown.Header4: 'Keyword',
+            QsciLexerMarkdown.Header5: 'Keyword',
+            QsciLexerMarkdown.Header6: 'Keyword',
+            QsciLexerMarkdown.OrderedListItem: 'Keyword',
+            QsciLexerMarkdown.UnorderedListItem: 'Keyword',
+            QsciLexerMarkdown.Link: 'String',
+            QsciLexerMarkdown.Default: 'Identifier'
+        }, 'preview': True,
+        'fast_run': [('Конвертировать в Docx', 'docx', lambda path, pr, bm: (other.report.markdown_parser.convert(
+            path, pr, bm, pdf=False), '')),
+                     ('Конвертировать в Pdf', 'pdf', lambda path, pr, bm: (other.report.markdown_parser.convert(
+                         path, pr, bm, pdf=True), ''))],
+    },
     'HTML': {
         'lexer': QsciLexerHTML,
         'files': ['.html'],
@@ -212,7 +223,7 @@ languages = {
         QsciLexerXML.UnknownAttribute: 'Preprocessor',
     }},
     'image': {'files': ['.bmp', '.png', '.jpg', '.pdf'], 'preview': True},
-    'Binary': {
+    'Text2Bin': {
         'lexer': LexerBin,
         'files': ['.t2b'],
         'autocompletion': AcMAbstract,
@@ -226,5 +237,7 @@ languages = {
             LexerBin.Comment: 'Comment'
         },
         'run': lambda path, *args, **kwargs: convert_binary(in_path=path),
-        'fast_run': True},
+        'fast_run': [('Конвертировать', 'bin', lambda path, project, bm: ('', convert_binary(
+            in_path=path, exceptions=False)))]
+    },
 }

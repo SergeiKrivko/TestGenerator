@@ -39,3 +39,7 @@ def python_coverage_html(sm, build):
     res = cmd_command(f"coverage html --data-file={temp_dir}/.coverage --directory={temp_dir}/htmlcov", shell=True)
     if res.returncode == 0:
         return f"{temp_dir}/htmlcov/index.html"
+
+
+def python_fast_run(path, project, bm):
+    return f"{project.get('python')} \"{path}\"", ''

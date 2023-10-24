@@ -146,6 +146,7 @@ class ContextMenu(QMenu):
     OPEN_IN_EXPLORER = 106
     OPEN_BY_COMMAND = 107
     MOVE_TO_TRASH = 108
+    RUN_FILE = 109
 
     COPY_FILES = 200
     PASTE_FILES = 201
@@ -192,6 +193,10 @@ class ContextMenu(QMenu):
 
         self.addSeparator()
 
+        self.add_fast_run_actions(path)
+
+        self.addSeparator()
+
         self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить").triggered.connect(
             lambda: self.set_action(ContextMenu.DELETE_FILE))
         self.addAction(QIcon(self.tm.get_image('button_delete')), "Переместить в корзину").triggered.connect(
@@ -229,6 +234,23 @@ class ContextMenu(QMenu):
             self.tm.auto_css(el)
         self.action = None
         self.action_data = None
+
+    def add_fast_run_actions(self, path):
+        for language in languages.values():
+            for el in language.get('files', []):
+                if path.endswith(el):
+
+                    for name, icon, func in language.get('fast_run', []):
+                        if icon:
+                            icon = QIcon(self.tm.get_image(icon))
+                        else:
+                            icon = None
+                        action = self.addAction(icon, name)
+                        self.connect_run_action(action, func)
+                    return
+
+    def connect_run_action(self, action, func):
+        action.triggered.connect(lambda: self.set_action(ContextMenu.RUN_FILE, func))
 
     def add_open_action(self, name, icon, command):
         self.open_menu.addAction(name).triggered.connect(
@@ -419,6 +441,14 @@ class FilesWidget(SidePanelWidget):
                 self.copy_path()
             case ContextMenu.PASTE_FILES:
                 self.paste_files()
+            case ContextMenu.RUN_FILE:
+                self.fast_run_file(menu.action_data)
+
+    def fast_run_file(self, func):
+        item = self.files_list.currentItem()
+        if isinstance(item, TreeFile) or isinstance(item, TreeDirectory):
+            self.bm.side_tab_show('run')
+            self.bm.side_tab_command('run', item.path, func)
 
     def copy_file(self):
         item = self.files_list.currentItem()

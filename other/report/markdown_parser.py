@@ -17,6 +17,7 @@ from cairosvg import svg2png
 import latex2mathml.converter as latex_converter
 
 import config
+from backend.commands import read_file
 from other.report.docx_api import docx_to_pdf_by_api
 
 DEFAULT_STILES = {
@@ -503,6 +504,22 @@ class MarkdownParser:
 
 def count_in_start(line, symbol):
     return len(line) - len(line.lstrip(symbol))
+
+
+def convert(path, project, bm, pdf=False):
+    try:
+        file = path
+        if pdf:
+            out_file = f"{bm.sm.temp_dir()}/out.docx"
+            pdf_file = path[:path.rindex('.')] + '.pdf'
+        else:
+            out_file = path[:path.rindex('.')] + '.docx'
+            pdf_file = ''
+        converter = MarkdownParser(bm, read_file(file, ''), out_file, pdf_file)
+        converter.convert()
+    except Exception as ex:
+        return f"{ex.__class__.__name__}: {ex}"
+    return ''
 
 
 if __name__ == '__main__':

@@ -239,17 +239,24 @@ class BinaryConverter:
             raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
 
 
-def convert(text='', path='', in_path=''):
-    if in_path:
-        with open(in_path, encoding='utf-8') as f:
-            path, name = os.path.split(in_path)
-            if '.' in name and (ind := name.rindex('.')) != 0:
-                path = os.path.join(path, name[:ind] + '.bin')
-            encoder = BinaryConverter(f.read(), path)
+def convert(text='', path='', in_path='', exceptions=True):
+    try:
+        if in_path:
+            with open(in_path, encoding='utf-8') as f:
+                path, name = os.path.split(in_path)
+                if '.' in name and (ind := name.rindex('.')) != 0:
+                    path = os.path.join(path, name[:ind] + '.bin')
+                encoder = BinaryConverter(f.read(), path)
+                encoder.convert()
+        else:
+            encoder = BinaryConverter(text, path)
             encoder.convert()
-    else:
-        encoder = BinaryConverter(text, path)
-        encoder.convert()
+    except Exception as ex:
+        if exceptions:
+            raise ex
+        return f"{ex.__class__.__name__}: {ex}"
+    if not exceptions:
+        return ''
 
 
 if __name__ == '__main__':

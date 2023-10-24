@@ -77,6 +77,8 @@ class ConsolePanel(SidePanelWidget):
         self.buttons['run'].clicked.connect(self.run_main)
         self.buttons['cancel'].clicked.connect(self.terminal.terminate_process)
 
+        self.looper = None
+
     def run_main(self):
         self.terminal.run_build(self._build_box.current_scenario())
         # res, errors = self.cm.compile()
@@ -94,6 +96,20 @@ class ConsolePanel(SidePanelWidget):
         super().set_theme()
         self.terminal.set_theme()
 
-    def run_file(self, path):
-        self.terminal.run_file(path)
+    def compile(self, path, func):
+        self.terminal.command_clear()
+        self.looper = self.bm.run_process(lambda: func(path, self.bm.sm.project, self.bm), 'console', path)
+        self.looper.finished.connect(self.run_file)
+
+    def run_file(self):
+        command, errors = self.looper.res
+        if errors:
+            CompilerErrorWindow(errors, self.tm).exec()
+        elif command:
+            self.terminal.command(command)
+        else:
+            self.terminal.write_text("Готово")
+
+    def command(self, *args, **kwargs):
+        self.compile(args[0], args[1])
 
