@@ -188,7 +188,7 @@ class SettingsManager(QObject):
 
     def delete_main_project(self, project=None, directory=False, data=False):
         if project is None:
-            project = self.project
+            project = self.main_project
 
         if project.path() not in self.projects:
             return
