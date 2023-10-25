@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
         # self.side_panel.tabs['tests'].jump_to_testing.connect(
         #     lambda index, show_tab: None if not show_tab else self.show_tab(MainMenu.TAB_TESTING))
 
-        self.unit_testing_widget = UnitTestingWidget(self.sm, self.bm, self.cm, self.tm)
+        self.unit_testing_widget = UnitTestingWidget(self.sm, self.bm, self.cm, self.tm, self.app)
         self.add_tab(self.unit_testing_widget, 'unit_tests', 'Модульное тестирование')
 
         self.settings_widget = SettingsWindow(self.sm, self.bm, self.tm, self.side_bar)

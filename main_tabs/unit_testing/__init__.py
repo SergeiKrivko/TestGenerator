@@ -1,6 +1,9 @@
+import json
+
+from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QTreeWidget, \
-    QTreeWidgetItem
+    QTreeWidgetItem, QApplication
 
 from backend.backend_manager import BackendManager
 from backend.settings_manager import SettingsManager
@@ -17,12 +20,13 @@ BUTTONS_MAX_WIDTH = 40
 
 
 class UnitTestingWidget(MainTab):
-    def __init__(self, sm: SettingsManager, bm: BackendManager, cm: CommandManager, tm):
+    def __init__(self, sm: SettingsManager, bm: BackendManager, cm: CommandManager, tm, app: QApplication):
         super().__init__()
         self.sm = sm
         self.bm = bm
         self.cm = cm
         self.tm = tm
+        self.app = app
 
         super().hide()
 
@@ -87,6 +91,7 @@ class UnitTestingWidget(MainTab):
         self._tree_widget.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)
         self._tree_widget.setHeaderHidden(True)
         self._tree_widget.currentItemChanged.connect(self._on_test_selected)
+        self._tree_widget.itemSelectionChanged.connect(self._on_selection_changed)
         left_layout.addWidget(self._tree_widget)
 
         right_layout = QVBoxLayout()
@@ -108,6 +113,9 @@ class UnitTestingWidget(MainTab):
 
         self.bm.unitTestingError.connect(self._on_testing_failed)
 
+        self.ctrl_pressed = False
+        self.shift_pressed = False
+
     def _on_testing_failed(self, errors):
         dialog = CompilerErrorWindow(errors, self.tm)
         dialog.exec()
@@ -120,6 +128,73 @@ class UnitTestingWidget(MainTab):
 
     def run_tests(self):
         self.bm.run_unit_tests()
+
+    def _get_modules_set(self):
+        modules = set()
+        for item in self._tree_widget.selectedItems():
+            modules.add(item.parent())
+        if None in modules:
+            for item in self._tree_widget.selectedItems():
+                if isinstance(item, TreeSuiteItem):
+                    item.select_all()
+        return modules
+
+    def _on_selection_changed(self):
+        modules = self._get_modules_set()
+        if len(modules) > 1:
+            for m in modules:
+                if isinstance(m, TreeSuiteItem):
+                    if m == self._tree_widget.currentItem():
+                        m.select_all(m.isSelected())
+                    else:
+                        m.select_all()
+
+    def copy_tests(self):
+        modules = self._get_modules_set()
+        if None in modules:
+            modules.remove(None)
+            data = {'type': 'suites', 'data': [{
+                'data': suite.suite.to_dict(),
+                'tests': [test.get_data() for test in suite.suite.tests()]
+            } for suite in modules]}
+            mime_data = QMimeData()
+            mime_data.setData('TestGeneratorUnitTests', json.dumps(data).encode('utf-8'))
+            self.app.clipboard().setMimeData(mime_data)
+        elif len(modules) == 1:
+            suite = modules.pop()
+            data = {'type': 'tests', 'data': [test.get_data() for test in suite.suite.tests()]}
+            mime_data = QMimeData()
+            mime_data.setData('TestGeneratorUnitTests', json.dumps(data).encode('utf-8'))
+            self.app.clipboard().setMimeData(mime_data)
+
+    def paste_tests(self):
+        item = self._tree_widget.currentItem()
+        if isinstance(item, TreeSuiteItem):
+            suite = item.suite
+        elif isinstance(item, TreeItem):
+            suite = item.parent().suite
+        else:
+            return
+
+        data = self.app.clipboard().mimeData().data(f'TestGeneratorUnitTests')
+        if data:
+            try:
+                data = json.loads(data.data().decode('utf-8'))
+                if data.get('type') == 'tests':
+                    tests = data.get('data')
+                    for el in tests:
+                        suite.new_test(data=el)
+                elif data.get('type') == 'suites':
+                    suites = data.get('data')
+                    print(suites)
+                    for el in suites:
+                        suite = self.bm.new_suite(el.get('data'))
+                        for test in el.get('tests', []):
+                            suite.new_test(data=test)
+            except UnicodeDecodeError:
+                pass
+            except json.JSONDecodeError:
+                pass
 
     def _on_test_selected(self):
         item = self._tree_widget.currentItem()
@@ -134,6 +209,30 @@ class UnitTestingWidget(MainTab):
         else:
             self._test_edit.hide()
             self._test_edit.open_test(None)
+
+    def keyPressEvent(self, a0) -> None:
+        match a0.key():
+            case Qt.Key.Key_C:
+                if self.ctrl_pressed:
+                    self.copy_tests()
+            case Qt.Key.Key_V:
+                if self.ctrl_pressed:
+                    self.paste_tests()
+            # case Qt.Key.Key_Z:
+            #     if self.ctrl_pressed:
+            #         self.undo.emit()
+            case Qt.Key.Key_Control:
+                self.ctrl_pressed = True
+            case Qt.Key.Key_Shift:
+                self.shift_pressed = True
+            case Qt.Key.Key_Delete:
+                self.delete_item()
+
+    def keyReleaseEvent(self, a0) -> None:
+        if a0.key() == Qt.Key.Key_Control:
+            self.ctrl_pressed = False
+        if a0.key() == Qt.Key.Key_Shift:
+            self.shift_pressed = False
 
     def delete_item(self):
         self._test_edit.open_test(None)
@@ -203,11 +302,12 @@ class TreeSuiteItem(QTreeWidgetItem):
         return False
 
     def delete_item(self):
-        for i in range(self.childCount()):
+        flag = False
+        for i in range(self.childCount() - 1, -1, -1):
             if self.child(i).isSelected():
                 self.suite.delete_test(i)
-                return True
-        return False
+                flag = True
+        return flag
 
     def move(self, direction):
         for i in range(self.childCount()):
@@ -215,6 +315,11 @@ class TreeSuiteItem(QTreeWidgetItem):
                 self.suite.move_test(direction, i)
                 return True
         return False
+
+    def select_all(self, flag=True):
+        self.setSelected(flag)
+        for i in range(self.childCount()):
+            self.child(i).setSelected(flag)
 
     def _on_test_add(self, test, index):
         self.insertChild(index, TreeItem(self._tm, test))
@@ -224,6 +329,9 @@ class TreeSuiteItem(QTreeWidgetItem):
 
     def _on_name_changed(self):
         self.setText(0, self.suite.name())
+
+    def __hash__(self):
+        return self.suite.id.__hash__()
 
     def set_theme(self):
         self.setIcon(0, QIcon(self._tm.get_image('c')))
@@ -243,6 +351,9 @@ class TreeItem(QTreeWidgetItem):
         self.test.nameChanged.connect(self._on_name_changed)
         self.test.statusChanged.connect(self.set_theme)
         self._on_name_changed()
+
+    def __hash__(self):
+        return self.test.id.__hash__()
 
     def _on_name_changed(self):
         self.setText(0, self.test.get('desc', ''))

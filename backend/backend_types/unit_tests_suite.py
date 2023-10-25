@@ -66,8 +66,12 @@ class UnitTestsSuite(QObject):
         self.store()
         self.addTest.emit(test, len(self._tests) - 1)
 
-    def new_test(self, index):
+    def new_test(self, index=None, data=None):
+        if index is None:
+            index = len(self._tests)
         test = UnitTest(self._path)
+        if data:
+            test.set_data(data)
         self.insert_test(test, index)
 
     def insert_test(self, test: UnitTest, index: int):
@@ -98,25 +102,33 @@ class UnitTestsSuite(QObject):
                 index += 1
                 self.insert_test(test, index)
 
+    def from_dict(self, dct):
+        self.set_code(dct.get('code'))
+        self.set_name(dct.get('name'))
+        self.set_module(dct.get('module'))
+
     def load(self):
         self._tests.clear()
         if not os.path.isdir(self._path):
             return
         dct = read_json(self._data_file)
-        self.set_code(dct.get('code'))
-        self.set_name(dct.get('name'))
-        self.set_module(dct.get('module'))
+        self.from_dict(dct)
         for el in dct.get('tests', []):
             self.add_test(UnitTest(self._path, el))
+
+    def to_dict(self):
+        return {
+            'name': self._name,
+            'code': self._code,
+            'module': self._module,
+        }
 
     def store(self):
         if self._removing:
             return
         os.makedirs(self._path, exist_ok=True)
         write_file(self._data_file, json.dumps({
-            'name': self._name,
-            'code': self._code,
-            'module': self._module,
+            **self.to_dict(),
             'tests': [str(test.id) for test in self._tests]
         }))
 

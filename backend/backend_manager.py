@@ -312,8 +312,12 @@ class BackendManager(QObject):
         self.sm.set('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
         self.deleteSuite.emit(index)
 
-    def new_suite(self):
-        self.add_suite(UnitTestsSuite(f"{self.sm.project.data_path()}/unit_tests"))
+    def new_suite(self, data=None):
+        suite = UnitTestsSuite(f"{self.sm.project.data_path()}/unit_tests")
+        if data:
+            suite.from_dict(data)
+        self.add_suite(suite)
+        return suite
 
     def convert_unit_tests(self):
         converter = CheckConverter(self.sm.project.unit_tests_path(), self.sm.project,

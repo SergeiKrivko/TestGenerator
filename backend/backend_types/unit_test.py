@@ -63,6 +63,14 @@ class UnitTest(QObject):
         res = self._data.get(key, default)
         return res
 
+    def get_data(self):
+        return self._data
+
+    def set_data(self, data):
+        self._data = data
+        self.store()
+        self.nameChanged.emit()
+
     def __setitem__(self, key, value):
         if key == 'name' or key == 'desc':
             self.nameChanged.emit()
