@@ -376,6 +376,8 @@ class ListField(QWidget):
         layout.addWidget(self._label)
 
         self._list_widget = QListWidget()
+        self._list_widget.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        self._list_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._list_widget.setMinimumHeight(len(dct) * 22 + 2)
         layout.addWidget(self._list_widget)
         for key, item in dct.items():

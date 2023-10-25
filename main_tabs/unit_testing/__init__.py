@@ -84,6 +84,7 @@ class UnitTestingWidget(MainTab):
         buttons_layout.addWidget(self.button_run)
 
         self._tree_widget = QTreeWidget()
+        self._tree_widget.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)
         self._tree_widget.setHeaderHidden(True)
         self._tree_widget.currentItemChanged.connect(self._on_test_selected)
         left_layout.addWidget(self._tree_widget)

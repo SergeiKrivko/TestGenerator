@@ -9,7 +9,7 @@ from ui.custom_dialog import CustomDialog
 
 class CompilerErrorWindow(CustomDialog):
     def __init__(self, text: str, tm, mask='', name="Ошибка компиляции"):
-        super().__init__(name, True)
+        super().__init__(tm, name, True)
         super().set_theme()
         if isinstance(mask, str) and '{file}' in mask and '{line}' in mask:
             self._mask = mask

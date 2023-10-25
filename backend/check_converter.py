@@ -95,7 +95,7 @@ def convert_suite(file, suite: UnitTestsSuite):
         file.write(f"    tcase_add_test(tc_core, {test.get('name')});\n")
     file.write(f"""    suite_add_tcase(s, tc_core);
     return s;
-}}\n\n""")
+}}\n""")
 
 
 def convert_module(path, module: UnitTestsModule):
@@ -104,7 +104,8 @@ def convert_module(path, module: UnitTestsModule):
     file.write(f"#include \"{module.name()[:-2]}.h\"\n\n")
 
     for suite in module.suits():
-        file.write(suite.code() + '\n\n')
+        if suite.code().strip():
+            file.write(suite.code().strip('\n') + '\n\n\n')
 
     for suite in module.suits():
         convert_suite(file, suite)
