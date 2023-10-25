@@ -72,10 +72,9 @@ class UnitTest(QObject):
         self.nameChanged.emit()
 
     def __setitem__(self, key, value):
+        self._data[key] = value
         if key == 'name' or key == 'desc':
             self.nameChanged.emit()
         if key == 'status':
             self.statusChanged.emit()
-
-        self._data[key] = value
 

@@ -7,7 +7,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
 from backend.backend_types.unit_tests_suite import UnitTestsSuite
 from backend.func_testing import TestingLooper
-from backend.history_manager import HistoryManager
+from backend.history_manager import HistoryManager, EMPTY_RECORD
 from backend.load_task import Loader
 from backend.macros_converter import MacrosConverter
 from backend.backend_types.build import Build
@@ -129,7 +129,7 @@ class BackendManager(QObject):
 
     def add_func_test(self, test: FuncTest, index=None, record=None):
         if record is None:
-            record = self._func_tests_history.add_record('add')
+            record = EMPTY_RECORD
         record.add_data(('add', test, index))
         if index is None:
             index = len(self.func_tests[test.type()])
@@ -137,22 +137,33 @@ class BackendManager(QObject):
         self.sm.set(f'{test.type()}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test.type()]))
         self.addFuncTest.emit(test, index)
 
-    def new_func_test(self, test_type='pos', index=None, data=None):
+    def new_func_test(self, test_type='pos', index=None, data=None, record=None):
+        if record is None:
+            record = self._func_tests_history.add_record('new')
         test = FuncTest(f"{self.sm.project.data_path()}/func_tests/{test_type}", test_type=test_type)
         if data:
             test.from_dict(data)
-        self.add_func_test(test, index)
+        self.add_func_test(test, index, record=record)
         return test
 
     def delete_func_test(self, type: Literal['pos', 'neg'], index: int, record=None):
         test = self.func_tests[type][index]
         if record is None:
-            record = self._func_tests_history.add_record('add')
+            record = self._func_tests_history.add_record('delete_group')
         record.add_data(('delete', test, index))
         self.func_tests[type].pop(index)
         test.delete()
         self.sm.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
         self.deleteFuncTest.emit(test, index)
+
+    def add_some_func_tests(self, type: Literal['pos', 'neg'], tests: list[int] | dict[int: dict]):
+        record = self._func_tests_history.add_record('add_group')
+        if isinstance(tests, list):
+            for i in tests:
+                self.new_func_test(type, i, record=record)
+        else:
+            for i, data in tests.items():
+                self.new_func_test(type, i, data, record=record)
 
     def delete_some_func_tests(self, type: Literal['pos', 'neg'], indexes: list[int]):
         record = self._func_tests_history.add_record('delete_tests')
@@ -213,7 +224,7 @@ class BackendManager(QObject):
 
     def undo_func_tests(self, redo=False):
         if redo:
-            record = self._func_tests_history.get_undo()
+            record = self._func_tests_history.get_redo()
         else:
             record = self._func_tests_history.get_undo()
         if record is None:

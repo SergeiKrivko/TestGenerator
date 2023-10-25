@@ -15,6 +15,7 @@ BUTTONS_MAX_WIDTH = 30
 
 
 class TestTableWidget(QWidget):
+    cutTests = pyqtSignal(str)
     copyTests = pyqtSignal(str)
     pasteTests = pyqtSignal(str)
     deleteTests = pyqtSignal(str)
@@ -82,6 +83,12 @@ class TestTableWidget(QWidget):
         self.pos_button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.pos_button_copy.clicked.connect(lambda: self.copyTests.emit('pos'))
         pos_buttons_layout.addWidget(self.pos_button_copy)
+
+        self.pos_button_cut = Button(self.tm, 'cut', css='Bg')
+        self.pos_button_cut.setFixedHeight(22)
+        self.pos_button_cut.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.pos_button_cut.clicked.connect(lambda: self.cutTests.emit('pos'))
+        pos_buttons_layout.addWidget(self.pos_button_cut)
 
         self.pos_button_paste = Button(self.tm, 'paste', css='Bg')
         self.pos_button_paste.setFixedHeight(22)
@@ -176,15 +183,16 @@ class TestTableWidget(QWidget):
         self.neg_button_paste.clicked.connect(lambda: self.pasteTests.emit('neg'))
         neg_buttons_layout.addWidget(self.neg_button_paste)
 
+        self.neg_button_cut = Button(self.tm, 'cut', css='Bg')
+        self.neg_button_cut.setFixedHeight(22)
+        self.neg_button_cut.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        self.neg_button_cut.clicked.connect(lambda: self.cutTests.emit('neg'))
+        neg_buttons_layout.addWidget(self.neg_button_cut)
+
         self.neg_button_generate = Button(self.tm, 'generate', css='Bg')
         self.neg_button_generate.setFixedHeight(22)
         self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
         neg_buttons_layout.addWidget(self.neg_button_generate)
-
-        # self.neg_button_generate = Button(self.tm, 'generate')
-        # self.neg_button_generate.setFixedHeight(22)
-        # self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        # neg_buttons_layout.addWidget(self.neg_button_generate)
 
         self.neg_test_list = QListWidget()
         self.neg_test_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
@@ -236,10 +244,10 @@ class TestTableWidget(QWidget):
         self.tm.set_theme_to_list_widget(self.pos_test_list)
         self.tm.set_theme_to_list_widget(self.neg_test_list)
         for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
-                   self.pos_button_copy, self.pos_button_paste, self.in_data_edit,
+                   self.pos_button_copy, self.pos_button_paste, self.pos_button_cut, self.in_data_edit,
                    self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_paste,
-                   self.out_data_edit,
+                   self.out_data_edit, self.neg_button_cut,
                    self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
                    self.neg_button_generate, self.export_button]:
             self.tm.auto_css(el)
@@ -252,6 +260,9 @@ class TestTableWidget(QWidget):
 
     def keyPressEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
         match a0.key():
+            case Qt.Key.Key_X:
+                if self.ctrl_pressed:
+                    self.cutTests.emit('')
             case Qt.Key.Key_C:
                 if self.ctrl_pressed:
                     self.copyTests.emit('')

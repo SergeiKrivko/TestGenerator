@@ -3,16 +3,14 @@ import os
 import random
 from copy import deepcopy
 
-from PyQt6.QtCore import Qt, QMimeData
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QScrollArea, \
-    QHBoxLayout, QCheckBox, QLabel, QListWidgetItem, QApplication
+from PyQt6.QtCore import QMimeData
+from PyQt6.QtWidgets import QVBoxLayout, QListWidgetItem, QApplication
 
-from backend.backend_types.func_test import FuncTest
 from backend.backend_manager import BackendManager
-from ui.main_tab import MainTab
-from ui.options_window import OptionsWidget
-from main_tabs.tests.test_table_widget import TestTableWidget
+from backend.backend_types.func_test import FuncTest
 from main_tabs.tests.test_edit_widget import TestEditWidget
+from main_tabs.tests.test_table_widget import TestTableWidget
+from ui.main_tab import MainTab
 
 
 class TestsWidget(MainTab):
@@ -34,6 +32,7 @@ class TestsWidget(MainTab):
         self.test_list_widget.neg_button_down.clicked.connect(self.move_neg_test_down)
 
         self.test_list_widget.copyTests.connect(self.copy_tests)
+        self.test_list_widget.cutTests.connect(self.cut_tests)
         self.test_list_widget.pasteTests.connect(self.paste_tests)
         self.test_list_widget.deleteTests.connect(self.delete_tests)
         self.test_list_widget.undo.connect(self.bm.undo_func_tests)
@@ -127,6 +126,10 @@ class TestsWidget(MainTab):
                           json.dumps([item.test.to_dict() for item in items]).encode('utf-8'))
         self.app.clipboard().setMimeData(mime_data)
 
+    def cut_tests(self, test_type):
+        self.copy_tests()
+        self.delete_tests()
+
     def paste_tests(self, tests_type='pos'):
         if tests_type == '':
             if self.test_list_widget.pos_test_list.currentItem():
@@ -148,9 +151,7 @@ class TestsWidget(MainTab):
         if tests:
             try:
                 tests = json.loads(tests.data().decode('utf-8'))
-                for el in tests:
-                    self.bm.new_func_test(tests_type, index, data=el)
-                    index += 1
+                self.bm.add_some_func_tests(tests_type, {i + index: el for i, el in enumerate(tests)})
             except UnicodeDecodeError:
                 pass
             except json.JSONDecodeError:

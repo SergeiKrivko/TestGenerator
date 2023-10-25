@@ -1,18 +1,18 @@
 class HistoryManager:
     def __init__(self):
-        self._undo: list[HistoryRecord] = []
-        self._redo: list[HistoryRecord] = []
+        self._undo: list[_HistoryRecord] = []
+        self._redo: list[_HistoryRecord] = []
 
     def add_record(self, record_type, data=None):
         self._redo.clear()
-        record = HistoryRecord(record_type, data)
+        record = _HistoryRecord(record_type, data)
         self._undo.append(record)
         return record
 
-    def _add_redo_record(self, record: 'HistoryRecord'):
+    def _add_redo_record(self, record: '_HistoryRecord'):
         self._redo.append(record)
 
-    def _add_undo_record(self, record: 'HistoryRecord'):
+    def _add_undo_record(self, record: '_HistoryRecord'):
         self._undo.append(record)
 
     def get_undo(self):
@@ -36,7 +36,7 @@ class HistoryManager:
         self._redo.clear()
 
 
-class HistoryRecord:
+class _HistoryRecord:
     def __init__(self, action_type: str, data=None):
         self.type = action_type
         self.data = []
@@ -51,3 +51,14 @@ class HistoryRecord:
 
     def clear(self):
         self.data.clear()
+
+
+class _EmptyRecord(_HistoryRecord):
+    def __init__(self):
+        super().__init__('')
+
+    def add_data(self, data):
+        pass
+
+
+EMPTY_RECORD = _EmptyRecord()
