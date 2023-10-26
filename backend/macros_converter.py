@@ -69,24 +69,6 @@ class MacrosConverter(QThread):
         if not os.path.isdir(f"{self.src_dir}/{tests_type}"):
             return
 
-        try:
-            self._file = open(f"{self.data_path}/files.txt", encoding='utf-8')
-            for line in self._file:
-                try:
-                    os.remove(path := f"{self.dst_dir}/{line.strip()}")
-                    os.removedirs(os.path.split(path)[0])
-                except FileNotFoundError:
-                    pass
-                except PermissionError:
-                    pass
-                except OSError:
-                    pass
-            self._file.close()
-        except FileNotFoundError:
-            pass
-        self._file = open(f"{self.data_path}/files.txt", 'w', encoding='utf-8')
-        self.finished.connect(self._file.close)
-
         for index, test in enumerate(self.tests[tests_type]):
             if self.closed:
                 return
@@ -150,16 +132,24 @@ class MacrosConverter(QThread):
         self.closed = True
 
     def run(self):
-        # for test_type in ['pos', 'neg']:
-        #     for d in [self.project.test_in_path(test_type, 0), self.project.test_out_path(test_type, 0),
-        #               self.project.test_args_path(test_type, 0), self.project.test_in_file_path(test_type, 0, 1, False),
-        #               self.project.test_out_file_path(test_type, 0, 1, False),
-        #               self.project.test_check_file_path(test_type, 0, 1, False)]:
-        #         try:
-        #             shutil.rmtree(d := os.path.split(d)[0])
-        #             os.makedirs(d, exist_ok=True)
-        #         except Exception:
-        #             pass
+        try:
+            self._file = open(f"{self.data_path}/files.txt", encoding='utf-8')
+            for line in self._file:
+                try:
+                    os.remove(path := f"{self.dst_dir}/{line.strip()}")
+                    os.removedirs(os.path.split(path)[0])
+                except FileNotFoundError:
+                    pass
+                except PermissionError:
+                    pass
+                except OSError:
+                    pass
+            self._file.close()
+        except FileNotFoundError:
+            pass
+        self._file = open(f"{self.data_path}/files.txt", 'w', encoding='utf-8')
+        self.finished.connect(self._file.close)
+
         self.readme.write(f"# Тесты для {self.project.name()}:\n")
 
         self.readme.write("\n## Позитивные тесты:\n")

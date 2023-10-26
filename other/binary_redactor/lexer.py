@@ -55,69 +55,72 @@ class LexerBin(QsciLexerCustom):
         return ""
 
     def styleText(self, start, end):
-        self.set_defines()
-        if not self.bin_code:
-            self.startStyling(end, LexerBin.Default)
-            return
+        try:
+            self.set_defines()
+            if not self.bin_code:
+                self.startStyling(end, LexerBin.Default)
+                return
 
-        self.startStyling(start)
+            self.startStyling(start)
 
-        text = self.parent().text().encode('utf-8')[start:end].decode('utf-8')
-        for line in text.split('\n'):
-            if '//' in line:
-                comment_len = len(line) - (ind := line.rindex('//'))
-                line = line[:ind]
-            else:
-                comment_len = 0
-
-            split_line = BinaryConverter.split_line(line, False)
-            if line.startswith('#'):
-                self.setStyling(len(line), LexerBin.PreProcessor)
-            elif line.strip():
-                self.setStyling(len(line) - len(line := line.lstrip()), LexerBin.Value)
-                mask = split_line[0]
-                line = line.lstrip(mask)
-                if mask in self.defines:
-                    mask = self.defines[mask]
-
-                try:
-                    expected_values = BinaryConverter.get_expected_values(mask)
-                except Exception:
-                    self.setStyling(len(split_line[0]), LexerBin.InvalidMask)
-                    self.setStyling(len(line), LexerBin.Value)
-                    continue
-
-                if len(expected_values) != len(split_line) - 1:
-                    self.setStyling(len(split_line[0]), LexerBin.InvalidMask)
+            text = self.parent().text().encode('utf-8')[start:end].decode('utf-8')
+            for line in text.split('\n'):
+                if '//' in line:
+                    comment_len = len(line) - (ind := line.rindex('//'))
+                    line = line[:ind]
                 else:
-                    self.setStyling(len(split_line[0]), LexerBin.Mask)
+                    comment_len = 0
 
-                for i in range(1, len(split_line)):
-                    # print(len(line) - len(line.lstrip()))
+                split_line = BinaryConverter.split_line(line, False)
+                if line.startswith('#'):
+                    self.setStyling(len(line), LexerBin.PreProcessor)
+                elif line.strip():
                     self.setStyling(len(line) - len(line := line.lstrip()), LexerBin.Value)
-                    line = line[len(split_line[i]):]
-                    try:
-                        value_type, minimum, maximum = expected_values[i - 1]
-                        if value_type == str and len(BinaryConverter.replace_line(
-                                split_line[i]).encode(self.encoder.encoding)) > maximum:
-                            raise ValueError
-                        elif value_type != str and not(minimum <= value_type(split_line[i]) <= maximum):
-                            raise ValueError
-                        j = 0
-                        while j < len(split_line[i]):
-                            if split_line[i][j] == '\\':
-                                self.setStyling(1 + len(split_line[i][j + 1].encode('utf-8')), LexerBin.Mask)
-                                j += 2
-                            else:
-                                self.setStyling(len(split_line[i][j].encode('utf-8')), LexerBin.Value)
-                                j += 1
-                    except ValueError:
-                        self.setStyling(len(split_line[i].encode('utf-8')), LexerBin.InvalidValue)
-                    except IndexError:
-                        self.setStyling(len(split_line[i].encode('utf-8')), LexerBin.InvalidValue)
-                self.setStyling(len(line.encode('utf-8')), LexerBin.Value)
+                    mask = split_line[0]
+                    line = line.lstrip(mask)
+                    if mask in self.defines:
+                        mask = self.defines[mask]
 
-            self.setStyling(comment_len + 1, LexerBin.Comment)
+                    try:
+                        expected_values = BinaryConverter.get_expected_values(mask)
+                    except Exception:
+                        self.setStyling(len(split_line[0]), LexerBin.InvalidMask)
+                        self.setStyling(len(line), LexerBin.Value)
+                        continue
+
+                    if len(expected_values) != len(split_line) - 1:
+                        self.setStyling(len(split_line[0]), LexerBin.InvalidMask)
+                    else:
+                        self.setStyling(len(split_line[0]), LexerBin.Mask)
+
+                    for i in range(1, len(split_line)):
+                        # print(len(line) - len(line.lstrip()))
+                        self.setStyling(len(line) - len(line := line.lstrip()), LexerBin.Value)
+                        line = line[len(split_line[i]):]
+                        try:
+                            value_type, minimum, maximum = expected_values[i - 1]
+                            if value_type == str and len(BinaryConverter.replace_line(
+                                    split_line[i]).encode(self.encoder.encoding)) > maximum:
+                                raise ValueError
+                            elif value_type != str and not(minimum <= value_type(split_line[i]) <= maximum):
+                                raise ValueError
+                            j = 0
+                            while j < len(split_line[i]):
+                                if split_line[i][j] == '\\':
+                                    self.setStyling(1 + len(split_line[i][j + 1].encode('utf-8')), LexerBin.Mask)
+                                    j += 2
+                                else:
+                                    self.setStyling(len(split_line[i][j].encode('utf-8')), LexerBin.Value)
+                                    j += 1
+                        except ValueError:
+                            self.setStyling(len(split_line[i].encode('utf-8')), LexerBin.InvalidValue)
+                        except IndexError:
+                            self.setStyling(len(split_line[i].encode('utf-8')), LexerBin.InvalidValue)
+                    self.setStyling(len(line.encode('utf-8')), LexerBin.Value)
+
+                self.setStyling(comment_len + 1, LexerBin.Comment)
+        except RuntimeError:
+            pass
 
     def set_defines(self):
         self.encoder.text = self.parent().text()
