@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
 import send2trash
 
 from language.languages import languages
+from other.report.markdown_patterns import MarkdownPatternsDialog
 from side_tabs.files.open_file_options import get_open_file_options
 from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
@@ -415,7 +416,14 @@ class FilesWidget(SidePanelWidget):
             case ContextMenu.CREATE_H:
                 self.create_file(base_path=path, extension='h')
             case ContextMenu.CREATE_MD:
-                self.create_file(base_path=path, extension='md')
+                file = self.create_file(base_path=path, extension='md')
+                print(file)
+                if isinstance(file, str):
+                    dialog = MarkdownPatternsDialog(self.sm, self.tm, file)
+                    if dialog.exec():
+                        pass
+                    else:
+                        os.remove(file)
             case ContextMenu.CREATE_T2B:
                 self.create_file(base_path=path, extension='t2b')
             case ContextMenu.DELETE_FILE:
@@ -538,7 +546,9 @@ class FilesWidget(SidePanelWidget):
                 MessageBox(MessageBox.Icon.Warning, "Ошибка",
                            f"Невозможно создать {'директорию' if directory else 'файл'}: {ex.__class__.__name__}: {ex}",
                            self.tm)
-            self.update_files_list()
+            else:
+                self.update_files_list()
+                return path
 
     def delete_file(self, to_trash=True):
         if self.files_list.currentItem() is None:

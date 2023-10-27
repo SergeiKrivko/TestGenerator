@@ -30,7 +30,7 @@ DEFAULT_STILES = {
     'Heading 4': {'font': 'Times New Roman', 'size': 14, 'bold': True, 'color': (0, 0, 0)},
     'Heading 5': {'font': 'Times New Roman', 'size': 14, 'italic': True, 'underline': True, 'color': (0, 0, 0)},
     'Heading 6': {'font': 'Times New Roman', 'size': 14, 'italic': True, 'color': (0, 0, 0)},
-    'Body Text': {'font': 'Courier', 'size': 11, 'color': (0, 0, 0)},
+    'Body Text': {'font': 'Consolas', 'size': 11, 'color': (0, 0, 0)},
 }
 
 DEFAULT_PROPERTIES = {
@@ -445,8 +445,10 @@ class MarkdownParser:
         table.cell(0, 1).paragraphs[0].runs[-1].text = table.cell(0, 1).paragraphs[0].runs[-1].text.rstrip()
         for run in table.cell(0, 0).paragraphs[0].runs:
             run.font.size = Pt(11)
+            run.font.name = 'Consolas'
         for run in table.cell(0, 1).paragraphs[0].runs:
             run.font.size = Pt(11)
+            run.font.name = 'Consolas'
 
     def _add_page_numbers(self):
         def create_element(name):
