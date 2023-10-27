@@ -15,6 +15,7 @@ from requests import post
 import docx2pdf
 from cairosvg import svg2png
 import latex2mathml.converter as latex_converter
+from pypdf import PdfMerger
 
 import config
 from backend.commands import read_file
@@ -48,6 +49,7 @@ class MarkdownParser:
         self.document = docx.Document()
 
         self.html_parser = HtmlToDocx()
+        self._pdf_merger = PdfMerger()
 
         self.styles = dict()
         self._set_styles(styles if styles else DEFAULT_STILES)
@@ -57,6 +59,8 @@ class MarkdownParser:
         self._current_line = -1
 
         self._list_id = 9
+
+        self._pdf_to_merge = []
 
     def _next_line(self):
         self._current_line += 1
@@ -68,12 +72,16 @@ class MarkdownParser:
         return self._current_line < len(self._lines) - 1
 
     def convert(self):
-        self.add_table_of_content()
-
         while (line := self._next_line()) is not None:
             if self.parse_image(line):
                 continue
             if self.parse_code(line):
+                continue
+            if self.parse_toc(line):
+                continue
+            if self.parse_author(line):
+                continue
+            if self.parse_pdf_including(line):
                 continue
             if self.parse_header(line):
                 continue
@@ -178,6 +186,24 @@ class MarkdownParser:
             return True
         return False
 
+    def parse_toc(self, line):
+        if line.startswith('[table-of-content]: <>'):
+            self.add_table_of_content()
+            return True
+        return False
+
+    def parse_author(self, line):
+        if line.startswith(tag := '[author]: <> ('):
+            self.document.core_properties.author = line.strip()[len(tag):-1]
+            return True
+        return False
+
+    def parse_pdf_including(self, line):
+        if line.startswith(tag := '[include-pdf]: <> ('):
+            self._pdf_to_merge.append(line.strip()[len(tag):-1])
+            return True
+        return False
+
     def parse_image(self, line):
         if not re.match(r"!\[[\w.=\\/:]*]\([\w.\\/:]+\)", line.strip()):
             return False
@@ -226,6 +252,9 @@ class MarkdownParser:
             if line.strip().strip('-|'):
                 table.add_row()
                 for i, text in enumerate(line.strip()[1:-1].split('|')):
+                    if not text.strip() and i > 1:
+                        text = table.cell(table_rows, i - 1).text
+                        table.cell(table_rows, i).merge(table.cell(table_rows, i - 1)).text = text
                     table.cell(table_rows, i).text = text.strip()
                 table_rows += 1
         return True
@@ -458,6 +487,14 @@ class MarkdownParser:
             docx_to_pdf_by_api(self.dist, self.to_pdf)
         else:
             raise Exception("can not convert docx to pdf")
+        print(self._pdf_to_merge)
+        if self._pdf_to_merge:
+            for el in self._pdf_to_merge:
+                print(el)
+                self._pdf_merger.append(el)
+            self._pdf_merger.append(self.to_pdf)
+            self._pdf_merger.write(self.to_pdf)
+            self._pdf_merger.close()
 
     def add_table_of_content(self):
         self.document.add_heading("Оглавление")
@@ -485,8 +522,6 @@ class MarkdownParser:
         r_element.append(fldChar2)
         r_element.append(fldChar4)
         p_element = paragraph._p
-
-        self.document.add_page_break()
 
     def convert_formula(self, text, paragraph=None):
         mathml = latex_converter.convert(text)

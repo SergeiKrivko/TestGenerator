@@ -1,9 +1,13 @@
+import json
 import os
+import platform
+import subprocess
 
 from PyQt6.Qsci import QsciLexerCPP
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog, QLabel, QComboBox, QCheckBox, \
+    QPushButton
 
 from main_tabs.code_tab.preview_widgets import PreviewWidget
 from main_tabs.code_tab.search_panel import SearchPanel
@@ -11,6 +15,7 @@ from language.languages import languages
 from main_tabs.code_tab.syntax_highlighter import CodeEditor
 from backend.settings_manager import SettingsManager
 from ui.button import Button
+from ui.custom_dialog import CustomDialog
 from ui.main_tab import MainTab
 from other.binary_redactor.convert_binary import convert
 
@@ -160,7 +165,7 @@ class CodeWidget(MainTab):
         if os.path.isfile(path):
             self.open_code(path)
 
-    def open_code(self, path, line=None, pos=None):
+    def open_code(self, path, line=None, pos=None, flags=None):
         path = os.path.abspath(path)
         if pos is None:
             pos = 0
@@ -199,12 +204,46 @@ class CodeWidget(MainTab):
                         self.buttons[path] = 1
                     self.top_panel.open_tab(path)
                     return
-        code_edit = CodeEditor(self.sm, self.tm, path=path)
+        return
+        extensions = json.loads(self.sm.get_general('extensions', '{}'))
+        for ex, data in extensions.items():
+            if path.endswith(ex):
+                if data.get('system_open', False):
+                    CodeWidget.open_by_system(path)
+                    return
+                try:
+                    code_edit = CodeEditor(self.sm, self.tm, path=path, encoding=data.get('encoding', 'utf-8'))
+                except UnicodeDecodeError:
+                    return
+                break
+        else:
+            try:
+                code_edit = CodeEditor(self.sm, self.tm, path=path, encoding='utf-8')
+            except UnicodeDecodeError:
+                dialog = UnknownFileDialog(self.tm, path)
+                if dialog.exec():
+                    data, all_files = dialog.res()
+                    if all_files:
+                        name = os.path.basename(path)
+                        extensions[name if '.' not in name else name[name.rindex('.'):]] = data
+                        self.sm.set_general('extensions', json.dumps(extensions))
+                        self.open_code(path)
+                        return
+                return
         code_edit.hide()
         self.layout.addWidget(code_edit)
         code_edit.set_theme()
         self.code_widgets[path] = code_edit
         self.top_panel.open_tab(path)
+
+    @staticmethod
+    def open_by_system(filepath):
+        if platform.system() == 'Darwin':  # macOS
+            subprocess.call(('open', filepath))
+        elif platform.system() == 'Windows':  # Windows
+            os.startfile(filepath)
+        else:  # linux variants
+            subprocess.call(('xdg-open', filepath))
 
     def show_preview(self, flag):
         if flag:
@@ -395,3 +434,61 @@ QTabBar QToolButton::left-arrow {{
             else:
                 file_type = 'unknown_file'
             self.tab_bar.setTabIcon(i, QIcon(self.tm.get_image(file_type, 'unknown_file')))
+
+
+class UnknownFileDialog(CustomDialog):
+    def __init__(self, tm, path):
+        super().__init__(tm, "Неизвестный файл", True, True)
+        self.setFixedSize(300, 200)
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self._label = QLabel(f"Файл {os.path.basename(path)} имеет неизвестное расширение и, не может быть открыт, "
+                             f"так как не является текстовым файлом или имеет другую кодировку. "
+                             f"Выберите, что делать с этим файлом")
+        self._label.setWordWrap(True)
+        layout.addWidget(self._label)
+
+        self._combo_box = QComboBox()
+        self._combo_box.addItems(['Открыть системным приложением', 'Выбрать другую кодировку'])
+        self._combo_box.currentIndexChanged.connect(
+            lambda ind: self._encoding_box.hide() if ind != 1 else self._encoding_box.show())
+        layout.addWidget(self._combo_box)
+
+        self._encoding_box = QComboBox()
+        self._encoding_box.hide()
+        self._encoding_box.addItems(['utf-8', 'utf-16'])
+        layout.addWidget(self._encoding_box)
+
+        self._checkbox = QCheckBox()
+        self._checkbox.setText("Для всех файлов такого типа")
+        layout.addWidget(self._checkbox)
+
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addLayout(buttons_layout)
+
+        self._button_ok = QPushButton("Ок")
+        self._button_ok.setFixedSize(80, 24)
+        self._button_ok.clicked.connect(self.accept)
+        buttons_layout.addWidget(self._button_ok)
+
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
+        self.set_theme()
+
+    def res(self):
+        res = dict()
+        match self._combo_box.currentIndex():
+            case 0:
+                res['system_open'] = True
+            case 1:
+                res['encoding'] = self._encoding_box.currentText()
+        return res, self._checkbox.isChecked()
+
+    def set_theme(self):
+        super().set_theme()
+        for el in [self._checkbox, self._encoding_box, self._label, self._combo_box, self._button_ok]:
+            self.tm.auto_css(el)

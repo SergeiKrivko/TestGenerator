@@ -9,7 +9,7 @@ from language.languages import languages
 class CodeEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, sm, tm, path=None, language=None, border=False):
+    def __init__(self, sm, tm, path=None, language=None, border=False, encoding=None):
         super(CodeEditor, self).__init__(None)
 
         self.sm = sm
@@ -71,13 +71,14 @@ class CodeEditor(QsciScintilla):
 
         self.setCallTipsVisible(0)
 
-        if self.path is not None:
-            try:
-                with open(self.path, encoding='utf-8') as f:
+        try:
+            if self.path is not None:
+                with open(self.path, encoding=encoding if encoding else 'utf-8') as f:
                     self.setText(f.read())
                 self.textChanged.connect(self.save_file)
-            except Exception as ex:
-                print(f"{ex.__class__.__name__}: {ex}")
+        except UnicodeDecodeError as ex:
+            if encoding:
+                raise ex
 
         self.current_row = 0
         self.am = self.language_data.get('autocompletion', CodeAutocompletionManager)(self.sm, self.dir)
