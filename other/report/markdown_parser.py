@@ -81,6 +81,8 @@ class MarkdownParser:
                 continue
             if self.parse_author(line):
                 continue
+            if self.parse_page_size(line):
+                continue
             if self.parse_pdf_including(line):
                 continue
             if self.parse_header(line):
@@ -201,6 +203,15 @@ class MarkdownParser:
     def parse_pdf_including(self, line):
         if line.startswith(tag := '[include-pdf]: <> ('):
             self._pdf_to_merge.append(line.strip()[len(tag):-1])
+            return True
+        return False
+
+    def parse_page_size(self, line):
+        if line.startswith(tag := '[page-size]: <> ('):
+            width, height = line.strip()[len(tag):-1].split()
+            for section in self.document.sections:
+                section.page_width = Mm(float(width.strip()))
+                section.page_height = Mm(float(height.strip()))
             return True
         return False
 
