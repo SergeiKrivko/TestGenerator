@@ -6,8 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
     QPushButton
 
-from side_tabs.builds.commands_list import CommandsList, ScenarioBox
-from main_tabs.tests.in_data_window import InDataWindow
+from side_tabs.builds.commands_list import ScenarioBox
 from ui.button import Button
 from ui.options_window import OptionsWidget
 
@@ -125,13 +124,6 @@ class TestTableWidget(QWidget):
         out_data_layout = QHBoxLayout()
         neg_layout.addLayout(out_data_layout)
 
-        self.in_data_window = InDataWindow(self.sm, self.tm)
-
-        self.in_data_button = Button(self.tm, 'plus', css='Bg')
-        self.in_data_button.setFixedHeight(22)
-        self.in_data_button.clicked.connect(self.in_data_window.exec)
-        out_data_layout.addWidget(self.in_data_button)
-
         self._export_dialog = ExportDialog(self.sm, self.cm, self.tm)
 
         self.export_button = Button(self.tm, 'button_export', css='Bg')
@@ -248,7 +240,7 @@ class TestTableWidget(QWidget):
                    self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_paste,
                    self.out_data_edit, self.neg_button_cut,
-                   self.pos_comparator_widget, self.neg_comparator_widget, self.in_data_button,
+                   self.pos_comparator_widget, self.neg_comparator_widget,
                    self.neg_button_generate, self.export_button]:
             self.tm.auto_css(el)
         for label in self.labels:

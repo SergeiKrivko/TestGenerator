@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 
+import pymorphy3
+
 
 def get_si():
     if os.name == 'nt':
@@ -91,3 +93,33 @@ def wsl_path(path: str, build):
     if path[1] == ':':
         path = f"/mnt/{path[0].lower()}{path[2:]}"
     return path
+
+
+morph = pymorphy3.MorphAnalyzer()
+
+
+def inflect(text: str, case='nomn'):
+    res = []
+    for word in text.split(' '):
+        upper, capitalize = False, False
+        if word.upper() == word:
+            upper = True
+        elif word.lower() != word:
+            capitalize = True
+        if not word:
+            res.append(word)
+        else:
+            try:
+                p = morph.parse(word)[0]
+                if p.inflect({'nomn'}).word == word.lower():
+                    new_word = p.inflect({case}).word
+                    if upper:
+                        new_word = new_word.upper()
+                    elif capitalize:
+                        new_word = new_word.capitalize()
+                    res.append(new_word)
+                else:
+                    res.append(word)
+            except AttributeError:
+                res.append(word)
+    return ' '.join(res)

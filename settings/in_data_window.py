@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QDialog, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
     QScrollArea, QCheckBox, QSpinBox
 
 from ui.button import Button
@@ -10,13 +10,14 @@ BUTTON_WIDTH = HEIGHT
 LINE_EDIT_WIDTH = 100
 
 
-class InDataWindow(QDialog):
-    def __init__(self, sm, tm):
+class InDataWidget(QWidget):
+    def __init__(self, sm, bm, tm):
         super().__init__()
         self._sm = sm
+        self._bm = bm
         self._tm = tm
 
-        self.setFixedSize(800, 500)
+        # self.setFixedSize(800, 500)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -52,25 +53,27 @@ class InDataWindow(QDialog):
         self._scroll_layout.addWidget(widget)
 
     def save(self):
-        self._sm.set_task('in_data_list', [el.save() for el in self._widgets])
+        self._sm.set_data('in_data_list', [el.save() for el in self._widgets])
 
     def load(self):
         self._widgets.clear()
         for i in range(self._scroll_layout.count()):
             self._scroll_layout.itemAt(0).widget().setParent(None)
-        for el in self._sm.get_task('in_data_list', []):
+        for el in self._sm.get_data('in_data_list', []):
             self.add_elem(el)
 
     def delete_elem(self, elem):
         self._widgets.remove(elem)
         elem.setParent(None)
 
-    def exec(self) -> int:
+    def hideEvent(self, a0) -> None:
+        super().hideEvent(a0)
+        self.save()
+
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
         self.load()
         self.set_theme()
-        res = super().exec()
-        self.save()
-        return res
 
     def set_theme(self):
         self.setStyleSheet(self._tm.bg_style_sheet)
@@ -213,16 +216,8 @@ class _StrEdit(QWidget):
         self._range_edit = _RangeEdit(self._tm, "Длина:")
         layout.addWidget(self._range_edit)
 
-        bottom_layout = QHBoxLayout()
-        bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addLayout(bottom_layout)
-
-        self._checkbox = QCheckBox()
-        bottom_layout.addWidget(self._checkbox)
-
-        self._label = QLabel("Пробелы")
-        bottom_layout.addWidget(self._label)
+        self._checkbox = QCheckBox("Пробелы")
+        layout.addWidget(self._checkbox)
 
     def load(self, data: dict):
         self._checkbox.setChecked(bool(data.get('spaces', False)))
@@ -232,7 +227,6 @@ class _StrEdit(QWidget):
         return {'spaces': self._checkbox.isChecked(), **self._range_edit.save()}
 
     def set_theme(self):
-        self._tm.auto_css(self._label)
         self._tm.auto_css(self._checkbox)
         self._range_edit.set_theme()
 
@@ -268,16 +262,8 @@ class _ArrayEdit(QWidget):
         self._range_edit.hide()
         top_layout.addWidget(self._range_edit)
 
-        bottom_layout = QHBoxLayout()
-        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        bottom_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(bottom_layout)
-
-        self._checkbox = QCheckBox()
-        bottom_layout.addWidget(self._checkbox)
-
-        self._label2 = QLabel("Элементы в одну строку")
-        bottom_layout.addWidget(self._label2)
+        self._checkbox = QCheckBox("Элементы в одну строку")
+        layout.addWidget(self._checkbox)
 
         self._item_edit = _DataEdit(self._tm)
         layout.addWidget(self._item_edit)
@@ -302,7 +288,7 @@ class _ArrayEdit(QWidget):
         self._item_edit.load(data.get('item', dict()))
 
     def set_theme(self):
-        for el in [self._combo_box, self._label, self._spin_box, self._label2, self._checkbox]:
+        for el in [self._combo_box, self._label, self._spin_box, self._checkbox]:
             self._tm.auto_css(el)
         for el in [self._range_edit, self._item_edit]:
             el.set_theme()
@@ -322,11 +308,8 @@ class _StructEdit(QWidget):
         top_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_layout)
 
-        self._checkbox = QCheckBox()
+        self._checkbox = QCheckBox("Ввод в строку")
         top_layout.addWidget(self._checkbox)
-
-        self._label = QLabel("Ввод в строку")
-        top_layout.addWidget(self._label)
 
         self._button = Button(self._tm, 'plus')
         self._button.setFixedSize(BUTTON_WIDTH, HEIGHT)
@@ -364,7 +347,7 @@ class _StructEdit(QWidget):
             self._add_item(el)
 
     def set_theme(self):
-        for el in [self._label, self._checkbox, self._button]:
+        for el in [self._checkbox, self._button]:
             self._tm.auto_css(el)
         for el in self._items:
             el.set_theme()

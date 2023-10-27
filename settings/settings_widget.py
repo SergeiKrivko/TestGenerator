@@ -4,7 +4,7 @@ import os.path
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QResizeEvent, QFontMetrics
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
-    QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea
+    QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea, QTextEdit
 
 from ui.button import Button
 from ui.message_box import MessageBox
@@ -12,6 +12,7 @@ from ui.message_box import MessageBox
 KEY_GLOBAL = 0
 KEY_LOCAL = 1
 KEY_DICT = 2
+KEY_DATA = 3
 
 
 class _Widget(QWidget):
@@ -67,6 +68,8 @@ class _Widget(QWidget):
             return self._sm.get_general(self._key, self._default)
         if self._key_type == KEY_LOCAL:
             return self._sm.get(self._key, self._default)
+        if self._key_type == KEY_DATA:
+            return self._sm.get_data(self._key, self._default)
 
     def _set(self, value):
         if self._key is None:
@@ -75,6 +78,8 @@ class _Widget(QWidget):
             self._dict[self._key] = value
         elif self._key_type == KEY_GLOBAL or self._key_type is None:
             self._sm.set_general(self._key, value)
+        elif self._key_type == KEY_DATA:
+            self._sm.set_data(self._key, value)
         else:
             self._sm.set(self._key, value)
         self.valueChanged.emit(value)
@@ -165,6 +170,39 @@ class LineEdit(_Widget):
 
     def set_theme(self):
         self._tm.auto_css(self._line_edit)
+        self._tm.auto_css(self._label)
+
+
+class TextEdit(_Widget):
+    STD_WIDTH = 150
+
+    def __init__(self, name='', text='', key=None, key_type=None):
+        super().__init__(key, key_type, text)
+        self._last_value = text
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self._label = QLabel(name)
+        layout.addWidget(self._label)
+
+        self._text_edit = QTextEdit()
+        self._text_edit.setText(text)
+        self._text_edit.textChanged.connect(self._on_text_changed)
+        layout.addWidget(self._text_edit)
+
+    def _on_text_changed(self):
+        self._set(self._text_edit.toPlainText())
+
+    def set_value(self, text):
+        self._last_value = str(text)
+        self._set(str(text))
+        self._text_edit.setText(str(text))
+
+    def set_theme(self):
+        self._tm.auto_css(self._text_edit)
         self._tm.auto_css(self._label)
 
 

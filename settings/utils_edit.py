@@ -166,31 +166,11 @@ class UtilOptionsEdit(QWidget):
         self._output_edit.addItems(['STDOUT', 'STDERR', 'Файл {dist}'])
         layout.addWidget(self._output_edit)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        self._checkbox1 = QCheckBox("Ненулевой код возврата считается отрицательным результатом")
+        main_layout.addWidget(self._checkbox1)
 
-        self._checkbox1 = QCheckBox()
-        layout.addWidget(self._checkbox1)
-
-        label = QLabel("Ненулевой код возврата считается отрицательным результатом")
-        label.setWordWrap(True)
-        self._labels.append(label)
-        layout.addWidget(label)
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
-
-        self._checkbox2 = QCheckBox()
-        layout.addWidget(self._checkbox2)
-
-        label = QLabel("Наличие вывода считается отрицательным результатом")
-        label.setWordWrap(True)
-        self._labels.append(label)
-        layout.addWidget(label)
+        self._checkbox2 = QCheckBox("Наличие вывода считается отрицательным результатом")
+        main_layout.addWidget(self._checkbox2)
 
         self.hide()
 

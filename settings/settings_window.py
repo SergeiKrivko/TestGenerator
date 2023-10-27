@@ -1,13 +1,13 @@
 import os
 
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QHBoxLayout, QDialog, QVBoxLayout, QTreeWidget, QTreeWidgetItem
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from config import APP_NAME
+from settings.in_data_window import InDataWidget
 from settings.lib_dialog import LibWidget
-from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, FileEdit, \
-    KEY_LOCAL, \
-    SwitchBox, ProgramEdit, ListWidget
+from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, KEY_LOCAL, \
+    KEY_DATA, SwitchBox, ProgramEdit, TextEdit
 from settings.utils_edit import UtilsEdit
 from ui.custom_dialog import CustomDialog
 
@@ -30,7 +30,7 @@ class SettingsWindow(CustomDialog):
         layout.setContentsMargins(10, 10, 0, 10)
         main_layout.addLayout(layout)
 
-        self.setFixedSize(800, 500)
+        self.setFixedSize(920, 600)
 
         self.tree_widget = QTreeWidget()
         self.tree_widget.setHeaderHidden(True)
@@ -43,6 +43,7 @@ class SettingsWindow(CustomDialog):
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Проект']))
         item.addChild(QTreeWidgetItem(['Структура']))
         item.addChild(QTreeWidgetItem(['Тестирование']))
+        item.addChild(QTreeWidgetItem(['Входные данные']))
 
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Языки']))
         item.addChild(QTreeWidgetItem(['C']))
@@ -75,8 +76,9 @@ class SettingsWindow(CustomDialog):
 
         self.project_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            FileEdit("Папка проекта:", mode=FileEdit.MODE_DIR),
+            LineEdit("Название:", '', width=500, key='name', key_type=KEY_DATA),
             ComboBox("Язык:", ['C', 'Python'], key='language', text_mode=True),
+            TextEdit("Описание:", '', key='description', key_type=KEY_DATA),
             key_type=KEY_LOCAL)
         self.project_settings_widget.hide()
         layout.addWidget(self.project_settings_widget)
@@ -144,6 +146,10 @@ class SettingsWindow(CustomDialog):
         )
         self.project_testing_widget.hide()
         layout.addWidget(self.project_testing_widget)
+
+        self.project_in_widget = InDataWidget(self.sm, self.bm, self.tm)
+        self.project_in_widget.hide()
+        layout.addWidget(self.project_in_widget)
 
         self.c_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -283,6 +289,7 @@ class SettingsWindow(CustomDialog):
         self.testing_settings_widget.set_theme()
         self.project_struct_widget.set_theme()
         self.project_testing_widget.set_theme()
+        self.project_in_widget.set_theme()
         self.utils_widget.set_theme()
 
     def exec(self) -> int:
@@ -303,6 +310,7 @@ class SettingsWindow(CustomDialog):
             self.project_settings_widget.hide()
             self.project_struct_widget.hide()
             self.project_testing_widget.hide()
+            self.project_in_widget.hide()
             self.c_settings_widget.hide()
             self.python_settings_widget.hide()
             self.bash_settings_widget.hide()
@@ -320,6 +328,8 @@ class SettingsWindow(CustomDialog):
                 self.project_struct_widget.show()
             if tab == 'Тестирование':
                 self.project_testing_widget.show()
+            if tab == 'Входные данные':
+                self.project_in_widget.show()
             if tab == 'C':
                 self.c_settings_widget.show()
             if tab == 'Python':

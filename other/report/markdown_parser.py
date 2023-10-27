@@ -275,54 +275,68 @@ class MarkdownParser:
         code = False
         bold = False
         italic = False
+        run_code = []
 
         for word in words:
             text = word
-            if text == '*' or text == '**':
-                pass
-            elif text.startswith('`'):
-                code = True
-                text = text[1:]
-            elif text.startswith('***'):
-                bold = True
-                italic = True
-                text = text[3:]
-            elif text.startswith('**'):
-                bold = True
-                text = text[2:]
-            elif text.startswith('*'):
-                italic = True
-                text = text[1:]
+            if run_code:
+                if text.endswith(')$'):
+                    text = text[:-1]
+                    run_code.append(text)
+                    text = str(eval(' '.join(run_code)))
+                    run_code.clear()
+                else:
+                    run_code.append(text + ' ')
+            else:
+                if text == '*' or text == '**':
+                    pass
+                elif text.startswith('`'):
+                    code = True
+                    text = text[1:]
+                elif text.startswith('***'):
+                    bold = True
+                    italic = True
+                    text = text[3:]
+                elif text.startswith('**'):
+                    bold = True
+                    text = text[2:]
+                elif text.startswith('*'):
+                    italic = True
+                    text = text[1:]
+                elif text.startswith('$('):
+                    text = text[2:]
+                    run_code.append(text)
 
-            if text == '*' or text == '**':
-                pass
-            elif text.endswith('`'):
-                text = text[:-1]
-            elif text.endswith('***'):
-                text = text[:-3]
-            elif text.endswith('**'):
-                text = text[:-2]
-            elif text.endswith('*'):
-                text = text[:-1]
+                elif text == '*' or text == '**':
+                    pass
+                elif text.endswith('`') and code:
+                    text = text[:-1]
+                elif text.endswith('***') and bold and italic:
+                    text = text[:-3]
+                elif text.endswith('**') and bold:
+                    text = text[:-2]
+                elif text.endswith('*') and italic:
+                    text = text[:-1]
 
-            run = paragraph.add_run(text)
-            if code:
-                run.font.name = 'Courier'
-            if italic:
-                run.font.italic = True
-            if bold:
-                run.font.bold = True
-            paragraph.add_run(' ')
+            if not run_code:
+                run = paragraph.add_run(text)
+                if code:
+                    run.font.name = 'Courier'
+                if italic:
+                    run.font.italic = True
+                if bold:
+                    run.font.bold = True
+                paragraph.add_run(' ')
 
-            if word.endswith('`'):
-                code = False
-            elif word.endswith('***'):
-                bold = False
-                italic = False
-            elif word.endswith('**'):
-                bold = False
-            elif word.endswith('*'):
-                italic = False
+                if word.endswith('`'):
+                    code = False
+                elif word.endswith('***'):
+                    bold = False
+                    italic = False
+                elif word.endswith('**'):
+                    bold = False
+                elif word.endswith('*'):
+                    italic = False
 
     def parse_tests(self, line):
         if line.startswith('[tests]: <>'):
@@ -498,10 +512,8 @@ class MarkdownParser:
             docx_to_pdf_by_api(self.dist, self.to_pdf)
         else:
             raise Exception("can not convert docx to pdf")
-        print(self._pdf_to_merge)
         if self._pdf_to_merge:
             for el in self._pdf_to_merge:
-                print(el)
                 self._pdf_merger.append(el)
             self._pdf_merger.append(self.to_pdf)
             self._pdf_merger.write(self.to_pdf)

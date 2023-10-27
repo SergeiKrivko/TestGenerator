@@ -35,8 +35,8 @@ class Project:
         self['version'] = APP_VERSION
 
     def name(self):
-        if 'name' in self._data:
-            return self['name']
+        if 'name' in self._data and self._data['name'].strip():
+            return self._data['name']
         return os.path.basename(self._path)
 
     def path(self):

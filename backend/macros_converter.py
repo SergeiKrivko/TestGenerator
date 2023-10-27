@@ -5,6 +5,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, QObject
 
 from backend.backend_types.func_test import FuncTest
 from backend.backend_types.project import Project
+from backend.commands import inflect
 from other.binary_redactor.convert_binary import convert as convert_binary
 
 
@@ -150,7 +151,7 @@ class MacrosConverter(QThread):
         self._file = open(f"{self.data_path}/files.txt", 'w', encoding='utf-8')
         self.finished.connect(self._file.close)
 
-        self.readme.write(f"# Тесты для {self.project.name()}:\n")
+        self.readme.write(f"# Тесты для {inflect(self.project.name(), 'gent')}:\n")
 
         self.readme.write("\n## Позитивные тесты:\n")
         self.convert_tests('pos')
