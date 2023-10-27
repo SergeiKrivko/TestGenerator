@@ -134,7 +134,7 @@ class BackendManager(QObject):
         if index is None:
             index = len(self.func_tests[test.type()])
         self.func_tests[test.type()].insert(index, test)
-        self.sm.set(f'{test.type()}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test.type()]))
+        self.sm.set_data(f'{test.type()}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test.type()]))
         self.addFuncTest.emit(test, index)
 
     def new_func_test(self, test_type='pos', index=None, data=None, record=None):
@@ -153,7 +153,7 @@ class BackendManager(QObject):
         record.add_data(('delete', test, index))
         self.func_tests[type].pop(index)
         test.delete()
-        self.sm.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
+        self.sm.set_data(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
         self.deleteFuncTest.emit(test, index)
 
     def add_some_func_tests(self, type: Literal['pos', 'neg'], tests: list[int] | dict[int: dict]):
@@ -173,7 +173,7 @@ class BackendManager(QObject):
     def clear_func_tests(self):
         for test_type in ['pos', 'neg']:
             self.func_tests[test_type].clear()
-            # self.sm.set(f'{test_type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test_type]))
+            # self.sm.set_data(f'{test_type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[test_type]))
         self.clearFuncTests.emit()
 
     def get_func_test(self, type: Literal['pos', 'neg', 'all'], index: int):
@@ -202,7 +202,7 @@ class BackendManager(QObject):
                 self.delete_func_test(type, index, record=record)
                 index += 1
                 self.add_func_test(test, index, record=record)
-        self.sm.project.set(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
+        self.sm.project.set_data(f'{type}_func_tests', ';'.join(str(test.id) for test in self.func_tests[type]))
 
     def func_tests_count(self, type: Literal['pos', 'neg', 'all'] = 'all'):
         match type:
@@ -313,14 +313,14 @@ class BackendManager(QObject):
 
     def add_suite(self, suite: UnitTestsSuite):
         self.unit_tests_suites.append(suite)
-        self.sm.set('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
+        self.sm.set_data('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
         self.addUnitTestSuite.emit(suite)
 
     def delete_suite(self, index):
         suite = self.unit_tests_suites[index]
         suite.delete()
         self.unit_tests_suites.pop(index)
-        self.sm.set('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
+        self.sm.set_data('unit_tests', ';'.join(str(test.id) for test in self.unit_tests_suites))
         self.deleteSuite.emit(index)
 
     def new_suite(self, data=None):

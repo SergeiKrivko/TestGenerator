@@ -2,12 +2,14 @@ import json
 import os
 import shutil
 
+from backend.commands import read_json
 from config import APP_VERSION
 
 
 class Project:
     TEST_GENERATOR_DIR = ".TestGenerator"
     SETTINGS_FILE = "TestGeneratorSettings.json"
+    DATA_FILE = "TestGeneratorData.json"
 
     def __init__(self, path, sm, parent=None, makedirs=False, load=False):
         self._path = os.path.abspath(path)
@@ -21,6 +23,7 @@ class Project:
 
         self._sm = sm
         self._data = dict()
+        self._settings = dict()
         self._parent = parent
         self._children = dict()
 
@@ -80,40 +83,61 @@ class Project:
 
     def load_settings(self):
         try:
-            with open(os.path.join(self.data_path(), Project.SETTINGS_FILE), encoding='utf-8') as f:
-                self._data = json.loads(f.read())
+            self._settings = read_json(os.path.join(self.data_path(), Project.SETTINGS_FILE))
+            self._data = read_json(os.path.join(self.data_path(), Project.DATA_FILE))
+            self.load_settings_old()
         except FileNotFoundError:
             pass
         except json.JSONDecodeError:
             pass
 
+    def load_settings_old(self):
+        for key in ['version', 'pos_func_tests', 'neg_func_tests', 'unit_tests']:
+            if key in self._settings:
+                self._data[key] = self._settings[key]
+                self._settings.pop(key)
+
     def save_settings(self):
         os.makedirs(self._path, exist_ok=True)
         with open(os.path.join(self.data_path(), Project.SETTINGS_FILE), 'w', encoding='utf-8') as f:
+            f.write(json.dumps(self._settings, indent=2))
+        with open(os.path.join(self.data_path(), Project.DATA_FILE), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._data, indent=2))
 
     def __getitem__(self, item):
-        if item in self._data or self._parent is None:
-            return self._data[item]
+        if item in self._settings or self._parent is None:
+            return self._settings[item]
         return self._parent[item]
 
     def has_item(self, key):
-        return key in self._data
+        return key in self._settings
 
     def __setitem__(self, key, value):
-        self._data[key] = value
+        self._settings[key] = value
         self.save_settings()
 
     def get(self, key, default=None):
-        if key in self._data or self._parent is None:
-            return self._data.get(key, default)
+        if key in self._settings or self._parent is None:
+            return self._settings.get(key, default)
+        return self._settings.get(key, default)
+
+    def get_data(self, key, default=None):
         return self._data.get(key, default)
 
     def set(self, key, value):
+        self._settings[key] = value
+        self.save_settings()
+
+    def set_data(self, key, value):
         self._data[key] = value
         self.save_settings()
 
     def pop(self, key):
+        if key in self._settings:
+            self._settings.pop(key)
+        self.save_settings()
+
+    def pop_data(self, key):
         if key in self._data:
             self._data.pop(key)
         self.save_settings()
@@ -185,7 +209,7 @@ class Project:
     def create_gitignore(self):
         os.makedirs(self.data_path(), exist_ok=True)
         with open(os.path.join(self.data_path(), ".gitignore"), 'w', encoding='utf-8') as f:
-            f.write('# Created by TestGenerator\n*\n')
+            f.write(f'# Created by TestGenerator\n*\n{Project.SETTINGS_FILE}\n')
 
     def delete(self, dir=False):
         if isinstance(self._parent, Project):

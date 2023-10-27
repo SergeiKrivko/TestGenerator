@@ -83,36 +83,31 @@ class SettingsWindow(CustomDialog):
 
         self.project_struct_widget = SettingsWidget(
             self.sm, self.tm,
-            ComboBox("Структура проекта", ['Лаба - задание - вариант', 'Без структуры'], key='struct', width=250,
-                     children={0: [
-                         LineEdit("Шаблон имени папки с лабой:", "lab_{lab:0>2}_{task:0>2}_{var:0>2}",
-                                  key='dir_pattern', width=300, check_func=SettingsWindow.check_dir_pattern),
-                         LineEdit("Шаблон имени папки с лабой при отсутствии варианта:", "lab_{lab:0>2}_{task:0>2}",
-                                  key='dir_no_var_pattern', width=300, check_func=SettingsWindow.check_dir_pattern)
-                     ]}),
-            CheckBox("Сохранять тесты в папке проекта", state=False, key='func_tests_in_project', children={True: [
-                LineEdit("Файл с входными данными:", "func_tests/data/{test_type}_{number:0>2}_in.txt",
-                         key='stdin_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
-                LineEdit("Файл с выходными данными:", "func_tests/data/{test_type}_{number:0>2}_out.txt",
-                         key='stdout_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
-                LineEdit("Файл с аргументами:", "func_tests/data/{test_type}_{number:0>2}_args.txt",
-                         key='args_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
-                LineEdit("Входные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}",
-                         key='fin_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
-                LineEdit("Выходные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}",
-                         key='fout_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
-                LineEdit("Файлы проверки состояния входных:",
-                         "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}",
-                         key='fcheck_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
-                LineEdit("Информация о тестах", "func_tests/readme.md",
-                         key='readme_pattern', width=500, check_func=SettingsWindow.check_path)
-            ]}),
-            LineEdit("Папка с модульными тестами", "unit_tests",
-                     key='unit_tests_dir', width=500, check_func=SettingsWindow.check_path),
-            LineEdit("Приложение для модульных тестов", "unit_tests.exe",
-                     key='unit_tests_app', width=500, check_func=SettingsWindow.check_path),
-            LineEdit("Папка с временными файлами", "out",
-                     key='temp_files_dir', width=500, check_func=SettingsWindow.check_path),
+            CheckBox("Стандартная структура", state=True, key='default_struct', children={False: [
+                CheckBox("Сохранять тесты в папке проекта", state=False, key='func_tests_in_project', children={True: [
+                    LineEdit("Файл с входными данными:", "func_tests/data/{test_type}_{number:0>2}_in.txt",
+                             key='stdin_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
+                    LineEdit("Файл с выходными данными:", "func_tests/data/{test_type}_{number:0>2}_out.txt",
+                             key='stdout_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
+                    LineEdit("Файл с аргументами:", "func_tests/data/{test_type}_{number:0>2}_args.txt",
+                             key='args_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
+                    LineEdit("Входные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}",
+                             key='fin_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
+                    LineEdit("Выходные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}",
+                             key='fout_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
+                    LineEdit("Файлы проверки состояния входных:",
+                             "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}",
+                             key='fcheck_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
+                    LineEdit("Информация о тестах", "func_tests/readme.md",
+                             key='readme_pattern', width=500, check_func=SettingsWindow.check_path)
+                ]}),
+                LineEdit("Папка с модульными тестами", "unit_tests",
+                         key='unit_tests_dir', width=500, check_func=SettingsWindow.check_path),
+                LineEdit("Приложение для модульных тестов", "unit_tests.exe",
+                         key='unit_tests_app', width=500, check_func=SettingsWindow.check_path),
+                LineEdit("Папка с временными файлами", "out",
+                         key='temp_files_dir', width=500, check_func=SettingsWindow.check_path)
+        ]}),
             key_type=KEY_LOCAL
         )
         self.project_struct_widget.hide()

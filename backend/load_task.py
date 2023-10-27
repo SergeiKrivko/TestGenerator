@@ -85,7 +85,7 @@ class Loader(QThread):
 
     def load_func_tests(self):
         for test_type in ['pos', 'neg']:
-            if isinstance(lst := self._sm.project.get(f'{test_type}_func_tests'), str):
+            if isinstance(lst := self._sm.project.get_data(f'{test_type}_func_tests'), str):
                 for test_id in lst.split(';'):
                     if test_id:
                         self._manager.add_func_test(FuncTest(
@@ -96,11 +96,10 @@ class Loader(QThread):
                         f"{self._new_data_path}/func_tests/{test_type}/{el}", test_type))
 
     def load_unit_tests(self):
-        if isinstance(lst := self._sm.project.get(f'unit_tests'), str):
+        if isinstance(lst := self._sm.project.get_data(f'unit_tests'), str):
             for suite_id in lst.split(';'):
                 if suite_id:
                     self._manager.add_suite(UnitTestsSuite(f"{self._new_data_path}/unit_tests", suite_id))
-        # TODO: Сделать загрузку старого формата
 
     def load_builds(self):
         path = f"{self._new_data_path}/scenarios"

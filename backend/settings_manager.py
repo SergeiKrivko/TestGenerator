@@ -118,6 +118,15 @@ class SettingsManager(QObject):
         if self.project is not None:
             self.project.set(key, value)
 
+    def get_data(self, key, default=None):
+        if self.project is not None:
+            return self.project.get_data(key, default)
+        return default
+
+    def set_data(self, key, value):
+        if self.project is not None:
+            self.project.set_data(key, value)
+
     def temp_dir(self):
         return f"{self.app_data_dir}/temp_files"
 
@@ -176,6 +185,9 @@ class SettingsManager(QObject):
             return self.all_projects[path]
         else:
             project = Project(path, self, makedirs=True, load=True)
+            project.set('default_struct', True)
+            project.set('default_compiler_settings', True)
+            project.set('default_testing_settings', True)
             self.projects[path] = project
             return project
 
@@ -184,6 +196,9 @@ class SettingsManager(QObject):
         if path in self.all_projects:
             return self.all_projects[path]
         project = Project(path, self, makedirs=True)
+        project.set('default_struct', True)
+        project.set('default_compiler_settings', True)
+        project.set('default_testing_settings', True)
         return project
 
     def delete_main_project(self, project=None, directory=False, data=False):
