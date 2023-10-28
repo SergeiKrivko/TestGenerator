@@ -3,10 +3,10 @@ import os
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QDialog, QLineEdit, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QFileDialog
 
 import config
-from other.chat_widget import ChatWidget, ChatInputArea
+from side_tabs.telegram.chat_widget import ChatWidget, ChatInputArea
 from side_tabs.telegram.chat_bubble import TelegramChatBubble
 from side_tabs.telegram.chat_list_widget import TelegramListWidget
 from side_tabs.telegram.telegram_api import types

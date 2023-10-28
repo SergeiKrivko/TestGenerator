@@ -1,24 +1,23 @@
-from random import randint
-from time import sleep
-
-from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFontMetrics, QKeyEvent
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QSizePolicy
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit
 
+from side_tabs.chat import gpt
+from side_tabs.chat.chat_bubble import ChatBubble
 from ui.button import Button
 from ui.side_panel_widget import SidePanelWidget
 
 
 class ChatPanel(SidePanelWidget):
-    def __init__(self, sm, tm):
+    def __init__(self, sm, bm, tm):
         super().__init__(sm, tm, "Чат", [])
+        self.bm = bm
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self._chat_widget = ChatWidget(self.sm, self.tm)
+        self._chat_widget = ChatWidget(self.sm, self.bm, self.tm)
         layout.addWidget(self._chat_widget)
 
     def set_theme(self):
@@ -27,9 +26,10 @@ class ChatPanel(SidePanelWidget):
 
 
 class ChatWidget(QWidget):
-    def __init__(self, sm, tm):
+    def __init__(self, sm, bm, tm):
         super().__init__()
         self._sm = sm
+        self._bm = bm
         self._tm = tm
 
         self._bubbles = []
@@ -52,14 +52,6 @@ class ChatWidget(QWidget):
         bottom_layout = QHBoxLayout()
         layout.addLayout(bottom_layout)
 
-        self._button_document = Button(self._tm, "telegram_document")
-        self._button_document.setFixedSize(30, 30)
-        bottom_layout.addWidget(self._button_document)
-
-        self._button_tg_project = Button(self._tm, "button_to_zip")
-        self._button_tg_project.setFixedSize(30, 30)
-        bottom_layout.addWidget(self._button_tg_project)
-
         self._text_edit = ChatInputArea()
         self._text_edit.returnPressed.connect(self.send_message)
         bottom_layout.addWidget(self._text_edit, 1)
@@ -70,21 +62,28 @@ class ChatWidget(QWidget):
         bottom_layout.addWidget(self._button)
 
         self.looper = None
+        self._last_bubble = None
+        self._last_message = None
+        self.messages = []
 
     def send_message(self):
         if not (text := self._text_edit.toPlainText()):
             return
         self.add_bubble(text, ChatBubble.SIDE_RIGHT)
         self._text_edit.setText("")
-        self.looper = Looper(text)
+        self.messages.append({'role': 'user', 'content': text})
+        self.looper = Looper(self.messages.copy())
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
-        self.looper.sendMessage.connect(lambda answer: self.add_bubble(answer, ChatBubble.SIDE_LEFT))
-        self.looper.start()
+        self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
+        self._last_message = None
+        self.looper.sendMessage.connect(self.add_text)
+        self._bm.run_process(self.looper, 'GPT_chat', '1')
 
     def add_bubble(self, text, side):
-        bubble = ChatBubble(self._tm, text, side)
+        bubble = ChatBubble(self._bm, self._tm, text, side)
         self._add_buble(bubble)
+        return bubble
 
     def _add_buble(self, bubble):
         self._scroll_layout.addWidget(bubble)
@@ -96,8 +95,16 @@ class ChatWidget(QWidget):
         self._bubbles.insert(0, bubble)
         bubble.set_theme()
 
+    def add_text(self, text):
+        self._last_bubble.add_text(text)
+        if self._last_message is None:
+            self._last_message = {'role': 'assistant', 'content': text}
+            self.messages.append(self._last_message)
+        else:
+            self._last_message['content'] = self._last_bubble.text()
+
     def set_theme(self):
-        for el in [self._scroll_area, self._text_edit, self._button, self._button_document, self._button_tg_project]:
+        for el in [self._scroll_area, self._text_edit, self._button]:
             self._tm.auto_css(el)
         for el in self._bubbles:
             el.set_theme()
@@ -111,50 +118,8 @@ class Looper(QThread):
         self.text = text
 
     def run(self):
-        sleep(randint(1, 5))
-        self.sendMessage.emit(self.text)
-
-
-class ChatBubble(QWidget):
-    SIDE_LEFT = 0
-    SIDE_RIGHT = 1
-
-    _BORDER_RADIUS = 10
-
-    def __init__(self, tm, text, side):
-        super().__init__()
-        self._tm = tm
-        self._side = side
-        self._text = text
-
-        layout = QHBoxLayout()
-        layout.setDirection(QHBoxLayout.LeftToRight if self._side == ChatBubble.SIDE_LEFT else QHBoxLayout.RightToLeft)
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft if self._side == ChatBubble.SIDE_LEFT else Qt.AlignmentFlag.AlignRight)
-        self.setLayout(layout)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        font_metrics = QFontMetrics(self._tm.font_medium)
-
-        self._label = QLabel(self._text)
-        self._label.setWordWrap(True)
-        self._label.setMaximumWidth(font_metrics.size(0, self._text).width() + 20)
-        self._label.setTextInteractionFlags(Qt.TextSelectableByMouse | Qt.TextSelectableByKeyboard)
-        layout.addWidget(self._label, 10)
-
-        widget = QWidget()
-        layout.addWidget(widget, 1)
-
-    def set_theme(self):
-        css = f"""color: {self._tm['TextColor']}; 
-            background-color: {self._tm['BgColor']};
-            border: 1px solid {self._tm['BorderColor']};
-            border-top-left-radius: {ChatBubble._BORDER_RADIUS}px;
-            border-top-right-radius: {ChatBubble._BORDER_RADIUS}px;
-            border-bottom-left-radius: {0 if self._side == ChatBubble.SIDE_LEFT else ChatBubble._BORDER_RADIUS}px;
-            border-bottom-right-radius: {0 if self._side == ChatBubble.SIDE_RIGHT else ChatBubble._BORDER_RADIUS}px;
-            padding: 4px;"""
-        self._label.setStyleSheet(css)
-        self._label.setFont(self._tm.font_medium)
+        for el in gpt.simple_response(self.text):
+            self.sendMessage.emit(el)
 
 
 class ChatInputArea(QTextEdit):
@@ -174,7 +139,7 @@ class ChatInputArea(QTextEdit):
         self.setFixedHeight(min(300, self.height() + height))
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
-        if e.key() == Qt.Key_Return or e.key() == Qt.Key_Enter:
+        if e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter:
             self.returnPressed.emit()
         else:
             super().keyPressEvent(e)

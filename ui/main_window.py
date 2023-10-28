@@ -1,7 +1,7 @@
 from sys import argv
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialog, QDialogButtonBox, QLabel, QHBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout
 
 from backend.backend_manager import BackendManager
 from other.report.report_window import ReportWindow
@@ -9,7 +9,7 @@ from side_tabs.builds import BuildWindow
 from side_tabs.console import ConsolePanel
 from side_tabs.files.files_widget import FilesWidget
 from side_tabs.terminal_tab import TerminalTab
-from other.chat_widget import ChatPanel
+from side_tabs.chat import ChatPanel
 from side_tabs.git.git_panel import GitPanel
 from side_tabs.telegram.telegram_widget import TelegramWidget
 from side_tabs.time import TimePanel
@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
             'generator': (GeneratorTab(self.sm, self.bm, self.tm), "Генерация тестов"),
             'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
-            'chat': (ChatPanel(self.sm, self.tm), "Чат"),
+            'chat': (ChatPanel(self.sm, self.bm, self.tm), "Чат"),
             'telegram': (TelegramWidget(self.sm, self.tm), "Telegram"),
             'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет"),
             'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
