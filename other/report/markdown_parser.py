@@ -38,6 +38,10 @@ DEFAULT_PROPERTIES = {
     'first_line_indent': 12.5,
 }
 
+_YES = 1
+_NO = 0
+_UNKNOWN = 2
+
 
 class MarkdownParser:
     def __init__(self, bm, text: str, dist: str, to_pdf="", styles=None, properties=None):
@@ -61,6 +65,10 @@ class MarkdownParser:
         self._list_id = 9
 
         self._pdf_to_merge = []
+        self._last_paragraph = None
+        self._italic = _NO
+        self._bold = _NO
+        self._code = _NO
 
     def _next_line(self):
         self._current_line += 1
@@ -271,6 +279,44 @@ class MarkdownParser:
         return True
 
     def add_runs(self, paragraph, line):
+        self._add_runs(paragraph, line + ' ')
+
+    def _add_runs(self, paragraph, line, bold=_UNKNOWN, italic=_UNKNOWN, code=_UNKNOWN):
+        def split_line(line_to_split: str, sep: str):
+            lst = line_to_split.split(sep)
+            i = 0
+            while i < len(lst) - 1:
+                if (len(lst[i]) - len(lst[i].rstrip('\\'))) % 2:
+                    lst[i] = lst[i + 1]
+                    lst.pop(i + 1)
+                i += 1
+            return lst
+
+        if bold != _UNKNOWN and italic != _UNKNOWN and code != _UNKNOWN:
+            run = paragraph.add_run(line)
+            run.font.bold = bool(bold)
+            run.font.italic = bool(italic)
+            if code:
+                run.font.name = 'Consolas'
+            self._last_paragraph = paragraph
+            self._bold, self._italic, self._code = bold, italic, code
+        elif bold == _UNKNOWN:
+            flag = self._bold if paragraph == self._last_paragraph else _NO
+            for el in split_line(line, '**'):
+                self._add_runs(paragraph, el, flag, italic, code)
+                flag = _NO if flag == _YES else _YES
+        elif italic == _UNKNOWN:
+            flag = self._italic if paragraph == self._last_paragraph else _NO
+            for el in split_line(line, '*'):
+                self._add_runs(paragraph, el, bold, flag, code)
+                flag = _NO if flag == _YES else _YES
+        elif code == _UNKNOWN:
+            flag = self._code if paragraph == self._last_paragraph else _NO
+            for el in split_line(line, '`'):
+                self._add_runs(paragraph, el, bold, italic, flag)
+                flag = _NO if flag == _YES else _YES
+
+    def add_runs_old(self, paragraph, line):
         words = line.split(' ')
         code = False
         bold = False
