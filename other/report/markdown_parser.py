@@ -15,7 +15,7 @@ from requests import post
 import docx2pdf
 from cairosvg import svg2png
 import latex2mathml.converter as latex_converter
-from pypdf import PdfMerger
+from pypdf import PdfMerger, PdfReader
 
 import config
 from backend.commands import read_file
@@ -101,6 +101,8 @@ class MarkdownParser:
                 continue
             if self.parse_page_break(line):
                 continue
+            if self.parse_line_break(line):
+                continue
             if self.parse_formula(line):
                 continue
             if self.parse_simple_formula(line):
@@ -179,6 +181,12 @@ class MarkdownParser:
         if not line.startswith('[page-break]: <>'):
             return False
         self.document.add_page_break()
+        return True
+
+    def parse_line_break(self, line):
+        if not line.startswith('[line-break]: <>') and not line.startswith('[br]: <>'):
+            return False
+        self.document.add_paragraph()
         return True
 
     def parse_formula(self, line):
@@ -293,7 +301,7 @@ class MarkdownParser:
             return lst
 
         if bold != _UNKNOWN and italic != _UNKNOWN and code != _UNKNOWN:
-            run = paragraph.add_run(line)
+            run = paragraph.add_run(line.replace('\\*', '*').replace('\\`', '`').replace('\\\\', '\\'))
             run.font.bold = bool(bold)
             run.font.italic = bool(italic)
             if code:
@@ -561,11 +569,15 @@ class MarkdownParser:
         else:
             raise Exception("can not convert docx to pdf")
         if self._pdf_to_merge:
-            for el in self._pdf_to_merge:
-                self._pdf_merger.append(el)
-            self._pdf_merger.append(self.to_pdf)
-            self._pdf_merger.write(self.to_pdf)
-            self._pdf_merger.close()
+            with open(self.to_pdf, 'br') as stream:
+                pdf_reader = PdfReader(stream)
+
+                for el in self._pdf_to_merge:
+                    self._pdf_merger.append(el)
+                self._pdf_merger.append(self.to_pdf)
+                self._pdf_merger.add_metadata(pdf_reader.metadata)
+                self._pdf_merger.write(self.to_pdf)
+                self._pdf_merger.close()
 
     def add_table_of_content(self):
         self.document.add_heading("Оглавление")
@@ -598,7 +610,7 @@ class MarkdownParser:
         mathml = latex_converter.convert(text)
         tree = etree.fromstring(mathml)
         xslt = etree.parse(
-            r"C:\Program Files (x86)\Microsoft Office\Office14\MML2OMML.XSL"
+            r"other\report\MML2OMML.XSL"
         )
         transform = etree.XSLT(xslt)
         new_dom = transform(tree)

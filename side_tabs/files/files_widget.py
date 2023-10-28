@@ -554,7 +554,12 @@ class FilesWidget(SidePanelWidget):
         if self.files_list.currentItem() is None:
             return
         if to_trash:
-            send2trash.send2trash(self.files_list.currentItem().path)
+            try:
+                send2trash.send2trash(self.files_list.currentItem().path)
+            except FileExistsError:
+                pass
+            except Exception as ex:
+                MessageBox(MessageBox.Icon.Warning, "Ошибка", f"{ex.__class__.__name__}: {ex}", self.tm)
             self.update_files_list()
             return
         dlg = DeleteFileDialog(f"Вы уверены, что хотите удалить файл {self.files_list.currentItem().name}?", self.tm)
