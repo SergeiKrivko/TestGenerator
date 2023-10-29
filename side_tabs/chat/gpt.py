@@ -1,12 +1,13 @@
 import g4f
 
 
-def simple_response(messages: list[dict[str: str]]):
+def simple_response(messages: list[dict[str: str]], **kwargs):
     response = g4f.ChatCompletion.create(
         model=g4f.models.default,
         messages=messages,
         timeout=120,
-        stream=True
+        stream=True,
+        **kwargs
     )
     for el in response:
         yield el

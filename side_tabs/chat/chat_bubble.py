@@ -1,8 +1,5 @@
-from time import sleep
-
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QTextEdit
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit
 
 
 class ChatBubble(QWidget):
@@ -40,6 +37,10 @@ class ChatBubble(QWidget):
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
+        self._resize()
+
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
         self._resize()
 
     def _resize(self):
