@@ -190,7 +190,7 @@ class TelegramChatWidget(ChatWidget):
     def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
         super().resizeEvent(a0)
         for el in self._bubbles:
-            el.set_max_width(min(500, int(self.width() * 0.7)))
+            el.set_max_width(min(750, int(self.width() * 0.7)))
 
     def send_message(self):
         if not (text := self._text_edit.toPlainText()):

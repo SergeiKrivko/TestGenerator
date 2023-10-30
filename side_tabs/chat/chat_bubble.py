@@ -26,6 +26,7 @@ class ChatBubble(QWidget):
         # font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._text_edit = QTextEdit()
+        self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setMarkdown(text)
         self._text_edit.setReadOnly(True)
         # self._text_edit.setMaximumWidth(font_metrics.size(0, self._text).width() + 20)

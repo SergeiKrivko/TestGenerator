@@ -1,4 +1,5 @@
 import os
+from uuid import UUID
 
 from PyQt6.QtWidgets import QHBoxLayout
 
@@ -30,6 +31,11 @@ class ChatPanel(SidePanelWidget):
         self.buttons['add'].clicked.connect(self._new_dialog)
 
         self._load_dialogs()
+        try:
+            if (dialog_id := UUID(self.sm.get_general('gpt_current_dialog', ''))) in self.dialogs:
+                self._select_dialog(dialog_id)
+        except ValueError:
+            pass
 
     def _load_dialogs(self):
         os.makedirs(self._data_path, exist_ok=True)
@@ -62,6 +68,7 @@ class ChatPanel(SidePanelWidget):
         self.dialogs.pop(dialog_id)
 
     def _select_dialog(self, dialog_id):
+        self.sm.set_general('gpt_current_dialog', str(dialog_id))
         self._list_widget.hide()
         self.chat_widgets[dialog_id].show()
         self.current = dialog_id

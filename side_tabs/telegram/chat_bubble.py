@@ -3,7 +3,7 @@ import shutil
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFontMetrics, QPixmap
-from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QFileDialog
+from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QFileDialog, QTextEdit
 
 from side_tabs.telegram.telegram_api import types
 from side_tabs.telegram.telegram_manager import TelegramManager
@@ -23,9 +23,9 @@ class TelegramChatBubble(QWidget):
                            self._manager.get('my_id')
 
         if isinstance(message.content, types.TgMessageText):
-            self._text = message.content.text.text
+            self._text = message.content.text.html
         elif isinstance(message.content, (types.TgMessageDocument, types.TgMessagePhoto, types.TgMessageVideo)):
-            self._text = message.content.caption.text
+            self._text = message.content.caption.html
         else:
             self._text = ''
 
@@ -67,16 +67,28 @@ class TelegramChatBubble(QWidget):
 
         font_metrics = QFontMetrics(self._tm.font_medium)
 
-        self._label = QLabel(self._text)
-        self._label.setContentsMargins(7, 4, 7, 7)
-        self._label.setWordWrap(True)
-        self._label.setMaximumWidth(font_metrics.size(0, self._text).width() + 20)
-        self._label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse |
-                                            Qt.TextInteractionFlag.TextSelectableByKeyboard)
+        self._label = QTextEdit()
+        self._label.setHtml(self._text)
+        self._label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self._label.setViewportMargins(4, 1, 4, 4)
+        self._label.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._fm_width = font_metrics.size(0, self._text).width() + 20
+        self._label.setMaximumWidth(self._fm_width)
         self._layout.addWidget(self._label, 10)
 
         widget = QWidget()
         main_layout.addWidget(widget, 1)
+
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
+        self._label.setFixedHeight(10)
+        self._label.setFixedHeight(10 + self._label.verticalScrollBar().maximum())
+
+    def resizeEvent(self, a0) -> None:
+        super().resizeEvent(a0)
+        self._label.setFixedWidth(min(self._fm_width, int(self.width() * 0.73)))
+        self._label.setFixedHeight(10)
+        self._label.setFixedHeight(10 + self._label.verticalScrollBar().maximum())
 
     def hide_sender(self):
         self._sender_label.hide()

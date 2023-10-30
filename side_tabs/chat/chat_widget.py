@@ -47,8 +47,10 @@ class ChatWidget(QWidget):
         self._scroll_area = QScrollArea()
         layout.addWidget(self._scroll_area, 1)
 
-        scroll_widget = QWidget()
+        scroll_widget = _ScrollWidget()
+        scroll_widget.resized.connect(self._scroll)
         self._scroll_area.setWidget(scroll_widget)
+        self._scroll_area.verticalScrollBar().valueChanged.connect(self._on_scrolled)
         self._scroll_area.setWidgetResizable(True)
         self._scroll_layout = QVBoxLayout()
         self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -70,6 +72,7 @@ class ChatWidget(QWidget):
         self.looper = None
         self._last_bubble = None
         self._last_message = None
+        self._to_bottom = True
 
         for el in self._dialog.messages:
             self.add_bubble(el.get('content', ''),
@@ -111,6 +114,19 @@ class ChatWidget(QWidget):
         else:
             self._last_message['content'] += text
             self._dialog.store()
+
+    def _on_scrolled(self):
+        self._to_bottom = abs(self._scroll_area.verticalScrollBar().maximum() -
+                              self._scroll_area.verticalScrollBar().value()) < 5
+        self._dialog.scrolling_pos = self._scroll_area.verticalScrollBar().value()
+
+    def _scroll(self):
+        if self._to_bottom:
+            self._scroll_area.verticalScrollBar().setValue(self._scroll_area.verticalScrollBar().maximum())
+
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
+        self._scroll_area.verticalScrollBar().setValue(self._dialog.scrolling_pos)
 
     def _open_settings(self):
         dialog = ChatSettingsWindow(self._tm, self._dialog)
@@ -244,3 +260,11 @@ class ChatSettingsWindow(CustomDialog):
             self.tm.auto_css(el)
         for el in [self._name_label, self._used_messages_box, self._saved_messages_box, self._temperature_box]:
             self.tm.auto_css(el)
+
+
+class _ScrollWidget(QWidget):
+    resized = pyqtSignal()
+
+    def resizeEvent(self, a0) -> None:
+        super().resizeEvent(a0)
+        self.resized.emit()

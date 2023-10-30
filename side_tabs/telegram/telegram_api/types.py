@@ -187,6 +187,40 @@ def get_chat_action(data: dict, client):
     # raise TypeError(f"Unknown authorization state {data['@type']}")
 
 
+def get_text_entity(data: dict, client):
+    if data['@type'] == "textEntityTypeTextUrl":
+        return TgTextEntityTypeTextUrl(data, client)
+    if data['@type'] == "textEntityTypeBold":
+        return TgTextEntityTypeBold(data, client)
+    if data['@type'] == "textEntityTypeCode":
+        return TgTextEntityTypeCode(data, client)
+    if data['@type'] == "textEntityTypePre":
+        return TgTextEntityTypePre(data, client)
+    if data['@type'] == "textEntityTypeUrl":
+        return TgTextEntityTypeUrl(data, client)
+    if data['@type'] == "textEntityTypeBotCommand":
+        return TgTextEntityTypeBotCommand(data, client)
+    if data['@type'] == "textEntityTypeCustomEmoji":
+        return TgTextEntityTypeCustomEmoji(data, client)
+    if data['@type'] == "textEntityTypeEmailAddress":
+        return TgTextEntityTypeEmailAddress(data, client)
+    if data['@type'] == "textEntityTypeHashtag":
+        return TgTextEntityTypeHashtag(data, client)
+    if data['@type'] == "textEntityTypeItalic":
+        return TgTextEntityTypeItalic(data, client)
+    if data['@type'] == "textEntityTypeMediaTimestamp":
+        return TgTextEntityTypeMediaTimestamp(data, client)
+    if data['@type'] == "textEntityTypeMention":
+        return TgTextEntityTypeMention(data, client)
+    if data['@type'] == "textEntityTypeSpoiler":
+        return TgTextEntityTypeSpoiler(data, client)
+    if data['@type'] == "textEntityTypeStrikethrough":
+        return TgTextEntityTypeStrikethrough(data, client)
+    if data['@type'] == "textEntityTypeUnderline":
+        return TgTextEntityTypeUnderline(data, client)
+    raise TypeError(f"Unknown text entity {data['@type']}")
+
+
 class TgOptionValueString:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
@@ -613,7 +647,44 @@ class TgFormattedText:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         self.text = data.get('text')
-        self.entities = data.get('entities')
+        self.entities = [TgTextEntity(en, client) for en in data.get('entities')]
+
+        self.html = ''
+        self._includes = dict()
+        self.to_html()
+
+    def to_html(self):
+        self.html = self.text
+        for entity in self.entities:
+            if isinstance(entity.type, TgTextEntityTypeBold):
+                self._include('<b>', entity.offset)
+                self._include('</b>', entity.offset + entity.length)
+            elif isinstance(entity.type, TgTextEntityTypeItalic):
+                self._include('<i>', entity.offset)
+                self._include('</i>', entity.offset + entity.length)
+            elif isinstance(entity.type, TgTextEntityTypeCode):
+                self._include("<font face='Courier'>", entity.offset)
+                self._include('</font>', entity.offset + entity.length)
+            elif isinstance(entity.type, TgTextEntityTypeUnderline):
+                self._include("<ins>", entity.offset)
+                self._include('</ins>', entity.offset + entity.length)
+            elif isinstance(entity.type, TgTextEntityTypePre):
+                self._include("<pre>", entity.offset)
+                self._include('</pre>', entity.offset + entity.length)
+            elif isinstance(entity.type, TgTextEntityTypeTextUrl):
+                self._include(f"<a href='{entity.type.url}'>", entity.offset)
+                self._include('</a>', entity.offset + entity.length)
+
+    def _include(self, text, pos):
+        index = pos
+        for key, value in self._includes.items():
+            if key <= pos:
+                index += value
+        self.html = self.html[:index] + text + self.html[index:]
+        if pos in self._includes:
+            self._includes[pos] += len(text)
+        else:
+            self._includes[pos] = len(text)
 
 
 class TgSupergroupFullInfo:
@@ -1208,7 +1279,7 @@ class TgTextEntity:
 
         self.offset = data.get('offset')
         self.length = data.get('length')
-        self.type = TgTextEntityTypeTextUrl(data.get('type'), client)
+        self.type = get_text_entity(data.get('type'), client)
 
 
 class TgTextEntityTypeTextUrl:
@@ -1515,6 +1586,8 @@ class TgUserStatusLastWeek:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         pass
+
+
 class TgTextEntityTypeMediaTimestamp:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
@@ -1527,8 +1600,12 @@ class TgTextEntityTypeMentionName:
         self.user_id = data.get('user_id')
 
 
+class TgTextEntityTypeUnderline:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+
+
 class TgChatActionBarAddContact:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         pass
-
