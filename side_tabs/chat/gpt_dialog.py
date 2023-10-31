@@ -33,7 +33,7 @@ class GPTDialog:
             'saved_messages': self.saved_messages,
             'temperature': self.temperature,
             'scrolling_pos': self.scrolling_pos
-        }))
+        }, ensure_ascii=False))
 
     def load(self):
         data = read_json(self._path)

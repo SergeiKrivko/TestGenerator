@@ -1,3 +1,4 @@
+import datetime
 from uuid import UUID
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
@@ -79,7 +80,7 @@ class ChatWidget(QWidget):
                             ChatBubble.SIDE_RIGHT if el.get('role') == 'user' else ChatBubble.SIDE_LEFT)
 
     def send_message(self):
-        if not (text := self._text_edit.toPlainText()):
+        if not ((text := self._text_edit.toPlainText()).strip()):
             return
         self.add_bubble(text, ChatBubble.SIDE_RIGHT)
         self._text_edit.setText("")
@@ -90,7 +91,7 @@ class ChatWidget(QWidget):
         self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
         self._last_message = None
         self.looper.sendMessage.connect(self.add_text)
-        self._bm.run_process(self.looper, 'GPT_chat', '1')
+        self._bm.run_process(self.looper, 'GPT_chat', str(self._dialog.id))
 
     def add_bubble(self, text, side):
         bubble = ChatBubble(self._bm, self._tm, text, side)
@@ -152,7 +153,7 @@ class Looper(QThread):
         self.kwargs = kwargs
 
     def run(self):
-        for el in gpt.simple_response(self.text, **self.kwargs):
+        for el in gpt.stream_response(self.text, **self.kwargs):
             self.sendMessage.emit(el)
 
 
@@ -165,6 +166,8 @@ class ChatInputArea(QTextEdit):
         self.setFixedHeight(30)
         self.textChanged.connect(self._on_text_changed)
 
+        self._shift_pressed = False
+
     def _on_text_changed(self):
         height = self.verticalScrollBar().maximum()
         if not height:
@@ -173,10 +176,18 @@ class ChatInputArea(QTextEdit):
         self.setFixedHeight(min(300, self.height() + height))
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
-        if e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter:
+        if (e.key() == Qt.Key.Key_Return or e.key() == Qt.Key.Key_Enter) and not self._shift_pressed:
             self.returnPressed.emit()
+        elif e.key() == Qt.Key.Key_Shift:
+            self._shift_pressed = True
+            super().keyPressEvent(e)
         else:
             super().keyPressEvent(e)
+
+    def keyReleaseEvent(self, e) -> None:
+        if e.key() == Qt.Key.Key_Shift:
+            self._shift_pressed = False
+        super().keyPressEvent(e)
 
 
 class ChatSettingsWindow(CustomDialog):
@@ -197,6 +208,11 @@ class ChatSettingsWindow(CustomDialog):
         self._name_label = QLineEdit()
         self._name_label.setText(self._dialog.name)
         main_layout.addWidget(self._name_label)
+
+        self._time_label = QLabel()
+        self._time_label.setText(f"Создан: {datetime.datetime.fromtimestamp(self._dialog.time).strftime('%D %H:%M')}")
+        self._labels.append(self._time_label)
+        main_layout.addWidget(self._time_label)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

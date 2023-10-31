@@ -1,4 +1,5 @@
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit
 
 
@@ -23,10 +24,12 @@ class ChatBubble(QWidget):
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # font_metrics = QFontMetrics(self._tm.font_medium)
+        self._font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._text_edit = QTextEdit()
+        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
         self._text_edit.setMarkdown(text)
         self._text_edit.setReadOnly(True)
         # self._text_edit.setMaximumWidth(font_metrics.size(0, self._text).width() + 20)
@@ -51,6 +54,7 @@ class ChatBubble(QWidget):
     def add_text(self, text: str):
         self._text += text
         self._text_edit.setMarkdown(self._text)
+        self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
 
     def text(self):
         return self._text

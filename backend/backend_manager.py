@@ -449,7 +449,7 @@ class BackendManager(QObject):
 
     def terminate_all(self):
         for item in self._background_processes.values():
-            for el in item.values():
+            for el in list(item.values()):
                 el.terminate()
 
     # --------------------- tabs ----------------------------

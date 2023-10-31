@@ -69,7 +69,9 @@ class TelegramChatBubble(QWidget):
 
         self._label = QTextEdit()
         self._label.setHtml(self._text)
-        self._label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        self._label.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse |
+                                            Qt.TextInteractionFlag.TextSelectableByMouse |
+                                            Qt.TextInteractionFlag.TextSelectableByKeyboard)
         self._label.setViewportMargins(4, 1, 4, 4)
         self._label.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._fm_width = font_metrics.size(0, self._text).width() + 20

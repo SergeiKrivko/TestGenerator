@@ -1,4 +1,5 @@
 import os
+from time import time
 from uuid import UUID
 
 from PyQt6.QtWidgets import QHBoxLayout
@@ -47,6 +48,7 @@ class ChatPanel(SidePanelWidget):
 
     def _new_dialog(self):
         dialog = GPTDialog(self._data_path)
+        dialog.time = time()
         self._add_dialog(dialog)
 
     def _add_dialog(self, dialog):
