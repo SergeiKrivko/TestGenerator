@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
     QPushButton
 
+from main_tabs.tests.gpt_generator import GPTTestGenerator
 from side_tabs.builds.commands_list import ScenarioBox
 from ui.button import Button
 from ui.options_window import OptionsWidget
@@ -95,10 +96,11 @@ class TestTableWidget(QWidget):
         self.pos_button_paste.clicked.connect(lambda: self.pasteTests.emit('pos'))
         pos_buttons_layout.addWidget(self.pos_button_paste)
 
-        # self.pos_button_generate = Button(self.tm, 'generate')
-        # self.pos_button_generate.setFixedHeight(22)
-        # self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        # pos_buttons_layout.addWidget(self.pos_button_generate)
+        self.pos_button_generate = Button(self.tm, 'generate', css='Bg')
+        self.pos_button_generate.setFixedHeight(22)
+        self.pos_button_generate.clicked.connect(self._generate_pos_tests)
+        self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        pos_buttons_layout.addWidget(self.pos_button_generate)
 
         self.pos_test_list = QListWidget()
         self.pos_test_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
@@ -224,6 +226,10 @@ class TestTableWidget(QWidget):
             index = min(list_widget.count() - 1, index + 1)
         list_widget.setCurrentRow(index)
 
+    def _generate_pos_tests(self):
+        generator = GPTTestGenerator(self.bm)
+        self.bm.run_process(generator, 'gpt_test_generator', self.sm.project.path())
+
     def run_export(self):
         self._export_dialog.tests = []
         # for i in range(self.pos_test_list.count()):
@@ -237,7 +243,7 @@ class TestTableWidget(QWidget):
         self.tm.set_theme_to_list_widget(self.neg_test_list)
         for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
                    self.pos_button_copy, self.pos_button_paste, self.pos_button_cut, self.in_data_edit,
-                   self.neg_add_button, self.neg_delete_button,
+                   self.pos_button_generate, self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_paste,
                    self.out_data_edit, self.neg_button_cut,
                    self.pos_comparator_widget, self.neg_comparator_widget,
