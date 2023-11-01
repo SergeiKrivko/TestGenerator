@@ -784,7 +784,8 @@ QsciScintilla QScrollBar::sub-line, QScrollBar::add-line {{
     height: 0px;
     subcontrol-position: left;
     subcontrol-origin: margin;
-}}"""
+}}
+{self.menu_css()}"""
 
     def list_widget_css(self, palette, border=True, border_radius=True):
         return f"""
@@ -1035,6 +1036,7 @@ QTextEdit QScrollBar::sub-line, QScrollBar::add-line {{
     subcontrol-position: left;
     subcontrol-origin: margin;
 }}
+{self.menu_css(palette)}
 """
 
     def combobox_css(self, palette='Bg'):

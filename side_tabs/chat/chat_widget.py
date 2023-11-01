@@ -99,6 +99,7 @@ class ChatWidget(QWidget):
         return bubble
 
     def _add_buble(self, bubble):
+        bubble.deleteRequested.connect(lambda: self._delete_message(bubble))
         self._scroll_layout.addWidget(bubble)
         self._bubbles.append(bubble)
         bubble.set_theme()
@@ -107,6 +108,14 @@ class ChatWidget(QWidget):
         self._scroll_layout.insertWidget(0, bubble)
         self._bubbles.insert(0, bubble)
         bubble.set_theme()
+
+    def _delete_message(self, bubble):
+        for i, b in enumerate(self._bubbles):
+            if b == bubble:
+                self._bubbles.pop(i)
+                self._dialog.pop_message(i)
+                bubble.setParent(None)
+                break
 
     def add_text(self, text):
         self._last_bubble.add_text(text)

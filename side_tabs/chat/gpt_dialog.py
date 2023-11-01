@@ -61,6 +61,11 @@ class GPTDialog:
         self.store()
         return message
 
+    def pop_message(self, index):
+        res = self.messages.pop(index)
+        self.store()
+        return res
+
     def delete(self):
         if os.path.isfile(self._path):
             os.remove(self._path)

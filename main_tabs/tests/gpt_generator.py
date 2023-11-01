@@ -3,20 +3,19 @@ from PyQt6.QtCore import QThread
 from backend.backend_manager import BackendManager
 from side_tabs.chat import gpt
 
-from gpt_json import GPTJSON, GPTMessage, GPTMessageRole
-
 
 class GPTTestGenerator(QThread):
     def __init__(self, bm: BackendManager):
         super().__init__()
         self.bm = bm
         self.sm = bm.sm
+        self.project = self.sm.project
 
     def run(self):
         print('RUN\n')
         resp = gpt.simple_response([
-            {'role': 'system', 'content': f"Ты пишешь программу на {self.sm.get('language')}, которая должна\n"
-                                          f"```{self.sm.get_data('description')}```"},
+            {'role': 'system', 'content': f"Ты пишешь программу на {self.project.get('language')}, которая должна\n"
+                                          f"```\n{self.project.get_data('description')}\n```"},
             {'role': 'user',
              'content': "Составь классы эквивалентности позитивных функциональных тестов этой программы.\n"
                         "Выдай ответ в виде списка классов эквивалентности без пояснений"
@@ -30,8 +29,8 @@ class GPTTestGenerator(QThread):
         for test_class in classes:
             print(test_class)
             resp = gpt.simple_response([
-                {'role': 'system', 'content': f"Ты пишешь программу на {self.sm.get('language')}, которая должна\n"
-                                              f"```{self.sm.get_data('description')}```"},
+                {'role': 'system', 'content': f"Ты пишешь программу на {self.project.get('language')}, которая должна\n"
+                                              f"```\n{self.project.get_data('description')}\n```"},
                 {'role': 'user',
                  'content': f"Придумай входные и выходные данные для теста \"{test_class}\". В ответ напиши только "
                             f"входные и выходные данные на разных строках, без пояснений"
