@@ -89,8 +89,10 @@ class ChatWidget(QWidget):
         if isinstance(self.looper, Looper) and not self.looper.isFinished():
             self.looper.terminate()
         self._last_bubble = self.add_bubble('', ChatBubble.SIDE_LEFT)
+        self._last_bubble.start_progress()
         self._last_message = None
         self.looper.sendMessage.connect(self.add_text)
+        self.looper.finished.connect(self._last_bubble.end_progress)
         self._bm.run_process(self.looper, 'GPT_chat', str(self._dialog.id))
 
     def add_bubble(self, text, side):

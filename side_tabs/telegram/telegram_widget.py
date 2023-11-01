@@ -3,7 +3,7 @@ import os
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit
 
 import config
 from side_tabs.telegram.chat_widget import ChatWidget, ChatInputArea
@@ -56,6 +56,13 @@ class TelegramWidget(SidePanelWidget):
 
         self._manager_started = False
         # self._manager.start()
+
+    def command(self, text, file=None, image=None, *args, **kwargs):
+        dialog = SelectChatDialog(self.tm, self._manager)
+        if dialog.exec():
+            dialog2 = SendFileDialog(self.tm, self._manager.get_chat(dialog.chat), text, SendFileDialog.TEXT_ONLY)
+            if dialog2.exec():
+                self._manager.send_message(dialog2.text_area.toPlainText(), dialog.chat)
 
     def show(self):
         if enabled and not self._manager_started:
@@ -150,7 +157,7 @@ class TelegramChatWidget(ChatWidget):
     def _sending_document(self):
         path, _ = QFileDialog.getOpenFileName(caption="Выберите файл для отправки")
         if path:
-            dialog = SendFileDialog(self._tm, path, self._text_edit.toPlainText())
+            dialog = SendFileDialog(self._tm, self._chat, self._text_edit.toPlainText(), SendFileDialog.FILE, path)
             if dialog.exec():
                 self._manager.send_file_message(dialog.text_area.toPlainText(), dialog.file_name_line.text(),
                                                 self._chat.id)
@@ -336,20 +343,30 @@ class PasswordWidget(CustomDialog):
 
 
 class SendFileDialog(CustomDialog):
-    def __init__(self, tm, file, text=''):
-        super().__init__(tm, "Отправка файла")
+    TEXT_ONLY = 0
+    FILE = 1
+    IMAGE = 2
+
+    def __init__(self, tm, chat, text='', option=0, data=None):
+        super().__init__(tm, "Отправка сообщения")
         self._tm = tm
         super().set_theme()
+
+        self.setFixedSize(400, 400)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
-        self.file_name_line = QLineEdit()
-        self.file_name_line.setText(file)
-        self.file_name_line.setReadOnly(True)
-        layout.addWidget(self.file_name_line)
+        self._chat_label = QLabel(chat.title)
+        layout.addWidget(self._chat_label)
 
-        self.text_area = ChatInputArea()
+        self.file_name_line = QLineEdit()
+        if option == SendFileDialog.FILE:
+            self.file_name_line.setText(data)
+            self.file_name_line.setReadOnly(True)
+            layout.addWidget(self.file_name_line)
+
+        self.text_area = QTextEdit()
         self.text_area.setText(text)
         layout.addWidget(self.text_area)
 
@@ -365,5 +382,32 @@ class SendFileDialog(CustomDialog):
         self._button_send.clicked.connect(self.accept)
         buttons_layout.addWidget(self._button_send)
 
-        for el in [self.file_name_line, self.text_area, self._button_send, self._button_cancel]:
+        for el in [self._chat_label, self.file_name_line, self.text_area, self._button_send, self._button_cancel]:
             self._tm.auto_css(el)
+
+
+class SelectChatDialog(CustomDialog):
+    def __init__(self, tm, manager: TelegramManager):
+        super().__init__(tm, "Выберите чат", True, True)
+        self._manager = manager
+        self.chat = None
+
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        self._list_widget = TelegramListWidget(tm, manager)
+        self._list_widget.currentItemChanged.connect(self._on_chat_selected)
+        layout.addWidget(self._list_widget)
+
+        for el in self._manager._chats.values():
+            self._list_widget.add_item(el)
+        self.set_theme()
+
+    def _on_chat_selected(self, chat_id):
+        chat_id = int(chat_id)
+        self.chat = chat_id
+        self.accept()
+
+    def set_theme(self):
+        super().set_theme()
+        self._list_widget.set_theme()

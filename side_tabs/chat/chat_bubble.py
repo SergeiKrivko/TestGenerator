@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QLabel, QVBoxLayout
 
 
 class ChatBubble(QWidget):
@@ -28,6 +28,11 @@ class ChatBubble(QWidget):
         self.setLayout(layout)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        v_layout = QVBoxLayout()
+        v_layout.setContentsMargins(0, 0, 0, 0)
+        v_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.addLayout(v_layout, 10)
+
         self._font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._text_edit = QTextEdit()
@@ -38,7 +43,11 @@ class ChatBubble(QWidget):
         self._text_edit.setMarkdown(text)
         self._text_edit.setReadOnly(True)
         self._text_edit.textChanged.connect(self._resize)
-        layout.addWidget(self._text_edit, 10)
+        v_layout.addWidget(self._text_edit)
+
+        self._progress_marker = QLabel("GPT печатает...")
+        v_layout.addWidget(self._progress_marker)
+        self._progress_marker.hide()
 
         widget = QWidget()
         layout.addWidget(widget, 1)
@@ -55,6 +64,8 @@ class ChatBubble(QWidget):
             case ContextMenu.SELECT_ALL:
                 self._text_edit.selectAll()
                 self._text_edit.setFocus()
+            case ContextMenu.SEND_TO_TELEGRAM:
+                self._bm.side_tab_command('telegram', self._text)
 
     def resizeEvent(self, a0) -> None:
         super().resizeEvent(a0)
@@ -63,6 +74,12 @@ class ChatBubble(QWidget):
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
         self._resize()
+
+    def start_progress(self):
+        self._progress_marker.show()
+
+    def end_progress(self):
+        self._progress_marker.hide()
 
     def _resize(self):
         self._text_edit.setFixedHeight(10)
@@ -93,6 +110,7 @@ class ContextMenu(QMenu):
     DELETE_MESSAGE = 1
     COPY_AS_TEXT = 2
     SELECT_ALL = 3
+    SEND_TO_TELEGRAM = 4
 
     def __init__(self, tm):
         super().__init__()
@@ -108,6 +126,11 @@ class ContextMenu(QMenu):
 
         action = self.addAction('Удалить')
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_MESSAGE))
+
+        self.addSeparator()
+
+        action = self.addAction('Переслать в Telegram')
+        action.triggered.connect(lambda: self.set_action(ContextMenu.SEND_TO_TELEGRAM))
 
         self.setStyleSheet(tm.menu_css())
 
