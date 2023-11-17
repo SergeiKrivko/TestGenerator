@@ -1,4 +1,6 @@
-from PyQt6.QtCore import Qt, QUrl
+import json
+
+from PyQt6.QtCore import Qt, QUrl, QObject, pyqtSlot
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWebEngineCore import QWebEngineSettings
 from PyQt6.QtWebEngineWidgets import QWebEngineView
@@ -27,6 +29,12 @@ class PreviewWidget(QWidget):
         self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
         self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
         layout.addWidget(self.web_engine)
+
+        # channel = QWebChannel()
+        # handler = CallHandler(self.web_engine)  # Создание экземпляра объекта внешней обработки QWebChannel
+        # channel.registerObject('PyHandler',
+        #                        handler)  # Зарегистрируйте объект обработки внешнего интерфейса как объект PyHandler на странице внешнего интерфейса. Имя этого объекта - PyHandler при доступе к интерфейсу.
+        # self.web_engine.page().setWebChannel(channel)  # Смонтировать объект внешней обработки
 
         self.setLayout(layout)
         self.theme_apply = False
@@ -69,3 +77,51 @@ class PreviewWidget(QWidget):
         self.set_theme()
         if not self.file.endswith('.pdf'):
             self.open(self.file)
+
+
+class CallHandler(QObject):
+
+    def __init__(self, view):
+        super(CallHandler, self).__init__()
+        self.view = view
+
+    @pyqtSlot(str, result=str)  # Первый параметр - это тип параметра, передаваемый в обратном вызове
+    def init_home(self, str_args):
+        print('resolving......init home..')
+        print(str_args)  # Просмотр параметров
+
+        # #####
+        # Напишите соответствующую логику обработки, такую ​​как:
+        # msg = 'Получить сообщение от python'
+        msg = self.getInfo()
+        # view.page().runJavaScript("alert('%s')" % msg)
+        self.view.page().runJavaScript("window.say_hello('%s')" % msg)
+        return 'hello, Python'
+
+    def getInfo(self):
+        import socket, platform
+        hostname = socket.gethostname()
+        ip = socket.gethostbyname(hostname)
+        list_info = platform.uname()
+        sys_name = list_info[0] + list_info[2]
+        cpu_name = list_info[5]
+        dic_info = {"hostname": hostname, "ip": ip, "sys_name": sys_name, \
+                    "cpu_name": cpu_name}
+        # # Вызвать js функцию, реализовать обратный вызов
+        # self.mainFrame.evaluateJavaScript('%s(%s)' % ('onGetInfo', json.dumps(dic_info)))
+        return json.dumps(dic_info)
+
+
+# class WebEngine(QWebEngineView):
+#     def __init__(self):
+#         super(WebEngine, self).__init__()
+#         self.setContextMenuPolicy(
+#             Qt.NoContextMenu)  # Установить правило контекстного меню как настраиваемое контекстное меню
+#         # self.customContextMenuRequested.connect (self.showRightMenu) # Здесь, чтобы загрузить и отобразить настраиваемое контекстное меню, здесь мы не фокусируемся, пропустите подробную ленту
+#
+#         self.setWindowTitle('QWebChannel взаимодействует с интерфейсом пользователя')
+#
+#         self.resize(1100, 650)
+#         cp = QDesktopWidget().availableGeometry().center()
+#         self.move(QPoint(cp.x() - self.width() / 2, cp.y() - self.height() / 2))
+

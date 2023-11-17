@@ -37,7 +37,7 @@ class TestsWidget(MainTab):
         self.test_list_widget.deleteTests.connect(self.delete_tests)
         self.test_list_widget.undo.connect(self.bm.undo_func_tests)
 
-        self.test_list_widget.neg_button_generate.clicked.connect(self.generate_neg_tests)
+        # self.test_list_widget.neg_button_generate.clicked.connect(self.generate_neg_tests)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
         self.test_list_widget.neg_test_list.itemSelectionChanged.connect(self.select_neg_test)
         layout.addWidget(self.test_list_widget)

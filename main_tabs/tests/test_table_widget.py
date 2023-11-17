@@ -4,7 +4,7 @@ import docx
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLabel, QComboBox, QLineEdit, QDialog, \
-    QPushButton
+    QPushButton, QProgressBar
 
 from main_tabs.tests.gpt_generator import GPTTestGenerator
 from side_tabs.builds.commands_list import ScenarioBox
@@ -39,18 +39,10 @@ class TestTableWidget(QWidget):
         pos_layout = QVBoxLayout()
         layout.addLayout(pos_layout)
 
-        in_data_layout = QHBoxLayout()
-        pos_layout.addLayout(in_data_layout)
-        in_data_layout.addWidget(label := QLabel("Вход:"))
-        self.labels.append(label)
-
-        self.in_data_edit = QLineEdit()
-        in_data_layout.addWidget(self.in_data_edit)
-
         self._build_box = ScenarioBox(self.sm, self.bm, self.tm)
         self._build_box.currentIndexChanged.connect(self._on_build_changed)
         self.sm.projectChanged.connect(lambda: self._build_box.load(self.sm.get('build')))
-        in_data_layout.addWidget(self._build_box)
+        pos_layout.addWidget(self._build_box)
 
         pos_buttons_layout = QHBoxLayout()
         pos_layout.addLayout(pos_buttons_layout)
@@ -96,11 +88,11 @@ class TestTableWidget(QWidget):
         self.pos_button_paste.clicked.connect(lambda: self.pasteTests.emit('pos'))
         pos_buttons_layout.addWidget(self.pos_button_paste)
 
-        self.pos_button_generate = Button(self.tm, 'generate', css='Bg')
-        self.pos_button_generate.setFixedHeight(22)
-        self.pos_button_generate.clicked.connect(self._generate_pos_tests)
-        self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        pos_buttons_layout.addWidget(self.pos_button_generate)
+        # self.pos_button_generate = Button(self.tm, 'generate', css='Bg')
+        # self.pos_button_generate.setFixedHeight(22)
+        # self.pos_button_generate.clicked.connect(self._generate_pos_tests)
+        # self.pos_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        # pos_buttons_layout.addWidget(self.pos_button_generate)
 
         self.pos_test_list = QListWidget()
         self.pos_test_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
@@ -123,21 +115,24 @@ class TestTableWidget(QWidget):
         neg_layout = QVBoxLayout()
         layout.addLayout(neg_layout)
 
-        out_data_layout = QHBoxLayout()
-        neg_layout.addLayout(out_data_layout)
+        generator_layout = QHBoxLayout()
+        neg_layout.addLayout(generator_layout)
+        generator_layout.setContentsMargins(0, 0, 0, 0)
 
-        self._export_dialog = ExportDialog(self.sm, self.cm, self.tm)
+        self.button_generate = QPushButton("Сгенерировать")
+        self.button_generate.setFixedHeight(22)
+        self.button_generate.clicked.connect(self._generate_pos_tests)
+        generator_layout.addWidget(self.button_generate)
 
-        self.export_button = Button(self.tm, 'button_export', css='Bg')
-        self.export_button.setFixedHeight(22)
-        self.export_button.clicked.connect(self.run_export)
-        out_data_layout.addWidget(self.export_button)
+        self.generator_progress_bar = QProgressBar()
+        self.generator_progress_bar.setFixedHeight(22)
+        self.generator_progress_bar.hide()
+        generator_layout.addWidget(self.generator_progress_bar)
 
-        out_data_layout.addWidget(label := QLabel("Выход:"))
-        self.labels.append(label)
-
-        self.out_data_edit = QLineEdit()
-        out_data_layout.addWidget(self.out_data_edit)
+        self.button_cancel = QPushButton("Отмена")
+        self.button_cancel.setFixedSize(100, 22)
+        self.button_cancel.hide()
+        generator_layout.addWidget(self.button_cancel)
 
         neg_buttons_layout = QHBoxLayout()
         neg_layout.addLayout(neg_buttons_layout)
@@ -183,10 +178,10 @@ class TestTableWidget(QWidget):
         self.neg_button_cut.clicked.connect(lambda: self.cutTests.emit('neg'))
         neg_buttons_layout.addWidget(self.neg_button_cut)
 
-        self.neg_button_generate = Button(self.tm, 'generate', css='Bg')
-        self.neg_button_generate.setFixedHeight(22)
-        self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
-        neg_buttons_layout.addWidget(self.neg_button_generate)
+        # self.neg_button_generate = Button(self.tm, 'generate', css='Bg')
+        # self.neg_button_generate.setFixedHeight(22)
+        # self.neg_button_generate.setMaximumWidth(BUTTONS_MAX_WIDTH)
+        # neg_buttons_layout.addWidget(self.neg_button_generate)
 
         self.neg_test_list = QListWidget()
         self.neg_test_list.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
@@ -227,27 +222,36 @@ class TestTableWidget(QWidget):
         list_widget.setCurrentRow(index)
 
     def _generate_pos_tests(self):
+        self.button_generate.hide()
+        self.generator_progress_bar.show()
+        self.button_cancel.show()
+
+        # for el in [self.po]:
+        #     pass
+
         generator = GPTTestGenerator(self.bm)
+        generator.finished.connect(self._on_generation_finished)
+        generator.progressChanged.connect(self._on_progress_changed)
         self.bm.run_process(generator, 'gpt_test_generator', self.sm.project.path())
 
-    def run_export(self):
-        self._export_dialog.tests = []
-        # for i in range(self.pos_test_list.count()):
-        #     self._export_dialog.tests.append(Test(self.pos_test_list.item(i).path, f"pos{i}", 'pos'))
-        # for i in range(self.neg_test_list.count()):
-        #     self._export_dialog.tests.append(Test(self.neg_test_list.item(i).path, f"neg{i}", 'neg'))
-        self._export_dialog.exec()
+    def _on_progress_changed(self, current_progress, max_progress):
+        self.generator_progress_bar.setMaximum(max_progress)
+        self.generator_progress_bar.setValue(current_progress)
+
+    def _on_generation_finished(self):
+        self.generator_progress_bar.hide()
+        self.button_cancel.hide()
+        self.button_generate.show()
 
     def set_theme(self):
         self.tm.set_theme_to_list_widget(self.pos_test_list)
         self.tm.set_theme_to_list_widget(self.neg_test_list)
         for el in [self.pos_add_button, self.pos_delete_button, self.pos_button_up, self.pos_button_down,
-                   self.pos_button_copy, self.pos_button_paste, self.pos_button_cut, self.in_data_edit,
-                   self.pos_button_generate, self.neg_add_button, self.neg_delete_button,
+                   self.pos_button_copy, self.pos_button_paste, self.pos_button_cut,
+                   self.neg_add_button, self.neg_delete_button,
                    self.neg_button_up, self.neg_button_down, self.neg_button_copy, self.neg_button_paste,
-                   self.out_data_edit, self.neg_button_cut,
-                   self.pos_comparator_widget, self.neg_comparator_widget,
-                   self.neg_button_generate, self.export_button]:
+                   self.neg_button_cut, self.pos_comparator_widget, self.neg_comparator_widget,
+                   self.button_generate, self.generator_progress_bar, self.button_cancel]:
             self.tm.auto_css(el)
         for label in self.labels:
             label.setFont(self.tm.font_medium)

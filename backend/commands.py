@@ -17,7 +17,7 @@ def get_si():
 def cmd_command(args, **kwargs):
     # if 'encoding' not in kwargs:
     #     kwargs['encoding'] = 'utf-8'
-    return subprocess.run(args, capture_output=True, text=True, startupinfo=get_si(), **kwargs)
+    return subprocess.run(args, capture_output=True, text=True, encoding='utf-8', startupinfo=get_si(), **kwargs)
 
 
 def cmd_command_pipe(command, stdout=True, stderr=False, **kwargs):

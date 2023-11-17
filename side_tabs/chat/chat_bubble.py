@@ -1,6 +1,10 @@
+import markdown
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QTextEdit, QMenu, QLabel, QVBoxLayout
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+
+from backend.commands import read_file
 
 
 class ChatBubble(QWidget):
@@ -40,7 +44,7 @@ class ChatBubble(QWidget):
         self._text_edit.setMaximumWidth(self._font_metrics.size(0, self._text).width() + 20)
         self._text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.LinksAccessibleByMouse)
-        self._text_edit.setMarkdown(text)
+        self._set_html()
         self._text_edit.setReadOnly(True)
         self._text_edit.textChanged.connect(self._resize)
         v_layout.addWidget(self._text_edit)
@@ -51,6 +55,11 @@ class ChatBubble(QWidget):
 
         widget = QWidget()
         layout.addWidget(widget, 1)
+
+    def _set_html(self):
+        # html = f"<style>{read_file(r'C:/Users/sergi/AppData/Local/SergeiKrivko/TestGenerator/GPT/dialogs/codehilite.css')}</style>\n{markdown.markdown(self._text, extensions=['fenced_code', 'codehilite'])}"
+        # self._text_edit.setHtml(html)
+        self._text_edit.setMarkdown(self._text)
 
     def run_context_menu(self, pos):
         menu = ContextMenu(self._tm)
