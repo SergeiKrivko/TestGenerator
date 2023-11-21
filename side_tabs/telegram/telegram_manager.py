@@ -79,11 +79,13 @@ class TelegramManager(QThread):
     def load_messages(self, chat: types.TgChat):
         self._client.load_messages(chat, max_count=50)
 
+    def load_chats(self):
+        self._client.load_chats()
+
     def download_file(self, file: types.TgFile):
         self._client.download_file(file)
 
     def view_messages(self, chat_id: int, message_ids: list):
-        # return
         self._client.send({'@type': "viewMessages", 'chat_id': chat_id, 'message_ids': message_ids})
 
     def open_chat(self, chat_id: int):
@@ -106,10 +108,15 @@ class TelegramManager(QThread):
 
         elif isinstance(event, events.TgUpdateNewChat):
             self._chats[event.chat.id] = event.chat
-            self.newChat.emit(event.chat)
+            self.updateChat.emit(str(event.chat.id))
         elif isinstance(event, events.TgUpdateChatReadInbox):
             self._chats[event.chat_id].unread_count = event.unread_count
             self.updateChat.emit(str(event.chat_id))
+        elif isinstance(event, events.TgChats):
+            for chat_id in event.chat_ids:
+                if chat_id not in self._chats:
+                    self._client.send({'@type': 'getChat', 'chat_id': chat_id})
+                self.newChat.emit(self.get_chat(chat_id))
 
         # MESSAGES
 

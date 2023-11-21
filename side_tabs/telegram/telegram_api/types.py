@@ -1609,3 +1609,36 @@ class TgChatActionBarAddContact:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
         pass
+
+
+class TgChatMemberStatusAdministrator:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.custom_title = data.get('custom_title')
+        self.can_be_edited = data.get('can_be_edited')
+        self.rights = None if 'rights' not in data else TgChatAdministratorRights(data.get('rights'), client)
+
+
+class TgChatAdministratorRights:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.can_manage_chat = data.get('can_manage_chat')
+        self.can_change_info = data.get('can_change_info')
+        self.can_post_messages = data.get('can_post_messages')
+        self.can_edit_messages = data.get('can_edit_messages')
+        self.can_delete_messages = data.get('can_delete_messages')
+        self.can_invite_users = data.get('can_invite_users')
+        self.can_restrict_members = data.get('can_restrict_members')
+        self.can_pin_messages = data.get('can_pin_messages')
+        self.can_manage_topics = data.get('can_manage_topics')
+        self.can_promote_members = data.get('can_promote_members')
+        self.can_manage_video_chats = data.get('can_manage_video_chats')
+        self.is_anonymous = data.get('is_anonymous')
+
+
+class TgReactionTypeCustomEmoji:
+    def __init__(self, data: dict, client):
+        check_type(data['@type'], self)
+        self.custom_emoji_id = data.get('custom_emoji_id')
+
+

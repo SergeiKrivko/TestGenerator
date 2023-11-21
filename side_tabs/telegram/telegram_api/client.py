@@ -3,7 +3,7 @@ from typing import Callable, Optional
 
 import side_tabs.telegram.telegram_api.types as types
 import side_tabs.telegram.telegram_api.events as events
-# from side_tabs.telegram.telegram_api.class_converter import Module
+from side_tabs.telegram.telegram_api.class_converter import Module
 
 
 class TgClient(Client):
@@ -27,8 +27,10 @@ class TgClient(Client):
         self._authorization_state = None
         self._authorization_handler = None
 
-        # self.module = Module(r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\backend_types.py",
-        #                      r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\events.py")
+        self.chats_is_loaded = False
+
+        self.module = Module(r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\types.py",
+                             r"C:\Users\sergi\PycharmProjects\TestGenerator\side_tabs\telegram\telegram_api\events.py")
 
     def send(self, data: dict):
         self.tdjson.send(data)
@@ -39,6 +41,12 @@ class TgClient(Client):
         else:
             self.send({'@type': 'getChatHistory', 'chat_id': chat.id, 'limit': max_count,
                        'from_message_id': chat.first_message.id})
+
+    def load_chats(self):
+        if self.chats_is_loaded:
+            return
+        self.send({'@type': 'loadChats', 'chat_list': None, 'limit': 100})
+        self.chats_is_loaded = True
 
     def download_file(self, file: types.TgFile):
         self.send({'@type': 'downloadFile', 'file_id': file.id, 'priority': 10})
@@ -97,9 +105,13 @@ class TgClient(Client):
         while True:
             event_dict = self.tdjson.receive()
             if event_dict:
-                # self.module.feed_event(event_dict)
+                self.module.feed_event(event_dict)
                 if not self.authorized:
                     self.authenticate_user(event_dict)
+                else:
+                    self.load_chats()
+
+                print(event_dict)
 
                 if hasattr(self, "update_handler"):
                     self.update_handler(event_dict)
