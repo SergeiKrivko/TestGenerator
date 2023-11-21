@@ -9,6 +9,7 @@ import language.testing.shell
 from other.binary_redactor.lexer import LexerBin
 from other.binary_redactor.convert_binary import convert as convert_binary
 import other.report.markdown_parser
+from side_tabs.files.zip_manager import ZipManager
 
 languages = {
     'txt': {'lexer': None, 'files': ['.txt'], 'autocompletion': AcMAbstract},
@@ -32,7 +33,7 @@ languages = {
         'compile': language.testing.c.c_compile,
         'run': language.testing.c.c_run,
         'coverage': language.testing.c.c_collect_coverage,
-        'fast_run': True,
+        # 'fast_run': True,
         'compiler_mask': "{file}:{line}:",
     },
     'Python': {
@@ -240,4 +241,6 @@ languages = {
         'fast_run': [('Конвертировать', 'bin', lambda path, project, bm: ('', convert_binary(
             in_path=path, exceptions=False)))]
     },
+    'ZIP': {'files': ['.zip'],
+            'fast_run': [('Распаковать', 'zip', lambda path, *args: ('', ZipManager.extract(path)))]}
 }

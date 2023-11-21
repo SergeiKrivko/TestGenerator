@@ -16,7 +16,7 @@ def main():
     window = MainWindow(app)
     window.show()
     window.set_theme()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

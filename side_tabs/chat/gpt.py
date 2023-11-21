@@ -1,6 +1,9 @@
 import g4f
 
 
+g4f.version_check = False
+
+
 def stream_response(messages: list[dict[str: str]], **kwargs):
     response = g4f.ChatCompletion.create(
         model=g4f.models.default,

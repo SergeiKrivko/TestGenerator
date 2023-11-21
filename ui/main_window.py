@@ -1,7 +1,8 @@
 from sys import argv
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout
+from PyQt6.QtGui import QPalette
+from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QApplication
 
 from backend.backend_manager import BackendManager
 from other.report.report_window import ReportWindow
@@ -33,7 +34,7 @@ from main_tabs.unit_testing.__init__ import UnitTestingWidget
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, app):
+    def __init__(self, app: QApplication):
         super(MainWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)

@@ -14,6 +14,7 @@ import send2trash
 from language.languages import languages
 from other.report.markdown_patterns import MarkdownPatternsDialog
 from side_tabs.files.open_file_options import get_open_file_options
+from side_tabs.files.zip_manager import ZipManager
 from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
 from ui.side_panel_widget import SidePanelWidget
@@ -93,6 +94,7 @@ class TreeWidget(QTreeWidget):
         self.tm = tm
         self.moving_item = None
         self.moving_file = None
+        self.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)
 
     def mouseMoveEvent(self, event: typing.Optional[QtGui.QMouseEvent]) -> None:
         super().mouseMoveEvent(event)
@@ -149,6 +151,7 @@ class ContextMenu(QMenu):
     OPEN_BY_COMMAND = 107
     MOVE_TO_TRASH = 108
     RUN_FILE = 109
+    COMPRESS_TO_ZIP = 110
 
     COPY_FILES = 200
     PASTE_FILES = 201
@@ -205,6 +208,8 @@ class ContextMenu(QMenu):
             lambda: self.set_action(ContextMenu.MOVE_TO_TRASH))
         self.addAction(QIcon(self.tm.get_image('button_rename')), "Переименовать").triggered.connect(
             lambda: self.set_action(ContextMenu.RENAME_FILE))
+        self.addAction(QIcon(self.tm.get_image('button_to_zip')), "Сжать в ZIP").triggered.connect(
+            lambda: self.set_action(ContextMenu.COMPRESS_TO_ZIP))
 
         self.addSeparator()
 
@@ -216,7 +221,8 @@ class ContextMenu(QMenu):
                 lambda: self.set_action(ContextMenu.OPEN_IN_EXPLORER))
             self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')), "Терминал").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
-            self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')), "Системный терминал").triggered.connect(
+            self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')),
+                                     "Системный терминал").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
         else:
             self.open_menu.addAction("Вкладка \"Код\"").triggered.connect(
@@ -432,6 +438,8 @@ class FilesWidget(SidePanelWidget):
                 self.delete_file(to_trash=True)
             case ContextMenu.RENAME_FILE:
                 self.rename_file()
+            case ContextMenu.COMPRESS_TO_ZIP:
+                self.compress_files()
             case ContextMenu.OPEN_IN_CODE:
                 self.open_file()
             case ContextMenu.OPEN_BY_SYSTEM:
@@ -489,13 +497,27 @@ class FilesWidget(SidePanelWidget):
                     pass
             self.update_files_list()
 
+    def compress_files(self):
+        files = []
+        for el in self.files_list.selectedItems():
+            if isinstance(el, (TreeDirectory, TreeFile)):
+                files.append(el.path)
+        if not files:
+            return
+        path = files[0][:files[0].rindex('.')] + '.zip'
+        path = self.create_file(base_path=os.path.split(path)[0], base_name=os.path.basename(path), extension='zip')
+        if path is None:
+            return
+        ZipManager.compress(path, files)
+        self.update_files_list()
+
     @staticmethod
     def open_by_system(filepath):
-        if platform.system() == 'Darwin':       # macOS
+        if platform.system() == 'Darwin':  # macOS
             subprocess.call(('open', filepath))
-        elif platform.system() == 'Windows':    # Windows
+        elif platform.system() == 'Windows':  # Windows
             os.startfile(filepath)
-        else:                                   # linux variants
+        else:  # linux variants
             subprocess.call(('xdg-open', filepath))
 
     @staticmethod
@@ -517,10 +539,10 @@ class FilesWidget(SidePanelWidget):
     def create_directory(self):
         self.create_file(directory=True)
 
-    def create_file(self, directory=False, base_path=None, extension=''):
+    def create_file(self, directory=False, base_path=None, base_name='', extension=''):
         if base_path is None:
             base_path = self.sm.project.path()
-        self.dialog = RenameFileDialog('', directory, self.tm)
+        self.dialog = RenameFileDialog(base_name, directory, self.tm)
         if self.dialog.exec():
             if not self.dialog.line_edit.text():
                 MessageBox(MessageBox.Icon.Warning, "Ошибка",
