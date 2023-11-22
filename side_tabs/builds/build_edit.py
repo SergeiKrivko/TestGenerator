@@ -118,6 +118,15 @@ class BuildEdit(QScrollArea):
                     LineField(self.tm, 'app_file', 'app.exe', "Исполняемый файл:"),
                     ProgramField(self.sm, self.tm, 'compiler', "Компилятор", 'gcc.exe'),
                     TreeField(self.tm, 'files', self.sm.project.path(), ('.c', '.h'), "Файлы:"))
+            case 'C++':
+                self._load_struct(
+                    name_edit := LineField(self.tm, 'name', '-', "Название:"),
+                    LineField(self.tm, 'keys', '', "Ключи компилятора:"),
+                    LineField(self.tm, 'linker_keys', '', "Ключи компоновки:"),
+                    CheckboxField(self.tm, 'coverage', False, "Coverage"),
+                    LineField(self.tm, 'app_file', 'app.exe', "Исполняемый файл:"),
+                    ProgramField(self.sm, self.tm, 'compiler', "Компилятор", 'g++.exe'),
+                    TreeField(self.tm, 'files', self.sm.project.path(), ('.cpp', '.h'), "Файлы:"))
             case 'python':
                 self._load_struct(
                     name_edit := LineField(self.tm, 'name', '-', "Название:"),

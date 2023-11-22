@@ -5,6 +5,7 @@ import shutil
 from backend.commands import read_json, read_file
 
 from language.testing.c import *
+from language.testing.cpp import *
 from language.testing.python import *
 from other.report.markdown_parser import MarkdownParser
 
@@ -43,6 +44,8 @@ class Build:
         match self.get('type'):
             case 'C':
                 return c_compile(project, self, bm.sm)
+            case 'C++':
+                return cpp_compile(project, self, bm.sm)
             case 'report':
                 try:
                     path = self.get('cwd', '') if os.path.isabs(self.get('cwd', '')) else \
@@ -69,6 +72,8 @@ class Build:
         match self.get('type'):
             case 'C':
                 return c_run(project, self, args)
+            case 'C++':
+                return cpp_run(project, self, args)
             case 'python':
                 return python_run(project, self, args)
             case 'python_coverage':

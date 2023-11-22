@@ -21,6 +21,7 @@ class Searcher(QThread):
         if os.name == 'nt':
             self.res = find('C:\\', {
                 'gcc.exe': None,
+                'gcc++.exe': None,
                 'gcov.exe': None,
                 'python.exe': None,
                 'coverage.exe': None
@@ -28,6 +29,7 @@ class Searcher(QThread):
         else:
             self.res = find('/usr', {
                 'gcc': None,
+                'g++': None,
                 'gcov': None,
                 'python3': None,
                 'coverage': None

@@ -12,13 +12,15 @@ import py7zr
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
 from config import APP_NAME
+from language.languages import PROJECT_LANGUAGES, languages
 from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
 from ui.options_window import OptionsWidget
 from ui.side_panel_widget import SidePanelWidget
 
-LANGUAGES = ['C', 'Python']
-LANGUAGE_ICONS = {'C': 'c', 'Python': 'py', None: 'unknown_file'}
+LANGUAGES = PROJECT_LANGUAGES
+LANGUAGE_ICONS = {key: languages[key]['files'][0][1:] for key in PROJECT_LANGUAGES}
+LANGUAGE_ICONS[None] = 'unknown_file'
 
 
 class ProjectWidget(SidePanelWidget):
@@ -112,7 +114,7 @@ class ProjectWidget(SidePanelWidget):
         if self.dialog.exec():
             new_name = self.dialog.line_edit.text()
             if new_name in self.sm.projects:
-                MessageBox(MessageBox.Warning, "Переименование проекта",
+                MessageBox(MessageBox.Icon.Warning, "Переименование проекта",
                            f"Проект {new_name} уже существует. Переименование невозможно", self.tm)
             else:
                 self.sm.rename_project(new_name)
@@ -344,7 +346,6 @@ class ProjectFromZipDialog(CustomDialog):
     def __init__(self, name: str, directory: str, tm):
         super().__init__(tm, "Распаковка проекта")
 
-
         self.layout = QVBoxLayout()
 
         label = QLabel("Выберите директорию:")
@@ -405,14 +406,14 @@ class ProgressDialog(QMessageBox):
     def __init__(self, title, message, tm):
         super().__init__(None)
 
-        self.setIcon(QMessageBox.Information)
+        self.setIcon(QMessageBox.Icon.Information)
         self.setText(message)
         self.setWindowTitle(title)
         self.setFont(tm.font_medium)
 
         self.setStyleSheet(tm.bg_style_sheet)
-        self.addButton(QMessageBox.Cancel)
-        button = self.button(QMessageBox.Cancel)
+        self.addButton(QMessageBox.StandardButton.Cancel)
+        button = self.button(QMessageBox.StandardButton.Cancel)
         tm.auto_css(button)
         button.setFixedSize(70, 24)
 
@@ -504,7 +505,7 @@ class OpenAsProjectDialog(CustomDialog):
 
     def button_create_triggered(self):
         if self.line_edit.text() in self.sm.projects:
-            MessageBox(MessageBox.Warning, "Создание проекта", f"Невозможно создать проект {self.line_edit.text()}, так"
+            MessageBox(MessageBox.Icon.Warning, "Создание проекта", f"Невозможно создать проект {self.line_edit.text()}, так"
                                                                f" как проект с таким названием уже существует", self.tm)
         else:
             self.accept()
@@ -540,7 +541,7 @@ class NewProjectDialog(CustomDialog):
 
         self.options_widget = OptionsWidget({
             "Название проекта:": {'type': str, 'width': 300},
-            "Язык:": {'type': 'combo', 'values': ['C', 'Python'], 'name': OptionsWidget.NAME_LEFT},
+            "Язык:": {'type': 'combo', 'values': PROJECT_LANGUAGES, 'name': OptionsWidget.NAME_LEFT},
             "Сохранять тесты в папке проекта": {'type': bool, 'name': OptionsWidget.NAME_RIGHT}
         })
         main_layout.addWidget(self.options_widget)

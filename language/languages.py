@@ -63,18 +63,29 @@ languages = {
         'coverage': language.testing.python.python_collect_coverage,
         'fast_run': [('Запустить', 'run', language.testing.python.python_fast_run)],
     },
-    'C++': {'lexer': QsciLexerCPP, 'files': ['.cpp', '.h'], 'autocompletion': AcMAbstract, 'colors': {
-        QsciLexerCPP.Identifier: 'Identifier',
-        QsciLexerCPP.PreProcessor: 'Preprocessor',
-        QsciLexerCPP.Comment: 'Comment',
-        QsciLexerCPP.CommentLine: 'Comment',
-        QsciLexerCPP.CommentDoc: 'Comment',
-        QsciLexerCPP.Keyword: 'Keyword',
-        QsciLexerCPP.Number: 'Number',
-        QsciLexerCPP.Operator: 'Identifier',
-        QsciLexerCPP.DoubleQuotedString: 'String',
-        QsciLexerCPP.SingleQuotedString: 'String',
-    }},
+    'C++': {
+        'lexer': QsciLexerCPP,
+        'files': ['.cpp', '.h'],
+        'autocompletion': AcMC,
+        'colors': {
+            QsciLexerCPP.Identifier: 'Identifier',
+            QsciLexerCPP.PreProcessor: 'Preprocessor',
+            QsciLexerCPP.Comment: 'Comment',
+            QsciLexerCPP.CommentLine: 'Comment',
+            QsciLexerCPP.CommentDoc: 'Comment',
+            QsciLexerCPP.Keyword: 'Keyword',
+            QsciLexerCPP.Number: 'Number',
+            QsciLexerCPP.Operator: 'Identifier',
+            QsciLexerCPP.DoubleQuotedString: 'String',
+            QsciLexerCPP.SingleQuotedString: 'String',
+            QsciLexerCPP.UnclosedString: 'String'
+        },
+        'compile': language.testing.c.c_compile,
+        'run': language.testing.c.c_run,
+        'coverage': language.testing.c.c_collect_coverage,
+        # 'fast_run': True,
+        'compiler_mask': "{file}:{line}:",
+    },
     'Bach': {
         'lexer': QsciLexerBash,
         'files': ['.sh'],
@@ -244,3 +255,5 @@ languages = {
     'ZIP': {'files': ['.zip'],
             'fast_run': [('Распаковать', 'zip', lambda path, *args: ('', ZipManager.extract(path)))]}
 }
+
+PROJECT_LANGUAGES = ['C', 'C++', 'Python']

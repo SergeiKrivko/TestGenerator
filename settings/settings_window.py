@@ -4,6 +4,7 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
 from config import APP_NAME
+from language.languages import PROJECT_LANGUAGES
 from settings.in_data_window import InDataWidget
 from settings.lib_dialog import LibWidget
 from settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, KEY_LOCAL, \
@@ -47,6 +48,7 @@ class SettingsWindow(CustomDialog):
 
         self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Языки']))
         item.addChild(QTreeWidgetItem(['C']))
+        item.addChild(QTreeWidgetItem(['C++']))
         item.addChild(QTreeWidgetItem(['Python']))
         item.addChild(QTreeWidgetItem(['Bash']))
 
@@ -77,7 +79,7 @@ class SettingsWindow(CustomDialog):
         self.project_settings_widget = SettingsWidget(
             self.sm, self.tm,
             LineEdit("Название:", '', width=500, key='name', key_type=KEY_DATA),
-            ComboBox("Язык:", ['C', 'Python'], key='language', text_mode=True),
+            ComboBox("Язык:", PROJECT_LANGUAGES, key='language', text_mode=True),
             TextEdit("Описание:", '', key='description', key_type=KEY_DATA),
             key_type=KEY_LOCAL)
         self.project_settings_widget.hide()
@@ -122,6 +124,9 @@ class SettingsWindow(CustomDialog):
                     'C': [
                         self.c_settings(),
                     ],
+                    'C++': [
+                        ProgramEdit("Компилятор:", 'g++', 'g++'),
+                    ],
                     'Python': [
                         ProgramEdit("Python:", 'python.exe', 'python'),
                         ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
@@ -158,6 +163,14 @@ class SettingsWindow(CustomDialog):
         )
         self.c_settings_widget.hide()
         layout.addWidget(self.c_settings_widget)
+
+        self.cpp_settings_widget = SettingsWidget(
+            self.sm, self.tm,
+            ProgramEdit("Компилятор:", 'g++', 'g++'),
+            key_type=KEY_GLOBAL
+        )
+        self.cpp_settings_widget.hide()
+        layout.addWidget(self.cpp_settings_widget)
 
         self.python_settings_widget = SettingsWidget(
             self.sm, self.tm,
@@ -219,20 +232,7 @@ class SettingsWindow(CustomDialog):
 
     @staticmethod
     def c_settings():
-        return SwitchBox(lambda: os.name == 'posix', {True: [
-            ProgramEdit("Компилятор:", 'gcc', 'gcc'),
-            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
-            CheckBox("Ключ -lm", True, key='-lm'),
-            ProgramEdit("Coverage:", 'gcov', 'gcov'),
-        ], False: CheckBox("Использовать WSL", False, key="C_wsl", children={True: [
-            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
-            CheckBox("Ключ -lm", True, key='-lm'),
-        ], False: [
-            ProgramEdit("Компилятор:", 'gcc.exe', 'gcc'),
-            LineEdit("Ключи компилятора: ", key='c_compiler_keys', width=450),
-            ProgramEdit("Coverage:", 'gcov.exe', 'gcov'),
-        ]}, not_delete_keys=True)
-        }, not_delete_keys=True)
+        return ProgramEdit("Компилятор:", 'gcc', 'gcc')
 
     @staticmethod
     def check_path(path: str):
@@ -284,6 +284,7 @@ class SettingsWindow(CustomDialog):
         self.main_settings_widget.set_theme()
         self.ui_settings_widget.set_theme()
         self.c_settings_widget.set_theme()
+        self.cpp_settings_widget.set_theme()
         self.python_settings_widget.set_theme()
         self.bash_settings_widget.set_theme()
         self.testing_settings_widget.set_theme()
@@ -312,6 +313,7 @@ class SettingsWindow(CustomDialog):
             self.project_testing_widget.hide()
             self.project_in_widget.hide()
             self.c_settings_widget.hide()
+            self.cpp_settings_widget.hide()
             self.python_settings_widget.hide()
             self.bash_settings_widget.hide()
             self.testing_settings_widget.hide()
@@ -332,6 +334,8 @@ class SettingsWindow(CustomDialog):
                 self.project_in_widget.show()
             if tab == 'C':
                 self.c_settings_widget.show()
+            if tab == 'C++':
+                self.cpp_settings_widget.show()
             if tab == 'Python':
                 self.python_settings_widget.show()
             if tab == 'Bash':
