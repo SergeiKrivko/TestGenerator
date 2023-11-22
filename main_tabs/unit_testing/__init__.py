@@ -162,7 +162,7 @@ class UnitTestingWidget(MainTab):
             self.app.clipboard().setMimeData(mime_data)
         elif len(modules) == 1:
             suite = modules.pop()
-            data = {'type': 'tests', 'data': [test.get_data() for test in suite.suite.tests()]}
+            data = {'type': 'tests', 'data': [test.test.get_data() for test in self._tree_widget.selectedItems()]}
             mime_data = QMimeData()
             mime_data.setData('TestGeneratorUnitTests', json.dumps(data).encode('utf-8'))
             self.app.clipboard().setMimeData(mime_data)
