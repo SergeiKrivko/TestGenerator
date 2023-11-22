@@ -454,3 +454,10 @@ class TgUpdateChatTitle(TgEvent):
         self.title = data.get('title')
 
 
+class TgChatLists(TgEvent):
+    def __init__(self, data: dict, client):
+        if data['@type'] .lower() != self.__class__.__name__[2:].lower():
+            raise TypeError('TgType error')
+        self.chat_lists = data.get('chat_lists')
+
+

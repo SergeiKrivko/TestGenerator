@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFontMetrics, QPixmap
 from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QFileDialog, QTextEdit
 
-from side_tabs.telegram.telegram_api import types
+from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager
 from ui.button import Button
 from ui.message_box import MessageBox
@@ -14,18 +14,18 @@ from ui.message_box import MessageBox
 class TelegramChatBubble(QWidget):
     _BORDER_RADIUS = 10
 
-    def __init__(self, tm, message: types.TgMessage, manager: TelegramManager):
+    def __init__(self, tm, message: tg.Message, manager: TelegramManager):
         super().__init__()
         self._tm = tm
         self._message = message
         self._manager = manager
-        self._right_side = isinstance(message.sender_id, types.TgMessageSenderUser) and message.sender_id.user_id == \
-                           self._manager.get('my_id')
+        self._right_side = isinstance(message.sender_id, tg.MessageSenderUser) and message.sender_id.user_id == \
+                           int(self._manager.get('my_id'))
 
-        if isinstance(message.content, types.TgMessageText):
-            self._text = message.content.text.html
-        elif isinstance(message.content, (types.TgMessageDocument, types.TgMessagePhoto, types.TgMessageVideo)):
-            self._text = message.content.caption.html
+        if isinstance(message.content, tg.MessageText):
+            self._text = TgFormattedText(message.content.text).html
+        elif isinstance(message.content, (tg.MessageDocument, tg.MessagePhoto, tg.MessageVideo)):
+            self._text = TgFormattedText(message.content.caption).html
         else:
             self._text = ''
 
@@ -44,10 +44,10 @@ class TelegramChatBubble(QWidget):
         self._layout.setContentsMargins(1, 1, 1, 1)
         self._main_widget.setLayout(self._layout)
 
-        if isinstance(self._message.sender_id, types.TgMessageSenderUser):
+        if isinstance(self._message.sender_id, tg.MessageSenderUser):
             user = self._manager.get_user(self._message.sender_id.user_id)
             user_name = f"{user.first_name} {user.last_name}"
-        elif isinstance(self._message.sender_id, types.TgMessageSenderChat):
+        elif isinstance(self._message.sender_id, tg.MessageSenderChat):
             chat = self._manager.get_chat(self._message.sender_id.chat_id)
             user_name = chat.title
         else:
@@ -56,12 +56,12 @@ class TelegramChatBubble(QWidget):
         self._sender_label.setContentsMargins(10, 2, 10, 2)
         self._layout.addWidget(self._sender_label)
 
-        if isinstance(self._message.content, types.TgMessagePhoto):
+        if isinstance(self._message.content, tg.MessagePhoto):
             self._photo_label = _PhotoLabel(self._tm, self._message.content.photo.sizes[-1].photo)
             self._manager.updateFile.connect(self._photo_label.update_image)
             self._layout.addWidget(self._photo_label)
 
-        if isinstance(self._message.content, types.TgMessageDocument):
+        if isinstance(self._message.content, tg.MessageDocument):
             self._document_widget = _DocumentWidget(self._tm, self._message.content.document, self._manager)
             self._layout.addWidget(self._document_widget)
 
@@ -128,7 +128,7 @@ class TelegramChatBubble(QWidget):
 class _PhotoLabel(QLabel):
     MAX_HEIGHT = 600
 
-    def __init__(self, tm, file: types.TgFile):
+    def __init__(self, tm, file: tg.File):
         super().__init__()
         self._tm = tm
         self._photo = file
@@ -137,10 +137,10 @@ class _PhotoLabel(QLabel):
             self._pixmap = QPixmap(self._photo.local.path)
             self.resize_pixmap()
         else:
-            self._photo.download()
+            tg.downloadFile(self._photo.id)
 
-    def update_image(self, image: types.TgFile):
-        if isinstance(self._photo, types.TgFile) and image.id == self._photo.id and \
+    def update_image(self, image: tg.File):
+        if isinstance(self._photo, tg.File) and image.id == self._photo.id and \
                 self._photo.local.is_downloading_completed:
             self._pixmap = QPixmap(self._photo.local.path)
             self.resize_pixmap()
@@ -159,7 +159,7 @@ class _PhotoLabel(QLabel):
 
 
 class _DocumentWidget(QWidget):
-    def __init__(self, tm, document: types.TgDocument, manager):
+    def __init__(self, tm, document: tg.Document, manager):
         super().__init__()
         self._tm = tm
         self._document = document
@@ -208,7 +208,7 @@ class _DocumentWidget(QWidget):
                 if not self._document.document.local.is_downloading_active:
                     self._document.document.download()
 
-    def _on_file_updated(self, file: types.TgFile):
+    def _on_file_updated(self, file: tg.File):
         if file.id == self._document.document.id and self._document.document.local.is_downloading_completed:
             if self._saving:
                 self._continue_saving()
@@ -220,3 +220,46 @@ class _DocumentWidget(QWidget):
         except Exception as ex:
             MessageBox(MessageBox.Icon.Warning, "Ошибка", f"Не удалось сохранить файл {self._document.file_name}:\n"
                                                           f"{ex.__class__.__name__}: {ex}", self._tm)
+
+
+class TgFormattedText:
+    def __init__(self, formatted_text: tg.FormattedText):
+        self.text = formatted_text.text
+        self.entities = formatted_text.entities
+
+        self.html = ''
+        self._includes = dict()
+        self.to_html()
+
+    def to_html(self):
+        self.html = self.text
+        for entity in self.entities:
+            if isinstance(entity.type, tg.TextEntityTypeBold):
+                self._include('<b>', entity.offset)
+                self._include('</b>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypeItalic):
+                self._include('<i>', entity.offset)
+                self._include('</i>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypeCode):
+                self._include("<font face='Courier'>", entity.offset)
+                self._include('</font>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypeUnderline):
+                self._include("<ins>", entity.offset)
+                self._include('</ins>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypePre):
+                self._include("<pre>", entity.offset)
+                self._include('</pre>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypeTextUrl):
+                self._include(f"<a href='{entity.type.url}'>", entity.offset)
+                self._include('</a>', entity.offset + entity.length)
+
+    def _include(self, text, pos):
+        index = pos
+        for key, value in self._includes.items():
+            if key <= pos:
+                index += value
+        self.html = self.html[:index] + text + self.html[index:]
+        if pos in self._includes:
+            self._includes[pos] += len(text)
+        else:
+            self._includes[pos] = len(text)

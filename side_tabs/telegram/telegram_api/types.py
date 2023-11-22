@@ -291,21 +291,19 @@ class TgChatListMain:
 class TgChatListFilter:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
-
         self.chat_filter_id = data.get('chat_filter_id')
+        # print(self.chat_filter_id)
 
 
 class TgChatListArchive:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
-
         pass
 
 
 class TgConnectionStateConnecting:
     def __init__(self, data: dict, client):
         check_type(data['@type'], self)
-
         pass
 
 

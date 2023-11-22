@@ -3,18 +3,18 @@ import os
 
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QWidget, QLabel, QLineEdit, QPushButton, QFileDialog, QTextEdit, \
+    QTabBar
 
 import config
 from side_tabs.telegram.chat_widget import ChatWidget, ChatInputArea
 from side_tabs.telegram.chat_bubble import TelegramChatBubble
 from side_tabs.telegram.chat_list_widget import TelegramListWidget
-from side_tabs.telegram.telegram_api import types
-from side_tabs.telegram.telegram_manager import TelegramManager
+from side_tabs.telegram.telegram_api import types, tg
+from side_tabs.telegram.telegram_manager import TelegramManager, TgChat
 from ui.button import Button
 from ui.custom_dialog import CustomDialog
 from ui.side_panel_widget import SidePanelWidget
-
 
 enabled = config.secret_data and os.name != 'posix'
 
@@ -27,19 +27,30 @@ class TelegramWidget(SidePanelWidget):
             return
 
         self._manager = TelegramManager(self.sm)
-        self._manager.newChat.connect(self.add_chat)
+        self._manager.chatsLoaded.connect(self.update_chats)
         self._manager.addMessage.connect(self.add_message)
         self._manager.insertMessage.connect(self.insert_message)
         self._manager.loadingFinished.connect(self.loading_finished)
         self._manager.authorization.connect(self.get_authentication_data)
+        self._manager.updateFolders.connect(self.update_folders)
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
+        list_layout = QVBoxLayout()
+        list_layout.setContentsMargins(0, 0, 0, 0)
+        list_layout.setSpacing(0)
+        layout.addLayout(list_layout)
+
+        self._tab_bar = QTabBar()
+        self._tab_bar.setFixedHeight(26)
+        self._tab_bar.currentChanged.connect(self._on_folder_selected)
+        list_layout.addWidget(self._tab_bar)
+
         self._list_widget = TelegramListWidget(self.tm, self._manager)
         self._list_widget.currentItemChanged.connect(self.show_chat)
-        layout.addWidget(self._list_widget)
+        list_layout.addWidget(self._list_widget)
 
         self._chats_layout = QVBoxLayout()
         self._chats_layout.setSpacing(0)
@@ -55,6 +66,7 @@ class TelegramWidget(SidePanelWidget):
         self._current_chat = None
 
         self._manager_started = False
+        self._folders = []
         # self._manager.start()
 
     def command(self, text, file=None, image=None, *args, **kwargs):
@@ -70,13 +82,27 @@ class TelegramWidget(SidePanelWidget):
             self._manager_started = True
         super().show()
 
-    def add_message(self, message: types.TgMessage):
+    def update_folders(self, folders):
+        self._folders = list(folders.values())
+        for key in folders:
+            self._tab_bar.addTab(key)
+
+    def update_chats(self, chat_ids):
+        print(chat_ids)
+        self._list_widget.clear()
+        for el in chat_ids:
+            self.add_chat(self._manager.get_chat(el))
+
+    def _on_folder_selected(self):
+        tg.getChats(self._folders[self._tab_bar.currentIndex()], 100)
+
+    def add_message(self, message: tg.Message):
         self._chat_widgets[message.chat_id].add_message(message)
 
-    def insert_message(self, message: types.TgMessage):
+    def insert_message(self, message: tg.Message):
         self._chat_widgets[message.chat_id].insert_message(message)
 
-    def loading_finished(self, chat: types.TgChat):
+    def loading_finished(self, chat: TgChat):
         self._chat_widgets[chat.id].check_if_need_to_load()
 
     def add_chat(self, chat):
@@ -95,6 +121,7 @@ class TelegramWidget(SidePanelWidget):
             if self._current_chat in self._chat_widgets:
                 self._chat_widgets[self._current_chat].hide()
             self._list_widget.hide()
+            self._tab_bar.hide()
             self._top_panel.show()
             self._top_panel.set_chat(self._manager.get_chat(chat_id))
             self._chat_widgets[chat_id].show()
@@ -105,6 +132,7 @@ class TelegramWidget(SidePanelWidget):
             if self._current_chat in self._chat_widgets:
                 self._chat_widgets[self._current_chat].hide()
             self._list_widget.show()
+            self._tab_bar.show()
             self._top_panel.hide()
             self._list_widget.set_current_id(None)
             self._current_chat = None
@@ -122,6 +150,7 @@ class TelegramWidget(SidePanelWidget):
         super().set_theme()
         if not enabled:
             return
+        self.tm.auto_css(self._tab_bar)
         self._top_panel.set_theme()
         self._list_widget.set_theme()
         for el in self._chat_widgets.values():
@@ -132,7 +161,7 @@ class TelegramChatWidget(ChatWidget):
     sendMessage = pyqtSignal(str)
     SB_VALUE_TO_LOAD = 20
 
-    def __init__(self, sm, tm, chat: types.TgChat, manager: TelegramManager):
+    def __init__(self, sm, tm, chat: TgChat, manager: TelegramManager):
         super().__init__(sm, tm)
         self._chat = chat
         self._manager = manager
@@ -174,23 +203,23 @@ class TelegramChatWidget(ChatWidget):
     def add_messages_to_load(self):
         self._messages_to_load = self._chat.message_count() + 50
 
-    def add_message(self, message: types.TgMessage):
+    def add_message(self, message: tg.Message):
         self.add_bubble(message)
 
-    def insert_message(self, message: types.TgMessage):
+    def insert_message(self, message: tg.Message):
         self.insert_bubble(message)
 
-    def insert_bubble(self, message: types.TgMessage):
+    def insert_bubble(self, message: tg.Message):
         bubble = TelegramChatBubble(self._tm, message, self._manager)
         bubble.set_max_width(int(self.width() * 0.8))
-        if isinstance(self._chat.type, types.TgChatTypePrivate):
+        if isinstance(self._chat.type, tg.ChatTypePrivate):
             bubble.hide_sender()
         self._insert_bubble(bubble)
 
-    def add_bubble(self, message: types.TgMessage, *args):
+    def add_bubble(self, message: tg.Message, *args):
         bubble = TelegramChatBubble(self._tm, message, self._manager)
         bubble.set_max_width(int(self.width() * 0.8))
-        if isinstance(self._chat.type, types.TgChatTypePrivate):
+        if isinstance(self._chat.type, tg.ChatTypePrivate):
             bubble.hide_sender()
         self._add_buble(bubble)
 
@@ -237,13 +266,13 @@ class TelegramTopWidget(QWidget):
 
         self._manager.updateUserStatus.connect(self._on_user_status_updated)
 
-    def set_chat(self, chat: types.TgChat):
+    def set_chat(self, chat: TgChat):
         self._chat = chat
         self._name_label.setText(chat.title)
-        if isinstance(chat.type, types.TgChatTypePrivate):
+        if isinstance(chat.type, tg.ChatTypePrivate):
             self._status_label.show()
             user = self._manager.get_user(chat.type.user_id)
-            if isinstance(user.status, types.TgUserStatusOnline):
+            if isinstance(user.status, tg.UserStatusOnline):
                 self._status_label.setText("В сети")
             else:
                 self._status_label.setText(f"Был(а) в {self.get_time(user.status.was_online)}")
@@ -255,13 +284,13 @@ class TelegramTopWidget(QWidget):
         return datetime.datetime.fromtimestamp(t).strftime("%H:%M")
 
     def _on_user_status_updated(self, user_id: str | int):
-        if not isinstance(self._chat, types.TgChat):
+        if not isinstance(self._chat, TgChat):
             return
         user_id = int(user_id)
-        if isinstance(self._chat.type, types.TgChatTypePrivate):
+        if isinstance(self._chat.type, tg.ChatTypePrivate):
             self._status_label.show()
             user = self._manager.get_user(self._chat.type.user_id)
-            if isinstance(user.status, types.TgUserStatusOnline):
+            if isinstance(user.status, tg.UserStatusOnline):
                 self._status_label.setText("В сети")
             else:
                 self._status_label.setText(f"Был(а) в {self.get_time(user.status.was_online)}")
@@ -277,27 +306,27 @@ class PasswordWidget(CustomDialog):
         super().__init__(tm, config.APP_NAME, button_close=True)
         super().set_theme()
 
-        if isinstance(state, types.TgAuthorizationStateWaitPhoneNumber):
+        if isinstance(state, tg.AuthorizationStateWaitPhoneNumber):
             self._text = "Пожалуйста, введите свой номер телефона:"
             self._password_mode = False
             self._2_lines = False
-        elif isinstance(state, types.TgAuthorizationStateWaitCode):
+        elif isinstance(state, tg.AuthorizationStateWaitCode):
             self._text = "Пожалуйста, введите полученный вами код аутентификации:"
             self._password_mode = True
             self._2_lines = False
-        elif isinstance(state, types.TgAuthorizationStateWaitEmailAddress):
+        elif isinstance(state, tg.AuthorizationStateWaitEmailAddress):
             self._text = "Пожалуйста, введите свой адрес электронной почты:"
             self._password_mode = False
             self._2_lines = False
-        elif isinstance(state, types.TgAuthorizationStateWaitEmailCode):
+        elif isinstance(state, tg.AuthorizationStateWaitEmailCode):
             self._text = "Пожалуйста, введите полученный вами по электронной почте код аутентификации:"
             self._password_mode = True
             self._2_lines = False
-        elif isinstance(state, types.TgAuthorizationStateWaitRegistration):
+        elif isinstance(state, tg.AuthorizationStateWaitRegistration):
             self._text = "Пожалуйста, введите имя и фамилию:"
             self._password_mode = True
             self._2_lines = True
-        elif isinstance(state, types.TgAuthorizationStateWaitPassword):
+        elif isinstance(state, tg.AuthorizationStateWaitPassword):
             self._text = "Пожалуйста, введите свой пароль:"
             self._password_mode = True
             self._2_lines = False

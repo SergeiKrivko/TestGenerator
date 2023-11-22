@@ -3,8 +3,8 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea
 
-from side_tabs.telegram.telegram_api import types
-from side_tabs.telegram.telegram_manager import TelegramManager
+from side_tabs.telegram.telegram_api import types, tg
+from side_tabs.telegram.telegram_manager import TelegramManager, TgChat
 
 
 class TelegramListWidget(QScrollArea):
@@ -21,10 +21,21 @@ class TelegramListWidget(QScrollArea):
 
         self._layout = QVBoxLayout()
         self._layout.setSpacing(0)
-        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setContentsMargins(2, 2, 2, 2)
         scroll_widget.setLayout(self._layout)
 
         self._items = dict()
+
+    def clear(self):
+        for el in self._items.values():
+            el.setParent(None)
+            el.disabled = True
+            el.hide()
+        self._items.clear()
+
+    def _on_chat_updated(self, chat_id):
+        for el in self._items.values():
+            el.update_chat(chat_id)
 
     def _on_item_hover(self, chat_id):
         if isinstance(chat_id, str):
@@ -48,7 +59,7 @@ class TelegramListWidget(QScrollArea):
         if chat_id in self._items:
             self._items[chat_id].set_selected(True)
 
-    def add_item(self, chat: types.TgChat):
+    def add_item(self, chat: TgChat):
         item = TelegramListWidgetItem(self._tm, chat, self._manager)
         item.selected.connect(self._on_item_selected)
         item.hover.connect(self._on_item_hover)
@@ -62,12 +73,12 @@ class TelegramListWidget(QScrollArea):
         self._set_items_width()
 
     def _set_items_width(self):
-        width = self.width() - 15
+        width = self.width() - 19
         for el in self._items.values():
             el.setFixedWidth(width)
 
     def set_theme(self):
-        self._tm.auto_css(self)
+        self._tm.auto_css(self, border_radius=False)
         for item in self._items.values():
             item.set_theme()
 
@@ -89,7 +100,7 @@ class TelegramListWidgetItem(QWidget):
     selected = pyqtSignal(str)
     hover = pyqtSignal(str)
 
-    def __init__(self, tm, chat: types.TgChat, manager: TelegramManager):
+    def __init__(self, tm, chat: TgChat, manager: TelegramManager):
         super().__init__()
         self._tm = tm
         self._chat = chat
@@ -97,6 +108,7 @@ class TelegramListWidgetItem(QWidget):
         self._selected = False
         self._hover = False
         self._manager = manager
+        self.disabled = False
 
         self.setFixedHeight(54)
 
@@ -117,8 +129,9 @@ class TelegramListWidgetItem(QWidget):
         if chat.photo is not None:
             self._photo = chat.photo.small
             if self._photo.local.can_be_downloaded:
-                self._photo.download()
-            manager.updateFile.connect(self.update_icon)
+                tg.downloadFile(self._photo.remote.id, None, None, None, None)
+                # self._photo.download()
+            # manager.updateFile.connect(self.update_icon)
             if self._photo.local.is_downloading_completed:
                 self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(48, 48))
         main_layout.addWidget(self._icon_label)
@@ -147,11 +160,9 @@ class TelegramListWidgetItem(QWidget):
         if self._chat.unread_count == 0:
             self._unread_count_label.hide()
 
-        manager.updateChat.connect(self.update_chat)
-
     def update_last_message(self, message):
-        if message is not None and (isinstance(self._chat.type, types.TgChatTypeBasicGroup) or
-                                    isinstance(self._chat.type, types.TgChatTypeSupergroup) and hasattr(
+        if message is not None and (isinstance(self._chat.type, tg.ChatTypeBasicGroup) or
+                                    isinstance(self._chat.type, tg.ChatTypeSupergroup) and hasattr(
                     message.sender_id, 'user_id')):
             sender = self._manager.get_user(message.sender_id.user_id)
         else:
@@ -159,10 +170,10 @@ class TelegramListWidgetItem(QWidget):
         self._last_message_label.open_message(message, sender)
 
     def update_chat(self, chat_id: str):
-        if int(chat_id) != self._chat.id:
+        if int(chat_id) != self._chat.id or self.disabled:
             return
         message = self._chat.last_message
-        if isinstance(message, types.TgMessage):
+        if isinstance(message, tg.Message):
             self.update_last_message(message)
 
         self._unread_count_label.setText(str(self._chat.unread_count))
@@ -171,8 +182,8 @@ class TelegramListWidgetItem(QWidget):
         else:
             self._unread_count_label.show()
 
-    def update_icon(self, image: types.TgFile):
-        if isinstance(self._photo, types.TgFile) and image.id == self._photo.id and \
+    def update_icon(self, image: tg.File):
+        if isinstance(self._photo, tg.File) and image.id == self._photo.id and \
                 self._photo.local.is_downloading_completed:
             self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(44, 44))
 
@@ -263,7 +274,7 @@ class LastMessageWidget(QWidget):
         self._sender_label.setFont(self._tm.font_small)
         self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}")
 
-    def open_message(self, message: types.TgMessage, sender: types.TgUser = None):
+    def open_message(self, message: tg.Message, sender: tg.User = None):
         text = ""
         icon = None
 
@@ -275,9 +286,9 @@ class LastMessageWidget(QWidget):
 
         if message is not None:
             match message.content.__class__:
-                case types.TgMessageText:
+                case tg.MessageText:
                     text = message.content.text.text
-                case types.TgMessagePhoto:
+                case tg.MessagePhoto:
                     icon = message.content.photo.minithumbnail
                     if message.content.caption.text:
                         text = message.content.caption.text
@@ -285,8 +296,8 @@ class LastMessageWidget(QWidget):
                         text = "Фотография"
 
         self._text_label.setText(text[:80])
-        if isinstance(icon, types.TgMinithumbnail):
+        if isinstance(icon, tg.Minithumbnail):
             self._icon_label.show()
-            self._icon_label.setPixmap(QPixmap(icon.load()))
+            # self._icon_label.setPixmap(QPixmap(icon.load()))
         else:
             self._icon_label.hide()
