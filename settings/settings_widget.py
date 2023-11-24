@@ -6,8 +6,10 @@ from PyQt6.QtGui import QResizeEvent, QFontMetrics
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QCheckBox, QComboBox, QSpinBox, \
     QDoubleSpinBox, QPushButton, QFileDialog, QScrollArea, QTextEdit
 
+from backend.backend_types.program import Program
 from ui.button import Button
 from ui.message_box import MessageBox
+from ui.program_box import ProgramBox
 
 KEY_GLOBAL = 0
 KEY_LOCAL = 1
@@ -606,10 +608,8 @@ class ListWidget(_Widget):
 
 
 class ProgramEdit(_Widget):
-    def __init__(self, desc, file, key=None, key_type=None):
-        super().__init__(key, key_type, file)
-        self._file = file
-        self._items = []
+    def __init__(self, desc, program: Program, key_type=None):
+        super().__init__(program.key(), key_type, program.basic().to_json())
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -618,89 +618,28 @@ class ProgramEdit(_Widget):
         self.label = QLabel(desc)
         main_layout.addWidget(self.label)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(3)
-        main_layout.addLayout(layout)
-
-        self.combo_box = QComboBox()
-        layout.addWidget(self.combo_box)
-        self.combo_box.currentTextChanged.connect(self._on_index_changed)
-
-        self.line_edit = QLineEdit()
-        self.line_edit.hide()
-        self.line_edit.returnPressed.connect(self._on_return_pressed)
-        layout.addWidget(self.line_edit)
-
-        self.button_update = Button(None, 'update')
-        layout.addWidget(self.button_update)
-        self.button_update.setFixedSize(24, 22)
-
-        self.button_add = Button(None, 'plus')
-        layout.addWidget(self.button_add)
-        self.button_add.clicked.connect(self._on_plus_clicked)
-        self.button_add.setFixedSize(24, 22)
+        self.program_box = ProgramBox(program)
+        main_layout.addWidget(self.program_box)
+        self._connected = False
 
     def set_sm(self, sm):
         super().set_sm(sm)
+        self.program_box.set_sm(sm)
 
-        self.button_update.clicked.connect(self._sm.start_search)
-        self._sm.searching_complete.connect(self.update_items)
-        self.update_items()
+    def set_tm(self, tm):
+        super().set_tm(tm)
+        self.program_box.set_tm(tm)
 
-    def set_items(self, items: list, delete_current=False):
-        text = self.combo_box.currentText()
-        if not delete_current and text not in items and text.strip():
-            items.append(text)
-        else:
-            text = self._get()
-            if text not in items:
-                items.append(text)
-        self._items = items
-        self.combo_box.clear()
-        self.combo_box.addItems(items)
-        self.combo_box.setCurrentText(text)
-
-    def add_item(self, item: str):
-        self._items.append(item)
-        self.combo_box.addItem(item, None)
-
-    def _on_plus_clicked(self):
-        self.combo_box.hide()
-        self.line_edit.show()
-        self.line_edit.setText(self.combo_box.currentText())
-        self.line_edit.selectAll()
-        self.line_edit.setFocus()
-
-    def _on_return_pressed(self):
-        if text := self.line_edit.text().strip():
-            self.combo_box.addItems([text])
-            self.combo_box.setCurrentText(text)
-        self.line_edit.hide()
-        self.combo_box.show()
-
-    def _on_editing_finished(self):
-        self.line_edit.hide()
-        self.combo_box.show()
-
-    def update_items(self, forced=True):
-        self.set_items(self._sm.programs.get(self._file, []), delete_current=forced)
-
-    def set_value(self, text: str):
-        if text not in self._items:
-            self.add_item(text)
-        self.combo_box.setCurrentText(text)
-
-    def _on_index_changed(self, text):
-        self._set(text)
+    def set_value(self, value):
+        self.program_box.set_value(value)
+        if not self._connected:
+            self.program_box.currentChanged.connect(lambda prog: self._set(prog.to_json()))
+            self._connected = True
 
     def set_theme(self):
-        self._tm.auto_css(self.combo_box)
-        self._tm.auto_css(self.button_add)
-        self._tm.auto_css(self.button_update)
-        self._tm.auto_css(self.line_edit)
-        if self.label:
-            self._tm.auto_css(self.label)
+        super().set_theme()
+        self._tm.auto_css(self.label)
+        self.program_box.set_theme()
 
 
 class SettingsWidget(QScrollArea):

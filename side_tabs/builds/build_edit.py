@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QPushButton, QFileDialog
 
 from backend.backend_types.build import Build
+from backend.backend_types.program import PROGRAMS
 from side_tabs.builds.build_fields import *
 from side_tabs.builds.commands_list import CommandsList
 
@@ -116,7 +117,8 @@ class BuildEdit(QScrollArea):
                     LineField(self.tm, 'linker_keys', '', "Ключи компоновки:"),
                     CheckboxField(self.tm, 'coverage', False, "Coverage"),
                     LineField(self.tm, 'app_file', 'app.exe', "Исполняемый файл:"),
-                    ProgramField(self.sm, self.tm, 'compiler', "Компилятор", 'gcc.exe'),
+                    ProgramField(self.sm, self.tm, PROGRAMS['gcc'], "Компилятор", checkbox=True),
+                    ProgramField(self.sm, self.tm, PROGRAMS['gcov'], "Gcov", checkbox=True),
                     TreeField(self.tm, 'files', self.sm.project.path(), ('.c', '.h'), "Файлы:"))
             case 'C++':
                 self._load_struct(
@@ -125,18 +127,19 @@ class BuildEdit(QScrollArea):
                     LineField(self.tm, 'linker_keys', '', "Ключи компоновки:"),
                     CheckboxField(self.tm, 'coverage', False, "Coverage"),
                     LineField(self.tm, 'app_file', 'app.exe', "Исполняемый файл:"),
-                    ProgramField(self.sm, self.tm, 'compiler', "Компилятор", 'g++.exe'),
+                    ProgramField(self.sm, self.tm, PROGRAMS['g++'], "Компилятор", checkbox=True),
+                    ProgramField(self.sm, self.tm, PROGRAMS['gcov'], "Gcov", checkbox=True),
                     TreeField(self.tm, 'files', self.sm.project.path(), ('.cpp', '.h'), "Файлы:"))
             case 'python':
                 self._load_struct(
                     name_edit := LineField(self.tm, 'name', '-', "Название:"),
-                    ProgramField(self.sm, self.tm, 'interpreter', "Интерпретатор", 'python.exe'),
+                    ProgramField(self.sm, self.tm, PROGRAMS['python'], "Интерпретатор"),
                     LineField(self.tm, 'file', '', "Файл:"),
                 )
             case 'python_coverage':
                 self._load_struct(
                     name_edit := LineField(self.tm, 'name', '-', "Название:"),
-                    ProgramField(self.sm, self.tm, 'interpreter', "Интерпретатор", 'coverage.exe'),
+                    ProgramField(self.sm, self.tm, PROGRAMS['python_coverage'], "Интерпретатор"),
                     LineField(self.tm, 'file', '', "Файл:"),
                 )
             case 'script':
@@ -169,8 +172,8 @@ class BuildEdit(QScrollArea):
         self._utils_widget.show()
         self._preproc_widget.show()
         self._postproc_widget.show()
-        if os.name == 'nt':
-            self._wsl_widget.show()
+        # if os.name == 'nt':
+        #     self._wsl_widget.show()
 
         self._cwd_line.setText(self._build.get('cwd', '.'))
         self._utils_widget.load(self._build.get('utils', []))

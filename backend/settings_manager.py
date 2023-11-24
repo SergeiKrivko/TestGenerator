@@ -4,6 +4,7 @@ from PyQt6.QtCore import QSettings, pyqtSignal, QObject
 from json import dumps, loads, JSONDecodeError
 import appdirs
 
+from backend.backend_types.program import PROGRAMS, ProgramInstance
 from backend.backend_types.project import Project
 from backend.search import Searcher
 
@@ -32,9 +33,7 @@ class SettingsManager(QObject):
 
         self.programs = dict()
         self.searcher = None
-        self.load_programs()
-        if self.get_general('search_after_start', True):
-            self.start_search()
+        self.start_search(self.get_general('search_after_start', True), wait=True)
 
     def _load_projects(self):
         self.projects = dict()
@@ -234,28 +233,18 @@ class SettingsManager(QObject):
         self.project = new_name
         self.store_projects_list()
 
-    def load_programs(self):
-        try:
-            with open(f'{self.app_data_dir}/programs.json', encoding='utf-8') as f:
-                self.programs = loads(f.read())
-                if not isinstance(self.programs, dict):
-                    raise TypeError
-        except JSONDecodeError:
-            self.start_search()
-        except TypeError:
-            self.start_search()
-        except FileNotFoundError:
-            self.start_search()
-
-    def start_search(self):
+    def start_search(self, forced=False, wait=False):
         if self.searcher and not self.searcher.isFinished():
             return
-        self.searcher = Searcher()
+        self.searcher = Searcher(self, forced, wait)
         self.searcher.finished.connect(self.search_finish)
         self.searcher.start()
 
     def search_finish(self):
         self.programs = self.searcher.res
         self.searching_complete.emit()
+        self.store_programs()
+
+    def store_programs(self):
         with open(f'{self.app_data_dir}/programs.json', 'w', encoding='utf-8') as f:
-            f.write(dumps(self.programs))
+            f.write(dumps({key: list(map(ProgramInstance.to_json, item.existing())) for key, item in PROGRAMS.items()}))

@@ -1,3 +1,4 @@
+import encodings
 import json
 import os
 import subprocess
@@ -14,10 +15,30 @@ def get_si():
         return None
 
 
+ENCODINGS = ['utf-8', 'utf-16', 'ansi', 'ascii', 'charmap']
+
+
 def cmd_command(args, **kwargs):
-    # if 'encoding' not in kwargs:
-    #     kwargs['encoding'] = 'utf-8'
-    return subprocess.run(args, capture_output=True, text=True, encoding='utf-8', startupinfo=get_si(), **kwargs)
+    if isinstance(text := kwargs.get('input', b''), str):
+        kwargs['input'] = text.encode(kwargs.get('encoding', 'utf-8'))
+    res = subprocess.run(args, capture_output=True, startupinfo=get_si(), **kwargs)
+    for encoding in ENCODINGS:
+        try:
+            res.stdout = res.stdout.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            pass
+    else:
+        raise UnicodeDecodeError
+    for encoding in ENCODINGS:
+        try:
+            res.stderr = res.stderr.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            pass
+    else:
+        raise UnicodeDecodeError
+    return res
 
 
 def cmd_command_pipe(command, stdout=True, stderr=False, **kwargs):
@@ -84,8 +105,8 @@ def get_sorted_jsons(path: str):
     return lst
 
 
-def wsl_path(path: str, build):
-    if not build.get('wsl'):
+def wsl_path(path: str, build=None):
+    if build and not build.get('wsl'):
         return path
     path = path.replace('\\', '/')
     if len(path) <= 2:

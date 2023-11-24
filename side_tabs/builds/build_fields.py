@@ -4,8 +4,10 @@ from typing import Any
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QLineEdit, QComboBox, QHBoxLayout, QCheckBox
 
+from backend.backend_types.program import Program
 from language.utils import get_files
 from ui.button import Button
+from ui.program_box import ProgramBox
 from ui.tree_widget import TreeWidget, TreeWidgetItemCheckable
 
 
@@ -192,118 +194,52 @@ class TreeElement(TreeWidgetItemCheckable):
 
 
 class ProgramField(BuildField):
-    def __init__(self, sm, tm, key, name, file):
-        super().__init__(tm, key, sm.get('file'))
+    def __init__(self, sm, tm, program: Program, name='', checkbox=False):
+        super().__init__(tm, program.key(), program.basic())
         self.sm = sm
-        self._file = file
-        self._items = []
+        self._use_checkbox = checkbox
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(main_layout)
 
-        self.label = QLabel(name)
-        main_layout.addWidget(self.label)
+        self._label = QLabel(name)
+        main_layout.addWidget(self._label)
+        if not name:
+            self._label.hide()
 
-        checkbox_layout = QHBoxLayout()
-        checkbox_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        checkbox_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addLayout(checkbox_layout)
-
-        self._checkbox = QCheckBox("По умолчанию")
-        self._checkbox.stateChanged.connect(self._on_state_changed)
-        checkbox_layout.addWidget(self._checkbox)
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(3)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 0, 0, 0)
         main_layout.addLayout(layout)
 
-        self.combo_box = QComboBox()
-        layout.addWidget(self.combo_box)
+        self._checkbox = QCheckBox("По умолчанию")
+        if not self._use_checkbox:
+            self._checkbox.hide()
+        layout.addWidget(self._checkbox)
 
-        self.line_edit = QLineEdit()
-        self.line_edit.hide()
-        self.line_edit.returnPressed.connect(self._on_return_pressed)
-        layout.addWidget(self.line_edit)
+        self._program_box = ProgramBox(program, sm, tm)
+        layout.addWidget(self._program_box)
 
-        self.button_update = Button(None, 'update')
-        layout.addWidget(self.button_update)
-        self.button_update.setFixedSize(24, 22)
-
-        self.button_add = Button(None, 'plus')
-        layout.addWidget(self.button_add)
-        self.button_add.clicked.connect(self._on_plus_clicked)
-        self.button_add.setFixedSize(24, 22)
-
-        self.button_update.clicked.connect(self.sm.start_search)
-        self.sm.searching_complete.connect(self.update_items)
-        self.update_items()
-
-    def set_items(self, items: list):
-        text = self.combo_box.currentText()
-        if text not in items:
-            items.append(text)
-        self._items = items
-        self.combo_box.clear()
-        self.combo_box.addItems(items)
-        self.combo_box.setCurrentText(text)
-
-    def _on_state_changed(self):
-        if self._checkbox.isChecked():
-            self.line_edit.hide()
-            self.combo_box.hide()
-            self.button_add.hide()
-            self.button_update.hide()
-        else:
-            self.combo_box.show()
-            self.button_add.show()
-            self.button_update.show()
-
-    def add_item(self, item: str):
-        self._items.append(item)
-        self.combo_box.addItem(item, None)
-
-    def _on_plus_clicked(self):
-        self.combo_box.hide()
-        self.line_edit.show()
-        self.line_edit.setText(self.combo_box.currentText())
-        self.line_edit.selectAll()
-        self.line_edit.setFocus()
-
-    def _on_return_pressed(self):
-        if text := self.line_edit.text().strip():
-            self.combo_box.addItems([text])
-            self.combo_box.setCurrentText(text)
-        self.line_edit.hide()
-        self.combo_box.show()
-
-    def _on_editing_finished(self):
-        self.line_edit.hide()
-        self.combo_box.show()
-
-    def update_items(self):
-        self.set_items(self.sm.programs.get(self._file, []))
-
-    def set_value(self, text: str | None):
-        if text is None:
-            self._checkbox.setChecked(True)
-        else:
-            self._checkbox.setChecked(False)
-            if text not in self._items:
-                self.add_item(text)
-            self.update_items()
-            self.combo_box.setCurrentText(text)
+        self._checkbox.stateChanged.connect(self._program_box.setHidden)
 
     def value(self):
-        if self._checkbox.isChecked():
+        if self._use_checkbox and self._checkbox.isChecked():
             return None
-        return self.combo_box.currentText()
+        return self._program_box.current().to_json()
+
+    def set_value(self, value):
+        if value is None and self._use_checkbox:
+            self._checkbox.setChecked(True)
+            self._program_box.hide()
+        else:
+            self._checkbox.setChecked(False)
+            self._program_box.show()
+            self._program_box.set_value(value)
 
     def set_theme(self):
-        for el in [self.combo_box, self.button_update, self.button_add, self.label,
-                   self._checkbox]:
+        for el in [self._label, self._checkbox]:
             self.tm.auto_css(el)
+        self._program_box.set_theme()
 
 
 class CheckboxField(BuildField):
@@ -315,13 +251,8 @@ class CheckboxField(BuildField):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self._checkbox = QCheckBox()
+        self._checkbox = QCheckBox(name)
         layout.addWidget(self._checkbox)
-
-        self._label = QLabel(name)
-        layout.addWidget(self._label)
-        if not name:
-            self._label.hide()
 
     def value(self):
         return self._checkbox.isChecked()
@@ -331,5 +262,5 @@ class CheckboxField(BuildField):
 
     def set_theme(self):
         super().set_theme()
-        for el in [self._label, self._checkbox]:
+        for el in [self._checkbox]:
             self.tm.auto_css(el)

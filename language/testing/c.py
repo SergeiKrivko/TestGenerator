@@ -1,19 +1,16 @@
 import os
 
-from backend.commands import cmd_command, wsl_path
+from backend.backend_types.program import PROGRAMS
+from backend.commands import cmd_command
 from language.utils import get_files
 
 
 def c_compile(project, build, sm):
     coverage = build.get('coverage', False)
-    compiler = build.get('compiler')
-    if compiler is None:
-        compiler = project.get('gcc', 'gcc')
-    if build.get('wsl') and not compiler.startswith('wsl -e'):
-        compiler = 'wsl -e ' + compiler
+    compiler = PROGRAMS['gcc'].get(sm, build)
 
-    path = wsl_path(project.path(), build)
-    temp_dir = wsl_path(f"{sm.temp_dir()}/build{build.id}", build)
+    path = compiler.convert_path(project.path())
+    temp_dir = compiler.convert_path(f"{sm.temp_dir()}/build{build.id}")
     os.makedirs(f"{sm.temp_dir()}/build{build.id}", exist_ok=True)
 
     c_files = []
@@ -31,16 +28,14 @@ def c_compile(project, build, sm):
 
     compiler_keys = build.get('keys', '')
     for c_file, o_file in zip(c_files, o_files):
-        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} {h_dirs} -c -o {o_file} {c_file}"
-        res = cmd_command(command, shell=True)
+        res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} {h_dirs} -c -o {o_file} {c_file}")
         if res.returncode:
             code = False
         errors.append(res.stderr)
 
     if code:
-        command = f"{compiler} {compiler_keys} {'--coverage' if coverage else ''} -o {path}/{build.get('app_file')} " \
-                  f"{' '.join(o_files)} {build.get('linker_keys', '')}"
-        res = cmd_command(command, shell=True)
+        res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} -o {path}/{build.get('app_file')} "
+                       f"{' '.join(o_files)} {build.get('linker_keys', '')}")
         if res.returncode:
             code = False
         errors.append(res.stderr)
@@ -48,20 +43,19 @@ def c_compile(project, build, sm):
     return code, ''.join(map(str, errors))
 
 
-def c_run(project, build, args=''):
-    path = wsl_path(project.path(), build)
+def c_run(project, sm, build, args=''):
+    compiler = PROGRAMS['gcc'].get(sm, build)
+    path = compiler.convert_path(project.path())
     return f"{'wsl -e ' if build.get('wsl') else ''}{path}/{build.get('app_file')} {args}"
 
 
 def c_collect_coverage(sm, build):
     total_count = 0
     count = 0
-    gcov = sm.get('gcov', 'gcov')
-    if build.get('wsl') and not gcov.startswith('wsl -e'):
-        gcov = 'wsl -e gcov'
+    gcov = PROGRAMS['gcov'].get(sm, build)
 
     temp_dir = f"{sm.temp_dir()}/build{build.id}"
-    temp_dir_wsl = wsl_path(f"{sm.temp_dir()}/build{build.id}", build)
+    temp_dir_wsl = gcov.convert_path(f"{sm.temp_dir()}/build{build.id}")
 
     for file in build.get('files', []):
         res = cmd_command(f"{gcov} {file} -o {temp_dir_wsl}", shell=True, cwd=temp_dir)
@@ -80,23 +74,19 @@ def c_collect_coverage(sm, build):
 
 def c_coverage_html(sm, build):
     temp_dir = f"{sm.temp_dir()}/build{build.id}"
-    temp_dir_wsl = wsl_path(f"{sm.temp_dir()}/build{build.id}", build)
 
-    lcov = sm.get('lcov', 'lcov')
-    if build.get('wsl') and not lcov.startswith('wsl -e'):
-        lcov = 'wsl -e lcov'
+    lcov = PROGRAMS['lcov'].get(sm, build)
+    genhtml = PROGRAMS['genhtml'].get(sm, build)
 
-    genhtml = sm.get('genhtml', 'genhtml')
-    if build.get('wsl') and not genhtml.startswith('wsl -e'):
-        genhtml = 'wsl -e genhtml'
+    temp_dir_wsl = lcov.convert_path(f"{sm.temp_dir()}/build{build.id}")
 
     try:
-        res = cmd_command(f"{lcov} -t \"{build.get('name', '')}\" "
-                          f"-o {temp_dir_wsl}/coverage.info -c -d {temp_dir_wsl}", shell=True)
+        res = lcov(f"-t \"{build.get('name', '')}\" "
+                   f"-o {temp_dir_wsl}/coverage.info -c -d {temp_dir_wsl}", shell=True)
         if res.returncode:
             return None
 
-        res = cmd_command(f"{genhtml} -o {temp_dir_wsl}/report {temp_dir_wsl}/coverage.info", shell=True)
+        res = genhtml(f"-o {temp_dir_wsl}/report {temp_dir_wsl}/coverage.info", shell=True)
         if res.returncode:
             return None
         return f"{temp_dir}/report/index.html"

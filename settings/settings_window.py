@@ -3,6 +3,7 @@ import os
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QTreeWidget, QTreeWidgetItem
 
+from backend.backend_types.program import PROGRAMS
 from config import APP_NAME
 from language.languages import PROJECT_LANGUAGES
 from settings.in_data_window import InDataWidget
@@ -64,6 +65,7 @@ class SettingsWindow(CustomDialog):
             ComboBox("Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
             CheckBox("Поиск программ при каждом запуске", key='search_after_start'),
             CheckBox("Не предлагать создание проекта при открытии файла", key='not_create_project'),
+            CheckBox("Использовать WSL", key='use_wsl'),
             key_type=KEY_GLOBAL)
         layout.addWidget(self.main_settings_widget)
 
@@ -122,14 +124,14 @@ class SettingsWindow(CustomDialog):
             CheckBox("Глобальные настройки компилятора/интерпретатора", key='default_compiler_settings', children={
                 False: SwitchBox(lambda: self.sm.get('language'), {
                     'C': [
-                        self.c_settings(),
+                        *self.c_settings(),
                     ],
                     'C++': [
-                        ProgramEdit("Компилятор:", 'g++', 'g++'),
+                        ProgramEdit("Компилятор:", PROGRAMS['g++']),
                     ],
                     'Python': [
-                        ProgramEdit("Python:", 'python.exe', 'python'),
-                        ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
+                        ProgramEdit("Python:", PROGRAMS['python']),
+                        ProgramEdit("Python coverage:", PROGRAMS['python_coverage']),
                     ],
                 })
             }),
@@ -158,7 +160,7 @@ class SettingsWindow(CustomDialog):
 
         self.c_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            self.c_settings(),
+            *self.c_settings(),
             key_type=KEY_GLOBAL
         )
         self.c_settings_widget.hide()
@@ -166,7 +168,7 @@ class SettingsWindow(CustomDialog):
 
         self.cpp_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            ProgramEdit("Компилятор:", 'g++', 'g++'),
+            ProgramEdit("Компилятор:", PROGRAMS['g++']),
             key_type=KEY_GLOBAL
         )
         self.cpp_settings_widget.hide()
@@ -174,8 +176,8 @@ class SettingsWindow(CustomDialog):
 
         self.python_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            ProgramEdit("Python:", 'python.exe', 'python'),
-            ProgramEdit("Python coverage:", 'coverage.exe', 'python_coverage'),
+            ProgramEdit("Python:", PROGRAMS['python']),
+            ProgramEdit("Python coverage:", PROGRAMS['python_coverage']),
             key_type=KEY_GLOBAL
         )
         self.python_settings_widget.hide()
@@ -183,7 +185,7 @@ class SettingsWindow(CustomDialog):
 
         self.bash_settings_widget = SettingsWidget(
             self.sm, self.tm,
-            LineEdit("Интерпретатор Bash:", 'usr/bin/bash', 'bash', width=300),
+            ProgramEdit("Интерпретатор Bash:", PROGRAMS['bash']),
             key_type=KEY_GLOBAL,
         )
         self.bash_settings_widget.hide()
@@ -232,7 +234,9 @@ class SettingsWindow(CustomDialog):
 
     @staticmethod
     def c_settings():
-        return ProgramEdit("Компилятор:", 'gcc', 'gcc')
+        return [ProgramEdit("Компилятор:", PROGRAMS['gcc']),
+                ProgramEdit("Lcov:", PROGRAMS['lcov']),
+                ProgramEdit("Genhtml:", PROGRAMS['genhtml'])]
 
     @staticmethod
     def check_path(path: str):

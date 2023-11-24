@@ -7,6 +7,7 @@ from backend.commands import read_json, read_file
 from language.testing.c import *
 from language.testing.cpp import *
 from language.testing.python import *
+from language.testing.shell import bash_run
 from other.report.markdown_parser import MarkdownParser
 
 
@@ -71,16 +72,15 @@ class Build:
     def run(self, project, sm, args=''):
         match self.get('type'):
             case 'C':
-                return c_run(project, self, args)
+                return c_run(project, sm, self, args)
             case 'C++':
-                return cpp_run(project, self, args)
+                return cpp_run(project, sm, self, args)
             case 'python':
-                return python_run(project, self, args)
+                return python_run(project, sm, self, args)
             case 'python_coverage':
                 return python_run_coverage(project, sm, self, args)
             case 'bash':
-                return f"{sm.get_general('bash', 'usr/bin/bash')} " \
-                       f"\"{os.path.join(project.path(), self.get('file'))}\" {args}"
+                return bash_run(project, sm, self, args)
             case 'script':
                 return f"{os.path.join(project.path(), self.get('file'))} {args}"
             case 'command':

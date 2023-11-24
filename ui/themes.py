@@ -698,7 +698,7 @@ class ThemeManager:
         elif isinstance(widget, QComboBox):
             widget.setStyleSheet(self.combobox_css(palette))
         elif isinstance(widget, QLineEdit):
-            widget.setStyleSheet(self.base_css(palette, border, border_radius))
+            widget.setStyleSheet(self.line_edit_css(palette, border, border_radius))
         elif isinstance(widget, QTextEdit):
             widget.setStyleSheet(self.text_edit_css(palette))
         elif isinstance(widget, QTreeWidget):
@@ -937,6 +937,16 @@ QTreeWidget QScrollBar::sub-line, QScrollBar::add-line {{
                f"background-color: {self[f'{palette}Color']};\n" \
                f"border: {'1' if border else '0'}px solid {self['BorderColor']};\n" \
                f"border-radius: {'4' if border_radius else '0'}px;"
+
+    def line_edit_css(self, palette='Bg', border=True, border_radius=True):
+        return f"""
+QLineEdit {{
+    {self.base_css(palette, border, border_radius)}
+}}
+QLineEdit:focus {{
+    background-color: {self[f'{palette}HoverColor']};
+}}
+"""
 
     def scroll_area_css(self, palette, border=True):
         return f"""
