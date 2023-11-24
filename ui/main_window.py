@@ -5,6 +5,7 @@ from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QApplication
 
 from backend.backend_manager import BackendManager
+from backend.notification import notification
 from other.report.report_window import ReportWindow
 from side_tabs.builds import BuildWindow
 from side_tabs.console import ConsolePanel
@@ -121,6 +122,7 @@ class MainWindow(QMainWindow):
         self.bm.showSideTab.connect(self.side_bar.select_tab)
         self.bm.mainTabCommand.connect(self.tab_command)
         self.bm.sideTabCommand.connect(self.side_panel.tab_command)
+        self.bm.showNotification.connect(self.notification)
 
         self.resize(1100, 700)
 
@@ -157,6 +159,9 @@ class MainWindow(QMainWindow):
 
     def tab_command(self, tab, args: tuple, kwargs: dict):
         self._tabs[tab].command(*args, **kwargs)
+
+    def notification(self, title, message):
+        notification(title, message, on_click=lambda args: print(args))
 
     def closeEvent(self, a0):
         self.bm.close_project()

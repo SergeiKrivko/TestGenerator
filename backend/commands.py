@@ -1,8 +1,12 @@
 import encodings
 import json
 import os
+import pathlib
 import subprocess
+import sys
 
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    os.environ["PYMORPHY2_DICT_PATH"] = str(pathlib.Path(sys._MEIPASS).joinpath('pymorphy3_dicts_ru/data'))
 import pymorphy3
 
 

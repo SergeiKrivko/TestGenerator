@@ -256,6 +256,10 @@ class TestingWidget(MainTab):
 
         self._coverage_html = html_page
 
+        self.bm.notification("Тестирование завершено",
+                             f"Позитивные тесты: {self.pos_result_bar.passed}/{self.pos_result_bar.completed}\n"
+                             f"Негативные тесты: {self.neg_result_bar.passed}/{self.neg_result_bar.completed}")
+
         self.test_mode(False)
 
     def util_failed(self, name, errors, mask):
@@ -451,6 +455,18 @@ class TestCountIndicator(QLabel):
         self._count = 0
         self._passed = 0
         self._completed = 0
+
+    @property
+    def count(self):
+        return self._count
+
+    @property
+    def passed(self):
+        return self._passed
+
+    @property
+    def completed(self):
+        return self._completed
 
     def set_text(self):
         self.setText(f"{self._name} {self._passed}/{self._count}")

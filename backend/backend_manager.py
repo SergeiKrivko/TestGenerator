@@ -15,6 +15,7 @@ from backend.backend_types.project import Project
 from backend.backend_types.unit_test import UnitTest
 from backend.backend_types.util import Util
 from backend.check_converter import CheckConverter
+from backend.notification import notification
 from backend.settings_manager import SettingsManager
 from backend.backend_types.func_test import FuncTest
 from backend.commands import *
@@ -56,6 +57,7 @@ class BackendManager(QObject):
     showSideTab = pyqtSignal(str)
     mainTabCommand = pyqtSignal(str, tuple, dict)
     sideTabCommand = pyqtSignal(str, tuple, dict)
+    showNotification = pyqtSignal(str, str)
 
     def __init__(self):
         super().__init__()
@@ -485,6 +487,9 @@ class BackendManager(QObject):
             return
 
         self.open_main_project(self.sm.get_general('project'))
+
+    def notification(self, title, message):
+        self.showNotification.emit(title, message)
 
     def close_program(self):
         for project in list(self.sm.all_projects.values()):
