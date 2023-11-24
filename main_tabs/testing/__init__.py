@@ -428,6 +428,7 @@ class TestInfoWidget(QScrollArea):
                 self.add_widget(SimpleField(self._tm, "Код возврата:", f"{self._test.exit} ({self._test['exit']})"))
             else:
                 self.add_widget(SimpleField(self._tm, "Код возврата:", self._test.exit))
+            self.add_widget(SimpleField(self._tm, "Время выполнения:", f"{self._test.time:.4g} s"))
             self.add_widget(ListField(self._tm, "Результаты:", self._test.results))
 
             for key, item in self._test.utils_output.items():

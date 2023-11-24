@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from subprocess import TimeoutExpired
-from time import sleep
+from time import sleep, time
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -218,9 +218,12 @@ class TestingLooper(QThread):
     def run_test(self, test: FuncTest, index: int):
         self.prepare_test(test, index)
         try:
+            t = time()
             res = self._manager.run_build(self._project.get('build'), test.args, test.get('in', ''))
+            t = time() - t
             test.exit = res.returncode
             test.prog_out = {'STDOUT': res.stdout, 'STDERR': res.stderr}
+            test.time = t
             self.run_comparators(test, index)
             self.clear_after_run(test, index)
 

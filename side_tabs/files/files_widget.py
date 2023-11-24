@@ -112,7 +112,6 @@ class TreeWidget(QTreeWidget):
                 self.moving_file = MovedFile(self.tm, item.name)
             else:
                 return
-            print("NO SELECTION")
             self.setSelectionMode(QTreeWidget.SelectionMode.NoSelection)
             self.moving_item = item
             self.moving_file.move(self.mapToGlobal(e.pos()))
@@ -129,13 +128,11 @@ class TreeWidget(QTreeWidget):
                 elif isinstance(item, TreeFile):
                     path, _ = os.path.split(item.path)
                 else:
-                    print("Extended Selection")
                     self.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)
                     return
                 self.moveFile.emit(self.moving_item.path, path)
                 self.moving_item = None
         if self.moving_file is None:
-            print("Extended Selection")
             self.setSelectionMode(QTreeWidget.SelectionMode.ExtendedSelection)
 
 
@@ -430,7 +427,6 @@ class FilesWidget(SidePanelWidget):
                 self.create_file(base_path=path, extension='h')
             case ContextMenu.CREATE_MD:
                 file = self.create_file(base_path=path, extension='md')
-                print(file)
                 if isinstance(file, str):
                     dialog = MarkdownPatternsDialog(self.sm, self.tm, file)
                     if dialog.exec():

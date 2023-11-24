@@ -33,6 +33,7 @@ class FuncTest:
         self._status = FuncTest.IN_PROGRESS
 
         self.exit = 0
+        self.time = 0
         self.args = ''
         self.results = dict()
 
