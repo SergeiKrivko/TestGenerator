@@ -182,6 +182,6 @@ class PipeReader(QThread):
         self._stream = stream
 
     def run(self) -> None:
-        for line in iter(self._stream.readline, ''):
-            if line:
-                self.readyToRead.emit(line)
+        for symbol in iter(lambda: self._stream.read(1), ''):
+            if symbol:
+                self.readyToRead.emit(symbol)
