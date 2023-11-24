@@ -127,10 +127,11 @@ class Terminal(QTextEdit):
         if not self.current_process or not isinstance(self.process, subprocess.Popen):
             return
         self.process.kill()
-        self.stdout_reader.terminate()
-        self.stderr_reader.terminate()
-        self.process.stderr.close()
-        self.process.stdout.close()
+        self.current_process = None
+        # self.stdout_reader.terminate()
+        # self.stderr_reader.terminate()
+        # self.process.stderr.close()
+        # self.process.stdout.close()
         self.return_code = -1
         self.write_prompt()
 

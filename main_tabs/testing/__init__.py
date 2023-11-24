@@ -257,8 +257,8 @@ class TestingWidget(MainTab):
         self._coverage_html = html_page
 
         self.bm.notification("Тестирование завершено",
-                             f"Позитивные тесты: {self.pos_result_bar.passed}/{self.pos_result_bar.completed}\n"
-                             f"Негативные тесты: {self.neg_result_bar.passed}/{self.neg_result_bar.completed}")
+                             f"Позитивные тесты: {self.pos_result_bar.passed}/{self.pos_result_bar.count}\n"
+                             f"Негативные тесты: {self.neg_result_bar.passed}/{self.neg_result_bar.count}")
 
         self.test_mode(False)
 

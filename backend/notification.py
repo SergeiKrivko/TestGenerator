@@ -19,7 +19,5 @@ def notification(title, message, on_click=None):
         os.system(command)
     elif plt == "Windows":
         global toast_notifier
-        if toast_notifier is None:
-            import win11toast
-            toast_notifier = True
+        import win11toast
         win11toast.toast(title, message, on_click=on_click)

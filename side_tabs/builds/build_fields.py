@@ -194,7 +194,7 @@ class TreeElement(TreeWidgetItemCheckable):
 
 
 class ProgramField(BuildField):
-    def __init__(self, sm, tm, program: Program, name='', checkbox=False):
+    def __init__(self, sm, tm, program: Program, name='', checkbox=True):
         super().__init__(tm, program.key(), program.basic())
         self.sm = sm
         self._use_checkbox = checkbox
