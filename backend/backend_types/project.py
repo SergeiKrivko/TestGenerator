@@ -15,17 +15,18 @@ class Project:
         self._path = os.path.abspath(path)
         sm.all_projects[self._path] = self
 
-        if makedirs:
-            os.makedirs(os.path.join(self._path, Project.TEST_GENERATOR_DIR), exist_ok=True)
-            self.create_gitignore()
-        elif not os.path.isdir(os.path.join(self._path, Project.TEST_GENERATOR_DIR)):
-            raise FileNotFoundError
-
         self._sm = sm
         self._data = dict()
         self._settings = dict()
         self._parent = parent
         self._children = dict()
+        self._deliting = False
+
+        if makedirs:
+            os.makedirs(os.path.join(self._path, Project.TEST_GENERATOR_DIR), exist_ok=True)
+            self.create_gitignore()
+        elif not os.path.isdir(os.path.join(self._path, Project.TEST_GENERATOR_DIR)):
+            raise FileNotFoundError
 
         if load:
             self.load_settings()
@@ -98,7 +99,9 @@ class Project:
                 self._settings.pop(key)
 
     def save_settings(self):
-        os.makedirs(self._path, exist_ok=True)
+        if self._deliting:
+            return
+        os.makedirs(self.data_path(), exist_ok=True)
         with open(os.path.join(self.data_path(), Project.SETTINGS_FILE), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self._settings, indent=2))
         with open(os.path.join(self.data_path(), Project.DATA_FILE), 'w', encoding='utf-8') as f:
@@ -212,6 +215,7 @@ class Project:
             f.write(f'# Created by TestGenerator\n*\n{Project.SETTINGS_FILE}\n')
 
     def delete(self, dir=False):
+        self._deliting = True
         if isinstance(self._parent, Project):
             self._parent.children().pop(self.path())
         if dir:

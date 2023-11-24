@@ -151,7 +151,7 @@ class SettingsManager(QObject):
                     project = Project(path, self, load=True)
                     return project
 
-    def find_main_project(self, path):
+    def find_main_project(self, path, temp=False):
         first_path = path
         first_project = None
         while True:
@@ -172,10 +172,10 @@ class SettingsManager(QObject):
         if first_project is None:
             first_project = first_path
 
-        main_project = self.add_main_project(first_project)
+        main_project = self.add_main_project(first_project, temp=temp)
         return main_project, main_project
 
-    def add_main_project(self, path):
+    def add_main_project(self, path, temp=False):
         path = os.path.abspath(path)
         if path in self.projects:
             return self.projects[path]
@@ -187,6 +187,9 @@ class SettingsManager(QObject):
             project.set('default_struct', True)
             project.set('default_compiler_settings', True)
             project.set('default_testing_settings', True)
+            print(f"temp: {temp}")
+            if temp:
+                project.set('temp', True)
             self.projects[path] = project
             return project
 
@@ -218,7 +221,7 @@ class SettingsManager(QObject):
         project.delete(directory)
         self.all_projects.pop(project.path())
         if project.path() in self.projects:
-            self.all_projects.pop(project.path())
+            self.projects.pop(project.path())
         if project == self.project:
             self.project = None
             self.set_project(self.main_project)

@@ -471,19 +471,28 @@ class BackendManager(QObject):
     def parse_cmd_args(self, args):
         if len(args) == 2 and os.path.isfile(args[1]):
             path = os.path.abspath(os.path.split(args[1])[0])
-            main_project, subproject = self.sm.find_main_project(path)
+            main_project, subproject = self.sm.find_main_project(
+                path, temp=self.sm.get_general('open_file_temp_project'))
             lst = subproject.get('opened_files', [])
             lst.append(os.path.abspath(args[1]))
             subproject.set('opened_files', lst)
             subproject.save_settings()
             self.open_main_project(main_project, subproject)
             return
-        if len(args) == 3 and args[1] == '-d' and os.path.isdir(args[2]):
+        if len(args) == 3 and args[1] in ['-d', '--directory'] and os.path.isdir(args[2]):
             path = os.path.abspath(args[2])
-            self.open_main_project(*self.sm.find_main_project(path))
+            self.open_main_project(*self.sm.find_main_project(path, temp=self.sm.get_general('open_dir_temp_project')))
             return
 
         self.open_main_project(self.sm.get_general('project'))
+
+    def close_program(self):
+        for project in list(self.sm.all_projects.values()):
+            try:
+                if project.get('temp', False):
+                    self.sm.delete_project(project)
+            except KeyError:
+                pass
 
 
 class Looper(QThread):

@@ -160,6 +160,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, a0):
         self.bm.close_project()
+        self.bm.close_program()
         self.sm.store()
         if not self.bm.all_finished():
             dialog = ExitDialog(self.tm)
