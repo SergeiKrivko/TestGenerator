@@ -1,8 +1,8 @@
 import os
 import platform
 
-
-toast_notifier = None
+if platform.system() == 'Windows':
+    import win11toast
 
 
 def notification(title, message, on_click=None):
@@ -18,6 +18,5 @@ def notification(title, message, on_click=None):
         '''
         os.system(command)
     elif plt == "Windows":
-        global toast_notifier
-        import win11toast
-        win11toast.toast(title, message, on_click=on_click)
+        win11toast.toast(title, message, on_click=on_click, dialogue=title,
+                         icon=r"file:///C:\Users\sergi\AppData\Local\SergeiKrivko\TestGenerator\icon.png")

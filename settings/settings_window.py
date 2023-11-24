@@ -63,6 +63,7 @@ class SettingsWindow(CustomDialog):
         self.main_settings_widget = SettingsWidget(
             self.sm, self.tm,
             ComboBox("Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
+            CheckBox("Уведомления", key='notifications'),
             CheckBox("Поиск программ при каждом запуске", key='search_after_start'),
             CheckBox("Создавать временный проект при открытии файла", key='open_file_temp_project'),
             CheckBox("Создавать временный проект при открытии директории", key='open_dir_temp_project'),

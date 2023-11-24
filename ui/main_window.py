@@ -161,7 +161,33 @@ class MainWindow(QMainWindow):
         self._tabs[tab].command(*args, **kwargs)
 
     def notification(self, title, message):
-        notification(title, message, on_click=lambda args: print(args))
+        flag = False
+
+        def set_flag():
+            nonlocal flag
+            flag = True
+
+        if not self.isActiveWindow() and self.sm.get_general('notifications', False):
+            notification(title, message, on_click=lambda arg: set_flag())
+        if flag:
+            self.to_top()
+
+    def to_top(self):
+        from win32gui import SetWindowPos
+        import win32con
+        SetWindowPos(self.window().winId(),
+                     win32con.HWND_TOPMOST,
+                     # = always on top. only reliable way to bring it to the front on windows
+                     0, 0, 0, 0,
+                     win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+        SetWindowPos(self.window().winId(),
+                     win32con.HWND_NOTOPMOST,  # disable the always on top, but leave window at its top position
+                     0, 0, 0, 0,
+                     win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+        self.window().raise_()
+        self.window().show()
+        self.window().showNormal()
+        self.window().activateWindow()
 
     def closeEvent(self, a0):
         self.bm.close_project()
