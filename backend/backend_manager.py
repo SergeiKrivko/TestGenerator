@@ -490,6 +490,19 @@ class BackendManager(QObject):
         while not self._loader.isFinished():
             sleep(0.1)
 
+        util = None
+        if args.util:
+            try:
+                util_id = int(args.util)
+            except ValueError:
+                for key, item in self.utils.items():
+                    if item['name'] == args.util:
+                        util_id = key
+                        break
+                else:
+                    raise KeyError("Util not found")
+            util = self.utils[util_id]
+
         if args.build:
             try:
                 build_id = int(args.build)
@@ -502,6 +515,8 @@ class BackendManager(QObject):
                     raise KeyError("Build not found")
             build = self.builds[build_id]
             command = build.run(self.sm.project, self.sm, args)
+            if isinstance(util, Util):
+                command = util['command'].format(app=command, args='')
             cwd = build.get('cwd', '.') if os.path.isabs(build.get('cwd', '.')) else \
                 os.path.join(self.sm.project.path(), build.get('cwd', '.'))
             subprocess.run(command, cwd=cwd)

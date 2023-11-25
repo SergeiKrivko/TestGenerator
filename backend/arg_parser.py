@@ -11,6 +11,7 @@ _parser.add_argument('-f', '--file', help="Открывает указанный
 _parser.add_argument('-d', '--directory', help="Открывает папку как проект.")
 _parser.add_argument('-b', '--build', help="Запускает одну из конфигураций запуска. В качестве аргумента необходимо "
                                            "указать её название или ID. Графический интерфейс не будет запущен.")
+_parser.add_argument('--util', help="Указывает утилиту для конфигурации запуска.")
 _parser.add_argument('-t', '--testing', '--func-testing', action='store_true',
                      help="Запускает функциональное тестирование проекта. Графический интерфейс не будет запущен.")
 _parser.add_argument('-u', '--unit', '--unit-testing', action='store_true',
