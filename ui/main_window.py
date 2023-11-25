@@ -1,7 +1,4 @@
-from sys import argv
-
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QApplication
 
 from backend.backend_manager import BackendManager
@@ -35,7 +32,7 @@ from main_tabs.unit_testing.__init__ import UnitTestingWidget
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, app: QApplication):
+    def __init__(self, app: QApplication, args):
         super(MainWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)
@@ -129,7 +126,7 @@ class MainWindow(QMainWindow):
         # self.sm.finish_change_task()
         self.show_tab('code')
 
-        self.bm.parse_cmd_args(argv)
+        self.bm.parse_cmd_args(args)
 
     def add_tab(self, widget: MainTab, identifier: str, name: str):
         self._layout.addWidget(widget, 1)

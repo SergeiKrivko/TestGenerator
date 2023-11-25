@@ -38,8 +38,6 @@ class Searcher(QThread):
         try:
             with open(f'{self.sm.app_data_dir}/programs.json', encoding='utf-8') as f:
                 programs = {key: list(map(ProgramInstance.from_json, item)) for key, item in loads(f.read()).items()}
-                if self.wait:
-                    sleep(2)
                 for key, item in programs.items():
                     PROGRAMS[key].set_existing(item)
                 if not isinstance(programs, dict):

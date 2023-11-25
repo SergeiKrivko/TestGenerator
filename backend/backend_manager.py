@@ -1,5 +1,7 @@
 import os.path
 import random
+import sys
+from time import sleep
 from types import FunctionType
 from typing import Literal
 
@@ -15,7 +17,6 @@ from backend.backend_types.project import Project
 from backend.backend_types.unit_test import UnitTest
 from backend.backend_types.util import Util
 from backend.check_converter import CheckConverter
-from backend.notification import notification
 from backend.settings_manager import SettingsManager
 from backend.backend_types.func_test import FuncTest
 from backend.commands import *
@@ -241,12 +242,12 @@ class BackendManager(QObject):
 
     # -------------------------- TESTING --------------------------------
 
-    def start_testing(self):
+    def start_testing(self, verbose=False):
         self.run_macros_converter()
         self.startTesting.emit(self.func_tests['pos'] + self.func_tests['neg'])
         self.func_test_completed = 0
         self._testing_looper = TestingLooper(self.sm, self.sm.project, self,
-                                             self.func_tests['pos'] + self.func_tests['neg'])
+                                             self.func_tests['pos'] + self.func_tests['neg'], verbose=verbose)
         self._testing_looper.testStatusChanged.connect(self.func_test_set_status)
         self._testing_looper.finished.connect(lambda: self.endTesting.emit(self._testing_looper.coverage,
                                                                            self._testing_looper.coverage_html))
@@ -471,8 +472,8 @@ class BackendManager(QObject):
     # ------------------- cmd args --------------------------
 
     def parse_cmd_args(self, args):
-        if len(args) == 2 and os.path.isfile(args[1]):
-            path = os.path.abspath(os.path.split(args[1])[0])
+        if args.file:
+            path = args.file
             main_project, subproject = self.sm.find_main_project(
                 path, temp=self.sm.get_general('open_file_temp_project'))
             lst = subproject.get('opened_files', [])
@@ -480,13 +481,37 @@ class BackendManager(QObject):
             subproject.set('opened_files', lst)
             subproject.save_settings()
             self.open_main_project(main_project, subproject)
-            return
-        if len(args) == 3 and args[1] in ['-d', '--directory'] and os.path.isdir(args[2]):
-            path = os.path.abspath(args[2])
+        elif args.directory:
+            path = args.directory
             self.open_main_project(*self.sm.find_main_project(path, temp=self.sm.get_general('open_dir_temp_project')))
-            return
+        else:
+            self.open_main_project(self.sm.get_general('project'))
 
-        self.open_main_project(self.sm.get_general('project'))
+        while not self._loader.isFinished():
+            sleep(0.1)
+
+        if args.build:
+            try:
+                build_id = int(args.build)
+            except ValueError:
+                for key, item in self.builds.items():
+                    if item['name'] == args.build:
+                        build_id = key
+                        break
+                else:
+                    raise KeyError("Build not found")
+            build = self.builds[build_id]
+            command = build.run(self.sm.project, self.sm, args)
+            cwd = build.get('cwd', '.') if os.path.isabs(build.get('cwd', '.')) else \
+                os.path.join(self.sm.project.path(), build.get('cwd', '.'))
+            subprocess.run(command, cwd=cwd)
+
+        if args.testing:
+            self.start_testing(verbose=True)
+            while not self._testing_looper.isFinished():
+                sleep(0.1)
+
+        self.close_program()
 
     def notification(self, title, message):
         self.showNotification.emit(title, message)

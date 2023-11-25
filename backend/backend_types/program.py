@@ -34,11 +34,11 @@ class Program:
 
     def set_existing(self, programs: list['ProgramInstance']):
         for program in programs:
-            self.add_existing(program)
+            self.add_existing(program, check=False)
 
-    def add_existing(self, program: 'ProgramInstance'):
+    def add_existing(self, program: 'ProgramInstance', check=True):
         valid = True
-        if isinstance(self._validator, _ProgramValidator):
+        if check and isinstance(self._validator, _ProgramValidator):
             valid = False
             try:
                 res = program(self._validator.key, timeout=5)

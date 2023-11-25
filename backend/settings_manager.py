@@ -187,7 +187,6 @@ class SettingsManager(QObject):
             project.set('default_struct', True)
             project.set('default_compiler_settings', True)
             project.set('default_testing_settings', True)
-            print(f"temp: {temp}")
             if temp:
                 project.set('temp', True)
             self.projects[path] = project

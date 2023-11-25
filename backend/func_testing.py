@@ -20,7 +20,7 @@ class TestingLooper(QThread):
     compileFailed = pyqtSignal(str)
     utilFailed = pyqtSignal(str, str, str)
 
-    def __init__(self, sm, project: Project, manager, tests: list[FuncTest]):
+    def __init__(self, sm, project: Project, manager, tests: list[FuncTest], verbose=False):
         super(TestingLooper, self).__init__()
         self.sm = sm
         self._project = project
@@ -37,6 +37,7 @@ class TestingLooper(QThread):
         self._build = None
         if self._build_id is not None:
             self._build = self._manager.get_build(self._build_id)
+        self.verbose = verbose
 
     def prepare_test(self, test: FuncTest, index: int):
         test.clear_output()
@@ -260,6 +261,13 @@ class TestingLooper(QThread):
             self.run_test(test, index)
 
             self.testStatusChanged.emit(test, test.status())
+
+            if self.verbose:
+                print(f"\033[33m{test.type()}{index + 1:<4}\033[33m",
+                      {1: '\033[32mPASSED\033[0m', 2: '\033[31mFAILED\033[0m'}[test.status()],
+                      '  ', test['desc'],
+                      *[f"\033[{32 if item else 31}m'{key}'\033[33m" for key, item in test.results.items()])
+
             sleep(0.01)
             i += 1
 
