@@ -7,4 +7,4 @@ except ImportError:
 ORGANISATION_NAME = "SergeiKrivko"
 ORGANISATION_URL = "https://github.com/SergeiKrivko/TestGenerator"
 APP_NAME = "TestGenerator"
-APP_VERSION = "1.9.10"
+APP_VERSION = "1.9.11"

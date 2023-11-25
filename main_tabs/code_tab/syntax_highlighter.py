@@ -86,6 +86,7 @@ class CodeEditor(QsciScintilla):
         self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
         self.text_changed = False
         self.theme_apply = False
+        self._mtime = 0 if self.path is None else os.path.getmtime(self.path)
         self._opening = False
 
     def find_language(self):
@@ -148,6 +149,7 @@ class CodeEditor(QsciScintilla):
             try:
                 with open(self.path, 'w', encoding='utf-8', newline=self.sm.line_sep) as f:
                     f.write(self.text())
+                self._mtime = os.path.getmtime(self.path)
             except FileNotFoundError:
                 pass
             except PermissionError:
@@ -186,8 +188,9 @@ class CodeEditor(QsciScintilla):
         super().show()
         self.set_theme()
         try:
-            with open(self.path, encoding='utf-8') as f:
-                self.setText(f.read())
+            if self._mtime < os.path.getmtime(self.path):
+                with open(self.path, encoding='utf-8') as f:
+                    self.setText(f.read())
         except FileNotFoundError:
             pass
         except TypeError:
