@@ -27,7 +27,7 @@ def cpp_compile(project, build, sm):
     code = True
 
     def get_dependencies(file):
-        lst = compiler(f"{h_dirs} -M {file}").stdout.split()
+        lst = compiler(f"{h_dirs} -MM {file}").stdout.split()
         lst.pop(0)
         i = 0
         while i < len(lst):
@@ -58,8 +58,8 @@ def cpp_compile(project, build, sm):
 
 def cpp_run(project, sm, build, args=''):
     compiler = PROGRAMS['g++'].get(sm, build)
-    path = compiler.convert_path(project.path())
-    return f"{'wsl -e ' if build.get('wsl') else ''}{path}/{build.get('app_file')} {args}"
+    path = compiler.convert_path(os.path.join(project.path(), build.get('app_file')))
+    return f"{path} {args}"
 
 
 def cpp_collect_coverage(sm, build):

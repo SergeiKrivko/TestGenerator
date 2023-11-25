@@ -27,7 +27,7 @@ def c_compile(project, build, sm):
     code = True
 
     def get_dependencies(file):
-        lst = compiler(f"{h_dirs} -M {file}").stdout.split()
+        lst = compiler(f"{h_dirs} -MM {file}").stdout.split()
         lst.pop(0)
         i = 0
         while i < len(lst):

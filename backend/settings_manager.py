@@ -152,6 +152,7 @@ class SettingsManager(QObject):
                     return project
 
     def find_main_project(self, path, temp=False):
+        path = os.path.abspath(path)
         first_path = path
         first_project = None
         while True:
