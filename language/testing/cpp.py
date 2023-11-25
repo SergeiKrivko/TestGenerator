@@ -1,7 +1,7 @@
 import os
 
 from backend.backend_types.program import PROGRAMS
-from backend.commands import cmd_command
+from backend.commands import cmd_command, check_files_mtime
 from language.utils import get_files
 
 
@@ -26,8 +26,21 @@ def cpp_compile(project, build, sm):
     errors = []
     code = True
 
+    def get_dependencies(file):
+        lst = compiler(f"{h_dirs} -M {file}").stdout.split()
+        lst.pop(0)
+        i = 0
+        while i < len(lst):
+            if lst[i] == '\\':
+                lst.pop(i)
+            else:
+                i += 1
+        return lst
+
     compiler_keys = build.get('keys', '')
     for c_file, o_file in zip(c_files, o_files):
+        if os.path.isfile(o_file) and check_files_mtime(o_file, get_dependencies(c_file)):
+            continue
         res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} {h_dirs} -c -o {o_file} {c_file}")
         if res.returncode:
             code = False

@@ -41,7 +41,7 @@ class Build:
             shutil.rmtree(temp_dir)
 
     def compile(self, project, bm):
-        self.clear(bm.sm)
+        # self.clear(bm.sm)
         match self.get('type'):
             case 'C':
                 return c_compile(project, self, bm.sm)

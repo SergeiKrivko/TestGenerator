@@ -148,3 +148,10 @@ def inflect(text: str, case='nomn'):
             except AttributeError:
                 res.append(word)
     return ' '.join(res)
+
+
+def check_files_mtime(file, dependencies):
+    for el in dependencies:
+        if os.path.getmtime(el) > os.path.getmtime(file):
+            return False
+    return True

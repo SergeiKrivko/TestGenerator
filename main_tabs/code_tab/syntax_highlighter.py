@@ -86,6 +86,7 @@ class CodeEditor(QsciScintilla):
         self.cursorPositionChanged.connect(lambda: self.update_api(self.getCursorPosition()))
         self.text_changed = False
         self.theme_apply = False
+        self._opening = False
 
     def find_language(self):
         if self.language is None and self.path is not None:
@@ -99,6 +100,8 @@ class CodeEditor(QsciScintilla):
             self.language_data = languages[self.language]
 
     def set_text_changed(self):
+        if self._opening:
+            return
         self.text_changed = True
 
     def set_theme(self):
@@ -139,6 +142,8 @@ class CodeEditor(QsciScintilla):
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
     def save_file(self):
+        if self._opening:
+            return
         if os.path.isfile(self.path):
             try:
                 with open(self.path, 'w', encoding='utf-8', newline=self.sm.line_sep) as f:
@@ -151,6 +156,11 @@ class CodeEditor(QsciScintilla):
     def set_text(self, text):
         self.setText(text)
         self.update_api(self.getCursorPosition())
+
+    def setText(self, text):
+        self._opening = True
+        super().setText(text)
+        self._opening = False
 
     def update_api(self, pos):
         if self._lexer is None:
