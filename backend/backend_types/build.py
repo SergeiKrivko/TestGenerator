@@ -89,8 +89,11 @@ class Build:
                 return ""
 
     def collect_coverage(self, project, sm):
+        print('coverage')
         match self.get('type', 'C'):
             case 'C':
+                return c_collect_coverage(sm, self)
+            case 'C++':
                 return c_collect_coverage(sm, self)
             case 'python_coverage':
                 return python_collect_coverage(sm, self)
@@ -100,6 +103,8 @@ class Build:
     def coverage_html(self, project, sm):
         match self.get('type', 'C'):
             case 'C':
+                return c_coverage_html(sm, self)
+            case 'C++':
                 return c_coverage_html(sm, self)
             case 'python_coverage':
                 return python_coverage_html(sm, self)

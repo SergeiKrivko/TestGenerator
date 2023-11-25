@@ -71,7 +71,7 @@ def c_collect_coverage(sm, build):
     temp_dir_wsl = gcov.convert_path(f"{sm.temp_dir()}/build{build.id}")
 
     for file in build.get('files', []):
-        res = cmd_command(f"{gcov} {file} -o {temp_dir_wsl}", shell=True, cwd=temp_dir)
+        res = gcov(f"{file} -o {temp_dir_wsl}", shell=True, cwd=temp_dir)
 
         for line in res.stdout.split('\n'):
             if "Lines executed:" in line:
