@@ -1,5 +1,6 @@
 import os
 import subprocess
+from time import sleep
 
 from PyQt6.QtCore import QByteArray, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QTextCursor
@@ -183,5 +184,4 @@ class PipeReader(QThread):
 
     def run(self) -> None:
         for symbol in iter(lambda: self._stream.read(1), ''):
-            if symbol:
-                self.readyToRead.emit(symbol)
+            self.readyToRead.emit(symbol)

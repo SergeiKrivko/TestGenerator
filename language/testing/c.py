@@ -58,8 +58,8 @@ def c_compile(project, build, sm):
 
 def c_run(project, sm, build, args=''):
     compiler = PROGRAMS['gcc'].get(sm, build)
-    path = compiler.convert_path(project.path())
-    return f"{'wsl -e ' if build.get('wsl') else ''}{path}/{build.get('app_file')} {args}"
+    path = compiler.convert_path(os.path.join(project.path(), build.get('app_file')))
+    return f"{compiler.vs_args()} {path} {args}"
 
 
 def c_collect_coverage(sm, build):

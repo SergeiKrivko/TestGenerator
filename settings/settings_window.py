@@ -68,6 +68,7 @@ class SettingsWindow(CustomDialog):
             CheckBox("Создавать временный проект при открытии файла", key='open_file_temp_project'),
             CheckBox("Создавать временный проект при открытии директории", key='open_dir_temp_project'),
             CheckBox("Использовать WSL", key='use_wsl'),
+            LineEdit("Папка с диалогами GPT", key='gpt_dialogs_path', one_line=True, width=400),
             key_type=KEY_GLOBAL)
         layout.addWidget(self.main_settings_widget)
 

@@ -95,13 +95,16 @@ class ProgramInstance:
         self.virtual_system = virtual_system
         self.valid = True
 
-    def command(self):
+    def vs_args(self):
         vs_args = []
         match self.virtual_system:
             case Program.WSL:
                 vs_args = ['wsl', '-e']
+        return ' '.join(vs_args)
 
-        return ' '.join(vs_args) + ' ' + self.path
+    def command(self):
+
+        return self.vs_args() + ' ' + self.path
 
     def __call__(self, args, **kwargs):
         vs_args = []

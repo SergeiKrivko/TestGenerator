@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
             'generator': (GeneratorTab(self.sm, self.bm, self.tm), "Генерация тестов"),
             'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
-            'chat': (ChatPanel(self.sm, self.bm, self.tm), "Чат"),
+            'gpt': (ChatPanel(self.sm, self.bm, self.tm), "Чат"),
             'telegram': (TelegramWidget(self.sm, self.tm), "Telegram"),
             'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет"),
             'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
