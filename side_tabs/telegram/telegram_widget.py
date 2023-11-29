@@ -10,7 +10,7 @@ import config
 from side_tabs.telegram.chat_widget import ChatWidget, ChatInputArea
 from side_tabs.telegram.chat_bubble import TelegramChatBubble
 from side_tabs.telegram.chat_list_widget import TelegramListWidget
-from side_tabs.telegram.telegram_api import types, tg
+from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager, TgChat
 from ui.button import Button
 from ui.custom_dialog import CustomDialog

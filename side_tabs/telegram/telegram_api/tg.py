@@ -16035,11 +16035,11 @@ def addLocalMessage(chat_id: int = None, sender_id: MessageSender = None, reply_
 
 
 def addLogMessage(verbosity_level: int = None, text: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addLogMessage',
         'verbosity_level': to_json(verbosity_level),
         'text': to_json(text),
-    }))
+    })
 
 
 def addMessageReaction(chat_id: int = None, message_id: int = None, reaction_type: ReactionType = None, is_big: bool = None, update_recent_reactions: bool = None, ):
@@ -16424,10 +16424,10 @@ def checkStickerSetName(name: str = None, ):
 
 
 def cleanFileName(file_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'cleanFileName',
         'file_name': to_json(file_name),
-    }))
+    })
 
 
 def clearAllDraftMessages(exclude_secret_chats: bool = None, ):
@@ -17433,10 +17433,10 @@ def getChatFolderChatsToLeave(chat_folder_id: int = None, ):
 
 
 def getChatFolderDefaultIconName(folder: ChatFolder = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatFolderDefaultIconName',
         'folder': to_json(folder),
-    }))
+    })
 
 
 def getChatFolderInviteLinks(chat_folder_id: int = None, ):
@@ -17805,17 +17805,17 @@ def getFileDownloadedPrefixSize(file_id: int = None, offset: int = None, ):
 
 
 def getFileExtension(mime_type: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getFileExtension',
         'mime_type': to_json(mime_type),
-    }))
+    })
 
 
 def getFileMimeType(file_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getFileMimeType',
         'file_name': to_json(file_name),
-    }))
+    })
 
 
 def getForumTopic(chat_id: int = None, message_thread_id: int = None, ):
@@ -17957,17 +17957,17 @@ def getInternalLinkType(link: str = None, ):
 
 
 def getJsonString(json_value: JsonValue = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getJsonString',
         'json_value': to_json(json_value),
-    }))
+    })
 
 
 def getJsonValue(json: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getJsonValue',
         'json': to_json(json),
-    }))
+    })
 
 
 def getLanguagePackInfo(language_pack_id: str = None, ):
@@ -17978,13 +17978,13 @@ def getLanguagePackInfo(language_pack_id: str = None, ):
 
 
 def getLanguagePackString(language_pack_database_path: str = None, localization_target: str = None, language_pack_id: str = None, key: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLanguagePackString',
         'language_pack_database_path': to_json(language_pack_database_path),
         'localization_target': to_json(localization_target),
         'language_pack_id': to_json(language_pack_id),
         'key': to_json(key),
-    }))
+    })
 
 
 def getLanguagePackStrings(language_pack_id: str = None, keys: list[str] = None, ):
@@ -18003,28 +18003,28 @@ def getLocalizationTargetInfo(only_local: bool = None, ):
 
 
 def getLogStream():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLogStream',
-    }))
+    })
 
 
 def getLogTagVerbosityLevel(tag: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLogTagVerbosityLevel',
         'tag': to_json(tag),
-    }))
+    })
 
 
 def getLogTags():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLogTags',
-    }))
+    })
 
 
 def getLogVerbosityLevel():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLogVerbosityLevel',
-    }))
+    })
 
 
 def getLoginUrl(chat_id: int = None, message_id: int = None, button_id: int = None, allow_write_access: bool = None, ):
@@ -18059,10 +18059,10 @@ def getMapThumbnailFile(location: Location = None, zoom: int = None, width: int 
 
 
 def getMarkdownText(text: FormattedText = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMarkdownText',
         'text': to_json(text),
-    }))
+    })
 
 
 def getMe():
@@ -18217,10 +18217,10 @@ def getNetworkStatistics(only_current: bool = None, ):
 
 
 def getOption(name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getOption',
         'name': to_json(name),
-    }))
+    })
 
 
 def getPassportAuthorizationForm(bot_user_id: int = None, scope: str = None, public_key: str = None, nonce: str = None, ):
@@ -18279,11 +18279,11 @@ def getPhoneNumberInfo(phone_number_prefix: str = None, ):
 
 
 def getPhoneNumberInfoSync(language_code: str = None, phone_number_prefix: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPhoneNumberInfoSync',
         'language_code': to_json(language_code),
         'phone_number_prefix': to_json(phone_number_prefix),
-    }))
+    })
 
 
 def getPollVoters(chat_id: int = None, message_id: int = None, option_id: int = None, offset: int = None, limit: int = None, ):
@@ -18366,10 +18366,10 @@ def getProxyLink(proxy_id: int = None, ):
 
 
 def getPushReceiverId(payload: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPushReceiverId',
         'payload': to_json(payload),
-    }))
+    })
 
 
 def getRecentEmojiStatuses():
@@ -18617,17 +18617,17 @@ def getTemporaryPasswordState():
 
 
 def getTextEntities(text: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getTextEntities',
         'text': to_json(text),
-    }))
+    })
 
 
 def getThemeParametersJsonString(theme: ThemeParameters = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getThemeParametersJsonString',
         'theme': to_json(theme),
-    }))
+    })
 
 
 def getThemedEmojiStatuses():
@@ -18918,18 +18918,18 @@ def optimizeStorage(size: int = None, ttl: int = None, count: int = None, immuni
 
 
 def parseMarkdown(text: FormattedText = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'parseMarkdown',
         'text': to_json(text),
-    }))
+    })
 
 
 def parseTextEntities(text: str = None, parse_mode: TextParseMode = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'parseTextEntities',
         'text': to_json(text),
         'parse_mode': to_json(parse_mode),
-    }))
+    })
 
 
 def pinChatMessage(chat_id: int = None, message_id: int = None, disable_notification: bool = None, only_for_self: bool = None, ):
@@ -19600,12 +19600,12 @@ def searchPublicChats(query: str = None, ):
 
 
 def searchQuote(text: FormattedText = None, quote: FormattedText = None, quote_position: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchQuote',
         'text': to_json(text),
         'quote': to_json(quote),
         'quote_position': to_json(quote_position),
-    }))
+    })
 
 
 def searchRecentlyFoundChats(query: str = None, limit: int = None, ):
@@ -19651,13 +19651,13 @@ def searchStickers(sticker_type: StickerType = None, emojis: str = None, limit: 
 
 
 def searchStringsByPrefix(strings: list[str] = None, query: str = None, limit: int = None, return_none_for_empty_query: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchStringsByPrefix',
         'strings': to_json(strings),
         'query': to_json(query),
         'limit': to_json(limit),
         'return_none_for_empty_query': to_json(return_none_for_empty_query),
-    }))
+    })
 
 
 def searchUserByPhoneNumber(phone_number: str = None, ):
@@ -20293,25 +20293,25 @@ def setLocation(location: Location = None, ):
 
 
 def setLogStream(log_stream: LogStream = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setLogStream',
         'log_stream': to_json(log_stream),
-    }))
+    })
 
 
 def setLogTagVerbosityLevel(tag: str = None, new_verbosity_level: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setLogTagVerbosityLevel',
         'tag': to_json(tag),
         'new_verbosity_level': to_json(new_verbosity_level),
-    }))
+    })
 
 
 def setLogVerbosityLevel(new_verbosity_level: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setLogVerbosityLevel',
         'new_verbosity_level': to_json(new_verbosity_level),
-    }))
+    })
 
 
 def setLoginEmailAddress(new_login_email_address: str = None, ):
@@ -20745,10 +20745,10 @@ def testProxy(server: str = None, port: int = None, type: ProxyType = None, dc_i
 
 
 def testReturnError(error: Error = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testReturnError',
         'error': to_json(error),
-    }))
+    })
 
 
 def testSquareInt(x: int = None, ):

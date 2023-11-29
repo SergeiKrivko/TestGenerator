@@ -44,6 +44,7 @@ class TelegramManager(QThread):
     insertMessage = pyqtSignal(tg.Message)
     loadingFinished = pyqtSignal(TgChat)
     updateFolders = pyqtSignal(dict)
+    addMessageReactions = pyqtSignal(tg.Message, list)
 
     updateUserStatus = pyqtSignal(str)
 
@@ -170,6 +171,8 @@ class TelegramManager(QThread):
                     el.chat_id).message_count():
                 self.get_chat(el.chat_id).last_message_count = self.get_chat(el.chat_id).message_count()
                 self.loadingFinished.emit(self.get_chat(el.chat_id))
+        elif isinstance(event, tg.AddedReactions):
+            self.addMessageReactions.emit(event.reactions)
 
         # USERS
 

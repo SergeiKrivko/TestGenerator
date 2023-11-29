@@ -81,6 +81,12 @@ class TelegramChatBubble(QWidget):
         self._label.setMaximumWidth(self._fm_width)
         self._layout.addWidget(self._label, 10)
 
+        self._reactions_layout = QHBoxLayout()
+        self._layout.addLayout(self._reactions_layout)
+        self._reactions = []
+
+        # tg.getMessageAddedReactions(self._message.chat_id, self._message.id, limit=5)
+
         widget = QWidget()
         main_layout.addWidget(widget, 1)
 

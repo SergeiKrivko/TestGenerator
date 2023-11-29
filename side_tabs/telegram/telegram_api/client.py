@@ -30,7 +30,7 @@ class TgClient(Client):
         tg.client = self
 
     def send(self, data: dict):
-        print(data)
+        # print(data)
         self.tdjson.send(data)
 
     def func(self, dct):

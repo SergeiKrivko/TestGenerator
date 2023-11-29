@@ -3,7 +3,7 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QScrollArea
 
-from side_tabs.telegram.telegram_api import types, tg
+from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager, TgChat
 
 
@@ -21,6 +21,7 @@ class TelegramListWidget(QScrollArea):
 
         self._layout = QVBoxLayout()
         self._layout.setSpacing(0)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self._layout.setContentsMargins(2, 2, 2, 2)
         scroll_widget.setLayout(self._layout)
 
@@ -252,15 +253,16 @@ class LastMessageWidget(QWidget):
         layout.addWidget(self._icon_label)
 
         v_layout = QVBoxLayout()
+        v_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         v_layout.setSpacing(1)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(v_layout)
 
-        self._sender_label = Label()
-        self._sender_label.setWordWrap(True)
-        self._sender_label.setFixedHeight(12)
-        self._sender_label.mouseMoving.connect(self.mouseMoving.emit)
-        v_layout.addWidget(self._sender_label)
+        # self._sender_label = Label()
+        # self._sender_label.setWordWrap(True)
+        # self._sender_label.setFixedHeight(12)
+        # self._sender_label.mouseMoving.connect(self.mouseMoving.emit)
+        # v_layout.addWidget(self._sender_label)
 
         self._text_label = Label()
         self._text_label.setWordWrap(True)
@@ -270,29 +272,27 @@ class LastMessageWidget(QWidget):
 
     def set_theme(self):
         self._text_label.setFont(self._tm.font_small)
-        self._sender_label.setFont(self._tm.font_small)
-        self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}")
+        # self._sender_label.setFont(self._tm.font_small)
+        # self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}")
 
     def open_message(self, message: tg.Message, sender: tg.User = None):
         text = ""
         icon = None
 
         if sender:
-            self._sender_label.show()
-            self._sender_label.setText(sender.first_name + ' ' + sender.last_name)
-        else:
-            self._sender_label.hide()
+            # self._sender_label.show()
+            text += sender.first_name + ': '
 
         if message is not None:
             match message.content.__class__:
                 case tg.MessageText:
-                    text = message.content.text.text
+                    text += message.content.text.text
                 case tg.MessagePhoto:
                     icon = message.content.photo.minithumbnail
                     if message.content.caption.text:
-                        text = message.content.caption.text
+                        text += message.content.caption.text
                     else:
-                        text = "Фотография"
+                        text += "Фотография"
 
         self._text_label.setText(text[:80])
         if isinstance(icon, tg.Minithumbnail):
