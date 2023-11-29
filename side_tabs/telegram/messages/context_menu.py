@@ -10,6 +10,7 @@ class ContextMenu(QMenu):
     IMPORT = 3
     OPEN_FILE = 4
     SHOW_IN_FOLDER = 5
+    DELETE_FOR_ALL = 6
 
     def __init__(self, message: tg.Message, tm):
         super().__init__()
@@ -18,6 +19,9 @@ class ContextMenu(QMenu):
 
         action = self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить")
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
+
+        action = self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить для всех")
+        action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_FOR_ALL))
 
         self.addSeparator()
 

@@ -6,6 +6,8 @@ from ui.button import Button
 
 
 class ChatWidget(QWidget):
+    loadRequested = pyqtSignal()
+
     def __init__(self, sm, tm):
         super().__init__()
         self._sm = sm
@@ -17,10 +19,11 @@ class ChatWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
-        self._scroll_area = QScrollArea()
+        self._scroll_area = _ScrollArea()
+        self._scroll_area.loadRequested.connect(self.loadRequested.emit)
         layout.addWidget(self._scroll_area, 1)
 
-        scroll_widget = QWidget()
+        scroll_widget = _ScrollWidget()
         self._scroll_area.setWidget(scroll_widget)
         self._scroll_area.setWidgetResizable(True)
         self._scroll_layout = QVBoxLayout()
@@ -48,7 +51,8 @@ class ChatWidget(QWidget):
         self._button.clicked.connect(self.send_message)
         bottom_layout.addWidget(self._button)
 
-        self.looper = None
+        self._last_pos = 0
+        self._last_max = 0
 
     def send_message(self):
         pass
@@ -65,6 +69,16 @@ class ChatWidget(QWidget):
         self._scroll_layout.insertWidget(0, bubble)
         self._bubbles.insert(0, bubble)
         bubble.set_theme()
+
+    def _delete_bubbles(self, message_ids):
+        message_ids = set(message_ids)
+        i = 0
+        while i < len(self._bubbles):
+            if self._bubbles[i]._message.id in message_ids:
+                self._bubbles[i].setParent(None)
+                self._bubbles.pop(i)
+
+            i += 1
 
     def set_theme(self):
         for el in [self._scroll_area, self._text_edit, self._button, self._button_document, self._button_tg_project]:
@@ -95,3 +109,39 @@ class ChatInputArea(QTextEdit):
         else:
             super().keyPressEvent(e)
 
+
+class _ScrollArea(QScrollArea):
+    loadRequested = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self._last_pos = 0
+        self._last_max = 0
+        self.verticalScrollBar().valueChanged.connect(self._on_scrolled)
+
+    def setWidget(self, w: '_ScrollWidget') -> None:
+        super().setWidget(w)
+        w.resized.connect(self._on_resized)
+
+    def _on_scrolled(self, pos):
+        if pos < 50:
+            self.loadRequested.emit()
+
+    def _on_resized(self) -> None:
+        self._last_pos = self.verticalScrollBar().value()
+        print(self._last_pos, self._last_max)
+        if self._last_pos > self._last_max - 10:
+            self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
+        elif self._last_pos < 50:
+            self.verticalScrollBar().setValue(self.verticalScrollBar().maximum() -
+                                              self._last_max + self._last_pos)
+
+        self._last_max = self.verticalScrollBar().maximum()
+
+
+class _ScrollWidget(QWidget):
+    resized = pyqtSignal()
+
+    def resizeEvent(self, a0) -> None:
+        super().resizeEvent(a0)
+        self.resized.emit()

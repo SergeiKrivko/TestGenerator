@@ -102,6 +102,7 @@ class TelegramWidget(SidePanelWidget):
         self._chat_widgets[message.chat_id].insert_message(message)
 
     def loading_finished(self, chat: TgChat):
+        self._chat_widgets[chat.id].loading = False
         self._chat_widgets[chat.id].check_if_need_to_load()
 
     def add_chat(self, chat):
@@ -158,29 +159,35 @@ class TelegramWidget(SidePanelWidget):
 
 class TelegramChatWidget(ChatWidget):
     sendMessage = pyqtSignal(str)
-    SB_VALUE_TO_LOAD = 20
 
     def __init__(self, sm, tm, chat: TgChat, manager: TelegramManager):
         super().__init__(sm, tm)
         self._chat = chat
         self._manager = manager
+        self.loading = False
 
         self._scroll_bar = self._scroll_area.verticalScrollBar()
         self._scroll_bar.valueChanged.connect(self._on_scroll_bar_value_changed)
 
-        self._messages_to_load = 50
+        self._messages_to_load = 20
+        self.loadRequested.connect(self.add_messages_to_load)
 
         if not self._chat.permissions.can_send_basic_messages:
             self._text_edit.hide()
             self._button.hide()
 
         self._button_document.clicked.connect(self._sending_document)
+        self._manager.deleteMessages.connect(self._delete_messages)
 
     def show(self) -> None:
         if self.isHidden():
-            self._scroll_bar.setValue(self._scroll_bar.maximum())
+            # self._scroll_bar.setValue(self._scroll_bar.maximum())
             self.check_if_need_to_load()
         super().show()
+
+    def _delete_messages(self, chat_id, message_ids):
+        if chat_id == self._chat.id:
+            self._delete_bubbles(message_ids)
 
     def _sending_document(self):
         path, _ = QFileDialog.getOpenFileName(caption="Выберите файл для отправки")
@@ -191,8 +198,11 @@ class TelegramChatWidget(ChatWidget):
                                                 self._chat.id)
 
     def check_if_need_to_load(self):
+        if self.loading:
+            return
         if self._chat.message_count() < self._messages_to_load:
             self._manager.load_messages(self._chat)
+            self.loading = True
 
     def _on_scroll_bar_value_changed(self):
         for el in self._bubbles:
@@ -200,7 +210,8 @@ class TelegramChatWidget(ChatWidget):
                 el.set_read()
 
     def add_messages_to_load(self):
-        self._messages_to_load = self._chat.message_count() + 50
+        self._messages_to_load = self._chat.message_count() + 10
+        self.check_if_need_to_load()
 
     def add_message(self, message: tg.Message):
         self.add_bubble(message)

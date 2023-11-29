@@ -45,6 +45,7 @@ class TelegramManager(QThread):
     loadingFinished = pyqtSignal(TgChat)
     updateFolders = pyqtSignal(dict)
     addMessageReactions = pyqtSignal(tg.Message, list)
+    deleteMessages = pyqtSignal(object, list)
 
     updateUserStatus = pyqtSignal(str)
 
@@ -162,6 +163,8 @@ class TelegramManager(QThread):
             if event.last_message is not None:
                 chat = self.get_chat(event.chat_id)
                 chat.set_last_message(event.last_message)
+        elif isinstance(event, tg.UpdateDeleteMessages):
+            self.deleteMessages.emit(event.chat_id, event.message_ids)
         elif isinstance(event, tg.Messages):
             el = None
             for el in event.messages:

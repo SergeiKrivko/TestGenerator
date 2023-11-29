@@ -280,19 +280,22 @@ class LastMessageWidget(QWidget):
         icon = None
 
         if sender:
-            # self._sender_label.show()
             text += sender.first_name + ': '
 
         if message is not None:
-            match message.content.__class__:
-                case tg.MessageText:
-                    text += message.content.text.text
-                case tg.MessagePhoto:
-                    icon = message.content.photo.minithumbnail
-                    if message.content.caption.text:
-                        text += message.content.caption.text
-                    else:
-                        text += "Фотография"
+            if isinstance(message.content, tg.MessageText):
+                text += message.content.text.text
+            if isinstance(message.content, tg.MessagePhoto):
+                icon = message.content.photo.minithumbnail
+                if message.content.caption.text:
+                    text += message.content.caption.text
+                else:
+                    text += "Фотография"
+            if isinstance(message.content, tg.MessageDocument):
+                if message.content.caption.text:
+                    text += message.content.caption.text
+                else:
+                    text += message.content.document.file_name
 
         self._text_label.setText(text[:80])
         if isinstance(icon, tg.Minithumbnail):

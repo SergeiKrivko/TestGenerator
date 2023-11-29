@@ -120,7 +120,9 @@ class TelegramChatBubble(QWidget):
         menu.exec()
         match menu.action:
             case ContextMenu.DELETE:
-                tg.deleteMessages(self._message.chat_id, [self._message.id])
+                tg.deleteMessages(self._message.chat_id, [self._message.id], revoke=False)
+            case ContextMenu.DELETE_FOR_ALL:
+                tg.deleteMessages(self._message.chat_id, [self._message.id], revoke=True)
             case ContextMenu.SAVE:
                 self._document_widget.save()
             case ContextMenu.OPEN_FILE:
