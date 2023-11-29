@@ -145,9 +145,9 @@ class TelegramManager(QThread):
                 if chat_id not in self._chats:
                     tg.getChat(chat_id)
             self.chatsLoaded.emit(event.chat_ids)
-        elif isinstance(event, tg.UpdateChatFilters):
-            for el in event.chat_filters:
-                self._chat_lists[el.title] = tg.ChatListFilter(chat_filter_id=el.id)
+        elif isinstance(event, tg.UpdateChatFolders):
+            for el in event.chat_folders:
+                self._chat_lists[el.title] = tg.ChatListFolder(chat_folder_id=el.id)
             self.updateFolders.emit(self._chat_lists)
 
         # MESSAGES
@@ -182,6 +182,8 @@ class TelegramManager(QThread):
         # FILES
 
         elif isinstance(event, tg.UpdateFile):
+            if event.file.id not in self._files:
+                self._files[event.file.id] = event.file
             tg.update_object(file := self._files[event.file.id], event.file)
             self.updateFile.emit(file)
         # else:

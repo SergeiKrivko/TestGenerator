@@ -88,7 +88,6 @@ class TelegramWidget(SidePanelWidget):
             self._tab_bar.addTab(key)
 
     def update_chats(self, chat_ids):
-        print(chat_ids)
         self._list_widget.clear()
         for el in chat_ids:
             self.add_chat(self._manager.get_chat(el))
@@ -171,7 +170,7 @@ class TelegramChatWidget(ChatWidget):
 
         self._messages_to_load = 50
 
-        if not self._chat.permissions.can_send_messages:
+        if not self._chat.permissions.can_send_basic_messages:
             self._text_edit.hide()
             self._button.hide()
 
@@ -306,6 +305,8 @@ class PasswordWidget(CustomDialog):
         super().__init__(tm, config.APP_NAME, button_close=True)
         super().set_theme()
 
+        self.setFixedWidth(300)
+
         if isinstance(state, tg.AuthorizationStateWaitPhoneNumber):
             self._text = "Пожалуйста, введите свой номер телефона:"
             self._password_mode = False
@@ -335,17 +336,18 @@ class PasswordWidget(CustomDialog):
         self.setLayout(layout)
 
         self._label = QLabel(self._text)
+        self._label.setWordWrap(True)
         layout.addWidget(self._label)
 
         self._line_edit = QLineEdit()
         if self._password_mode:
-            self._line_edit.setEchoMode(QLineEdit.Password)
+            self._line_edit.setEchoMode(QLineEdit.EchoMode.Password)
         self._line_edit.returnPressed.connect(self.accept)
         layout.addWidget(self._line_edit)
 
         self._line_edit2 = QLineEdit()
         if self._password_mode:
-            self._line_edit2.setEchoMode(QLineEdit.Password)
+            self._line_edit2.setEchoMode(QLineEdit.EchoMode.Password)
         self._line_edit2.returnPressed.connect(self.accept)
         if not self._2_lines:
             self._line_edit2.hide()

@@ -1270,6 +1270,10 @@ QMenu::item {{
     padding: 4px 16px;
 }}
 
+QMenu::icon {{
+    padding-left: 6px;
+}}
+
 QMenu::item:selected {{
     background-color: {self[f'{palette}HoverColor']};
 }}

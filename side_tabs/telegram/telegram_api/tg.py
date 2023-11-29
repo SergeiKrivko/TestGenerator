@@ -22,6 +22,20 @@ class Function(TlObject):
         self._data = kwargs
 
 
+class AccentColor(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Accent color identifier.
+        self.id: int = get_object(kwargs.get('id'))
+        # Identifier of a built-in color to use in places, where only one color is needed; 0-6.
+        self.built_in_accent_color_id: int = get_object(kwargs.get('built_in_accent_color_id'))
+        # The list of 1-3 colors in RGB format, describing the accent color, as expected to be shown in light themes.
+        self.light_theme_colors: list[int] = get_object(kwargs.get('light_theme_colors'))
+        # The list of 1-3 colors in RGB format, describing the accent color, as expected to be shown in dark themes.
+        self.dark_theme_colors: list[int] = get_object(kwargs.get('dark_theme_colors'))
+
+
 class AccountTtl(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -50,6 +64,8 @@ class AddedReaction(Object):
         self.type: ReactionType = get_object(kwargs.get('type'))
         # Identifier of the chat member, applied the reaction.
         self.sender_id: MessageSender = get_object(kwargs.get('sender_id'))
+        # True, if the reaction was added by the current user.
+        self.is_outgoing: bool = get_object(kwargs.get('is_outgoing'))
         # Point in time (Unix timestamp) when the reaction was added.
         self.date: int = get_object(kwargs.get('date'))
 
@@ -220,8 +236,8 @@ class ArchiveChatListSettings(Object):
         self.archive_and_mute_new_chats_from_unknown_users: bool = get_object(kwargs.get('archive_and_mute_new_chats_from_unknown_users'))
         # True, if unmuted chats will be kept in the Archive chat list when they get a new message.
         self.keep_unmuted_chats_archived: bool = get_object(kwargs.get('keep_unmuted_chats_archived'))
-        # True, if unmuted chats, that are always included or pinned in a filter, will be kept in the Archive chat list when they get a new message. Ignored if keep_unmuted_chats_archived == true.
-        self.keep_chats_from_filters_archived: bool = get_object(kwargs.get('keep_chats_from_filters_archived'))
+        # True, if unmuted chats, that are always included or pinned in a folder, will be kept in the Archive chat list when they get a new message. Ignored if keep_unmuted_chats_archived == true.
+        self.keep_chats_from_folders_archived: bool = get_object(kwargs.get('keep_chats_from_folders_archived'))
 
 
 class AttachmentMenuBotColor(Object):
@@ -250,15 +266,13 @@ class AttachmentMenuBot(Object):
         self.supports_group_chats: bool = get_object(kwargs.get('supports_group_chats'))
         # True, if the bot supports opening from attachment menu in channel chats.
         self.supports_channel_chats: bool = get_object(kwargs.get('supports_channel_chats'))
-        # True, if the bot supports &quot;settings_button_pressed&quot; event.
-        self.supports_settings: bool = get_object(kwargs.get('supports_settings'))
         # True, if the user must be asked for the permission to send messages to the bot.
         self.request_write_access: bool = get_object(kwargs.get('request_write_access'))
-        # True, if the bot was explicitly added by the user. If the bot isn't added then on the first bot launch toggleBotIsAddedToAttachmentMenu must be called and the bot must be added or removed.
+        # True, if the bot was explicitly added by the user. If the bot isn't added, then on the first bot launch toggleBotIsAddedToAttachmentMenu must be called and the bot must be added or removed.
         self.is_added: bool = get_object(kwargs.get('is_added'))
         # True, if the bot must be shown in the attachment menu.
         self.show_in_attachment_menu: bool = get_object(kwargs.get('show_in_attachment_menu'))
-        # True, if the bot must be shown in the side menu menu.
+        # True, if the bot must be shown in the side menu.
         self.show_in_side_menu: bool = get_object(kwargs.get('show_in_side_menu'))
         # True, if a disclaimer, why the bot is shown in the side menu, is needed.
         self.show_disclaimer_in_side_menu: bool = get_object(kwargs.get('show_disclaimer_in_side_menu'))
@@ -662,7 +676,7 @@ class AvailableReactions(Object):
         self.recent_reactions: list[AvailableReaction] = get_object(kwargs.get('recent_reactions'))
         # List of popular reactions.
         self.popular_reactions: list[AvailableReaction] = get_object(kwargs.get('popular_reactions'))
-        # True, if custom emoji reactions could be added by Telegram Premium subscribers.
+        # True, if any custom emoji reaction can be added by Telegram Premium subscribers.
         self.allow_custom_emoji: bool = get_object(kwargs.get('allow_custom_emoji'))
 
 
@@ -1022,11 +1036,11 @@ class ChatAdministratorRights(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # True, if the administrator can get chat event log, get chat statistics, get message statistics in channels, get channel members, see anonymous administrators in supergroups and ignore slow mode. Implied by any other privilege; applicable to supergroups and channels only.
+        # True, if the administrator can get chat event log, get chat boosts in channels, get channel members, report supergroup spam messages, see anonymous administrators in supergroups and ignore slow mode. Implied by any other privilege; applicable to supergroups and channels only.
         self.can_manage_chat: bool = get_object(kwargs.get('can_manage_chat'))
         # True, if the administrator can change the chat title, photo, and other settings.
         self.can_change_info: bool = get_object(kwargs.get('can_change_info'))
-        # True, if the administrator can create channel posts; applicable to channels only.
+        # True, if the administrator can create channel posts or view channel statistics; applicable to channels only.
         self.can_post_messages: bool = get_object(kwargs.get('can_post_messages'))
         # True, if the administrator can edit messages of other users and pin messages; applicable to channels only.
         self.can_edit_messages: bool = get_object(kwargs.get('can_edit_messages'))
@@ -1034,7 +1048,7 @@ class ChatAdministratorRights(Object):
         self.can_delete_messages: bool = get_object(kwargs.get('can_delete_messages'))
         # True, if the administrator can invite new users to the chat.
         self.can_invite_users: bool = get_object(kwargs.get('can_invite_users'))
-        # True, if the administrator can restrict, ban, or unban chat members; always true for channels.
+        # True, if the administrator can restrict, ban, or unban chat members or view supergroup statistics; always true for channels.
         self.can_restrict_members: bool = get_object(kwargs.get('can_restrict_members'))
         # True, if the administrator can pin messages; applicable to basic groups and supergroups only.
         self.can_pin_messages: bool = get_object(kwargs.get('can_pin_messages'))
@@ -1044,6 +1058,12 @@ class ChatAdministratorRights(Object):
         self.can_promote_members: bool = get_object(kwargs.get('can_promote_members'))
         # True, if the administrator can manage video chats.
         self.can_manage_video_chats: bool = get_object(kwargs.get('can_manage_video_chats'))
+        # True, if the administrator can create new channel stories, or edit and delete posted stories; applicable to channels only.
+        self.can_post_stories: bool = get_object(kwargs.get('can_post_stories'))
+        # True, if the administrator can edit stories posted by other users, pin stories and access story archive; applicable to channels only.
+        self.can_edit_stories: bool = get_object(kwargs.get('can_edit_stories'))
+        # True, if the administrator can delete stories posted by other users; applicable to channels only.
+        self.can_delete_stories: bool = get_object(kwargs.get('can_delete_stories'))
         # True, if the administrator isn't shown in the chat member list and sends messages anonymously; applicable to supergroups only.
         self.is_anonymous: bool = get_object(kwargs.get('is_anonymous'))
 
@@ -1090,6 +1110,56 @@ class BotInfo(Object):
         self.edit_settings_link: InternalLinkType = get_object(kwargs.get('edit_settings_link'))
 
 
+class WebApp(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Web App short name.
+        self.short_name: str = get_object(kwargs.get('short_name'))
+        # Web App title.
+        self.title: str = get_object(kwargs.get('title'))
+        # Web App description.
+        self.description: str = get_object(kwargs.get('description'))
+        # Web App photo.
+        self.photo: Photo = get_object(kwargs.get('photo'))
+        # Web App animation; may be null.
+        self.animation: Animation = get_object(kwargs.get('animation'))
+
+
+class BotWriteAccessAllowReason(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class BotWriteAccessAllowReasonConnectedWebsite(BotWriteAccessAllowReason):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Domain name of the connected website.
+        self.domain_name: str = get_object(kwargs.get('domain_name'))
+
+
+class BotWriteAccessAllowReasonAddedToAttachmentMenu(BotWriteAccessAllowReason):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class BotWriteAccessAllowReasonLaunchedWebApp(BotWriteAccessAllowReason):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Information about the Web App.
+        self.web_app: WebApp = get_object(kwargs.get('web_app'))
+
+
+class BotWriteAccessAllowReasonAcceptedRequest(BotWriteAccessAllowReason):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class CallState(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -1102,7 +1172,7 @@ class Call(Object):
         self._data = kwargs
         # Call identifier, not persistent.
         self.id: int = get_object(kwargs.get('id'))
-        # Peer user identifier.
+        # User identifier of the other call participant.
         self.user_id: int = get_object(kwargs.get('user_id'))
         # True, if the call is outgoing.
         self.is_outgoing: bool = get_object(kwargs.get('is_outgoing'))
@@ -1308,7 +1378,7 @@ class CallStateReady(CallState):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Call protocols supported by the peer.
+        # Call protocols supported by the other call participant.
         self.protocol: CallProtocol = get_object(kwargs.get('protocol'))
         # List of available call servers.
         self.servers: list[CallServer] = get_object(kwargs.get('servers'))
@@ -1332,7 +1402,7 @@ class CallStateDiscarded(CallState):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The reason, why the call has ended.
+        # The reason why the call has ended.
         self.reason: CallDiscardReason = get_object(kwargs.get('reason'))
         # True, if the call rating must be sent to the server.
         self.need_rating: bool = get_object(kwargs.get('need_rating'))
@@ -1407,6 +1477,12 @@ class CanSendStoryResultOk(CanSendStoryResult):
 
 
 class CanSendStoryResultPremiumNeeded(CanSendStoryResult):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class CanSendStoryResultBoostNeeded(CanSendStoryResult):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -1510,7 +1586,7 @@ class ChatNotificationSettings(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # If true, mute_for is ignored and the value for the relevant type of chat or the forum chat is used instead.
+        # If true, the value for the relevant type of chat or the forum chat is used instead of mute_for.
         self.use_default_mute_for: bool = get_object(kwargs.get('use_default_mute_for'))
         # Time left before notifications will be unmuted, in seconds.
         self.mute_for: int = get_object(kwargs.get('mute_for'))
@@ -1518,11 +1594,11 @@ class ChatNotificationSettings(Object):
         self.use_default_sound: bool = get_object(kwargs.get('use_default_sound'))
         # Identifier of the notification sound to be played for messages; 0 if sound is disabled.
         self.sound_id: int = get_object(kwargs.get('sound_id'))
-        # If true, show_preview is ignored and the value for the relevant type of chat or the forum chat is used instead.
+        # If true, the value for the relevant type of chat or the forum chat is used instead of show_preview.
         self.use_default_show_preview: bool = get_object(kwargs.get('use_default_show_preview'))
         # True, if message content must be displayed in notifications.
         self.show_preview: bool = get_object(kwargs.get('show_preview'))
-        # If true, mute_stories is ignored and the value for the relevant type of chat is used instead.
+        # If true, the value for the relevant type of chat is used instead of mute_stories.
         self.use_default_mute_stories: bool = get_object(kwargs.get('use_default_mute_stories'))
         # True, if story notifications are disabled for the chat.
         self.mute_stories: bool = get_object(kwargs.get('mute_stories'))
@@ -1530,15 +1606,15 @@ class ChatNotificationSettings(Object):
         self.use_default_story_sound: bool = get_object(kwargs.get('use_default_story_sound'))
         # Identifier of the notification sound to be played for stories; 0 if sound is disabled.
         self.story_sound_id: int = get_object(kwargs.get('story_sound_id'))
-        # If true, show_story_sender is ignored and the value for the relevant type of chat is used instead.
+        # If true, the value for the relevant type of chat is used instead of show_story_sender.
         self.use_default_show_story_sender: bool = get_object(kwargs.get('use_default_show_story_sender'))
         # True, if the sender of stories must be displayed in notifications.
         self.show_story_sender: bool = get_object(kwargs.get('show_story_sender'))
-        # If true, disable_pinned_message_notifications is ignored and the value for the relevant type of chat or the forum chat is used instead.
+        # If true, the value for the relevant type of chat or the forum chat is used instead of disable_pinned_message_notifications.
         self.use_default_disable_pinned_message_notifications: bool = get_object(kwargs.get('use_default_disable_pinned_message_notifications'))
         # If true, notifications for incoming pinned messages will be created as for an ordinary unread message.
         self.disable_pinned_message_notifications: bool = get_object(kwargs.get('disable_pinned_message_notifications'))
-        # If true, disable_mention_notifications is ignored and the value for the relevant type of chat or the forum chat is used instead.
+        # If true, the value for the relevant type of chat or the forum chat is used instead of disable_mention_notifications.
         self.use_default_disable_mention_notifications: bool = get_object(kwargs.get('use_default_disable_mention_notifications'))
         # If true, notifications for messages with mentions will be created as for an ordinary unread message.
         self.disable_mention_notifications: bool = get_object(kwargs.get('disable_mention_notifications'))
@@ -1548,10 +1624,20 @@ class ChatPermissions(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # True, if the user can send text messages, contacts, invoices, locations, and venues.
-        self.can_send_messages: bool = get_object(kwargs.get('can_send_messages'))
+        # True, if the user can send text messages, contacts, giveaways, invoices, locations, and venues.
+        self.can_send_basic_messages: bool = get_object(kwargs.get('can_send_basic_messages'))
         # True, if the user can send music files.
-        self.can_send_media_messages: bool = get_object(kwargs.get('can_send_media_messages'))
+        self.can_send_audios: bool = get_object(kwargs.get('can_send_audios'))
+        # True, if the user can send documents.
+        self.can_send_documents: bool = get_object(kwargs.get('can_send_documents'))
+        # True, if the user can send photos.
+        self.can_send_photos: bool = get_object(kwargs.get('can_send_photos'))
+        # True, if the user can send videos.
+        self.can_send_videos: bool = get_object(kwargs.get('can_send_videos'))
+        # True, if the user can send video notes.
+        self.can_send_video_notes: bool = get_object(kwargs.get('can_send_video_notes'))
+        # True, if the user can send voice notes.
+        self.can_send_voice_notes: bool = get_object(kwargs.get('can_send_voice_notes'))
         # True, if the user can send polls.
         self.can_send_polls: bool = get_object(kwargs.get('can_send_polls'))
         # True, if the user can send animations, games, stickers, and dice and use inline bots.
@@ -1564,6 +1650,8 @@ class ChatPermissions(Object):
         self.can_invite_users: bool = get_object(kwargs.get('can_invite_users'))
         # True, if the user can pin messages.
         self.can_pin_messages: bool = get_object(kwargs.get('can_pin_messages'))
+        # True, if the user can manage topics.
+        self.can_manage_topics: bool = get_object(kwargs.get('can_manage_topics'))
 
 
 class ChatPhotoInfo(Object):
@@ -1600,8 +1688,8 @@ class DraftMessage(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Identifier of the replied message; 0 if none.
-        self.reply_to_message_id: int = get_object(kwargs.get('reply_to_message_id'))
+        # Information about the message to be replied; must be of the type inputMessageReplyToMessage; may be null if none.
+        self.reply_to: InputMessageReplyTo = get_object(kwargs.get('reply_to'))
         # Point in time (Unix timestamp) when the draft was created.
         self.date: int = get_object(kwargs.get('date'))
         # Content of the message draft; must be of the type inputMessageText.
@@ -1630,6 +1718,8 @@ class Message(Object):
         self.can_be_edited: bool = get_object(kwargs.get('can_be_edited'))
         # True, if the message can be forwarded.
         self.can_be_forwarded: bool = get_object(kwargs.get('can_be_forwarded'))
+        # True, if the message can be replied in another chat or topic.
+        self.can_be_replied_in_another_chat: bool = get_object(kwargs.get('can_be_replied_in_another_chat'))
         # True, if content of the message can be saved locally or copied.
         self.can_be_saved: bool = get_object(kwargs.get('can_be_saved'))
         # True, if the message can be deleted only for the current user while other users will continue to see it.
@@ -1662,6 +1752,8 @@ class Message(Object):
         self.edit_date: int = get_object(kwargs.get('edit_date'))
         # Information about the initial message sender; may be null if none or unknown.
         self.forward_info: MessageForwardInfo = get_object(kwargs.get('forward_info'))
+        # Information about the initial message for messages created with importMessages; may be null if the message isn't imported.
+        self.import_info: MessageImportInfo = get_object(kwargs.get('import_info'))
         # Information about interactions with the message; may be null if none.
         self.interaction_info: MessageInteractionInfo = get_object(kwargs.get('interaction_info'))
         # Information about unread reactions added to the message.
@@ -1672,7 +1764,7 @@ class Message(Object):
         self.message_thread_id: int = get_object(kwargs.get('message_thread_id'))
         # The message's self-destruct type; may be null if none.
         self.self_destruct_type: MessageSelfDestructType = get_object(kwargs.get('self_destruct_type'))
-        # Time left before the message self-destruct timer expires, in seconds; 0 if self-desctruction isn't scheduled yet.
+        # Time left before the message self-destruct timer expires, in seconds; 0 if self-destruction isn't scheduled yet.
         self.self_destruct_in: float = get_object(kwargs.get('self_destruct_in'))
         # Time left before the message will be automatically deleted by message_auto_delete_time setting of the chat, in seconds; 0 if never.
         self.auto_delete_in: float = get_object(kwargs.get('auto_delete_in'))
@@ -1714,6 +1806,10 @@ class Chat(Object):
         self.title: str = get_object(kwargs.get('title'))
         # Chat photo; may be null.
         self.photo: ChatPhotoInfo = get_object(kwargs.get('photo'))
+        # Identifier of the accent color for message sender name, and backgrounds of chat photo, reply header, and link preview.
+        self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
+        # Identifier of a custom emoji to be shown on the reply header background in replies to messages sent by the chat; 0 if none.
+        self.background_custom_emoji_id: int = get_object(kwargs.get('background_custom_emoji_id'))
         # Actions that non-administrator chat members are allowed to take in the chat.
         self.permissions: ChatPermissions = get_object(kwargs.get('permissions'))
         # Last message in the chat; may be null if none or unknown.
@@ -1908,7 +2004,7 @@ class ChatActionBarReportAddBlock(ChatActionBar):
         self._data = kwargs
         # If true, the chat was automatically archived and can be moved back to the main chat list using addChatToList simultaneously with setting chat notification settings to default using setChatNotificationSettings.
         self.can_unarchive: bool = get_object(kwargs.get('can_unarchive'))
-        # If non-negative, the current user was found by the peer through searchChatsNearby and this is the distance between the users.
+        # If non-negative, the current user was found by the other user through searchChatsNearby and this is the distance between the users.
         self.distance: int = get_object(kwargs.get('distance'))
 
 
@@ -2002,6 +2098,144 @@ class ChatAvailableReactionsSome(ChatAvailableReactions):
         self._data = kwargs
         # The list of reactions.
         self.reactions: list[ReactionType] = get_object(kwargs.get('reactions'))
+
+
+class ChatBoostSource(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class ChatBoost(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Unique identifier of the boost.
+        self.id: str = get_object(kwargs.get('id'))
+        # The number of identical boosts applied.
+        self.count: int = get_object(kwargs.get('count'))
+        # Source of the boost.
+        self.source: ChatBoostSource = get_object(kwargs.get('source'))
+        # Point in time (Unix timestamp) when the chat was boosted.
+        self.start_date: int = get_object(kwargs.get('start_date'))
+        # Point in time (Unix timestamp) when the boost will expire.
+        self.expiration_date: int = get_object(kwargs.get('expiration_date'))
+
+
+class ChatBoostLink(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The link.
+        self.link: str = get_object(kwargs.get('link'))
+        # True, if the link will work for non-members of the chat.
+        self.is_public: bool = get_object(kwargs.get('is_public'))
+
+
+class ChatBoostLinkInfo(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # True, if the link will work for non-members of the chat.
+        self.is_public: bool = get_object(kwargs.get('is_public'))
+        # Identifier of the chat to which the link points; 0 if the chat isn't found.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+
+
+class ChatBoostSlot(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Unique identifier of the slot.
+        self.slot_id: int = get_object(kwargs.get('slot_id'))
+        # Identifier of the currently boosted chat; 0 if none.
+        self.currently_boosted_chat_id: int = get_object(kwargs.get('currently_boosted_chat_id'))
+        # Point in time (Unix timestamp) when the chat was boosted; 0 if none.
+        self.start_date: int = get_object(kwargs.get('start_date'))
+        # Point in time (Unix timestamp) when the boost will expire.
+        self.expiration_date: int = get_object(kwargs.get('expiration_date'))
+        # Point in time (Unix timestamp) after which the boost can be used for another chat.
+        self.cooldown_until_date: int = get_object(kwargs.get('cooldown_until_date'))
+
+
+class ChatBoostSlots(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # List of boost slots.
+        self.slots: list[ChatBoostSlot] = get_object(kwargs.get('slots'))
+
+
+class ChatBoostSourceGiftCode(ChatBoostSource):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of a user, for which the gift code was created.
+        self.user_id: int = get_object(kwargs.get('user_id'))
+        # The created Telegram Premium gift code, which is known only if this is a gift code for the current user, or it has already been claimed.
+        self.gift_code: str = get_object(kwargs.get('gift_code'))
+
+
+class ChatBoostSourceGiveaway(ChatBoostSource):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of a user that won in the giveaway; 0 if none.
+        self.user_id: int = get_object(kwargs.get('user_id'))
+        # The created Telegram Premium gift code if it was used by the user or can be claimed by the current user; an empty string otherwise.
+        self.gift_code: str = get_object(kwargs.get('gift_code'))
+        # Identifier of the corresponding giveaway message; can be an identifier of a deleted message.
+        self.giveaway_message_id: int = get_object(kwargs.get('giveaway_message_id'))
+        # True, if the winner for the corresponding Telegram Premium subscription wasn't chosen, because there were not enough participants.
+        self.is_unclaimed: bool = get_object(kwargs.get('is_unclaimed'))
+
+
+class ChatBoostSourcePremium(ChatBoostSource):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the user.
+        self.user_id: int = get_object(kwargs.get('user_id'))
+
+
+class PrepaidPremiumGiveaway(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Unique identifier of the prepaid giveaway.
+        self.id: int = get_object(kwargs.get('id'))
+        # Number of users which will receive Telegram Premium subscription gift codes.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Number of month the Telegram Premium subscription will be active after code activation.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # Point in time (Unix timestamp) when the giveaway was paid.
+        self.payment_date: int = get_object(kwargs.get('payment_date'))
+
+
+class ChatBoostStatus(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # An HTTP URL, which can be used to boost the chat.
+        self.boost_url: str = get_object(kwargs.get('boost_url'))
+        # Identifiers of boost slots of the current user applied to the chat.
+        self.applied_slot_ids: list[int] = get_object(kwargs.get('applied_slot_ids'))
+        # Current boost level of the chat.
+        self.level: int = get_object(kwargs.get('level'))
+        # The number of boosts received by the chat from created Telegram Premium gift codes and giveaways; always 0 if the current user isn't an administrator in the chat.
+        self.gift_code_boost_count: int = get_object(kwargs.get('gift_code_boost_count'))
+        # The number of boosts received by the chat.
+        self.boost_count: int = get_object(kwargs.get('boost_count'))
+        # The number of boosts added to reach the current level.
+        self.current_level_boost_count: int = get_object(kwargs.get('current_level_boost_count'))
+        # The number of boosts needed to reach the next level; 0 if the next level isn't available.
+        self.next_level_boost_count: int = get_object(kwargs.get('next_level_boost_count'))
+        # Approximate number of Telegram Premium subscribers joined the chat; always 0 if the current user isn't an administrator in the chat.
+        self.premium_member_count: int = get_object(kwargs.get('premium_member_count'))
+        # A percentage of Telegram Premium subscribers joined the chat; always 0 if the current user isn't an administrator in the chat.
+        self.premium_member_percentage: float = get_object(kwargs.get('premium_member_percentage'))
+        # The list of prepaid giveaways available for the chat; only for chat administrators.
+        self.prepaid_giveaways: list[PrepaidPremiumGiveaway] = get_object(kwargs.get('prepaid_giveaways'))
 
 
 class ChatEventAction(Object):
@@ -2114,8 +2348,8 @@ class ChatEventMemberJoinedByInviteLink(ChatEventAction):
         self._data = kwargs
         # Invite link used to join the chat.
         self.invite_link: ChatInviteLink = get_object(kwargs.get('invite_link'))
-        # True, if the user has joined the chat using an invite link for a chat filter.
-        self.via_chat_filter_invite_link: bool = get_object(kwargs.get('via_chat_filter_invite_link'))
+        # True, if the user has joined the chat using an invite link for a chat folder.
+        self.via_chat_folder_invite_link: bool = get_object(kwargs.get('via_chat_folder_invite_link'))
 
 
 class ChatEventMemberJoinedByRequest(ChatEventAction):
@@ -2286,6 +2520,26 @@ class ChatEventActiveUsernamesChanged(ChatEventAction):
         self.old_usernames: list[str] = get_object(kwargs.get('old_usernames'))
         # New list of active usernames.
         self.new_usernames: list[str] = get_object(kwargs.get('new_usernames'))
+
+
+class ChatEventAccentColorChanged(ChatEventAction):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Previous identifier of chat accent color.
+        self.old_accent_color_id: int = get_object(kwargs.get('old_accent_color_id'))
+        # New identifier of chat accent color.
+        self.new_accent_color_id: int = get_object(kwargs.get('new_accent_color_id'))
+
+
+class ChatEventBackgroundCustomEmojiChanged(ChatEventAction):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Previous identifier of the custom emoji; 0 if none.
+        self.old_background_custom_emoji_id: int = get_object(kwargs.get('old_background_custom_emoji_id'))
+        # New identifier of the custom emoji; 0 if none.
+        self.new_background_custom_emoji_id: int = get_object(kwargs.get('new_background_custom_emoji_id'))
 
 
 class ChatEventHasProtectedContentToggled(ChatEventAction):
@@ -2498,29 +2752,29 @@ class ChatEvents(Object):
         self.events: list[ChatEvent] = get_object(kwargs.get('events'))
 
 
-class ChatFilterIcon(Object):
+class ChatFolderIcon(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The chosen icon name for short filter representation; one of &quot;All&quot;, &quot;Unread&quot;, &quot;Unmuted&quot;, &quot;Bots&quot;, &quot;Channels&quot;, &quot;Groups&quot;, &quot;Private&quot;, &quot;Custom&quot;, &quot;Setup&quot;, &quot;Cat&quot;, &quot;Crown&quot;, &quot;Favorite&quot;, &quot;Flower&quot;, &quot;Game&quot;, &quot;Home&quot;, &quot;Love&quot;, &quot;Mask&quot;, &quot;Party&quot;, &quot;Sport&quot;, &quot;Study&quot;, &quot;Trade&quot;, &quot;Travel&quot;, &quot;Work&quot;, &quot;Airplane&quot;, &quot;Book&quot;, &quot;Light&quot;, &quot;Like&quot;, &quot;Money&quot;, &quot;Note&quot;, &quot;Palette&quot;.
+        # The chosen icon name for short folder representation; one of &quot;All&quot;, &quot;Unread&quot;, &quot;Unmuted&quot;, &quot;Bots&quot;, &quot;Channels&quot;, &quot;Groups&quot;, &quot;Private&quot;, &quot;Custom&quot;, &quot;Setup&quot;, &quot;Cat&quot;, &quot;Crown&quot;, &quot;Favorite&quot;, &quot;Flower&quot;, &quot;Game&quot;, &quot;Home&quot;, &quot;Love&quot;, &quot;Mask&quot;, &quot;Party&quot;, &quot;Sport&quot;, &quot;Study&quot;, &quot;Trade&quot;, &quot;Travel&quot;, &quot;Work&quot;, &quot;Airplane&quot;, &quot;Book&quot;, &quot;Light&quot;, &quot;Like&quot;, &quot;Money&quot;, &quot;Note&quot;, &quot;Palette&quot;.
         self.name: str = get_object(kwargs.get('name'))
 
 
-class ChatFilter(Object):
+class ChatFolder(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The title of the filter; 1-12 characters without line feeds.
+        # The title of the folder; 1-12 characters without line feeds.
         self.title: str = get_object(kwargs.get('title'))
-        # The chosen icon for the chat filter; may be null. If null, use getChatFilterDefaultIconName to get default icon name for the filter.
-        self.icon: ChatFilterIcon = get_object(kwargs.get('icon'))
-        # True, if at least one link has been created for the filter.
+        # The chosen icon for the chat folder; may be null. If null, use getChatFolderDefaultIconName to get default icon name for the folder.
+        self.icon: ChatFolderIcon = get_object(kwargs.get('icon'))
+        # True, if at least one link has been created for the folder.
         self.is_shareable: bool = get_object(kwargs.get('is_shareable'))
-        # The chat identifiers of pinned chats in the filter. There can be up to getOption(&quot;chat_filter_chosen_chat_count_max&quot;) pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
+        # The chat identifiers of pinned chats in the folder. There can be up to getOption(&quot;chat_folder_chosen_chat_count_max&quot;) pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
         self.pinned_chat_ids: list[int] = get_object(kwargs.get('pinned_chat_ids'))
-        # The chat identifiers of always included chats in the filter. There can be up to getOption(&quot;chat_filter_chosen_chat_count_max&quot;) pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
+        # The chat identifiers of always included chats in the folder. There can be up to getOption(&quot;chat_folder_chosen_chat_count_max&quot;) pinned and always included non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
         self.included_chat_ids: list[int] = get_object(kwargs.get('included_chat_ids'))
-        # The chat identifiers of always excluded chats in the filter. There can be up to getOption(&quot;chat_filter_chosen_chat_count_max&quot;) always excluded non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
+        # The chat identifiers of always excluded chats in the folder. There can be up to getOption(&quot;chat_folder_chosen_chat_count_max&quot;) always excluded non-secret chats and the same number of secret chats, but the limit can be increased with Telegram Premium.
         self.excluded_chat_ids: list[int] = get_object(kwargs.get('excluded_chat_ids'))
         # True, if muted chats need to be excluded.
         self.exclude_muted: bool = get_object(kwargs.get('exclude_muted'))
@@ -2540,27 +2794,27 @@ class ChatFilter(Object):
         self.include_channels: bool = get_object(kwargs.get('include_channels'))
 
 
-class ChatFilterInfo(Object):
+class ChatFolderInfo(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Unique chat filter identifier.
+        # Unique chat folder identifier.
         self.id: int = get_object(kwargs.get('id'))
-        # The title of the filter; 1-12 characters without line feeds.
+        # The title of the folder; 1-12 characters without line feeds.
         self.title: str = get_object(kwargs.get('title'))
-        # The chosen or default icon for the chat filter.
-        self.icon: ChatFilterIcon = get_object(kwargs.get('icon'))
-        # True, if at least one link has been created for the filter.
+        # The chosen or default icon for the chat folder.
+        self.icon: ChatFolderIcon = get_object(kwargs.get('icon'))
+        # True, if at least one link has been created for the folder.
         self.is_shareable: bool = get_object(kwargs.get('is_shareable'))
-        # True, if the chat filter has invite links created by the current user.
+        # True, if the chat folder has invite links created by the current user.
         self.has_my_invite_links: bool = get_object(kwargs.get('has_my_invite_links'))
 
 
-class ChatFilterInviteLink(Object):
+class ChatFolderInviteLink(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The chat filter invite link.
+        # The chat folder invite link.
         self.invite_link: str = get_object(kwargs.get('invite_link'))
         # Name of the link.
         self.name: str = get_object(kwargs.get('name'))
@@ -2568,24 +2822,24 @@ class ChatFilterInviteLink(Object):
         self.chat_ids: list[int] = get_object(kwargs.get('chat_ids'))
 
 
-class ChatFilterInviteLinkInfo(Object):
+class ChatFolderInviteLinkInfo(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Basic information about the chat filter; chat filter identifier will be 0 if the user didn't have the chat filter yet.
-        self.chat_filter_info: ChatFilterInfo = get_object(kwargs.get('chat_filter_info'))
-        # Identifiers of the chats from the link, which aren't added to the filter yet.
+        # Basic information about the chat folder; chat folder identifier will be 0 if the user didn't have the chat folder yet.
+        self.chat_folder_info: ChatFolderInfo = get_object(kwargs.get('chat_folder_info'))
+        # Identifiers of the chats from the link, which aren't added to the folder yet.
         self.missing_chat_ids: list[int] = get_object(kwargs.get('missing_chat_ids'))
-        # Identifiers of the chats from the link, which are added to the filter already.
+        # Identifiers of the chats from the link, which are added to the folder already.
         self.added_chat_ids: list[int] = get_object(kwargs.get('added_chat_ids'))
 
 
-class ChatFilterInviteLinks(Object):
+class ChatFolderInviteLinks(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
         # List of the invite links.
-        self.invite_links: list[ChatFilterInviteLink] = get_object(kwargs.get('invite_links'))
+        self.invite_links: list[ChatFolderInviteLink] = get_object(kwargs.get('invite_links'))
 
 
 class ChatInviteLinkCount(Object):
@@ -2628,6 +2882,8 @@ class ChatInviteLinkInfo(Object):
         self.title: str = get_object(kwargs.get('title'))
         # Chat photo; may be null.
         self.photo: ChatPhotoInfo = get_object(kwargs.get('photo'))
+        # Identifier of the accent color for chat title and background of chat photo.
+        self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
         # Chat description.
         self.description: str = get_object(kwargs.get('description'))
         # Number of members in the chat.
@@ -2654,8 +2910,8 @@ class ChatInviteLinkMember(Object):
         self.user_id: int = get_object(kwargs.get('user_id'))
         # Point in time (Unix timestamp) when the user joined the chat.
         self.joined_chat_date: int = get_object(kwargs.get('joined_chat_date'))
-        # True, if the user has joined the chat using an invite link for a chat filter.
-        self.via_chat_filter_invite_link: bool = get_object(kwargs.get('via_chat_filter_invite_link'))
+        # True, if the user has joined the chat using an invite link for a chat folder.
+        self.via_chat_folder_invite_link: bool = get_object(kwargs.get('via_chat_folder_invite_link'))
         # User identifier of the chat administrator, approved user join request.
         self.approver_user_id: int = get_object(kwargs.get('approver_user_id'))
 
@@ -2720,12 +2976,12 @@ class ChatListArchive(ChatList):
         self._data = kwargs
 
 
-class ChatListFilter(ChatList):
+class ChatListFolder(ChatList):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Chat filter identifier.
-        self.chat_filter_id: int = get_object(kwargs.get('chat_filter_id'))
+        # Chat folder identifier.
+        self.chat_folder_id: int = get_object(kwargs.get('chat_folder_id'))
 
 
 class ChatLists(Object):
@@ -2868,7 +3124,7 @@ class ChatMessageSender(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Available message senders.
+        # The message sender.
         self.sender: MessageSender = get_object(kwargs.get('sender'))
         # True, if Telegram Premium is needed to use the message sender.
         self.needs_premium: bool = get_object(kwargs.get('needs_premium'))
@@ -3106,7 +3362,7 @@ class ChatStatisticsChannel(ChatStatistics):
         self.mean_view_count: StatisticalValue = get_object(kwargs.get('mean_view_count'))
         # Mean number of times the recently sent messages was shared.
         self.mean_share_count: StatisticalValue = get_object(kwargs.get('mean_share_count'))
-        # A percentage of users with enabled notifications for the chat.
+        # A percentage of users with enabled notifications for the chat; 0-100.
         self.enabled_notifications_percentage: float = get_object(kwargs.get('enabled_notifications_percentage'))
         # A graph containing number of members in the chat.
         self.member_count_graph: StatisticalGraph = get_object(kwargs.get('member_count_graph'))
@@ -3190,7 +3446,7 @@ class ChatTypeSecret(ChatType):
         self._data = kwargs
         # Secret chat identifier.
         self.secret_chat_id: int = get_object(kwargs.get('secret_chat_id'))
-        # User identifier of the secret chat peer.
+        # User identifier of the other user in the secret chat.
         self.user_id: int = get_object(kwargs.get('user_id'))
 
 
@@ -3454,7 +3710,7 @@ class FormattedText(Object):
         self._data = kwargs
         # The text.
         self.text: str = get_object(kwargs.get('text'))
-        # Entities contained in the text. Entities can be nested, but must not mutually intersect with each other. Pre, Code and PreCode entities can't contain other entities. Bold, Italic, Underline, Strikethrough, and Spoiler entities can contain and can be part of any other entities. All other entities can't contain each other.
+        # Entities contained in the text. Entities can be nested, but must not mutually intersect with each other. Pre, Code and PreCode entities can't contain other entities. BlockQuote entities can't contain other BlockQuote entities. Bold, Italic, Underline, Strikethrough, and Spoiler entities can contain and can be part of any other entities. All other entities can't contain each other.
         self.entities: list[TextEntity] = get_object(kwargs.get('entities'))
 
 
@@ -3627,6 +3883,12 @@ class DownloadedFileCounts(Object):
 
 
 class InputMessageContent(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class InputMessageReplyTo(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -4092,6 +4354,18 @@ class ForumTopics(Object):
         self.next_offset_message_thread_id: int = get_object(kwargs.get('next_offset_message_thread_id'))
 
 
+class FoundChatBoosts(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Total number of boosts applied to the chat.
+        self.total_count: int = get_object(kwargs.get('total_count'))
+        # List of boosts.
+        self.boosts: list[ChatBoost] = get_object(kwargs.get('boosts'))
+        # The offset for the next request. If empty, there are no more results.
+        self.next_offset: str = get_object(kwargs.get('next_offset'))
+
+
 class FoundChatMessages(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -4128,6 +4402,14 @@ class FoundMessages(Object):
         self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
+class FoundPosition(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The position of the match.
+        self.position: int = get_object(kwargs.get('position'))
+
+
 class FoundPositions(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -4138,30 +4420,12 @@ class FoundPositions(Object):
         self.positions: list[int] = get_object(kwargs.get('positions'))
 
 
-class WebApp(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Web App short name.
-        self.short_name: str = get_object(kwargs.get('short_name'))
-        # Web App title.
-        self.title: str = get_object(kwargs.get('title'))
-        # Web App description.
-        self.description: str = get_object(kwargs.get('description'))
-        # Web App photo.
-        self.photo: Photo = get_object(kwargs.get('photo'))
-        # Web App animation; may be null.
-        self.animation: Animation = get_object(kwargs.get('animation'))
-
-
 class FoundWebApp(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
         # The Web App.
         self.web_app: WebApp = get_object(kwargs.get('web_app'))
-        # True, if the app supports &quot;settings_button_pressed&quot; event.
-        self.supports_settings: bool = get_object(kwargs.get('supports_settings'))
         # True, if the user must be asked for the permission to the bot to send them messages.
         self.request_write_access: bool = get_object(kwargs.get('request_write_access'))
         # True, if there is no need to show an ordinary open URL confirmation before opening the Web App. The field must be ignored and confirmation must be shown anyway if the Web App link was hidden.
@@ -4228,7 +4492,7 @@ class GroupCall(Object):
         self.title: str = get_object(kwargs.get('title'))
         # Point in time (Unix timestamp) when the group call is supposed to be started by an administrator; 0 if it is already active or was ended.
         self.scheduled_start_date: int = get_object(kwargs.get('scheduled_start_date'))
-        # True, if the group call is scheduled and the current user will receive a notification when the group call will start.
+        # True, if the group call is scheduled and the current user will receive a notification when the group call starts.
         self.enabled_start_notification: bool = get_object(kwargs.get('enabled_start_notification'))
         # True, if the call is active.
         self.is_active: bool = get_object(kwargs.get('is_active'))
@@ -5234,6 +5498,12 @@ class InputInlineQueryResultVoiceNote(InputInlineQueryResult):
         self.input_message_content: InputMessageContent = get_object(kwargs.get('input_message_content'))
 
 
+class TelegramPaymentPurpose(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class InputInvoice(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -5256,6 +5526,14 @@ class InputInvoiceName(InputInvoice):
         self._data = kwargs
         # Name of the invoice.
         self.name: str = get_object(kwargs.get('name'))
+
+
+class InputInvoiceTelegram(InputInvoice):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Transaction purpose.
+        self.purpose: TelegramPaymentPurpose = get_object(kwargs.get('purpose'))
 
 
 class MessageSelfDestructType(Object):
@@ -5296,6 +5574,8 @@ class Invoice(Object):
         self.suggested_tip_amounts: list[int] = get_object(kwargs.get('suggested_tip_amounts'))
         # An HTTP URL with terms of service for recurring payments. If non-empty, the invoice payment will result in recurring payments and the user must accept the terms of service before allowed to pay.
         self.recurring_payment_terms_of_service_url: str = get_object(kwargs.get('recurring_payment_terms_of_service_url'))
+        # An HTTP URL with terms of service for non-recurring payments. If non-empty, then the user must accept the terms of service before allowed to pay.
+        self.terms_of_service_url: str = get_object(kwargs.get('terms_of_service_url'))
         # True, if the payment is a test payment.
         self.is_test: bool = get_object(kwargs.get('is_test'))
         # True, if the user's name is needed for payment.
@@ -5314,6 +5594,22 @@ class Invoice(Object):
         self.is_flexible: bool = get_object(kwargs.get('is_flexible'))
 
 
+class LinkPreviewOptions(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # True, if link preview must be disabled.
+        self.is_disabled: bool = get_object(kwargs.get('is_disabled'))
+        # URL to use for link preview. If empty, then the first URL found in the message text will be used.
+        self.url: str = get_object(kwargs.get('url'))
+        # True, if shown media preview must be small; ignored in secret chats or if the URL isn't explicitly specified.
+        self.force_small_media: bool = get_object(kwargs.get('force_small_media'))
+        # True, if shown media preview must be large; ignored in secret chats or if the URL isn't explicitly specified.
+        self.force_large_media: bool = get_object(kwargs.get('force_large_media'))
+        # True, if link preview must be shown above message text; otherwise, the link preview will be shown below the message text; ignored in secret chats.
+        self.show_above_text: bool = get_object(kwargs.get('show_above_text'))
+
+
 class MessageCopyOptions(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -5330,10 +5626,10 @@ class InputMessageText(InputMessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Formatted text to be sent; 1-getOption(&quot;message_text_length_max&quot;) characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, Code, Pre, PreCode, TextUrl and MentionName entities are allowed to be specified manually.
+        # Formatted text to be sent; 0-getOption(&quot;message_text_length_max&quot;) characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, CustomEmoji, BlockQuote, Code, Pre, PreCode, TextUrl and MentionName entities are allowed to be specified manually.
         self.text: FormattedText = get_object(kwargs.get('text'))
-        # True, if rich web page previews for URLs in the message text must be disabled.
-        self.disable_web_page_preview: bool = get_object(kwargs.get('disable_web_page_preview'))
+        # Options to be used for generation of a link preview; pass null to use default link preview options.
+        self.link_preview_options: LinkPreviewOptions = get_object(kwargs.get('link_preview_options'))
         # True, if a chat message draft must be deleted.
         self.clear_draft: bool = get_object(kwargs.get('clear_draft'))
 
@@ -5386,7 +5682,7 @@ class InputMessageDocument(InputMessageContent):
         self.document: InputFile = get_object(kwargs.get('document'))
         # Document thumbnail; pass null to skip thumbnail uploading.
         self.thumbnail: InputThumbnail = get_object(kwargs.get('thumbnail'))
-        # If true, automatic file type detection will be disabled and the document will always be sent as file. Always true for files sent to secret chats.
+        # True, if automatic file type detection is disabled and the document must be sent as a file. Always true for files sent to secret chats.
         self.disable_content_type_detection: bool = get_object(kwargs.get('disable_content_type_detection'))
         # Document caption; pass null to use an empty caption; 0-getOption(&quot;message_caption_length_max&quot;) characters.
         self.caption: FormattedText = get_object(kwargs.get('caption'))
@@ -5600,12 +5896,34 @@ class InputMessageForwarded(InputMessageContent):
         self._data = kwargs
         # Identifier for the chat this forwarded message came from.
         self.from_chat_id: int = get_object(kwargs.get('from_chat_id'))
-        # Identifier of the message to forward.
+        # Identifier of the message to forward. A message can be forwarded only if message.can_be_forwarded.
         self.message_id: int = get_object(kwargs.get('message_id'))
         # True, if a game message is being shared from a launched game; applies only to game messages.
         self.in_game_share: bool = get_object(kwargs.get('in_game_share'))
         # Options to be used to copy content of the message without reference to the original sender; pass null to forward the message as usual.
         self.copy_options: MessageCopyOptions = get_object(kwargs.get('copy_options'))
+
+
+class InputMessageReplyToMessage(InputMessageReplyTo):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The identifier of the chat to which the message to be replied belongs; pass 0 if the message to be replied is in the same chat. Must always be 0 for replies in secret chats. A message can be replied in another chat or topic only if message.can_be_replied_in_another_chat.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # The identifier of the message to be replied in the same or the specified chat.
+        self.message_id: int = get_object(kwargs.get('message_id'))
+        # Manually chosen quote from the message to be replied; pass null if none; 0-getOption(&quot;message_reply_quote_length_max&quot;) characters. Must always be null for replies in secret chats. Only Bold, Italic, Underline, Strikethrough, Spoiler, and CustomEmoji entities are allowed to be kept and must be kept in the quote.
+        self.quote: FormattedText = get_object(kwargs.get('quote'))
+
+
+class InputMessageReplyToStory(InputMessageReplyTo):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The identifier of the sender of the story. Currently, stories can be replied only in the sender's chat.
+        self.story_sender_chat_id: int = get_object(kwargs.get('story_sender_chat_id'))
+        # The identifier of the story.
+        self.story_id: int = get_object(kwargs.get('story_id'))
 
 
 class InputPersonalDocument(Object):
@@ -5890,7 +6208,7 @@ class StoryAreaPosition(Object):
         self.y_percentage: float = get_object(kwargs.get('y_percentage'))
         # The width of the rectangle, as a percentage of the media width.
         self.width_percentage: float = get_object(kwargs.get('width_percentage'))
-        # The ordinate of the rectangle's center, as a percentage of the media height.
+        # The height of the rectangle, as a percentage of the media height.
         self.height_percentage: float = get_object(kwargs.get('height_percentage'))
         # Clockwise rotation angle of the rectangle, in degrees; 0-360.
         self.rotation_angle: float = get_object(kwargs.get('rotation_angle'))
@@ -5932,6 +6250,18 @@ class InputStoryAreaTypePreviousVenue(InputStoryAreaType):
         self.venue_provider: str = get_object(kwargs.get('venue_provider'))
         # Identifier of the venue in the provider database.
         self.venue_id: str = get_object(kwargs.get('venue_id'))
+
+
+class InputStoryAreaTypeSuggestedReaction(InputStoryAreaType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Type of the reaction.
+        self.reaction_type: ReactionType = get_object(kwargs.get('reaction_type'))
+        # True, if reaction has a dark background.
+        self.is_dark: bool = get_object(kwargs.get('is_dark'))
+        # True, if reaction corner is flipped.
+        self.is_flipped: bool = get_object(kwargs.get('is_flipped'))
 
 
 class InputStoryAreas(Object):
@@ -6052,7 +6382,15 @@ class InternalLinkTypeChangePhoneNumber(InternalLinkType):
         self._data = kwargs
 
 
-class InternalLinkTypeChatFilterInvite(InternalLinkType):
+class InternalLinkTypeChatBoost(InternalLinkType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # URL to be passed to getChatBoostLinkInfo.
+        self.url: str = get_object(kwargs.get('url'))
+
+
+class InternalLinkTypeChatFolderInvite(InternalLinkType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -6060,7 +6398,7 @@ class InternalLinkTypeChatFilterInvite(InternalLinkType):
         self.invite_link: str = get_object(kwargs.get('invite_link'))
 
 
-class InternalLinkTypeChatFilterSettings(InternalLinkType):
+class InternalLinkTypeChatFolderSettings(InternalLinkType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -6178,6 +6516,14 @@ class InternalLinkTypePremiumFeatures(InternalLinkType):
         self._data = kwargs
         # Referrer specified in the link.
         self.referrer: str = get_object(kwargs.get('referrer'))
+
+
+class InternalLinkTypePremiumGiftCode(InternalLinkType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The Telegram Premium gift code.
+        self.code: str = get_object(kwargs.get('code'))
 
 
 class InternalLinkTypePrivacyAndSecuritySettings(InternalLinkType):
@@ -6736,8 +7082,8 @@ class MessageForwardInfo(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Origin of a forwarded message.
-        self.origin: MessageForwardOrigin = get_object(kwargs.get('origin'))
+        # Origin of the forwarded message.
+        self.origin: MessageOrigin = get_object(kwargs.get('origin'))
         # Point in time (Unix timestamp) when the message was originally sent.
         self.date: int = get_object(kwargs.get('date'))
         # The type of a public service announcement for the forwarded message.
@@ -6746,6 +7092,16 @@ class MessageForwardInfo(Object):
         self.from_chat_id: int = get_object(kwargs.get('from_chat_id'))
         # For messages forwarded to the chat with the current user (Saved Messages), to the Replies bot chat, or to the channel's discussion group, the identifier of the original message from which the new message was forwarded last time; 0 if unknown.
         self.from_message_id: int = get_object(kwargs.get('from_message_id'))
+
+
+class MessageImportInfo(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Name of the original sender.
+        self.sender_name: str = get_object(kwargs.get('sender_name'))
+        # Point in time (Unix timestamp) when the message was originally sent.
+        self.date: int = get_object(kwargs.get('date'))
 
 
 class MessageInteractionInfo(Object):
@@ -6848,6 +7204,22 @@ class Poll(Object):
         self.is_closed: bool = get_object(kwargs.get('is_closed'))
 
 
+class PremiumGiveawayParameters(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the channel chat, which will be automatically boosted by the winners of the giveaway for duration of the Premium subscription.
+        self.boosted_chat_id: int = get_object(kwargs.get('boosted_chat_id'))
+        # Identifiers of other channel chats that must be subscribed by the users to be eligible for the giveaway. There can be up to getOption(&quot;giveaway_additional_chat_count_max&quot;) additional chats.
+        self.additional_chat_ids: list[int] = get_object(kwargs.get('additional_chat_ids'))
+        # Point in time (Unix timestamp) when the giveaway is expected to be performed; must be 60-getOption(&quot;giveaway_duration_max&quot;) seconds in the future in scheduled giveaways.
+        self.winners_selection_date: int = get_object(kwargs.get('winners_selection_date'))
+        # True, if only new subscribers of the chats will be eligible for the giveaway.
+        self.only_new_members: bool = get_object(kwargs.get('only_new_members'))
+        # The list of two-letter ISO 3166-1 alpha-2 codes of countries, users from which will be eligible for the giveaway. If empty, then all users can participate in the giveaway. There can be up to getOption(&quot;giveaway_country_count_max&quot;) chosen countries. Users with phone number that was bought on Fragment can participate in any giveaway and the country code &quot;FT&quot; must not be specified in the list.
+        self.country_codes: list[str] = get_object(kwargs.get('country_codes'))
+
+
 class VideoNote(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -6898,6 +7270,14 @@ class WebPage(Object):
         self.duration: int = get_object(kwargs.get('duration'))
         # Author of the content.
         self.author: str = get_object(kwargs.get('author'))
+        # True, if size of media in the preview can be changed.
+        self.has_large_media: bool = get_object(kwargs.get('has_large_media'))
+        # True, if large media preview must be shown; otherwise, the media preview must be shown small and only the first frame must be shown for videos.
+        self.show_large_media: bool = get_object(kwargs.get('show_large_media'))
+        # True, if there is no need to show an ordinary open URL confirmation, when opening the URL from the preview, because the URL is shown in the message text in clear.
+        self.skip_confirmation: bool = get_object(kwargs.get('skip_confirmation'))
+        # True, if the link preview must be shown above message text; otherwise, the link preview must be shown below the message text.
+        self.show_above_text: bool = get_object(kwargs.get('show_above_text'))
         # Preview of the content as an animation, if available; may be null.
         self.animation: Animation = get_object(kwargs.get('animation'))
         # Preview of the content as an audio file, if available; may be null.
@@ -6926,8 +7306,10 @@ class MessageText(MessageContent):
         self._data = kwargs
         # Text of the message.
         self.text: FormattedText = get_object(kwargs.get('text'))
-        # A preview of the web page that's mentioned in the text; may be null.
+        # A link preview attached to the message; may be null.
         self.web_page: WebPage = get_object(kwargs.get('web_page'))
+        # Options which were used for generation of the link preview; may be null if default options were used.
+        self.link_preview_options: LinkPreviewOptions = get_object(kwargs.get('link_preview_options'))
 
 
 class MessageAnimation(MessageContent):
@@ -7456,6 +7838,44 @@ class MessageGiftedPremium(MessageContent):
         self.sticker: Sticker = get_object(kwargs.get('sticker'))
 
 
+class MessagePremiumGiftCode(MessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of a chat or a user that created the gift code.
+        self.creator_id: MessageSender = get_object(kwargs.get('creator_id'))
+        # True, if the gift code was created for a giveaway.
+        self.is_from_giveaway: bool = get_object(kwargs.get('is_from_giveaway'))
+        # True, if the winner for the corresponding Telegram Premium subscription wasn't chosen.
+        self.is_unclaimed: bool = get_object(kwargs.get('is_unclaimed'))
+        # Number of month the Telegram Premium subscription will be active after code activation.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # A sticker to be shown in the message; may be null if unknown.
+        self.sticker: Sticker = get_object(kwargs.get('sticker'))
+        # The gift code.
+        self.code: str = get_object(kwargs.get('code'))
+
+
+class MessagePremiumGiveawayCreated(MessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class MessagePremiumGiveaway(MessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Giveaway parameters.
+        self.parameters: PremiumGiveawayParameters = get_object(kwargs.get('parameters'))
+        # Number of users which will receive Telegram Premium subscription gift codes.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Number of month the Telegram Premium subscription will be active after code activation.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # A sticker to be shown in the message; may be null if unknown.
+        self.sticker: Sticker = get_object(kwargs.get('sticker'))
+
+
 class MessageContactRegistered(MessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -7482,22 +7902,12 @@ class MessageChatShared(MessageContent):
         self.button_id: int = get_object(kwargs.get('button_id'))
 
 
-class MessageWebsiteConnected(MessageContent):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Domain name of the connected website.
-        self.domain_name: str = get_object(kwargs.get('domain_name'))
-
-
 class MessageBotWriteAccessAllowed(MessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Information about the Web App, which requested the access; may be null if none or the Web App was opened from the attachment menu.
-        self.web_app: WebApp = get_object(kwargs.get('web_app'))
-        # True, if user allowed the bot to send messages by an explicit call to allowBotToSendMessages.
-        self.by_request: bool = get_object(kwargs.get('by_request'))
+        # The reason why the bot was allowed to write messages.
+        self.reason: BotWriteAccessAllowReason = get_object(kwargs.get('reason'))
 
 
 class MessageWebAppDataSent(MessageContent):
@@ -7626,56 +8036,10 @@ class MessageFileTypeUnknown(MessageFileType):
         self._data = kwargs
 
 
-class MessageForwardOrigin(Object):
+class MessageOrigin(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-
-
-class MessageForwardOriginUser(MessageForwardOrigin):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Identifier of the user that originally sent the message.
-        self.sender_user_id: int = get_object(kwargs.get('sender_user_id'))
-
-
-class MessageForwardOriginChat(MessageForwardOrigin):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Identifier of the chat that originally sent the message.
-        self.sender_chat_id: int = get_object(kwargs.get('sender_chat_id'))
-        # For messages originally sent by an anonymous chat administrator, original message author signature.
-        self.author_signature: str = get_object(kwargs.get('author_signature'))
-
-
-class MessageForwardOriginHiddenUser(MessageForwardOrigin):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Name of the sender.
-        self.sender_name: str = get_object(kwargs.get('sender_name'))
-
-
-class MessageForwardOriginChannel(MessageForwardOrigin):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Identifier of the chat from which the message was originally forwarded.
-        self.chat_id: int = get_object(kwargs.get('chat_id'))
-        # Message identifier of the original message.
-        self.message_id: int = get_object(kwargs.get('message_id'))
-        # Original post author signature.
-        self.author_signature: str = get_object(kwargs.get('author_signature'))
-
-
-class MessageForwardOriginMessageImport(MessageForwardOrigin):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Name of the sender.
-        self.sender_name: str = get_object(kwargs.get('sender_name'))
 
 
 class MessageReaction(Object):
@@ -7688,6 +8052,8 @@ class MessageReaction(Object):
         self.total_count: int = get_object(kwargs.get('total_count'))
         # True, if the reaction is chosen by the current user.
         self.is_chosen: bool = get_object(kwargs.get('is_chosen'))
+        # Identifier of the message sender used by the current user to add the reaction; may be null if unknown or the reaction isn't chosen.
+        self.used_sender_id: MessageSender = get_object(kwargs.get('used_sender_id'))
         # Identifiers of at most 3 recent message senders, added the reaction; available in private, basic group and supergroup chats.
         self.recent_sender_ids: list[MessageSender] = get_object(kwargs.get('recent_sender_ids'))
 
@@ -7730,10 +8096,48 @@ class MessageLinkInfo(Object):
         self.message_thread_id: int = get_object(kwargs.get('message_thread_id'))
         # If found, the linked message; may be null.
         self.message: Message = get_object(kwargs.get('message'))
-        # Timestamp from which the video/audio/video note/voice note playing must start, in seconds; 0 if not specified. The media can be in the message content or in its web page preview.
+        # Timestamp from which the video/audio/video note/voice note/story playing must start, in seconds; 0 if not specified. The media can be in the message content or in its web page preview.
         self.media_timestamp: int = get_object(kwargs.get('media_timestamp'))
         # True, if the whole media album to which the message belongs is linked.
         self.for_album: bool = get_object(kwargs.get('for_album'))
+
+
+class MessageOriginUser(MessageOrigin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the user that originally sent the message.
+        self.sender_user_id: int = get_object(kwargs.get('sender_user_id'))
+
+
+class MessageOriginHiddenUser(MessageOrigin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Name of the sender.
+        self.sender_name: str = get_object(kwargs.get('sender_name'))
+
+
+class MessageOriginChat(MessageOrigin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the chat that originally sent the message.
+        self.sender_chat_id: int = get_object(kwargs.get('sender_chat_id'))
+        # For messages originally sent by an anonymous chat administrator, original message author signature.
+        self.author_signature: str = get_object(kwargs.get('author_signature'))
+
+
+class MessageOriginChannel(MessageOrigin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the channel chat to which the message was originally sent.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # Message identifier of the original message.
+        self.message_id: int = get_object(kwargs.get('message_id'))
+        # Original post author signature.
+        self.author_signature: str = get_object(kwargs.get('author_signature'))
 
 
 class MessagePosition(Object):
@@ -7762,19 +8166,29 @@ class MessageReplyToMessage(MessageReplyTo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The identifier of the chat to which the replied message belongs; ignored for outgoing replies. For example, messages in the Replies chat are replies to messages in different chats.
+        # The identifier of the chat to which the message belongs; may be 0 if the replied message is in unknown chat.
         self.chat_id: int = get_object(kwargs.get('chat_id'))
-        # The identifier of the replied message.
+        # The identifier of the message; may be 0 if the replied message is in unknown chat.
         self.message_id: int = get_object(kwargs.get('message_id'))
+        # Manually or automatically chosen quote from the replied message; may be null if none. Only Bold, Italic, Underline, Strikethrough, Spoiler, and CustomEmoji entities can be present in the quote.
+        self.quote: FormattedText = get_object(kwargs.get('quote'))
+        # True, if the quote was manually chosen by the message sender.
+        self.is_quote_manual: bool = get_object(kwargs.get('is_quote_manual'))
+        # Information about origin of the message if the message was from another chat or topic; may be null for messages from the same chat.
+        self.origin: MessageOrigin = get_object(kwargs.get('origin'))
+        # Point in time (Unix timestamp) when the message was sent if the message was from another chat or topic; 0 for messages from the same chat.
+        self.origin_send_date: int = get_object(kwargs.get('origin_send_date'))
+        # Media content of the message if the message was from another chat or topic; may be null for messages from the same chat and messages without media. Can be only one of the following types: messageAnimation, messageAudio, messageContact, messageDice, messageDocument, messageGame, messageInvoice, messageLocation, messagePhoto, messagePoll, messagePremiumGiveaway, messageSticker, messageStory, messageText (for link preview), messageVenue, messageVideo, messageVideoNote, or messageVoiceNote.
+        self.content: MessageContent = get_object(kwargs.get('content'))
 
 
 class MessageReplyToStory(MessageReplyTo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The identifier of the sender of the replied story. Currently, stories can be replied only in the sender's chat.
+        # The identifier of the sender of the story.
         self.story_sender_chat_id: int = get_object(kwargs.get('story_sender_chat_id'))
-        # The identifier of the replied story.
+        # The identifier of the story.
         self.story_id: int = get_object(kwargs.get('story_id'))
 
 
@@ -7822,6 +8236,8 @@ class MessageSendOptions(Object):
         self.scheduling_state: MessageSchedulingState = get_object(kwargs.get('scheduling_state'))
         # Non-persistent identifier, which will be returned back in messageSendingStatePending object and can be used to match sent messages and corresponding updateNewMessage updates.
         self.sending_id: int = get_object(kwargs.get('sending_id'))
+        # Pass true to get a fake message instead of actually sending them.
+        self.only_preview: bool = get_object(kwargs.get('only_preview'))
 
 
 class MessageSenderUser(MessageSender):
@@ -7862,14 +8278,16 @@ class MessageSendingStateFailed(MessageSendingState):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # An error code; 0 if unknown.
-        self.error_code: int = get_object(kwargs.get('error_code'))
-        # Error message.
-        self.error_message: str = get_object(kwargs.get('error_message'))
+        # The cause of the message sending failure.
+        self.error: Error = get_object(kwargs.get('error'))
         # True, if the message can be re-sent.
         self.can_retry: bool = get_object(kwargs.get('can_retry'))
         # True, if the message can be re-sent only on behalf of a different sender.
         self.need_another_sender: bool = get_object(kwargs.get('need_another_sender'))
+        # True, if the message can be re-sent only if another quote is chosen in the message that is replied by the given message.
+        self.need_another_reply_quote: bool = get_object(kwargs.get('need_another_reply_quote'))
+        # True, if the message can be re-sent only if the message to be replied is removed. This will be done automatically by resendMessages.
+        self.need_drop_reply: bool = get_object(kwargs.get('need_drop_reply'))
         # Time left before the message can be re-sent, in seconds. No update is sent when this field changes.
         self.retry_after: float = get_object(kwargs.get('retry_after'))
 
@@ -8282,7 +8700,7 @@ class NotificationTypeNewPushMessage(NotificationType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The message identifier. The message will not be available in the chat history, but the identifier can be used in viewMessages, or as a message to reply.
+        # The message identifier. The message will not be available in the chat history, but the identifier can be used in viewMessages, or as a message to be replied in the same chat.
         self.message_id: int = get_object(kwargs.get('message_id'))
         # Identifier of the sender of the message. Corresponding user or chat may be inaccessible.
         self.sender_id: MessageSender = get_object(kwargs.get('sender_id'))
@@ -8656,6 +9074,8 @@ class PageBlockChatLink(PageBlock):
         self.title: str = get_object(kwargs.get('title'))
         # Chat photo; may be null.
         self.photo: ChatPhotoInfo = get_object(kwargs.get('photo'))
+        # Identifier of the accent color for chat title and background of chat photo.
+        self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
         # Chat username by which all other information about the chat can be resolved.
         self.username: str = get_object(kwargs.get('username'))
 
@@ -9424,6 +9844,18 @@ class PremiumFeatureUpgradedStories(PremiumFeature):
         self._data = kwargs
 
 
+class PremiumFeatureChatBoost(PremiumFeature):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PremiumFeatureAccentColor(PremiumFeature):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class PremiumFeaturePromotionAnimation(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -9456,6 +9888,130 @@ class PremiumFeatures(Object):
         self.limits: list[PremiumLimit] = get_object(kwargs.get('limits'))
         # An internal link to be opened to pay for Telegram Premium if store payment isn't possible; may be null if direct payment isn't available.
         self.payment_link: InternalLinkType = get_object(kwargs.get('payment_link'))
+
+
+class PremiumGiftCodeInfo(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of a chat or a user that created the gift code.
+        self.creator_id: MessageSender = get_object(kwargs.get('creator_id'))
+        # Point in time (Unix timestamp) when the code was created.
+        self.creation_date: int = get_object(kwargs.get('creation_date'))
+        # True, if the gift code was created for a giveaway.
+        self.is_from_giveaway: bool = get_object(kwargs.get('is_from_giveaway'))
+        # Identifier of the corresponding giveaway message in the creator_id chat; can be 0 or an identifier of a deleted message.
+        self.giveaway_message_id: int = get_object(kwargs.get('giveaway_message_id'))
+        # Number of month the Telegram Premium subscription will be active after code activation.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # Identifier of a user for which the code was created; 0 if none.
+        self.user_id: int = get_object(kwargs.get('user_id'))
+        # Point in time (Unix timestamp) when the code was activated; 0 if none.
+        self.use_date: int = get_object(kwargs.get('use_date'))
+
+
+class PremiumGiftCodePaymentOption(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # ISO 4217 currency code for Telegram Premium gift code payment.
+        self.currency: str = get_object(kwargs.get('currency'))
+        # The amount to pay, in the smallest units of the currency.
+        self.amount: int = get_object(kwargs.get('amount'))
+        # Number of users which will be able to activate the gift codes.
+        self.user_count: int = get_object(kwargs.get('user_count'))
+        # Number of month the Telegram Premium subscription will be active.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # Identifier of the store product associated with the option; may be empty if none.
+        self.store_product_id: str = get_object(kwargs.get('store_product_id'))
+        # Number of times the store product must be paid.
+        self.store_product_quantity: int = get_object(kwargs.get('store_product_quantity'))
+
+
+class PremiumGiftCodePaymentOptions(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The list of options.
+        self.options: list[PremiumGiftCodePaymentOption] = get_object(kwargs.get('options'))
+
+
+class PremiumGiveawayParticipantStatus(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PremiumGiveawayInfo(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PremiumGiveawayInfoOngoing(PremiumGiveawayInfo):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Point in time (Unix timestamp) when the giveaway was created.
+        self.creation_date: int = get_object(kwargs.get('creation_date'))
+        # Status of the current user in the giveaway.
+        self.status: PremiumGiveawayParticipantStatus = get_object(kwargs.get('status'))
+        # True, if the giveaway has ended and results are being prepared.
+        self.is_ended: bool = get_object(kwargs.get('is_ended'))
+
+
+class PremiumGiveawayInfoCompleted(PremiumGiveawayInfo):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Point in time (Unix timestamp) when the giveaway was created.
+        self.creation_date: int = get_object(kwargs.get('creation_date'))
+        # Point in time (Unix timestamp) when the winners were selected. May be bigger than winners selection date specified in parameters of the giveaway.
+        self.actual_winners_selection_date: int = get_object(kwargs.get('actual_winners_selection_date'))
+        # True, if the giveaway was canceled and was fully refunded.
+        self.was_refunded: bool = get_object(kwargs.get('was_refunded'))
+        # Number of winners in the giveaway.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Number of winners, which activated their gift codes.
+        self.activation_count: int = get_object(kwargs.get('activation_count'))
+        # Telegram Premium gift code that was received by the current user; empty if the user isn't a winner in the giveaway.
+        self.gift_code: str = get_object(kwargs.get('gift_code'))
+
+
+class PremiumGiveawayParticipantStatusEligible(PremiumGiveawayParticipantStatus):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PremiumGiveawayParticipantStatusParticipating(PremiumGiveawayParticipantStatus):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PremiumGiveawayParticipantStatusAlreadyWasMember(PremiumGiveawayParticipantStatus):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Point in time (Unix timestamp) when the user joined the chat.
+        self.joined_chat_date: int = get_object(kwargs.get('joined_chat_date'))
+
+
+class PremiumGiveawayParticipantStatusAdministrator(PremiumGiveawayParticipantStatus):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the chat administered by the user.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+
+
+class PremiumGiveawayParticipantStatusDisallowedCountry(PremiumGiveawayParticipantStatus):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # A two-letter ISO 3166-1 alpha-2 country code of the user's country.
+        self.user_country_code: str = get_object(kwargs.get('user_country_code'))
 
 
 class PremiumLimitType(Object):
@@ -9494,13 +10050,13 @@ class PremiumLimitTypeFavoriteStickerCount(PremiumLimitType):
         self._data = kwargs
 
 
-class PremiumLimitTypeChatFilterCount(PremiumLimitType):
+class PremiumLimitTypeChatFolderCount(PremiumLimitType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
 
 
-class PremiumLimitTypeChatFilterChosenChatCount(PremiumLimitType):
+class PremiumLimitTypeChatFolderChosenChatCount(PremiumLimitType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -9524,13 +10080,13 @@ class PremiumLimitTypeBioLength(PremiumLimitType):
         self._data = kwargs
 
 
-class PremiumLimitTypeChatFilterInviteLinkCount(PremiumLimitType):
+class PremiumLimitTypeChatFolderInviteLinkCount(PremiumLimitType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
 
 
-class PremiumLimitTypeShareableChatFilterCount(PremiumLimitType):
+class PremiumLimitTypeShareableChatFolderCount(PremiumLimitType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -9555,6 +10111,12 @@ class PremiumLimitTypeMonthlySentStoryCount(PremiumLimitType):
 
 
 class PremiumLimitTypeStoryCaptionLength(PremiumLimitType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PremiumLimitTypeStorySuggestedReactionAreaCount(PremiumLimitType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -9906,6 +10468,26 @@ class PushMessageContentPoll(PushMessageContent):
         self.is_pinned: bool = get_object(kwargs.get('is_pinned'))
 
 
+class PushMessageContentPremiumGiftCode(PushMessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Number of month the Telegram Premium subscription will be active after code activation.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+
+
+class PushMessageContentPremiumGiveaway(PushMessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Number of users which will receive Telegram Premium subscription gift codes; 0 for pinned message.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Number of month the Telegram Premium subscription will be active after code activation; 0 for pinned message.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # True, if the message is a pinned message with the specified content.
+        self.is_pinned: bool = get_object(kwargs.get('is_pinned'))
+
+
 class PushMessageContentScreenshotTaken(PushMessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -10110,22 +10692,22 @@ class ReactionTypeCustomEmoji(ReactionType):
         self.custom_emoji_id: int = get_object(kwargs.get('custom_emoji_id'))
 
 
-class RecommendedChatFilter(Object):
+class RecommendedChatFolder(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The chat filter.
-        self.filter: ChatFilter = get_object(kwargs.get('filter'))
-        # Chat filter description.
+        # The chat folder.
+        self.folder: ChatFolder = get_object(kwargs.get('folder'))
+        # Chat folder description.
         self.description: str = get_object(kwargs.get('description'))
 
 
-class RecommendedChatFilters(Object):
+class RecommendedChatFolders(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # List of recommended chat filters.
-        self.chat_filters: list[RecommendedChatFilter] = get_object(kwargs.get('chat_filters'))
+        # List of recommended chat folders.
+        self.chat_folders: list[RecommendedChatFolder] = get_object(kwargs.get('chat_folders'))
 
 
 class RecoveryEmailAddress(Object):
@@ -10450,9 +11032,9 @@ class ScopeNotificationSettings(Object):
         self.sound_id: int = get_object(kwargs.get('sound_id'))
         # True, if message content must be displayed in notifications.
         self.show_preview: bool = get_object(kwargs.get('show_preview'))
-        # If true, mute_stories is ignored and story notifications are received only for the first 5 chats from topChatCategoryUsers.
+        # If true, story notifications are received only for the first 5 chats from topChatCategoryUsers regardless of the value of mute_stories.
         self.use_default_mute_stories: bool = get_object(kwargs.get('use_default_mute_stories'))
-        # True, if story notifications are disabled for the chat.
+        # True, if story notifications are disabled.
         self.mute_stories: bool = get_object(kwargs.get('mute_stories'))
         # Identifier of the notification sound to be played for stories; 0 if sound is disabled.
         self.story_sound_id: int = get_object(kwargs.get('story_sound_id'))
@@ -10816,7 +11398,7 @@ class SpeechRecognitionResultError(SpeechRecognitionResult):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Recognition error.
+        # Recognition error. An error with a message &quot;MSG_VOICE_TOO_LONG&quot; is returned when media duration is too big to be recognized.
         self.error: Error = get_object(kwargs.get('error'))
 
 
@@ -10958,6 +11540,8 @@ class StickerSet(Object):
         self.sticker_format: StickerFormat = get_object(kwargs.get('sticker_format'))
         # Type of the stickers in the set.
         self.sticker_type: StickerType = get_object(kwargs.get('sticker_type'))
+        # True, if stickers in the sticker set are custom emoji that must be repainted; for custom emoji sticker sets only.
+        self.needs_repainting: bool = get_object(kwargs.get('needs_repainting'))
         # True for already viewed trending sticker sets.
         self.is_viewed: bool = get_object(kwargs.get('is_viewed'))
         # List of stickers in this set.
@@ -10990,6 +11574,8 @@ class StickerSetInfo(Object):
         self.sticker_format: StickerFormat = get_object(kwargs.get('sticker_format'))
         # Type of the stickers in the set.
         self.sticker_type: StickerType = get_object(kwargs.get('sticker_type'))
+        # True, if stickers in the sticker set are custom emoji that must be repainted; for custom emoji sticker sets only.
+        self.needs_repainting: bool = get_object(kwargs.get('needs_repainting'))
         # True for already viewed trending sticker sets.
         self.is_viewed: bool = get_object(kwargs.get('is_viewed'))
         # Total number of stickers in the set.
@@ -11108,8 +11694,34 @@ class StorePaymentPurposeGiftedPremium(StorePaymentPurpose):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Identifier of the user for which Premium was gifted.
+        # Identifier of the user to which Premium was gifted.
         self.user_id: int = get_object(kwargs.get('user_id'))
+        # ISO 4217 currency code of the payment currency.
+        self.currency: str = get_object(kwargs.get('currency'))
+        # Paid amount, in the smallest units of the currency.
+        self.amount: int = get_object(kwargs.get('amount'))
+
+
+class StorePaymentPurposePremiumGiftCodes(StorePaymentPurpose):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the channel chat, which will be automatically boosted by the users for duration of the Premium subscription and which is administered by the user; 0 if none.
+        self.boosted_chat_id: int = get_object(kwargs.get('boosted_chat_id'))
+        # ISO 4217 currency code of the payment currency.
+        self.currency: str = get_object(kwargs.get('currency'))
+        # Paid amount, in the smallest units of the currency.
+        self.amount: int = get_object(kwargs.get('amount'))
+        # Identifiers of the users which can activate the gift codes.
+        self.user_ids: list[int] = get_object(kwargs.get('user_ids'))
+
+
+class StorePaymentPurposePremiumGiveaway(StorePaymentPurpose):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Giveaway parameters.
+        self.parameters: PremiumGiveawayParameters = get_object(kwargs.get('parameters'))
         # ISO 4217 currency code of the payment currency.
         self.currency: str = get_object(kwargs.get('currency'))
         # Paid amount, in the smallest units of the currency.
@@ -11136,10 +11748,16 @@ class Story(Object):
         self.is_pinned: bool = get_object(kwargs.get('is_pinned'))
         # True, if the story is visible only for the current user.
         self.is_visible_only_for_self: bool = get_object(kwargs.get('is_visible_only_for_self'))
+        # True, if the story can be deleted.
+        self.can_be_deleted: bool = get_object(kwargs.get('can_be_deleted'))
+        # True, if the story can be edited.
+        self.can_be_edited: bool = get_object(kwargs.get('can_be_edited'))
         # True, if the story can be forwarded as a message. Otherwise, screenshots and saving of the story content must be also forbidden.
         self.can_be_forwarded: bool = get_object(kwargs.get('can_be_forwarded'))
         # True, if the story can be replied in the chat with the story sender.
         self.can_be_replied: bool = get_object(kwargs.get('can_be_replied'))
+        # True, if the story's is_pinned value can be changed.
+        self.can_toggle_is_pinned: bool = get_object(kwargs.get('can_toggle_is_pinned'))
         # True, if users viewed the story can be received through getStoryViewers.
         self.can_get_viewers: bool = get_object(kwargs.get('can_get_viewers'))
         # True, if users viewed the story can't be received, because the story has expired more than getOption(&quot;story_viewers_expiration_delay&quot;) seconds ago.
@@ -11196,7 +11814,9 @@ class StoryInteractionInfo(Object):
         self._data = kwargs
         # Number of times the story was viewed.
         self.view_count: int = get_object(kwargs.get('view_count'))
-        # Number of reactions added to the story.
+        # Number of times the story was forwarded; 0 if none or unknown.
+        self.forward_count: int = get_object(kwargs.get('forward_count'))
+        # Number of reactions added to the story; 0 if none or unknown.
         self.reaction_count: int = get_object(kwargs.get('reaction_count'))
         # Identifiers of at most 3 recent viewers of the story.
         self.recent_viewer_user_ids: list[int] = get_object(kwargs.get('recent_viewer_user_ids'))
@@ -11222,6 +11842,20 @@ class StoryAreaTypeVenue(StoryAreaType):
         self._data = kwargs
         # Information about the venue.
         self.venue: Venue = get_object(kwargs.get('venue'))
+
+
+class StoryAreaTypeSuggestedReaction(StoryAreaType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Type of the reaction.
+        self.reaction_type: ReactionType = get_object(kwargs.get('reaction_type'))
+        # Number of times the reaction was added.
+        self.total_count: int = get_object(kwargs.get('total_count'))
+        # True, if reaction has a dark background.
+        self.is_dark: bool = get_object(kwargs.get('is_dark'))
+        # True, if reaction corner is flipped.
+        self.is_flipped: bool = get_object(kwargs.get('is_flipped'))
 
 
 class StoryVideo(Object):
@@ -11430,7 +12064,7 @@ class Supergroup(Object):
         self.date: int = get_object(kwargs.get('date'))
         # Status of the current user in the supergroup or channel; custom title will always be empty.
         self.status: ChatMemberStatus = get_object(kwargs.get('status'))
-        # Number of members in the supergroup or channel; 0 if unknown. Currently, it is guaranteed to be known only if the supergroup or channel was received through searchPublicChats, searchChatsNearby, getInactiveSupergroupChats, getSuitableDiscussionChats, getGroupsInCommon, getUserPrivacySettingRules, or in chatFilterInviteLinkInfo.missing_chat_ids.
+        # Number of members in the supergroup or channel; 0 if unknown. Currently, it is guaranteed to be known only if the supergroup or channel was received through getChatsToSendStories, getCreatedPublicChats, getGroupsInCommon, getInactiveSupergroupChats, getSuitableDiscussionChats, getUserPrivacySettingRules, getVideoChatAvailableParticipants, searchChatsNearby, searchPublicChats, or in chatFolderInviteLinkInfo.missing_chat_ids.
         self.member_count: int = get_object(kwargs.get('member_count'))
         # True, if the channel has a discussion group, or the supergroup is the designated discussion group for a channel.
         self.has_linked_chat: bool = get_object(kwargs.get('has_linked_chat'))
@@ -11458,6 +12092,10 @@ class Supergroup(Object):
         self.is_scam: bool = get_object(kwargs.get('is_scam'))
         # True, if many users reported this supergroup or channel as a fake account.
         self.is_fake: bool = get_object(kwargs.get('is_fake'))
+        # True, if the channel has non-expired stories available to the current user.
+        self.has_active_stories: bool = get_object(kwargs.get('has_active_stories'))
+        # True, if the channel has unread non-expired stories available to the current user.
+        self.has_unread_active_stories: bool = get_object(kwargs.get('has_unread_active_stories'))
 
 
 class SupergroupFullInfo(Object):
@@ -11500,6 +12138,8 @@ class SupergroupFullInfo(Object):
         self.is_all_history_available: bool = get_object(kwargs.get('is_all_history_available'))
         # True, if aggressive anti-spam checks are enabled in the supergroup. The value of this field is only available to chat administrators.
         self.has_aggressive_anti_spam_enabled: bool = get_object(kwargs.get('has_aggressive_anti_spam_enabled'))
+        # True, if the channel has pinned stories.
+        self.has_pinned_stories: bool = get_object(kwargs.get('has_pinned_stories'))
         # Identifier of the supergroup sticker set; 0 if none.
         self.sticker_set_id: int = get_object(kwargs.get('sticker_set_id'))
         # Location to which the supergroup is connected; may be null if none.
@@ -11662,6 +12302,38 @@ class TargetChatInternalLink(TargetChat):
         self._data = kwargs
         # An internal link pointing to the chat.
         self.link: InternalLinkType = get_object(kwargs.get('link'))
+
+
+class TelegramPaymentPurposePremiumGiftCodes(TelegramPaymentPurpose):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the channel chat, which will be automatically boosted by the users for duration of the Premium subscription and which is administered by the user; 0 if none.
+        self.boosted_chat_id: int = get_object(kwargs.get('boosted_chat_id'))
+        # ISO 4217 currency code of the payment currency.
+        self.currency: str = get_object(kwargs.get('currency'))
+        # Paid amount, in the smallest units of the currency.
+        self.amount: int = get_object(kwargs.get('amount'))
+        # Identifiers of the users which can activate the gift codes.
+        self.user_ids: list[int] = get_object(kwargs.get('user_ids'))
+        # Number of month the Telegram Premium subscription will be active for the users.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+
+
+class TelegramPaymentPurposePremiumGiveaway(TelegramPaymentPurpose):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Giveaway parameters.
+        self.parameters: PremiumGiveawayParameters = get_object(kwargs.get('parameters'))
+        # ISO 4217 currency code of the payment currency.
+        self.currency: str = get_object(kwargs.get('currency'))
+        # Paid amount, in the smallest units of the currency.
+        self.amount: int = get_object(kwargs.get('amount'))
+        # Number of users which will be able to activate the gift codes.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Number of month the Telegram Premium subscription will be active for the users.
+        self.month_count: int = get_object(kwargs.get('month_count'))
 
 
 class TemporaryPasswordState(Object):
@@ -11850,6 +12522,12 @@ class TextEntityTypePreCode(TextEntityType):
         self.language: str = get_object(kwargs.get('language'))
 
 
+class TextEntityTypeBlockQuote(TextEntityType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class TextEntityTypeTextUrl(TextEntityType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -11878,7 +12556,7 @@ class TextEntityTypeMediaTimestamp(TextEntityType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Timestamp from which a video/audio/video note/voice note playing must start, in seconds. The media can be in the content or the web page preview of the current message, or in the same places in the replied message.
+        # Timestamp from which a video/audio/video note/voice note/story playing must start, in seconds. The media can be in the content or the web page preview of the current message, or in the same places in the replied message.
         self.media_timestamp: int = get_object(kwargs.get('media_timestamp'))
 
 
@@ -11910,8 +12588,20 @@ class ThemeParameters(Object):
         self.background_color: int = get_object(kwargs.get('background_color'))
         # A secondary color for the background in the RGB24 format.
         self.secondary_background_color: int = get_object(kwargs.get('secondary_background_color'))
+        # A color of the header background in the RGB24 format.
+        self.header_background_color: int = get_object(kwargs.get('header_background_color'))
+        # A color of the section background in the RGB24 format.
+        self.section_background_color: int = get_object(kwargs.get('section_background_color'))
         # A color of text in the RGB24 format.
         self.text_color: int = get_object(kwargs.get('text_color'))
+        # An accent color of the text in the RGB24 format.
+        self.accent_text_color: int = get_object(kwargs.get('accent_text_color'))
+        # A color of text on the section headers in the RGB24 format.
+        self.section_header_text_color: int = get_object(kwargs.get('section_header_text_color'))
+        # A color of the subtitle text in the RGB24 format.
+        self.subtitle_text_color: int = get_object(kwargs.get('subtitle_text_color'))
+        # A color of the text for destructive actions in the RGB24 format.
+        self.destructive_text_color: int = get_object(kwargs.get('destructive_text_color'))
         # A color of hints in the RGB24 format.
         self.hint_color: int = get_object(kwargs.get('hint_color'))
         # A color of links in the RGB24 format.
@@ -12074,6 +12764,10 @@ class User(Object):
         self.status: UserStatus = get_object(kwargs.get('status'))
         # Profile photo of the user; may be null.
         self.profile_photo: ProfilePhoto = get_object(kwargs.get('profile_photo'))
+        # Identifier of the accent color for name, and backgrounds of profile photo, reply header, and link preview.
+        self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
+        # Identifier of a custom emoji to be shown on the reply header background; 0 if none. For Telegram Premium users only.
+        self.background_custom_emoji_id: int = get_object(kwargs.get('background_custom_emoji_id'))
         # Emoji status to be shown instead of the default Telegram Premium badge; may be null. For Telegram Premium users only.
         self.emoji_status: EmojiStatus = get_object(kwargs.get('emoji_status'))
         # The user is a contact of the current user.
@@ -12202,10 +12896,8 @@ class UpdateMessageSendFailed(Update):
         self.message: Message = get_object(kwargs.get('message'))
         # The previous temporary message identifier.
         self.old_message_id: int = get_object(kwargs.get('old_message_id'))
-        # An error code.
-        self.error_code: int = get_object(kwargs.get('error_code'))
-        # Error message.
-        self.error_message: str = get_object(kwargs.get('error_message'))
+        # The cause of the message sending failure.
+        self.error: Error = get_object(kwargs.get('error'))
 
 
 class UpdateMessageContent(Update):
@@ -12332,6 +13024,26 @@ class UpdateChatPhoto(Update):
         self.photo: ChatPhotoInfo = get_object(kwargs.get('photo'))
 
 
+class UpdateChatAccentColor(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # The new chat accent color identifier.
+        self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
+
+
+class UpdateChatBackgroundCustomEmoji(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # The new identifier of a custom emoji to be shown on the reply header background; 0 if none.
+        self.background_custom_emoji_id: int = get_object(kwargs.get('background_custom_emoji_id'))
+
+
 class UpdateChatPermissions(Update):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -12348,7 +13060,7 @@ class UpdateChatLastMessage(Update):
         self._data = kwargs
         # Chat identifier.
         self.chat_id: int = get_object(kwargs.get('chat_id'))
-        # The new last message in the chat; may be null.
+        # The new last message in the chat; may be null if the last message became unknown. While the last message is unknown, new messages can be added to the chat without corresponding updateNewMessage update.
         self.last_message: Message = get_object(kwargs.get('last_message'))
         # The new chat positions in the chat lists.
         self.positions: list[ChatPosition] = get_object(kwargs.get('positions'))
@@ -12578,13 +13290,13 @@ class UpdateChatHasScheduledMessages(Update):
         self.has_scheduled_messages: bool = get_object(kwargs.get('has_scheduled_messages'))
 
 
-class UpdateChatFilters(Update):
+class UpdateChatFolders(Update):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # The new list of chat filters.
-        self.chat_filters: list[ChatFilterInfo] = get_object(kwargs.get('chat_filters'))
-        # Position of the main chat list among chat filters, 0-based.
+        # The new list of chat folders.
+        self.chat_folders: list[ChatFolderInfo] = get_object(kwargs.get('chat_folders'))
+        # Position of the main chat list among chat folders, 0-based.
         self.main_chat_list_position: int = get_object(kwargs.get('main_chat_list_position'))
 
 
@@ -12964,12 +13676,10 @@ class UpdateStorySendFailed(Update):
         self._data = kwargs
         # The failed to send story.
         self.story: Story = get_object(kwargs.get('story'))
-        # The cause of the failure; may be null if unknown.
-        self.error: CanSendStoryResult = get_object(kwargs.get('error'))
-        # An error code.
-        self.error_code: int = get_object(kwargs.get('error_code'))
-        # Error message.
-        self.error_message: str = get_object(kwargs.get('error_message'))
+        # The cause of the story sending failure.
+        self.error: Error = get_object(kwargs.get('error'))
+        # Type of the error; may be null if unknown.
+        self.error_type: CanSendStoryResult = get_object(kwargs.get('error_type'))
 
 
 class UpdateChatActiveStories(Update):
@@ -13088,6 +13798,16 @@ class UpdateChatThemes(Update):
         self._data = kwargs
         # The new list of chat themes.
         self.chat_themes: list[ChatTheme] = get_object(kwargs.get('chat_themes'))
+
+
+class UpdateAccentColors(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Information about supported colors; colors with identifiers 0 (red), 1 (orange), 2 (purple/violet), 3 (green), 4 (cyan), 5 (blue), 6 (pink) must always be supported and aren't included in the list. The exact colors for the accent colors with identifiers 0-6 must be taken from the app theme.
+        self.colors: list[AccentColor] = get_object(kwargs.get('colors'))
+        # The list of accent color identifiers, which can be set through setAccentColor and setChatAccentColor. The colors must be shown in the specififed order.
+        self.available_accent_color_ids: list[int] = get_object(kwargs.get('available_accent_color_ids'))
 
 
 class UpdateLanguagePackStrings(Update):
@@ -13382,8 +14102,8 @@ class UpdateChatMember(Update):
         self.date: int = get_object(kwargs.get('date'))
         # If user has joined the chat using an invite link, the invite link; may be null.
         self.invite_link: ChatInviteLink = get_object(kwargs.get('invite_link'))
-        # True, if the user has joined the chat using an invite link for a chat filter.
-        self.via_chat_filter_invite_link: bool = get_object(kwargs.get('via_chat_filter_invite_link'))
+        # True, if the user has joined the chat using an invite link for a chat folder.
+        self.via_chat_folder_invite_link: bool = get_object(kwargs.get('via_chat_folder_invite_link'))
         # Previous chat member.
         self.old_chat_member: ChatMember = get_object(kwargs.get('old_chat_member'))
         # New chat member.
@@ -13402,6 +14122,16 @@ class UpdateNewChatJoinRequest(Update):
         self.user_chat_id: int = get_object(kwargs.get('user_chat_id'))
         # The invite link, which was used to send join request; may be null.
         self.invite_link: ChatInviteLink = get_object(kwargs.get('invite_link'))
+
+
+class UpdateChatBoost(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # New information about the boost.
+        self.boost: ChatBoost = get_object(kwargs.get('boost'))
 
 
 class Updates(Object):
@@ -13713,6 +14443,7 @@ types = {
     'TlStorerToString': TlStorerToString,
     'Object': Object,
     'Function': Function,
+    'accentColor': AccentColor,
     'accountTtl': AccountTtl,
     'MessageSender': MessageSender,
     'ReactionType': ReactionType,
@@ -13806,6 +14537,12 @@ types = {
     'chatAdministratorRights': ChatAdministratorRights,
     'photo': Photo,
     'botInfo': BotInfo,
+    'webApp': WebApp,
+    'BotWriteAccessAllowReason': BotWriteAccessAllowReason,
+    'botWriteAccessAllowReasonConnectedWebsite': BotWriteAccessAllowReasonConnectedWebsite,
+    'botWriteAccessAllowReasonAddedToAttachmentMenu': BotWriteAccessAllowReasonAddedToAttachmentMenu,
+    'botWriteAccessAllowReasonLaunchedWebApp': BotWriteAccessAllowReasonLaunchedWebApp,
+    'botWriteAccessAllowReasonAcceptedRequest': BotWriteAccessAllowReasonAcceptedRequest,
     'CallState': CallState,
     'call': Call,
     'CallDiscardReason': CallDiscardReason,
@@ -13845,6 +14582,7 @@ types = {
     'CanSendStoryResult': CanSendStoryResult,
     'canSendStoryResultOk': CanSendStoryResultOk,
     'canSendStoryResultPremiumNeeded': CanSendStoryResultPremiumNeeded,
+    'canSendStoryResultBoostNeeded': CanSendStoryResultBoostNeeded,
     'canSendStoryResultActiveStoryLimitExceeded': CanSendStoryResultActiveStoryLimitExceeded,
     'canSendStoryResultWeeklyLimitExceeded': CanSendStoryResultWeeklyLimitExceeded,
     'canSendStoryResultMonthlyLimitExceeded': CanSendStoryResultMonthlyLimitExceeded,
@@ -13896,6 +14634,17 @@ types = {
     'chatAdministrators': ChatAdministrators,
     'chatAvailableReactionsAll': ChatAvailableReactionsAll,
     'chatAvailableReactionsSome': ChatAvailableReactionsSome,
+    'ChatBoostSource': ChatBoostSource,
+    'chatBoost': ChatBoost,
+    'chatBoostLink': ChatBoostLink,
+    'chatBoostLinkInfo': ChatBoostLinkInfo,
+    'chatBoostSlot': ChatBoostSlot,
+    'chatBoostSlots': ChatBoostSlots,
+    'chatBoostSourceGiftCode': ChatBoostSourceGiftCode,
+    'chatBoostSourceGiveaway': ChatBoostSourceGiveaway,
+    'chatBoostSourcePremium': ChatBoostSourcePremium,
+    'prepaidPremiumGiveaway': PrepaidPremiumGiveaway,
+    'chatBoostStatus': ChatBoostStatus,
     'ChatEventAction': ChatEventAction,
     'chatEvent': ChatEvent,
     'chatLocation': ChatLocation,
@@ -13924,6 +14673,8 @@ types = {
     'chatEventTitleChanged': ChatEventTitleChanged,
     'chatEventUsernameChanged': ChatEventUsernameChanged,
     'chatEventActiveUsernamesChanged': ChatEventActiveUsernamesChanged,
+    'chatEventAccentColorChanged': ChatEventAccentColorChanged,
+    'chatEventBackgroundCustomEmojiChanged': ChatEventBackgroundCustomEmojiChanged,
     'chatEventHasProtectedContentToggled': ChatEventHasProtectedContentToggled,
     'chatEventInvitesToggled': ChatEventInvitesToggled,
     'chatEventIsAllHistoryAvailableToggled': ChatEventIsAllHistoryAvailableToggled,
@@ -13946,12 +14697,12 @@ types = {
     'chatEventForumTopicPinned': ChatEventForumTopicPinned,
     'chatEventLogFilters': ChatEventLogFilters,
     'chatEvents': ChatEvents,
-    'chatFilterIcon': ChatFilterIcon,
-    'chatFilter': ChatFilter,
-    'chatFilterInfo': ChatFilterInfo,
-    'chatFilterInviteLink': ChatFilterInviteLink,
-    'chatFilterInviteLinkInfo': ChatFilterInviteLinkInfo,
-    'chatFilterInviteLinks': ChatFilterInviteLinks,
+    'chatFolderIcon': ChatFolderIcon,
+    'chatFolder': ChatFolder,
+    'chatFolderInfo': ChatFolderInfo,
+    'chatFolderInviteLink': ChatFolderInviteLink,
+    'chatFolderInviteLinkInfo': ChatFolderInviteLinkInfo,
+    'chatFolderInviteLinks': ChatFolderInviteLinks,
     'chatInviteLinkCount': ChatInviteLinkCount,
     'chatInviteLinkCounts': ChatInviteLinkCounts,
     'InviteLinkChatType': InviteLinkChatType,
@@ -13964,7 +14715,7 @@ types = {
     'ChatList': ChatList,
     'chatListMain': ChatListMain,
     'chatListArchive': ChatListArchive,
-    'chatListFilter': ChatListFilter,
+    'chatListFolder': ChatListFolder,
     'chatLists': ChatLists,
     'location': Location,
     'chatMemberStatusCreator': ChatMemberStatusCreator,
@@ -14061,6 +14812,7 @@ types = {
     'diceStickersSlotMachine': DiceStickersSlotMachine,
     'downloadedFileCounts': DownloadedFileCounts,
     'InputMessageContent': InputMessageContent,
+    'InputMessageReplyTo': InputMessageReplyTo,
     'EmailAddressAuthentication': EmailAddressAuthentication,
     'emailAddressAuthenticationCode': EmailAddressAuthenticationCode,
     'emailAddressAuthenticationAppleId': EmailAddressAuthenticationAppleId,
@@ -14112,11 +14864,12 @@ types = {
     'forumTopic': ForumTopic,
     'forumTopicIcon': ForumTopicIcon,
     'forumTopics': ForumTopics,
+    'foundChatBoosts': FoundChatBoosts,
     'foundChatMessages': FoundChatMessages,
     'foundFileDownloads': FoundFileDownloads,
     'foundMessages': FoundMessages,
+    'foundPosition': FoundPosition,
     'foundPositions': FoundPositions,
-    'webApp': WebApp,
     'foundWebApp': FoundWebApp,
     'game': Game,
     'gameHighScore': GameHighScore,
@@ -14204,13 +14957,16 @@ types = {
     'inputInlineQueryResultVenue': InputInlineQueryResultVenue,
     'inputInlineQueryResultVideo': InputInlineQueryResultVideo,
     'inputInlineQueryResultVoiceNote': InputInlineQueryResultVoiceNote,
+    'TelegramPaymentPurpose': TelegramPaymentPurpose,
     'InputInvoice': InputInvoice,
     'inputInvoiceMessage': InputInvoiceMessage,
     'inputInvoiceName': InputInvoiceName,
+    'inputInvoiceTelegram': InputInvoiceTelegram,
     'MessageSelfDestructType': MessageSelfDestructType,
     'PollType': PollType,
     'inputThumbnail': InputThumbnail,
     'invoice': Invoice,
+    'linkPreviewOptions': LinkPreviewOptions,
     'messageCopyOptions': MessageCopyOptions,
     'inputMessageText': InputMessageText,
     'inputMessageAnimation': InputMessageAnimation,
@@ -14230,6 +14986,8 @@ types = {
     'inputMessagePoll': InputMessagePoll,
     'inputMessageStory': InputMessageStory,
     'inputMessageForwarded': InputMessageForwarded,
+    'inputMessageReplyToMessage': InputMessageReplyToMessage,
+    'inputMessageReplyToStory': InputMessageReplyToStory,
     'inputPersonalDocument': InputPersonalDocument,
     'personalDetails': PersonalDetails,
     'InputPassportElement': InputPassportElement,
@@ -14265,6 +15023,7 @@ types = {
     'inputStoryAreaTypeLocation': InputStoryAreaTypeLocation,
     'inputStoryAreaTypeFoundVenue': InputStoryAreaTypeFoundVenue,
     'inputStoryAreaTypePreviousVenue': InputStoryAreaTypePreviousVenue,
+    'inputStoryAreaTypeSuggestedReaction': InputStoryAreaTypeSuggestedReaction,
     'inputStoryAreas': InputStoryAreas,
     'InputStoryContent': InputStoryContent,
     'inputStoryContentPhoto': InputStoryContentPhoto,
@@ -14278,8 +15037,9 @@ types = {
     'internalLinkTypeBotStart': InternalLinkTypeBotStart,
     'internalLinkTypeBotStartInGroup': InternalLinkTypeBotStartInGroup,
     'internalLinkTypeChangePhoneNumber': InternalLinkTypeChangePhoneNumber,
-    'internalLinkTypeChatFilterInvite': InternalLinkTypeChatFilterInvite,
-    'internalLinkTypeChatFilterSettings': InternalLinkTypeChatFilterSettings,
+    'internalLinkTypeChatBoost': InternalLinkTypeChatBoost,
+    'internalLinkTypeChatFolderInvite': InternalLinkTypeChatFolderInvite,
+    'internalLinkTypeChatFolderSettings': InternalLinkTypeChatFolderSettings,
     'internalLinkTypeChatInvite': InternalLinkTypeChatInvite,
     'internalLinkTypeDefaultMessageAutoDeleteTimerSettings': InternalLinkTypeDefaultMessageAutoDeleteTimerSettings,
     'internalLinkTypeEditProfileSettings': InternalLinkTypeEditProfileSettings,
@@ -14293,6 +15053,7 @@ types = {
     'internalLinkTypePassportDataRequest': InternalLinkTypePassportDataRequest,
     'internalLinkTypePhoneNumberConfirmation': InternalLinkTypePhoneNumberConfirmation,
     'internalLinkTypePremiumFeatures': InternalLinkTypePremiumFeatures,
+    'internalLinkTypePremiumGiftCode': InternalLinkTypePremiumGiftCode,
     'internalLinkTypePrivacyAndSecuritySettings': InternalLinkTypePrivacyAndSecuritySettings,
     'internalLinkTypeProxy': InternalLinkTypeProxy,
     'internalLinkTypePublicChat': InternalLinkTypePublicChat,
@@ -14358,6 +15119,7 @@ types = {
     'MessageSchedulingState': MessageSchedulingState,
     'MessageSendingState': MessageSendingState,
     'messageForwardInfo': MessageForwardInfo,
+    'messageImportInfo': MessageImportInfo,
     'messageInteractionInfo': MessageInteractionInfo,
     'unreadReaction': UnreadReaction,
     'messageAutoDeleteTime': MessageAutoDeleteTime,
@@ -14366,6 +15128,7 @@ types = {
     'MessageExtendedMedia': MessageExtendedMedia,
     'orderInfo': OrderInfo,
     'poll': Poll,
+    'premiumGiveawayParameters': PremiumGiveawayParameters,
     'videoNote': VideoNote,
     'webPage': WebPage,
     'messageText': MessageText,
@@ -14419,10 +15182,12 @@ types = {
     'messagePaymentSuccessful': MessagePaymentSuccessful,
     'messagePaymentSuccessfulBot': MessagePaymentSuccessfulBot,
     'messageGiftedPremium': MessageGiftedPremium,
+    'messagePremiumGiftCode': MessagePremiumGiftCode,
+    'messagePremiumGiveawayCreated': MessagePremiumGiveawayCreated,
+    'messagePremiumGiveaway': MessagePremiumGiveaway,
     'messageContactRegistered': MessageContactRegistered,
     'messageUserShared': MessageUserShared,
     'messageChatShared': MessageChatShared,
-    'messageWebsiteConnected': MessageWebsiteConnected,
     'messageBotWriteAccessAllowed': MessageBotWriteAccessAllowed,
     'messageWebAppDataSent': MessageWebAppDataSent,
     'messageWebAppDataReceived': MessageWebAppDataReceived,
@@ -14438,16 +15203,15 @@ types = {
     'messageFileTypePrivate': MessageFileTypePrivate,
     'messageFileTypeGroup': MessageFileTypeGroup,
     'messageFileTypeUnknown': MessageFileTypeUnknown,
-    'MessageForwardOrigin': MessageForwardOrigin,
-    'messageForwardOriginUser': MessageForwardOriginUser,
-    'messageForwardOriginChat': MessageForwardOriginChat,
-    'messageForwardOriginHiddenUser': MessageForwardOriginHiddenUser,
-    'messageForwardOriginChannel': MessageForwardOriginChannel,
-    'messageForwardOriginMessageImport': MessageForwardOriginMessageImport,
+    'MessageOrigin': MessageOrigin,
     'messageReaction': MessageReaction,
     'messageReplyInfo': MessageReplyInfo,
     'messageLink': MessageLink,
     'messageLinkInfo': MessageLinkInfo,
+    'messageOriginUser': MessageOriginUser,
+    'messageOriginHiddenUser': MessageOriginHiddenUser,
+    'messageOriginChat': MessageOriginChat,
+    'messageOriginChannel': MessageOriginChannel,
     'messagePosition': MessagePosition,
     'messagePositions': MessagePositions,
     'messageReplyToMessage': MessageReplyToMessage,
@@ -14640,26 +15404,41 @@ types = {
     'premiumFeatureAppIcons': PremiumFeatureAppIcons,
     'premiumFeatureRealTimeChatTranslation': PremiumFeatureRealTimeChatTranslation,
     'premiumFeatureUpgradedStories': PremiumFeatureUpgradedStories,
+    'premiumFeatureChatBoost': PremiumFeatureChatBoost,
+    'premiumFeatureAccentColor': PremiumFeatureAccentColor,
     'premiumFeaturePromotionAnimation': PremiumFeaturePromotionAnimation,
     'premiumLimit': PremiumLimit,
     'premiumFeatures': PremiumFeatures,
+    'premiumGiftCodeInfo': PremiumGiftCodeInfo,
+    'premiumGiftCodePaymentOption': PremiumGiftCodePaymentOption,
+    'premiumGiftCodePaymentOptions': PremiumGiftCodePaymentOptions,
+    'PremiumGiveawayParticipantStatus': PremiumGiveawayParticipantStatus,
+    'PremiumGiveawayInfo': PremiumGiveawayInfo,
+    'premiumGiveawayInfoOngoing': PremiumGiveawayInfoOngoing,
+    'premiumGiveawayInfoCompleted': PremiumGiveawayInfoCompleted,
+    'premiumGiveawayParticipantStatusEligible': PremiumGiveawayParticipantStatusEligible,
+    'premiumGiveawayParticipantStatusParticipating': PremiumGiveawayParticipantStatusParticipating,
+    'premiumGiveawayParticipantStatusAlreadyWasMember': PremiumGiveawayParticipantStatusAlreadyWasMember,
+    'premiumGiveawayParticipantStatusAdministrator': PremiumGiveawayParticipantStatusAdministrator,
+    'premiumGiveawayParticipantStatusDisallowedCountry': PremiumGiveawayParticipantStatusDisallowedCountry,
     'PremiumLimitType': PremiumLimitType,
     'premiumLimitTypeSupergroupCount': PremiumLimitTypeSupergroupCount,
     'premiumLimitTypePinnedChatCount': PremiumLimitTypePinnedChatCount,
     'premiumLimitTypeCreatedPublicChatCount': PremiumLimitTypeCreatedPublicChatCount,
     'premiumLimitTypeSavedAnimationCount': PremiumLimitTypeSavedAnimationCount,
     'premiumLimitTypeFavoriteStickerCount': PremiumLimitTypeFavoriteStickerCount,
-    'premiumLimitTypeChatFilterCount': PremiumLimitTypeChatFilterCount,
-    'premiumLimitTypeChatFilterChosenChatCount': PremiumLimitTypeChatFilterChosenChatCount,
+    'premiumLimitTypeChatFolderCount': PremiumLimitTypeChatFolderCount,
+    'premiumLimitTypeChatFolderChosenChatCount': PremiumLimitTypeChatFolderChosenChatCount,
     'premiumLimitTypePinnedArchivedChatCount': PremiumLimitTypePinnedArchivedChatCount,
     'premiumLimitTypeCaptionLength': PremiumLimitTypeCaptionLength,
     'premiumLimitTypeBioLength': PremiumLimitTypeBioLength,
-    'premiumLimitTypeChatFilterInviteLinkCount': PremiumLimitTypeChatFilterInviteLinkCount,
-    'premiumLimitTypeShareableChatFilterCount': PremiumLimitTypeShareableChatFilterCount,
+    'premiumLimitTypeChatFolderInviteLinkCount': PremiumLimitTypeChatFolderInviteLinkCount,
+    'premiumLimitTypeShareableChatFolderCount': PremiumLimitTypeShareableChatFolderCount,
     'premiumLimitTypeActiveStoryCount': PremiumLimitTypeActiveStoryCount,
     'premiumLimitTypeWeeklySentStoryCount': PremiumLimitTypeWeeklySentStoryCount,
     'premiumLimitTypeMonthlySentStoryCount': PremiumLimitTypeMonthlySentStoryCount,
     'premiumLimitTypeStoryCaptionLength': PremiumLimitTypeStoryCaptionLength,
+    'premiumLimitTypeStorySuggestedReactionAreaCount': PremiumLimitTypeStorySuggestedReactionAreaCount,
     'premiumPaymentOption': PremiumPaymentOption,
     'PremiumStoryFeature': PremiumStoryFeature,
     'PremiumSource': PremiumSource,
@@ -14697,6 +15476,8 @@ types = {
     'pushMessageContentLocation': PushMessageContentLocation,
     'pushMessageContentPhoto': PushMessageContentPhoto,
     'pushMessageContentPoll': PushMessageContentPoll,
+    'pushMessageContentPremiumGiftCode': PushMessageContentPremiumGiftCode,
+    'pushMessageContentPremiumGiveaway': PushMessageContentPremiumGiveaway,
     'pushMessageContentScreenshotTaken': PushMessageContentScreenshotTaken,
     'pushMessageContentSticker': PushMessageContentSticker,
     'pushMessageContentStory': PushMessageContentStory,
@@ -14720,8 +15501,8 @@ types = {
     'pushReceiverId': PushReceiverId,
     'reactionTypeEmoji': ReactionTypeEmoji,
     'reactionTypeCustomEmoji': ReactionTypeCustomEmoji,
-    'recommendedChatFilter': RecommendedChatFilter,
-    'recommendedChatFilters': RecommendedChatFilters,
+    'recommendedChatFolder': RecommendedChatFolder,
+    'recommendedChatFolders': RecommendedChatFolders,
     'recoveryEmailAddress': RecoveryEmailAddress,
     'replyMarkupRemoveKeyboard': ReplyMarkupRemoveKeyboard,
     'replyMarkupForceReply': ReplyMarkupForceReply,
@@ -14838,6 +15619,8 @@ types = {
     'StorePaymentPurpose': StorePaymentPurpose,
     'storePaymentPurposePremiumSubscription': StorePaymentPurposePremiumSubscription,
     'storePaymentPurposeGiftedPremium': StorePaymentPurposeGiftedPremium,
+    'storePaymentPurposePremiumGiftCodes': StorePaymentPurposePremiumGiftCodes,
+    'storePaymentPurposePremiumGiveaway': StorePaymentPurposePremiumGiveaway,
     'story': Story,
     'stories': Stories,
     'StoryContent': StoryContent,
@@ -14847,6 +15630,7 @@ types = {
     'StoryAreaType': StoryAreaType,
     'storyAreaTypeLocation': StoryAreaTypeLocation,
     'storyAreaTypeVenue': StoryAreaTypeVenue,
+    'storyAreaTypeSuggestedReaction': StoryAreaTypeSuggestedReaction,
     'storyVideo': StoryVideo,
     'storyContentPhoto': StoryContentPhoto,
     'storyContentVideo': StoryContentVideo,
@@ -14891,6 +15675,8 @@ types = {
     'targetChatCurrent': TargetChatCurrent,
     'targetChatChosen': TargetChatChosen,
     'targetChatInternalLink': TargetChatInternalLink,
+    'telegramPaymentPurposePremiumGiftCodes': TelegramPaymentPurposePremiumGiftCodes,
+    'telegramPaymentPurposePremiumGiveaway': TelegramPaymentPurposePremiumGiveaway,
     'temporaryPasswordState': TemporaryPasswordState,
     'testBytes': TestBytes,
     'testInt': TestInt,
@@ -14918,6 +15704,7 @@ types = {
     'textEntityTypeCode': TextEntityTypeCode,
     'textEntityTypePre': TextEntityTypePre,
     'textEntityTypePreCode': TextEntityTypePreCode,
+    'textEntityTypeBlockQuote': TextEntityTypeBlockQuote,
     'textEntityTypeTextUrl': TextEntityTypeTextUrl,
     'textEntityTypeMentionName': TextEntityTypeMentionName,
     'textEntityTypeCustomEmoji': TextEntityTypeCustomEmoji,
@@ -14966,6 +15753,8 @@ types = {
     'updateNewChat': UpdateNewChat,
     'updateChatTitle': UpdateChatTitle,
     'updateChatPhoto': UpdateChatPhoto,
+    'updateChatAccentColor': UpdateChatAccentColor,
+    'updateChatBackgroundCustomEmoji': UpdateChatBackgroundCustomEmoji,
     'updateChatPermissions': UpdateChatPermissions,
     'updateChatLastMessage': UpdateChatLastMessage,
     'updateChatPosition': UpdateChatPosition,
@@ -14990,7 +15779,7 @@ types = {
     'updateChatIsMarkedAsUnread': UpdateChatIsMarkedAsUnread,
     'updateChatBlockList': UpdateChatBlockList,
     'updateChatHasScheduledMessages': UpdateChatHasScheduledMessages,
-    'updateChatFilters': UpdateChatFilters,
+    'updateChatFolders': UpdateChatFolders,
     'updateChatOnlineMemberCount': UpdateChatOnlineMemberCount,
     'updateForumTopicInfo': UpdateForumTopicInfo,
     'updateScopeNotificationSettings': UpdateScopeNotificationSettings,
@@ -15040,6 +15829,7 @@ types = {
     'updateSavedNotificationSounds': UpdateSavedNotificationSounds,
     'updateSelectedBackground': UpdateSelectedBackground,
     'updateChatThemes': UpdateChatThemes,
+    'updateAccentColors': UpdateAccentColors,
     'updateLanguagePackStrings': UpdateLanguagePackStrings,
     'updateConnectionState': UpdateConnectionState,
     'updateTermsOfService': UpdateTermsOfService,
@@ -15067,6 +15857,7 @@ types = {
     'updatePollAnswer': UpdatePollAnswer,
     'updateChatMember': UpdateChatMember,
     'updateNewChatJoinRequest': UpdateNewChatJoinRequest,
+    'updateChatBoost': UpdateChatBoost,
     'updates': Updates,
     'UserType': UserType,
     'userLink': UserLink,
@@ -15118,7 +15909,10 @@ def get_object(data):
 
 
 def update_object(obj, data):
-    obj.__init__(data)
+    if not isinstance(data, dict):
+        data = to_json(data)
+    for key, item in data.items():
+        setattr(obj, key, get_object(item))
 
 
 def to_json(obj):
@@ -15137,107 +15931,107 @@ client = None
 
 
 def acceptCall(call_id: int = None, protocol: CallProtocol = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'acceptCall',
         'call_id': to_json(call_id),
         'protocol': to_json(protocol),
-    }))
+    })
 
 
 def acceptTermsOfService(terms_of_service_id: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'acceptTermsOfService',
         'terms_of_service_id': to_json(terms_of_service_id),
-    }))
+    })
 
 
 def activateStoryStealthMode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'activateStoryStealthMode',
-    }))
+    })
 
 
 def addApplicationChangelog(previous_application_version: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addApplicationChangelog',
         'previous_application_version': to_json(previous_application_version),
-    }))
+    })
 
 
-def addChatFilterByInviteLink(invite_link: str = None, chat_ids: list[int] = None, ):
-    return get_object(client.func({
-        '@type': 'addChatFilterByInviteLink',
+def addChatFolderByInviteLink(invite_link: str = None, chat_ids: list[int] = None, ):
+    return client.send({
+        '@type': 'addChatFolderByInviteLink',
         'invite_link': to_json(invite_link),
         'chat_ids': to_json(chat_ids),
-    }))
+    })
 
 
 def addChatMember(chat_id: int = None, user_id: int = None, forward_limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addChatMember',
         'chat_id': to_json(chat_id),
         'user_id': to_json(user_id),
         'forward_limit': to_json(forward_limit),
-    }))
+    })
 
 
 def addChatMembers(chat_id: int = None, user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addChatMembers',
         'chat_id': to_json(chat_id),
         'user_ids': to_json(user_ids),
-    }))
+    })
 
 
 def addChatToList(chat_id: int = None, chat_list: ChatList = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addChatToList',
         'chat_id': to_json(chat_id),
         'chat_list': to_json(chat_list),
-    }))
+    })
 
 
 def addContact(contact: Contact = None, share_phone_number: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addContact',
         'contact': to_json(contact),
         'share_phone_number': to_json(share_phone_number),
-    }))
+    })
 
 
 def addCustomServerLanguagePack(language_pack_id: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addCustomServerLanguagePack',
         'language_pack_id': to_json(language_pack_id),
-    }))
+    })
 
 
 def addFavoriteSticker(sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addFavoriteSticker',
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def addFileToDownloads(file_id: int = None, chat_id: int = None, message_id: int = None, priority: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addFileToDownloads',
         'file_id': to_json(file_id),
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'priority': to_json(priority),
-    }))
+    })
 
 
-def addLocalMessage(chat_id: int = None, sender_id: MessageSender = None, reply_to: MessageReplyTo = None, disable_notification: bool = None, input_message_content: InputMessageContent = None, ):
-    return get_object(client.func({
+def addLocalMessage(chat_id: int = None, sender_id: MessageSender = None, reply_to: InputMessageReplyTo = None, disable_notification: bool = None, input_message_content: InputMessageContent = None, ):
+    return client.send({
         '@type': 'addLocalMessage',
         'chat_id': to_json(chat_id),
         'sender_id': to_json(sender_id),
         'reply_to': to_json(reply_to),
         'disable_notification': to_json(disable_notification),
         'input_message_content': to_json(input_message_content),
-    }))
+    })
 
 
 def addLogMessage(verbosity_level: int = None, text: str = None, ):
@@ -15249,99 +16043,99 @@ def addLogMessage(verbosity_level: int = None, text: str = None, ):
 
 
 def addMessageReaction(chat_id: int = None, message_id: int = None, reaction_type: ReactionType = None, is_big: bool = None, update_recent_reactions: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addMessageReaction',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reaction_type': to_json(reaction_type),
         'is_big': to_json(is_big),
         'update_recent_reactions': to_json(update_recent_reactions),
-    }))
+    })
 
 
 def addNetworkStatistics(entry: NetworkStatisticsEntry = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addNetworkStatistics',
         'entry': to_json(entry),
-    }))
+    })
 
 
 def addProxy(server: str = None, port: int = None, enable: bool = None, type: ProxyType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addProxy',
         'server': to_json(server),
         'port': to_json(port),
         'enable': to_json(enable),
         'type': to_json(type),
-    }))
+    })
 
 
 def addRecentSticker(is_attached: bool = None, sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addRecentSticker',
         'is_attached': to_json(is_attached),
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def addRecentlyFoundChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addRecentlyFoundChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def addSavedAnimation(animation: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addSavedAnimation',
         'animation': to_json(animation),
-    }))
+    })
 
 
 def addSavedNotificationSound(sound: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addSavedNotificationSound',
         'sound': to_json(sound),
-    }))
+    })
 
 
 def addStickerToSet(user_id: int = None, name: str = None, sticker: InputSticker = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'addStickerToSet',
         'user_id': to_json(user_id),
         'name': to_json(name),
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def allowBotToSendMessages(bot_user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'allowBotToSendMessages',
         'bot_user_id': to_json(bot_user_id),
-    }))
+    })
 
 
 def answerCallbackQuery(callback_query_id: int = None, text: str = None, show_alert: bool = None, url: str = None, cache_time: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'answerCallbackQuery',
         'callback_query_id': to_json(callback_query_id),
         'text': to_json(text),
         'show_alert': to_json(show_alert),
         'url': to_json(url),
         'cache_time': to_json(cache_time),
-    }))
+    })
 
 
 def answerCustomQuery(custom_query_id: int = None, data: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'answerCustomQuery',
         'custom_query_id': to_json(custom_query_id),
         'data': to_json(data),
-    }))
+    })
 
 
 def answerInlineQuery(inline_query_id: int = None, is_personal: bool = None, button: InlineQueryResultsButton = None, results: list[InputInlineQueryResult] = None, cache_time: int = None, next_offset: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'answerInlineQuery',
         'inline_query_id': to_json(inline_query_id),
         'is_personal': to_json(is_personal),
@@ -15349,261 +16143,284 @@ def answerInlineQuery(inline_query_id: int = None, is_personal: bool = None, but
         'results': to_json(results),
         'cache_time': to_json(cache_time),
         'next_offset': to_json(next_offset),
-    }))
+    })
 
 
 def answerPreCheckoutQuery(pre_checkout_query_id: int = None, error_message: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'answerPreCheckoutQuery',
         'pre_checkout_query_id': to_json(pre_checkout_query_id),
         'error_message': to_json(error_message),
-    }))
+    })
 
 
 def answerShippingQuery(shipping_query_id: int = None, shipping_options: list[ShippingOption] = None, error_message: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'answerShippingQuery',
         'shipping_query_id': to_json(shipping_query_id),
         'shipping_options': to_json(shipping_options),
         'error_message': to_json(error_message),
-    }))
+    })
 
 
 def answerWebAppQuery(web_app_query_id: str = None, result: InputInlineQueryResult = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'answerWebAppQuery',
         'web_app_query_id': to_json(web_app_query_id),
         'result': to_json(result),
-    }))
+    })
+
+
+def applyPremiumGiftCode(code: str = None, ):
+    return client.send({
+        '@type': 'applyPremiumGiftCode',
+        'code': to_json(code),
+    })
 
 
 def assignAppStoreTransaction(receipt: bytes = None, purpose: StorePaymentPurpose = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'assignAppStoreTransaction',
         'receipt': to_json(receipt),
         'purpose': to_json(purpose),
-    }))
+    })
 
 
 def assignGooglePlayTransaction(package_name: str = None, store_product_id: str = None, purchase_token: str = None, purpose: StorePaymentPurpose = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'assignGooglePlayTransaction',
         'package_name': to_json(package_name),
         'store_product_id': to_json(store_product_id),
         'purchase_token': to_json(purchase_token),
         'purpose': to_json(purpose),
-    }))
+    })
 
 
 def banChatMember(chat_id: int = None, member_id: MessageSender = None, banned_until_date: int = None, revoke_messages: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'banChatMember',
         'chat_id': to_json(chat_id),
         'member_id': to_json(member_id),
         'banned_until_date': to_json(banned_until_date),
         'revoke_messages': to_json(revoke_messages),
-    }))
+    })
 
 
 def blockMessageSenderFromReplies(message_id: int = None, delete_message: bool = None, delete_all_messages: bool = None, report_spam: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'blockMessageSenderFromReplies',
         'message_id': to_json(message_id),
         'delete_message': to_json(delete_message),
         'delete_all_messages': to_json(delete_all_messages),
         'report_spam': to_json(report_spam),
-    }))
+    })
+
+
+def boostChat(chat_id: int = None, slot_ids: list[int] = None, ):
+    return client.send({
+        '@type': 'boostChat',
+        'chat_id': to_json(chat_id),
+        'slot_ids': to_json(slot_ids),
+    })
 
 
 def canBotSendMessages(bot_user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'canBotSendMessages',
         'bot_user_id': to_json(bot_user_id),
-    }))
+    })
 
 
 def canPurchasePremium(purpose: StorePaymentPurpose = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'canPurchasePremium',
         'purpose': to_json(purpose),
-    }))
+    })
 
 
-def canSendStory():
-    return get_object(client.func({
+def canSendStory(chat_id: int = None, ):
+    return client.send({
         '@type': 'canSendStory',
-    }))
+        'chat_id': to_json(chat_id),
+    })
 
 
 def canTransferOwnership():
-    return get_object(client.func({
+    return client.send({
         '@type': 'canTransferOwnership',
-    }))
+    })
 
 
 def cancelDownloadFile(file_id: int = None, only_if_pending: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'cancelDownloadFile',
         'file_id': to_json(file_id),
         'only_if_pending': to_json(only_if_pending),
-    }))
+    })
 
 
 def cancelPasswordReset():
-    return get_object(client.func({
+    return client.send({
         '@type': 'cancelPasswordReset',
-    }))
+    })
 
 
 def cancelPreliminaryUploadFile(file_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'cancelPreliminaryUploadFile',
         'file_id': to_json(file_id),
-    }))
+    })
 
 
 def changeImportedContacts(contacts: list[Contact] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'changeImportedContacts',
         'contacts': to_json(contacts),
-    }))
+    })
 
 
 def changePhoneNumber(phone_number: str = None, settings: PhoneNumberAuthenticationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'changePhoneNumber',
         'phone_number': to_json(phone_number),
         'settings': to_json(settings),
-    }))
+    })
 
 
 def changeStickerSet(set_id: int = None, is_installed: bool = None, is_archived: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'changeStickerSet',
         'set_id': to_json(set_id),
         'is_installed': to_json(is_installed),
         'is_archived': to_json(is_archived),
-    }))
+    })
 
 
 def checkAuthenticationBotToken(token: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkAuthenticationBotToken',
         'token': to_json(token),
-    }))
+    })
 
 
 def checkAuthenticationCode(code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkAuthenticationCode',
         'code': to_json(code),
-    }))
+    })
 
 
 def checkAuthenticationEmailCode(code: EmailAddressAuthentication = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkAuthenticationEmailCode',
         'code': to_json(code),
-    }))
+    })
 
 
 def checkAuthenticationPassword(password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkAuthenticationPassword',
         'password': to_json(password),
-    }))
+    })
 
 
 def checkAuthenticationPasswordRecoveryCode(recovery_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkAuthenticationPasswordRecoveryCode',
         'recovery_code': to_json(recovery_code),
-    }))
+    })
 
 
 def checkChangePhoneNumberCode(code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkChangePhoneNumberCode',
         'code': to_json(code),
-    }))
+    })
 
 
-def checkChatFilterInviteLink(invite_link: str = None, ):
-    return get_object(client.func({
-        '@type': 'checkChatFilterInviteLink',
+def checkChatFolderInviteLink(invite_link: str = None, ):
+    return client.send({
+        '@type': 'checkChatFolderInviteLink',
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def checkChatInviteLink(invite_link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkChatInviteLink',
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def checkChatUsername(chat_id: int = None, username: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkChatUsername',
         'chat_id': to_json(chat_id),
         'username': to_json(username),
-    }))
+    })
 
 
 def checkCreatedPublicChatsLimit(type: PublicChatType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkCreatedPublicChatsLimit',
         'type': to_json(type),
-    }))
+    })
 
 
 def checkEmailAddressVerificationCode(code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkEmailAddressVerificationCode',
         'code': to_json(code),
-    }))
+    })
 
 
 def checkLoginEmailAddressCode(code: EmailAddressAuthentication = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkLoginEmailAddressCode',
         'code': to_json(code),
-    }))
+    })
 
 
 def checkPasswordRecoveryCode(recovery_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkPasswordRecoveryCode',
         'recovery_code': to_json(recovery_code),
-    }))
+    })
 
 
 def checkPhoneNumberConfirmationCode(code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkPhoneNumberConfirmationCode',
         'code': to_json(code),
-    }))
+    })
 
 
 def checkPhoneNumberVerificationCode(code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkPhoneNumberVerificationCode',
         'code': to_json(code),
-    }))
+    })
+
+
+def checkPremiumGiftCode(code: str = None, ):
+    return client.send({
+        '@type': 'checkPremiumGiftCode',
+        'code': to_json(code),
+    })
 
 
 def checkRecoveryEmailAddressCode(code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkRecoveryEmailAddressCode',
         'code': to_json(code),
-    }))
+    })
 
 
 def checkStickerSetName(name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'checkStickerSetName',
         'name': to_json(name),
-    }))
+    })
 
 
 def cleanFileName(file_name: str = None, ):
@@ -15614,198 +16431,198 @@ def cleanFileName(file_name: str = None, ):
 
 
 def clearAllDraftMessages(exclude_secret_chats: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearAllDraftMessages',
         'exclude_secret_chats': to_json(exclude_secret_chats),
-    }))
+    })
 
 
 def clearAutosaveSettingsExceptions():
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearAutosaveSettingsExceptions',
-    }))
+    })
 
 
 def clearImportedContacts():
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearImportedContacts',
-    }))
+    })
 
 
 def clearRecentEmojiStatuses():
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearRecentEmojiStatuses',
-    }))
+    })
 
 
 def clearRecentReactions():
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearRecentReactions',
-    }))
+    })
 
 
 def clearRecentStickers(is_attached: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearRecentStickers',
         'is_attached': to_json(is_attached),
-    }))
+    })
 
 
 def clearRecentlyFoundChats():
-    return get_object(client.func({
+    return client.send({
         '@type': 'clearRecentlyFoundChats',
-    }))
+    })
 
 
 def clickAnimatedEmojiMessage(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'clickAnimatedEmojiMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def clickChatSponsoredMessage(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'clickChatSponsoredMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def clickPremiumSubscriptionButton():
-    return get_object(client.func({
+    return client.send({
         '@type': 'clickPremiumSubscriptionButton',
-    }))
+    })
 
 
 def close():
-    return get_object(client.func({
+    return client.send({
         '@type': 'close',
-    }))
+    })
 
 
 def closeChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'closeChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def closeSecretChat(secret_chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'closeSecretChat',
         'secret_chat_id': to_json(secret_chat_id),
-    }))
+    })
 
 
 def closeStory(story_sender_chat_id: int = None, story_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'closeStory',
         'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
-    }))
+    })
 
 
 def closeWebApp(web_app_launch_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'closeWebApp',
         'web_app_launch_id': to_json(web_app_launch_id),
-    }))
+    })
 
 
 def confirmQrCodeAuthentication(link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'confirmQrCodeAuthentication',
         'link': to_json(link),
-    }))
+    })
 
 
 def confirmSession(session_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'confirmSession',
         'session_id': to_json(session_id),
-    }))
+    })
 
 
 def createBasicGroupChat(basic_group_id: int = None, force: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createBasicGroupChat',
         'basic_group_id': to_json(basic_group_id),
         'force': to_json(force),
-    }))
+    })
 
 
 def createCall(user_id: int = None, protocol: CallProtocol = None, is_video: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createCall',
         'user_id': to_json(user_id),
         'protocol': to_json(protocol),
         'is_video': to_json(is_video),
-    }))
+    })
 
 
-def createChatFilter(filter: ChatFilter = None, ):
-    return get_object(client.func({
-        '@type': 'createChatFilter',
-        'filter': to_json(filter),
-    }))
+def createChatFolder(folder: ChatFolder = None, ):
+    return client.send({
+        '@type': 'createChatFolder',
+        'folder': to_json(folder),
+    })
 
 
-def createChatFilterInviteLink(chat_filter_id: int = None, name: str = None, chat_ids: list[int] = None, ):
-    return get_object(client.func({
-        '@type': 'createChatFilterInviteLink',
-        'chat_filter_id': to_json(chat_filter_id),
+def createChatFolderInviteLink(chat_folder_id: int = None, name: str = None, chat_ids: list[int] = None, ):
+    return client.send({
+        '@type': 'createChatFolderInviteLink',
+        'chat_folder_id': to_json(chat_folder_id),
         'name': to_json(name),
         'chat_ids': to_json(chat_ids),
-    }))
+    })
 
 
 def createChatInviteLink(chat_id: int = None, name: str = None, expiration_date: int = None, member_limit: int = None, creates_join_request: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createChatInviteLink',
         'chat_id': to_json(chat_id),
         'name': to_json(name),
         'expiration_date': to_json(expiration_date),
         'member_limit': to_json(member_limit),
         'creates_join_request': to_json(creates_join_request),
-    }))
+    })
 
 
 def createForumTopic(chat_id: int = None, name: str = None, icon: ForumTopicIcon = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createForumTopic',
         'chat_id': to_json(chat_id),
         'name': to_json(name),
         'icon': to_json(icon),
-    }))
+    })
 
 
 def createInvoiceLink(invoice: InputMessageContent = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createInvoiceLink',
         'invoice': to_json(invoice),
-    }))
+    })
 
 
 def createNewBasicGroupChat(user_ids: list[int] = None, title: str = None, message_auto_delete_time: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createNewBasicGroupChat',
         'user_ids': to_json(user_ids),
         'title': to_json(title),
         'message_auto_delete_time': to_json(message_auto_delete_time),
-    }))
+    })
 
 
 def createNewSecretChat(user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createNewSecretChat',
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def createNewStickerSet(user_id: int = None, title: str = None, name: str = None, sticker_format: StickerFormat = None, sticker_type: StickerType = None, needs_repainting: bool = None, stickers: list[InputSticker] = None, source: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createNewStickerSet',
         'user_id': to_json(user_id),
         'title': to_json(title),
@@ -15815,11 +16632,11 @@ def createNewStickerSet(user_id: int = None, title: str = None, name: str = None
         'needs_repainting': to_json(needs_repainting),
         'stickers': to_json(stickers),
         'source': to_json(source),
-    }))
+    })
 
 
 def createNewSupergroupChat(title: str = None, is_forum: bool = None, is_channel: bool = None, description: str = None, location: ChatLocation = None, message_auto_delete_time: int = None, for_import: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createNewSupergroupChat',
         'title': to_json(title),
         'is_forum': to_json(is_forum),
@@ -15828,292 +16645,293 @@ def createNewSupergroupChat(title: str = None, is_forum: bool = None, is_channel
         'location': to_json(location),
         'message_auto_delete_time': to_json(message_auto_delete_time),
         'for_import': to_json(for_import),
-    }))
+    })
 
 
 def createPrivateChat(user_id: int = None, force: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createPrivateChat',
         'user_id': to_json(user_id),
         'force': to_json(force),
-    }))
+    })
 
 
 def createSecretChat(secret_chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createSecretChat',
         'secret_chat_id': to_json(secret_chat_id),
-    }))
+    })
 
 
 def createSupergroupChat(supergroup_id: int = None, force: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createSupergroupChat',
         'supergroup_id': to_json(supergroup_id),
         'force': to_json(force),
-    }))
+    })
 
 
 def createTemporaryPassword(password: str = None, valid_for: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createTemporaryPassword',
         'password': to_json(password),
         'valid_for': to_json(valid_for),
-    }))
+    })
 
 
 def createVideoChat(chat_id: int = None, title: str = None, start_date: int = None, is_rtmp_stream: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'createVideoChat',
         'chat_id': to_json(chat_id),
         'title': to_json(title),
         'start_date': to_json(start_date),
         'is_rtmp_stream': to_json(is_rtmp_stream),
-    }))
+    })
 
 
 def deleteAccount(reason: str = None, password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteAccount',
         'reason': to_json(reason),
         'password': to_json(password),
-    }))
+    })
 
 
 def deleteAllCallMessages(revoke: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteAllCallMessages',
         'revoke': to_json(revoke),
-    }))
+    })
 
 
 def deleteAllRevokedChatInviteLinks(chat_id: int = None, creator_user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteAllRevokedChatInviteLinks',
         'chat_id': to_json(chat_id),
         'creator_user_id': to_json(creator_user_id),
-    }))
+    })
 
 
 def deleteChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
-def deleteChatFilter(chat_filter_id: int = None, leave_chat_ids: list[int] = None, ):
-    return get_object(client.func({
-        '@type': 'deleteChatFilter',
-        'chat_filter_id': to_json(chat_filter_id),
+def deleteChatFolder(chat_folder_id: int = None, leave_chat_ids: list[int] = None, ):
+    return client.send({
+        '@type': 'deleteChatFolder',
+        'chat_folder_id': to_json(chat_folder_id),
         'leave_chat_ids': to_json(leave_chat_ids),
-    }))
+    })
 
 
-def deleteChatFilterInviteLink(chat_filter_id: int = None, invite_link: str = None, ):
-    return get_object(client.func({
-        '@type': 'deleteChatFilterInviteLink',
-        'chat_filter_id': to_json(chat_filter_id),
+def deleteChatFolderInviteLink(chat_folder_id: int = None, invite_link: str = None, ):
+    return client.send({
+        '@type': 'deleteChatFolderInviteLink',
+        'chat_folder_id': to_json(chat_folder_id),
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def deleteChatHistory(chat_id: int = None, remove_from_chat_list: bool = None, revoke: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteChatHistory',
         'chat_id': to_json(chat_id),
         'remove_from_chat_list': to_json(remove_from_chat_list),
         'revoke': to_json(revoke),
-    }))
+    })
 
 
 def deleteChatMessagesByDate(chat_id: int = None, min_date: int = None, max_date: int = None, revoke: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteChatMessagesByDate',
         'chat_id': to_json(chat_id),
         'min_date': to_json(min_date),
         'max_date': to_json(max_date),
         'revoke': to_json(revoke),
-    }))
+    })
 
 
 def deleteChatMessagesBySender(chat_id: int = None, sender_id: MessageSender = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteChatMessagesBySender',
         'chat_id': to_json(chat_id),
         'sender_id': to_json(sender_id),
-    }))
+    })
 
 
 def deleteChatReplyMarkup(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteChatReplyMarkup',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def deleteCommands(scope: BotCommandScope = None, language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteCommands',
         'scope': to_json(scope),
         'language_code': to_json(language_code),
-    }))
+    })
 
 
 def deleteFile(file_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteFile',
         'file_id': to_json(file_id),
-    }))
+    })
 
 
 def deleteForumTopic(chat_id: int = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteForumTopic',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def deleteLanguagePack(language_pack_id: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteLanguagePack',
         'language_pack_id': to_json(language_pack_id),
-    }))
+    })
 
 
 def deleteMessages(chat_id: int = None, message_ids: list[int] = None, revoke: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteMessages',
         'chat_id': to_json(chat_id),
         'message_ids': to_json(message_ids),
         'revoke': to_json(revoke),
-    }))
+    })
 
 
 def deletePassportElement(type: PassportElementType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deletePassportElement',
         'type': to_json(type),
-    }))
+    })
 
 
 def deleteProfilePhoto(profile_photo_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteProfilePhoto',
         'profile_photo_id': to_json(profile_photo_id),
-    }))
+    })
 
 
 def deleteRevokedChatInviteLink(chat_id: int = None, invite_link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteRevokedChatInviteLink',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def deleteSavedCredentials():
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteSavedCredentials',
-    }))
+    })
 
 
 def deleteSavedOrderInfo():
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteSavedOrderInfo',
-    }))
+    })
 
 
 def deleteStickerSet(name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'deleteStickerSet',
         'name': to_json(name),
-    }))
+    })
 
 
-def deleteStory(story_id: int = None, ):
-    return get_object(client.func({
+def deleteStory(story_sender_chat_id: int = None, story_id: int = None, ):
+    return client.send({
         '@type': 'deleteStory',
+        'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
-    }))
+    })
 
 
 def destroy():
-    return get_object(client.func({
+    return client.send({
         '@type': 'destroy',
-    }))
+    })
 
 
 def disableAllSupergroupUsernames(supergroup_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'disableAllSupergroupUsernames',
         'supergroup_id': to_json(supergroup_id),
-    }))
+    })
 
 
 def disableProxy():
-    return get_object(client.func({
+    return client.send({
         '@type': 'disableProxy',
-    }))
+    })
 
 
 def discardCall(call_id: int = None, is_disconnected: bool = None, duration: int = None, is_video: bool = None, connection_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'discardCall',
         'call_id': to_json(call_id),
         'is_disconnected': to_json(is_disconnected),
         'duration': to_json(duration),
         'is_video': to_json(is_video),
         'connection_id': to_json(connection_id),
-    }))
+    })
 
 
 def disconnectAllWebsites():
-    return get_object(client.func({
+    return client.send({
         '@type': 'disconnectAllWebsites',
-    }))
+    })
 
 
 def disconnectWebsite(website_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'disconnectWebsite',
         'website_id': to_json(website_id),
-    }))
+    })
 
 
 def downloadFile(file_id: int = None, priority: int = None, offset: int = None, limit: int = None, synchronous: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'downloadFile',
         'file_id': to_json(file_id),
         'priority': to_json(priority),
         'offset': to_json(offset),
         'limit': to_json(limit),
         'synchronous': to_json(synchronous),
-    }))
+    })
 
 
-def editChatFilter(chat_filter_id: int = None, filter: ChatFilter = None, ):
-    return get_object(client.func({
-        '@type': 'editChatFilter',
-        'chat_filter_id': to_json(chat_filter_id),
-        'filter': to_json(filter),
-    }))
+def editChatFolder(chat_folder_id: int = None, folder: ChatFolder = None, ):
+    return client.send({
+        '@type': 'editChatFolder',
+        'chat_folder_id': to_json(chat_folder_id),
+        'folder': to_json(folder),
+    })
 
 
-def editChatFilterInviteLink(chat_filter_id: int = None, invite_link: str = None, name: str = None, chat_ids: list[int] = None, ):
-    return get_object(client.func({
-        '@type': 'editChatFilterInviteLink',
-        'chat_filter_id': to_json(chat_filter_id),
+def editChatFolderInviteLink(chat_folder_id: int = None, invite_link: str = None, name: str = None, chat_ids: list[int] = None, ):
+    return client.send({
+        '@type': 'editChatFolderInviteLink',
+        'chat_folder_id': to_json(chat_folder_id),
         'invite_link': to_json(invite_link),
         'name': to_json(name),
         'chat_ids': to_json(chat_ids),
-    }))
+    })
 
 
 def editChatInviteLink(chat_id: int = None, invite_link: str = None, name: str = None, expiration_date: int = None, member_limit: int = None, creates_join_request: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editChatInviteLink',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
@@ -16121,85 +16939,85 @@ def editChatInviteLink(chat_id: int = None, invite_link: str = None, name: str =
         'expiration_date': to_json(expiration_date),
         'member_limit': to_json(member_limit),
         'creates_join_request': to_json(creates_join_request),
-    }))
+    })
 
 
 def editCustomLanguagePackInfo(info: LanguagePackInfo = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editCustomLanguagePackInfo',
         'info': to_json(info),
-    }))
+    })
 
 
 def editForumTopic(chat_id: int = None, message_thread_id: int = None, name: str = None, edit_icon_custom_emoji: bool = None, icon_custom_emoji_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editForumTopic',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'name': to_json(name),
         'edit_icon_custom_emoji': to_json(edit_icon_custom_emoji),
         'icon_custom_emoji_id': to_json(icon_custom_emoji_id),
-    }))
+    })
 
 
 def editInlineMessageCaption(inline_message_id: str = None, reply_markup: ReplyMarkup = None, caption: FormattedText = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editInlineMessageCaption',
         'inline_message_id': to_json(inline_message_id),
         'reply_markup': to_json(reply_markup),
         'caption': to_json(caption),
-    }))
+    })
 
 
 def editInlineMessageLiveLocation(inline_message_id: str = None, reply_markup: ReplyMarkup = None, location: Location = None, heading: int = None, proximity_alert_radius: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editInlineMessageLiveLocation',
         'inline_message_id': to_json(inline_message_id),
         'reply_markup': to_json(reply_markup),
         'location': to_json(location),
         'heading': to_json(heading),
         'proximity_alert_radius': to_json(proximity_alert_radius),
-    }))
+    })
 
 
 def editInlineMessageMedia(inline_message_id: str = None, reply_markup: ReplyMarkup = None, input_message_content: InputMessageContent = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editInlineMessageMedia',
         'inline_message_id': to_json(inline_message_id),
         'reply_markup': to_json(reply_markup),
         'input_message_content': to_json(input_message_content),
-    }))
+    })
 
 
 def editInlineMessageReplyMarkup(inline_message_id: str = None, reply_markup: ReplyMarkup = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editInlineMessageReplyMarkup',
         'inline_message_id': to_json(inline_message_id),
         'reply_markup': to_json(reply_markup),
-    }))
+    })
 
 
 def editInlineMessageText(inline_message_id: str = None, reply_markup: ReplyMarkup = None, input_message_content: InputMessageContent = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editInlineMessageText',
         'inline_message_id': to_json(inline_message_id),
         'reply_markup': to_json(reply_markup),
         'input_message_content': to_json(input_message_content),
-    }))
+    })
 
 
 def editMessageCaption(chat_id: int = None, message_id: int = None, reply_markup: ReplyMarkup = None, caption: FormattedText = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editMessageCaption',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reply_markup': to_json(reply_markup),
         'caption': to_json(caption),
-    }))
+    })
 
 
 def editMessageLiveLocation(chat_id: int = None, message_id: int = None, reply_markup: ReplyMarkup = None, location: Location = None, heading: int = None, proximity_alert_radius: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editMessageLiveLocation',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
@@ -16207,106 +17025,107 @@ def editMessageLiveLocation(chat_id: int = None, message_id: int = None, reply_m
         'location': to_json(location),
         'heading': to_json(heading),
         'proximity_alert_radius': to_json(proximity_alert_radius),
-    }))
+    })
 
 
 def editMessageMedia(chat_id: int = None, message_id: int = None, reply_markup: ReplyMarkup = None, input_message_content: InputMessageContent = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editMessageMedia',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reply_markup': to_json(reply_markup),
         'input_message_content': to_json(input_message_content),
-    }))
+    })
 
 
 def editMessageReplyMarkup(chat_id: int = None, message_id: int = None, reply_markup: ReplyMarkup = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editMessageReplyMarkup',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reply_markup': to_json(reply_markup),
-    }))
+    })
 
 
 def editMessageSchedulingState(chat_id: int = None, message_id: int = None, scheduling_state: MessageSchedulingState = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editMessageSchedulingState',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'scheduling_state': to_json(scheduling_state),
-    }))
+    })
 
 
 def editMessageText(chat_id: int = None, message_id: int = None, reply_markup: ReplyMarkup = None, input_message_content: InputMessageContent = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editMessageText',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reply_markup': to_json(reply_markup),
         'input_message_content': to_json(input_message_content),
-    }))
+    })
 
 
 def editProxy(proxy_id: int = None, server: str = None, port: int = None, enable: bool = None, type: ProxyType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'editProxy',
         'proxy_id': to_json(proxy_id),
         'server': to_json(server),
         'port': to_json(port),
         'enable': to_json(enable),
         'type': to_json(type),
-    }))
+    })
 
 
-def editStory(story_id: int = None, content: InputStoryContent = None, areas: InputStoryAreas = None, caption: FormattedText = None, ):
-    return get_object(client.func({
+def editStory(story_sender_chat_id: int = None, story_id: int = None, content: InputStoryContent = None, areas: InputStoryAreas = None, caption: FormattedText = None, ):
+    return client.send({
         '@type': 'editStory',
+        'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
         'content': to_json(content),
         'areas': to_json(areas),
         'caption': to_json(caption),
-    }))
+    })
 
 
 def enableProxy(proxy_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'enableProxy',
         'proxy_id': to_json(proxy_id),
-    }))
+    })
 
 
 def endGroupCall(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'endGroupCall',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def endGroupCallRecording(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'endGroupCallRecording',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def endGroupCallScreenSharing(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'endGroupCallScreenSharing',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def finishFileGeneration(generation_id: int = None, error: Error = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'finishFileGeneration',
         'generation_id': to_json(generation_id),
         'error': to_json(error),
-    }))
+    })
 
 
-def forwardMessages(chat_id: int = None, message_thread_id: int = None, from_chat_id: int = None, message_ids: list[int] = None, options: MessageSendOptions = None, send_copy: bool = None, remove_caption: bool = None, only_preview: bool = None, ):
-    return get_object(client.func({
+def forwardMessages(chat_id: int = None, message_thread_id: int = None, from_chat_id: int = None, message_ids: list[int] = None, options: MessageSendOptions = None, send_copy: bool = None, remove_caption: bool = None, ):
+    return client.send({
         '@type': 'forwardMessages',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
@@ -16315,236 +17134,273 @@ def forwardMessages(chat_id: int = None, message_thread_id: int = None, from_cha
         'options': to_json(options),
         'send_copy': to_json(send_copy),
         'remove_caption': to_json(remove_caption),
-        'only_preview': to_json(only_preview),
-    }))
+    })
 
 
 def getAccountTtl():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAccountTtl',
-    }))
+    })
 
 
 def getActiveLiveLocationMessages():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getActiveLiveLocationMessages',
-    }))
+    })
 
 
 def getActiveSessions():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getActiveSessions',
-    }))
+    })
 
 
 def getAllPassportElements(password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAllPassportElements',
         'password': to_json(password),
-    }))
+    })
 
 
 def getAllStickerEmojis(sticker_type: StickerType = None, query: str = None, chat_id: int = None, return_only_main_emoji: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAllStickerEmojis',
         'sticker_type': to_json(sticker_type),
         'query': to_json(query),
         'chat_id': to_json(chat_id),
         'return_only_main_emoji': to_json(return_only_main_emoji),
-    }))
+    })
 
 
 def getAnimatedEmoji(emoji: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAnimatedEmoji',
         'emoji': to_json(emoji),
-    }))
+    })
 
 
 def getApplicationConfig():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getApplicationConfig',
-    }))
+    })
 
 
 def getApplicationDownloadLink():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getApplicationDownloadLink',
-    }))
+    })
 
 
 def getArchiveChatListSettings():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getArchiveChatListSettings',
-    }))
+    })
 
 
 def getArchivedStickerSets(sticker_type: StickerType = None, offset_sticker_set_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getArchivedStickerSets',
         'sticker_type': to_json(sticker_type),
         'offset_sticker_set_id': to_json(offset_sticker_set_id),
         'limit': to_json(limit),
-    }))
-
-
-def getArchivedStories(from_story_id: int = None, limit: int = None, ):
-    return get_object(client.func({
-        '@type': 'getArchivedStories',
-        'from_story_id': to_json(from_story_id),
-        'limit': to_json(limit),
-    }))
+    })
 
 
 def getAttachedStickerSets(file_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAttachedStickerSets',
         'file_id': to_json(file_id),
-    }))
+    })
 
 
 def getAttachmentMenuBot(bot_user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAttachmentMenuBot',
         'bot_user_id': to_json(bot_user_id),
-    }))
+    })
 
 
 def getAuthorizationState():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAuthorizationState',
-    }))
+    })
 
 
 def getAutoDownloadSettingsPresets():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAutoDownloadSettingsPresets',
-    }))
+    })
 
 
 def getAutosaveSettings():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getAutosaveSettings',
-    }))
+    })
+
+
+def getAvailableChatBoostSlots():
+    return client.send({
+        '@type': 'getAvailableChatBoostSlots',
+    })
 
 
 def getBackgroundUrl(name: str = None, type: BackgroundType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBackgroundUrl',
         'name': to_json(name),
         'type': to_json(type),
-    }))
+    })
 
 
 def getBackgrounds(for_dark_theme: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBackgrounds',
         'for_dark_theme': to_json(for_dark_theme),
-    }))
+    })
 
 
 def getBankCardInfo(bank_card_number: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBankCardInfo',
         'bank_card_number': to_json(bank_card_number),
-    }))
+    })
 
 
 def getBasicGroup(basic_group_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBasicGroup',
         'basic_group_id': to_json(basic_group_id),
-    }))
+    })
 
 
 def getBasicGroupFullInfo(basic_group_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBasicGroupFullInfo',
         'basic_group_id': to_json(basic_group_id),
-    }))
+    })
 
 
 def getBlockedMessageSenders(block_list: BlockList = None, offset: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBlockedMessageSenders',
         'block_list': to_json(block_list),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getBotInfoDescription(bot_user_id: int = None, language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBotInfoDescription',
         'bot_user_id': to_json(bot_user_id),
         'language_code': to_json(language_code),
-    }))
+    })
 
 
 def getBotInfoShortDescription(bot_user_id: int = None, language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBotInfoShortDescription',
         'bot_user_id': to_json(bot_user_id),
         'language_code': to_json(language_code),
-    }))
+    })
 
 
 def getBotName(bot_user_id: int = None, language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getBotName',
         'bot_user_id': to_json(bot_user_id),
         'language_code': to_json(language_code),
-    }))
+    })
 
 
 def getCallbackQueryAnswer(chat_id: int = None, message_id: int = None, payload: CallbackQueryPayload = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCallbackQueryAnswer',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'payload': to_json(payload),
-    }))
+    })
 
 
 def getCallbackQueryMessage(chat_id: int = None, message_id: int = None, callback_query_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCallbackQueryMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'callback_query_id': to_json(callback_query_id),
-    }))
+    })
 
 
 def getChat(chat_id: int = None, ):
-    client.send({
+    return client.send({
         '@type': 'getChat',
         'chat_id': to_json(chat_id),
     })
 
 
 def getChatActiveStories(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatActiveStories',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getChatAdministrators(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatAdministrators',
         'chat_id': to_json(chat_id),
-    }))
+    })
+
+
+def getChatArchivedStories(chat_id: int = None, from_story_id: int = None, limit: int = None, ):
+    return client.send({
+        '@type': 'getChatArchivedStories',
+        'chat_id': to_json(chat_id),
+        'from_story_id': to_json(from_story_id),
+        'limit': to_json(limit),
+    })
 
 
 def getChatAvailableMessageSenders(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatAvailableMessageSenders',
         'chat_id': to_json(chat_id),
-    }))
+    })
+
+
+def getChatBoostLink(chat_id: int = None, ):
+    return client.send({
+        '@type': 'getChatBoostLink',
+        'chat_id': to_json(chat_id),
+    })
+
+
+def getChatBoostLinkInfo(url: str = None, ):
+    return client.send({
+        '@type': 'getChatBoostLinkInfo',
+        'url': to_json(url),
+    })
+
+
+def getChatBoostStatus(chat_id: int = None, ):
+    return client.send({
+        '@type': 'getChatBoostStatus',
+        'chat_id': to_json(chat_id),
+    })
+
+
+def getChatBoosts(chat_id: int = None, only_gift_codes: bool = None, offset: str = None, limit: int = None, ):
+    return client.send({
+        '@type': 'getChatBoosts',
+        'chat_id': to_json(chat_id),
+        'only_gift_codes': to_json(only_gift_codes),
+        'offset': to_json(offset),
+        'limit': to_json(limit),
+    })
 
 
 def getChatEventLog(chat_id: int = None, query: str = None, from_event_id: int = None, limit: int = None, filters: ChatEventLogFilters = None, user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatEventLog',
         'chat_id': to_json(chat_id),
         'query': to_json(query),
@@ -16552,89 +17408,89 @@ def getChatEventLog(chat_id: int = None, query: str = None, from_event_id: int =
         'limit': to_json(limit),
         'filters': to_json(filters),
         'user_ids': to_json(user_ids),
-    }))
+    })
 
 
-def getChatFilter(chat_filter_id: int = None, ):
+def getChatFolder(chat_folder_id: int = None, ):
+    return client.send({
+        '@type': 'getChatFolder',
+        'chat_folder_id': to_json(chat_folder_id),
+    })
+
+
+def getChatFolderChatCount(folder: ChatFolder = None, ):
+    return client.send({
+        '@type': 'getChatFolderChatCount',
+        'folder': to_json(folder),
+    })
+
+
+def getChatFolderChatsToLeave(chat_folder_id: int = None, ):
+    return client.send({
+        '@type': 'getChatFolderChatsToLeave',
+        'chat_folder_id': to_json(chat_folder_id),
+    })
+
+
+def getChatFolderDefaultIconName(folder: ChatFolder = None, ):
     return get_object(client.func({
-        '@type': 'getChatFilter',
-        'chat_filter_id': to_json(chat_filter_id),
+        '@type': 'getChatFolderDefaultIconName',
+        'folder': to_json(folder),
     }))
 
 
-def getChatFilterChatCount(filter: ChatFilter = None, ):
-    return get_object(client.func({
-        '@type': 'getChatFilterChatCount',
-        'filter': to_json(filter),
-    }))
+def getChatFolderInviteLinks(chat_folder_id: int = None, ):
+    return client.send({
+        '@type': 'getChatFolderInviteLinks',
+        'chat_folder_id': to_json(chat_folder_id),
+    })
 
 
-def getChatFilterChatsToLeave(chat_filter_id: int = None, ):
-    return get_object(client.func({
-        '@type': 'getChatFilterChatsToLeave',
-        'chat_filter_id': to_json(chat_filter_id),
-    }))
-
-
-def getChatFilterDefaultIconName(filter: ChatFilter = None, ):
-    return get_object(client.func({
-        '@type': 'getChatFilterDefaultIconName',
-        'filter': to_json(filter),
-    }))
-
-
-def getChatFilterInviteLinks(chat_filter_id: int = None, ):
-    return get_object(client.func({
-        '@type': 'getChatFilterInviteLinks',
-        'chat_filter_id': to_json(chat_filter_id),
-    }))
-
-
-def getChatFilterNewChats(chat_filter_id: int = None, ):
-    return get_object(client.func({
-        '@type': 'getChatFilterNewChats',
-        'chat_filter_id': to_json(chat_filter_id),
-    }))
+def getChatFolderNewChats(chat_folder_id: int = None, ):
+    return client.send({
+        '@type': 'getChatFolderNewChats',
+        'chat_folder_id': to_json(chat_folder_id),
+    })
 
 
 def getChatHistory(chat_id: int = None, from_message_id: int = None, offset: int = None, limit: int = None, only_local: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatHistory',
         'chat_id': to_json(chat_id),
         'from_message_id': to_json(from_message_id),
         'offset': to_json(offset),
         'limit': to_json(limit),
         'only_local': to_json(only_local),
-    }))
+    })
 
 
 def getChatInviteLink(chat_id: int = None, invite_link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatInviteLink',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def getChatInviteLinkCounts(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatInviteLinkCounts',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getChatInviteLinkMembers(chat_id: int = None, invite_link: str = None, offset_member: ChatInviteLinkMember = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatInviteLinkMembers',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
         'offset_member': to_json(offset_member),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getChatInviteLinks(chat_id: int = None, creator_user_id: int = None, is_revoked: bool = None, offset_date: int = None, offset_invite_link: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatInviteLinks',
         'chat_id': to_json(chat_id),
         'creator_user_id': to_json(creator_user_id),
@@ -16642,298 +17498,310 @@ def getChatInviteLinks(chat_id: int = None, creator_user_id: int = None, is_revo
         'offset_date': to_json(offset_date),
         'offset_invite_link': to_json(offset_invite_link),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getChatJoinRequests(chat_id: int = None, invite_link: str = None, query: str = None, offset_request: ChatJoinRequest = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatJoinRequests',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
         'query': to_json(query),
         'offset_request': to_json(offset_request),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getChatListsToAddChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatListsToAddChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getChatMember(chat_id: int = None, member_id: MessageSender = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatMember',
         'chat_id': to_json(chat_id),
         'member_id': to_json(member_id),
-    }))
+    })
 
 
 def getChatMessageByDate(chat_id: int = None, date: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatMessageByDate',
         'chat_id': to_json(chat_id),
         'date': to_json(date),
-    }))
+    })
 
 
 def getChatMessageCalendar(chat_id: int = None, filter: SearchMessagesFilter = None, from_message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatMessageCalendar',
         'chat_id': to_json(chat_id),
         'filter': to_json(filter),
         'from_message_id': to_json(from_message_id),
-    }))
+    })
 
 
 def getChatMessageCount(chat_id: int = None, filter: SearchMessagesFilter = None, return_local: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatMessageCount',
         'chat_id': to_json(chat_id),
         'filter': to_json(filter),
         'return_local': to_json(return_local),
-    }))
+    })
 
 
 def getChatMessagePosition(chat_id: int = None, message_id: int = None, filter: SearchMessagesFilter = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatMessagePosition',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'filter': to_json(filter),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def getChatNotificationSettingsExceptions(scope: NotificationSettingsScope = None, compare_sound: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatNotificationSettingsExceptions',
         'scope': to_json(scope),
         'compare_sound': to_json(compare_sound),
-    }))
+    })
 
 
 def getChatPinnedMessage(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatPinnedMessage',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getChatPinnedStories(chat_id: int = None, from_story_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatPinnedStories',
         'chat_id': to_json(chat_id),
         'from_story_id': to_json(from_story_id),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getChatScheduledMessages(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatScheduledMessages',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getChatSparseMessagePositions(chat_id: int = None, filter: SearchMessagesFilter = None, from_message_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatSparseMessagePositions',
         'chat_id': to_json(chat_id),
         'filter': to_json(filter),
         'from_message_id': to_json(from_message_id),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getChatSponsoredMessages(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatSponsoredMessages',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getChatStatistics(chat_id: int = None, is_dark: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getChatStatistics',
         'chat_id': to_json(chat_id),
         'is_dark': to_json(is_dark),
-    }))
+    })
 
 
 def getChats(chat_list: ChatList = None, limit: int = None, ):
-    client.send({
+    return client.send({
         '@type': 'getChats',
         'chat_list': to_json(chat_list),
         'limit': to_json(limit),
     })
 
 
-def getChatsForChatFilterInviteLink(chat_filter_id: int = None, ):
-    return get_object(client.func({
-        '@type': 'getChatsForChatFilterInviteLink',
-        'chat_filter_id': to_json(chat_filter_id),
-    }))
+def getChatsForChatFolderInviteLink(chat_folder_id: int = None, ):
+    return client.send({
+        '@type': 'getChatsForChatFolderInviteLink',
+        'chat_folder_id': to_json(chat_folder_id),
+    })
+
+
+def getChatsToSendStories():
+    return client.send({
+        '@type': 'getChatsToSendStories',
+    })
 
 
 def getCloseFriends():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCloseFriends',
-    }))
+    })
 
 
 def getCommands(scope: BotCommandScope = None, language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCommands',
         'scope': to_json(scope),
         'language_code': to_json(language_code),
-    }))
+    })
 
 
 def getConnectedWebsites():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getConnectedWebsites',
-    }))
+    })
 
 
 def getContacts():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getContacts',
-    }))
+    })
 
 
 def getCountries():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCountries',
-    }))
+    })
 
 
 def getCountryCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCountryCode',
-    }))
+    })
 
 
 def getCreatedPublicChats(type: PublicChatType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCreatedPublicChats',
         'type': to_json(type),
-    }))
+    })
 
 
 def getCurrentState():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCurrentState',
-    }))
+    })
 
 
 def getCustomEmojiReactionAnimations():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCustomEmojiReactionAnimations',
-    }))
+    })
 
 
 def getCustomEmojiStickers(custom_emoji_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getCustomEmojiStickers',
         'custom_emoji_ids': to_json(custom_emoji_ids),
-    }))
+    })
 
 
 def getDatabaseStatistics():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getDatabaseStatistics',
-    }))
+    })
 
 
 def getDeepLinkInfo(link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getDeepLinkInfo',
         'link': to_json(link),
-    }))
+    })
+
+
+def getDefaultBackgroundCustomEmojiStickers():
+    return client.send({
+        '@type': 'getDefaultBackgroundCustomEmojiStickers',
+    })
 
 
 def getDefaultChatPhotoCustomEmojiStickers():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getDefaultChatPhotoCustomEmojiStickers',
-    }))
+    })
 
 
 def getDefaultEmojiStatuses():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getDefaultEmojiStatuses',
-    }))
+    })
 
 
 def getDefaultMessageAutoDeleteTime():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getDefaultMessageAutoDeleteTime',
-    }))
+    })
 
 
 def getDefaultProfilePhotoCustomEmojiStickers():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getDefaultProfilePhotoCustomEmojiStickers',
-    }))
+    })
 
 
 def getEmojiCategories(type: EmojiCategoryType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getEmojiCategories',
         'type': to_json(type),
-    }))
+    })
 
 
 def getEmojiReaction(emoji: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getEmojiReaction',
         'emoji': to_json(emoji),
-    }))
+    })
 
 
 def getEmojiSuggestionsUrl(language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getEmojiSuggestionsUrl',
         'language_code': to_json(language_code),
-    }))
+    })
 
 
 def getExternalLink(link: str = None, allow_write_access: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getExternalLink',
         'link': to_json(link),
         'allow_write_access': to_json(allow_write_access),
-    }))
+    })
 
 
 def getExternalLinkInfo(link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getExternalLinkInfo',
         'link': to_json(link),
-    }))
+    })
 
 
 def getFavoriteStickers():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getFavoriteStickers',
-    }))
+    })
 
 
 def getFile(file_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getFile',
         'file_id': to_json(file_id),
-    }))
+    })
 
 
 def getFileDownloadedPrefixSize(file_id: int = None, offset: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getFileDownloadedPrefixSize',
         'file_id': to_json(file_id),
         'offset': to_json(offset),
-    }))
+    })
 
 
 def getFileExtension(mime_type: str = None, ):
@@ -16951,29 +17819,29 @@ def getFileMimeType(file_name: str = None, ):
 
 
 def getForumTopic(chat_id: int = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getForumTopic',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def getForumTopicDefaultIcons():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getForumTopicDefaultIcons',
-    }))
+    })
 
 
 def getForumTopicLink(chat_id: int = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getForumTopicLink',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def getForumTopics(chat_id: int = None, query: str = None, offset_date: int = None, offset_message_id: int = None, offset_message_thread_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getForumTopics',
         'chat_id': to_json(chat_id),
         'query': to_json(query),
@@ -16981,111 +17849,111 @@ def getForumTopics(chat_id: int = None, query: str = None, offset_date: int = No
         'offset_message_id': to_json(offset_message_id),
         'offset_message_thread_id': to_json(offset_message_thread_id),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getGameHighScores(chat_id: int = None, message_id: int = None, user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getGameHighScores',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def getGroupCall(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getGroupCall',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def getGroupCallInviteLink(group_call_id: int = None, can_self_unmute: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getGroupCallInviteLink',
         'group_call_id': to_json(group_call_id),
         'can_self_unmute': to_json(can_self_unmute),
-    }))
+    })
 
 
 def getGroupCallStreamSegment(group_call_id: int = None, time_offset: int = None, scale: int = None, channel_id: int = None, video_quality: GroupCallVideoQuality = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getGroupCallStreamSegment',
         'group_call_id': to_json(group_call_id),
         'time_offset': to_json(time_offset),
         'scale': to_json(scale),
         'channel_id': to_json(channel_id),
         'video_quality': to_json(video_quality),
-    }))
+    })
 
 
 def getGroupCallStreams(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getGroupCallStreams',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def getGroupsInCommon(user_id: int = None, offset_chat_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getGroupsInCommon',
         'user_id': to_json(user_id),
         'offset_chat_id': to_json(offset_chat_id),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getImportedContactCount():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getImportedContactCount',
-    }))
+    })
 
 
 def getInactiveSupergroupChats():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getInactiveSupergroupChats',
-    }))
+    })
 
 
 def getInlineGameHighScores(inline_message_id: str = None, user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getInlineGameHighScores',
         'inline_message_id': to_json(inline_message_id),
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def getInlineQueryResults(bot_user_id: int = None, chat_id: int = None, user_location: Location = None, query: str = None, offset: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getInlineQueryResults',
         'bot_user_id': to_json(bot_user_id),
         'chat_id': to_json(chat_id),
         'user_location': to_json(user_location),
         'query': to_json(query),
         'offset': to_json(offset),
-    }))
+    })
 
 
 def getInstalledStickerSets(sticker_type: StickerType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getInstalledStickerSets',
         'sticker_type': to_json(sticker_type),
-    }))
+    })
 
 
 def getInternalLink(type: InternalLinkType = None, is_http: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getInternalLink',
         'type': to_json(type),
         'is_http': to_json(is_http),
-    }))
+    })
 
 
 def getInternalLinkType(link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getInternalLinkType',
         'link': to_json(link),
-    }))
+    })
 
 
 def getJsonString(json_value: JsonValue = None, ):
@@ -17103,10 +17971,10 @@ def getJsonValue(json: str = None, ):
 
 
 def getLanguagePackInfo(language_pack_id: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLanguagePackInfo',
         'language_pack_id': to_json(language_pack_id),
-    }))
+    })
 
 
 def getLanguagePackString(language_pack_database_path: str = None, localization_target: str = None, language_pack_id: str = None, key: str = None, ):
@@ -17120,18 +17988,18 @@ def getLanguagePackString(language_pack_database_path: str = None, localization_
 
 
 def getLanguagePackStrings(language_pack_id: str = None, keys: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLanguagePackStrings',
         'language_pack_id': to_json(language_pack_id),
         'keys': to_json(keys),
-    }))
+    })
 
 
 def getLocalizationTargetInfo(only_local: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLocalizationTargetInfo',
         'only_local': to_json(only_local),
-    }))
+    })
 
 
 def getLogStream():
@@ -17160,26 +18028,26 @@ def getLogVerbosityLevel():
 
 
 def getLoginUrl(chat_id: int = None, message_id: int = None, button_id: int = None, allow_write_access: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLoginUrl',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'button_id': to_json(button_id),
         'allow_write_access': to_json(allow_write_access),
-    }))
+    })
 
 
 def getLoginUrlInfo(chat_id: int = None, message_id: int = None, button_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getLoginUrlInfo',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'button_id': to_json(button_id),
-    }))
+    })
 
 
 def getMapThumbnailFile(location: Location = None, zoom: int = None, width: int = None, height: int = None, scale: int = None, chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMapThumbnailFile',
         'location': to_json(location),
         'zoom': to_json(zoom),
@@ -17187,7 +18055,7 @@ def getMapThumbnailFile(location: Location = None, zoom: int = None, width: int 
         'height': to_json(height),
         'scale': to_json(scale),
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getMarkdownText(text: FormattedText = None, ):
@@ -17198,154 +18066,154 @@ def getMarkdownText(text: FormattedText = None, ):
 
 
 def getMe():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMe',
-    }))
+    })
 
 
 def getMenuButton(user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMenuButton',
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def getMessage(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def getMessageAddedReactions(chat_id: int = None, message_id: int = None, reaction_type: ReactionType = None, offset: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageAddedReactions',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reaction_type': to_json(reaction_type),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getMessageAvailableReactions(chat_id: int = None, message_id: int = None, row_size: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageAvailableReactions',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'row_size': to_json(row_size),
-    }))
+    })
 
 
 def getMessageEmbeddingCode(chat_id: int = None, message_id: int = None, for_album: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageEmbeddingCode',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'for_album': to_json(for_album),
-    }))
+    })
 
 
 def getMessageFileType(message_file_head: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageFileType',
         'message_file_head': to_json(message_file_head),
-    }))
+    })
 
 
 def getMessageImportConfirmationText(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageImportConfirmationText',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getMessageLink(chat_id: int = None, message_id: int = None, media_timestamp: int = None, for_album: bool = None, in_message_thread: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageLink',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'media_timestamp': to_json(media_timestamp),
         'for_album': to_json(for_album),
         'in_message_thread': to_json(in_message_thread),
-    }))
+    })
 
 
 def getMessageLinkInfo(url: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageLinkInfo',
         'url': to_json(url),
-    }))
+    })
 
 
 def getMessageLocally(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageLocally',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def getMessagePublicForwards(chat_id: int = None, message_id: int = None, offset: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessagePublicForwards',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getMessageStatistics(chat_id: int = None, message_id: int = None, is_dark: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageStatistics',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'is_dark': to_json(is_dark),
-    }))
+    })
 
 
 def getMessageThread(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageThread',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def getMessageThreadHistory(chat_id: int = None, message_id: int = None, from_message_id: int = None, offset: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageThreadHistory',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'from_message_id': to_json(from_message_id),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getMessageViewers(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessageViewers',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def getMessages(chat_id: int = None, message_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getMessages',
         'chat_id': to_json(chat_id),
         'message_ids': to_json(message_ids),
-    }))
+    })
 
 
 def getNetworkStatistics(only_current: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getNetworkStatistics',
         'only_current': to_json(only_current),
-    }))
+    })
 
 
 def getOption(name: str = None, ):
@@ -17356,58 +18224,58 @@ def getOption(name: str = None, ):
 
 
 def getPassportAuthorizationForm(bot_user_id: int = None, scope: str = None, public_key: str = None, nonce: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPassportAuthorizationForm',
         'bot_user_id': to_json(bot_user_id),
         'scope': to_json(scope),
         'public_key': to_json(public_key),
         'nonce': to_json(nonce),
-    }))
+    })
 
 
 def getPassportAuthorizationFormAvailableElements(authorization_form_id: int = None, password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPassportAuthorizationFormAvailableElements',
         'authorization_form_id': to_json(authorization_form_id),
         'password': to_json(password),
-    }))
+    })
 
 
 def getPassportElement(type: PassportElementType = None, password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPassportElement',
         'type': to_json(type),
         'password': to_json(password),
-    }))
+    })
 
 
 def getPasswordState():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPasswordState',
-    }))
+    })
 
 
 def getPaymentForm(input_invoice: InputInvoice = None, theme: ThemeParameters = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPaymentForm',
         'input_invoice': to_json(input_invoice),
         'theme': to_json(theme),
-    }))
+    })
 
 
 def getPaymentReceipt(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPaymentReceipt',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def getPhoneNumberInfo(phone_number_prefix: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPhoneNumberInfo',
         'phone_number_prefix': to_json(phone_number_prefix),
-    }))
+    })
 
 
 def getPhoneNumberInfoSync(language_code: str = None, phone_number_prefix: str = None, ):
@@ -17419,67 +18287,82 @@ def getPhoneNumberInfoSync(language_code: str = None, phone_number_prefix: str =
 
 
 def getPollVoters(chat_id: int = None, message_id: int = None, option_id: int = None, offset: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPollVoters',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'option_id': to_json(option_id),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getPreferredCountryLanguage(country_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPreferredCountryLanguage',
         'country_code': to_json(country_code),
-    }))
+    })
 
 
 def getPremiumFeatures(source: PremiumSource = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPremiumFeatures',
         'source': to_json(source),
-    }))
+    })
+
+
+def getPremiumGiftCodePaymentOptions(boosted_chat_id: int = None, ):
+    return client.send({
+        '@type': 'getPremiumGiftCodePaymentOptions',
+        'boosted_chat_id': to_json(boosted_chat_id),
+    })
+
+
+def getPremiumGiveawayInfo(chat_id: int = None, message_id: int = None, ):
+    return client.send({
+        '@type': 'getPremiumGiveawayInfo',
+        'chat_id': to_json(chat_id),
+        'message_id': to_json(message_id),
+    })
 
 
 def getPremiumLimit(limit_type: PremiumLimitType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPremiumLimit',
         'limit_type': to_json(limit_type),
-    }))
+    })
 
 
 def getPremiumState():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPremiumState',
-    }))
+    })
 
 
 def getPremiumStickerExamples():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPremiumStickerExamples',
-    }))
+    })
 
 
 def getPremiumStickers(limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getPremiumStickers',
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getProxies():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getProxies',
-    }))
+    })
 
 
 def getProxyLink(proxy_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getProxyLink',
         'proxy_id': to_json(proxy_id),
-    }))
+    })
 
 
 def getPushReceiverId(payload: str = None, ):
@@ -17490,176 +18373,176 @@ def getPushReceiverId(payload: str = None, ):
 
 
 def getRecentEmojiStatuses():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRecentEmojiStatuses',
-    }))
+    })
 
 
 def getRecentInlineBots():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRecentInlineBots',
-    }))
+    })
 
 
 def getRecentStickers(is_attached: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRecentStickers',
         'is_attached': to_json(is_attached),
-    }))
+    })
 
 
 def getRecentlyOpenedChats(limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRecentlyOpenedChats',
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getRecentlyVisitedTMeUrls(referrer: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRecentlyVisitedTMeUrls',
         'referrer': to_json(referrer),
-    }))
+    })
 
 
-def getRecommendedChatFilters():
-    return get_object(client.func({
-        '@type': 'getRecommendedChatFilters',
-    }))
+def getRecommendedChatFolders():
+    return client.send({
+        '@type': 'getRecommendedChatFolders',
+    })
 
 
 def getRecoveryEmailAddress(password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRecoveryEmailAddress',
         'password': to_json(password),
-    }))
+    })
 
 
 def getRemoteFile(remote_file_id: str = None, file_type: FileType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRemoteFile',
         'remote_file_id': to_json(remote_file_id),
         'file_type': to_json(file_type),
-    }))
+    })
 
 
 def getRepliedMessage(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getRepliedMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def getSavedAnimations():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSavedAnimations',
-    }))
+    })
 
 
 def getSavedNotificationSound(notification_sound_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSavedNotificationSound',
         'notification_sound_id': to_json(notification_sound_id),
-    }))
+    })
 
 
 def getSavedNotificationSounds():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSavedNotificationSounds',
-    }))
+    })
 
 
 def getSavedOrderInfo():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSavedOrderInfo',
-    }))
+    })
 
 
 def getScopeNotificationSettings(scope: NotificationSettingsScope = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getScopeNotificationSettings',
         'scope': to_json(scope),
-    }))
+    })
 
 
 def getSecretChat(secret_chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSecretChat',
         'secret_chat_id': to_json(secret_chat_id),
-    }))
+    })
 
 
 def getStatisticalGraph(chat_id: int = None, token: str = None, x: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStatisticalGraph',
         'chat_id': to_json(chat_id),
         'token': to_json(token),
         'x': to_json(x),
-    }))
+    })
 
 
 def getStickerEmojis(sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStickerEmojis',
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def getStickerSet(set_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStickerSet',
         'set_id': to_json(set_id),
-    }))
+    })
 
 
 def getStickers(sticker_type: StickerType = None, query: str = None, limit: int = None, chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStickers',
         'sticker_type': to_json(sticker_type),
         'query': to_json(query),
         'limit': to_json(limit),
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getStorageStatistics(chat_limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStorageStatistics',
         'chat_limit': to_json(chat_limit),
-    }))
+    })
 
 
 def getStorageStatisticsFast():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStorageStatisticsFast',
-    }))
+    })
 
 
 def getStory(story_sender_chat_id: int = None, story_id: int = None, only_local: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStory',
         'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
         'only_local': to_json(only_local),
-    }))
+    })
 
 
 def getStoryAvailableReactions(row_size: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStoryAvailableReactions',
         'row_size': to_json(row_size),
-    }))
+    })
 
 
 def getStoryNotificationSettingsExceptions():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStoryNotificationSettingsExceptions',
-    }))
+    })
 
 
 def getStoryViewers(story_id: int = None, query: str = None, only_contacts: bool = None, prefer_with_reaction: bool = None, offset: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getStoryViewers',
         'story_id': to_json(story_id),
         'query': to_json(query),
@@ -17667,70 +18550,70 @@ def getStoryViewers(story_id: int = None, query: str = None, only_contacts: bool
         'prefer_with_reaction': to_json(prefer_with_reaction),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getSuggestedFileName(file_id: int = None, directory: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSuggestedFileName',
         'file_id': to_json(file_id),
         'directory': to_json(directory),
-    }))
+    })
 
 
 def getSuggestedStickerSetName(title: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSuggestedStickerSetName',
         'title': to_json(title),
-    }))
+    })
 
 
 def getSuitableDiscussionChats():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSuitableDiscussionChats',
-    }))
+    })
 
 
 def getSupergroup(supergroup_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSupergroup',
         'supergroup_id': to_json(supergroup_id),
-    }))
+    })
 
 
 def getSupergroupFullInfo(supergroup_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSupergroupFullInfo',
         'supergroup_id': to_json(supergroup_id),
-    }))
+    })
 
 
 def getSupergroupMembers(supergroup_id: int = None, filter: SupergroupMembersFilter = None, offset: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSupergroupMembers',
         'supergroup_id': to_json(supergroup_id),
         'filter': to_json(filter),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getSupportName():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSupportName',
-    }))
+    })
 
 
 def getSupportUser():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getSupportUser',
-    }))
+    })
 
 
 def getTemporaryPasswordState():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getTemporaryPasswordState',
-    }))
+    })
 
 
 def getTextEntities(text: str = None, ):
@@ -17748,87 +18631,95 @@ def getThemeParametersJsonString(theme: ThemeParameters = None, ):
 
 
 def getThemedEmojiStatuses():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getThemedEmojiStatuses',
-    }))
+    })
 
 
 def getTopChats(category: TopChatCategory = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getTopChats',
         'category': to_json(category),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getTrendingStickerSets(sticker_type: StickerType = None, offset: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getTrendingStickerSets',
         'sticker_type': to_json(sticker_type),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getUser(user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getUser',
         'user_id': to_json(user_id),
-    }))
+    })
+
+
+def getUserChatBoosts(chat_id: int = None, user_id: int = None, ):
+    return client.send({
+        '@type': 'getUserChatBoosts',
+        'chat_id': to_json(chat_id),
+        'user_id': to_json(user_id),
+    })
 
 
 def getUserFullInfo(user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getUserFullInfo',
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def getUserLink():
-    return get_object(client.func({
+    return client.send({
         '@type': 'getUserLink',
-    }))
+    })
 
 
 def getUserPrivacySettingRules(setting: UserPrivacySetting = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getUserPrivacySettingRules',
         'setting': to_json(setting),
-    }))
+    })
 
 
 def getUserProfilePhotos(user_id: int = None, offset: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getUserProfilePhotos',
         'user_id': to_json(user_id),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def getUserSupportInfo(user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getUserSupportInfo',
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def getVideoChatAvailableParticipants(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getVideoChatAvailableParticipants',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getVideoChatRtmpUrl(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getVideoChatRtmpUrl',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def getWebAppLinkUrl(chat_id: int = None, bot_user_id: int = None, web_app_short_name: str = None, start_parameter: str = None, theme: ThemeParameters = None, application_name: str = None, allow_write_access: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getWebAppLinkUrl',
         'chat_id': to_json(chat_id),
         'bot_user_id': to_json(bot_user_id),
@@ -17837,81 +18728,82 @@ def getWebAppLinkUrl(chat_id: int = None, bot_user_id: int = None, web_app_short
         'theme': to_json(theme),
         'application_name': to_json(application_name),
         'allow_write_access': to_json(allow_write_access),
-    }))
+    })
 
 
 def getWebAppUrl(bot_user_id: int = None, url: str = None, theme: ThemeParameters = None, application_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getWebAppUrl',
         'bot_user_id': to_json(bot_user_id),
         'url': to_json(url),
         'theme': to_json(theme),
         'application_name': to_json(application_name),
-    }))
+    })
 
 
 def getWebPageInstantView(url: str = None, force_full: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'getWebPageInstantView',
         'url': to_json(url),
         'force_full': to_json(force_full),
-    }))
+    })
 
 
-def getWebPagePreview(text: FormattedText = None, ):
-    return get_object(client.func({
+def getWebPagePreview(text: FormattedText = None, link_preview_options: LinkPreviewOptions = None, ):
+    return client.send({
         '@type': 'getWebPagePreview',
         'text': to_json(text),
-    }))
+        'link_preview_options': to_json(link_preview_options),
+    })
 
 
 def hideSuggestedAction(action: SuggestedAction = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'hideSuggestedAction',
         'action': to_json(action),
-    }))
+    })
 
 
 def importContacts(contacts: list[Contact] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'importContacts',
         'contacts': to_json(contacts),
-    }))
+    })
 
 
 def importMessages(chat_id: int = None, message_file: InputFile = None, attached_files: list[InputFile] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'importMessages',
         'chat_id': to_json(chat_id),
         'message_file': to_json(message_file),
         'attached_files': to_json(attached_files),
-    }))
+    })
 
 
 def inviteGroupCallParticipants(group_call_id: int = None, user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'inviteGroupCallParticipants',
         'group_call_id': to_json(group_call_id),
         'user_ids': to_json(user_ids),
-    }))
+    })
 
 
 def joinChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'joinChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def joinChatByInviteLink(invite_link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'joinChatByInviteLink',
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def joinGroupCall(group_call_id: int = None, participant_id: MessageSender = None, audio_source_id: int = None, payload: str = None, is_muted: bool = None, is_my_video_enabled: bool = None, invite_hash: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'joinGroupCall',
         'group_call_id': to_json(group_call_id),
         'participant_id': to_json(participant_id),
@@ -17920,77 +18812,85 @@ def joinGroupCall(group_call_id: int = None, participant_id: MessageSender = Non
         'is_muted': to_json(is_muted),
         'is_my_video_enabled': to_json(is_my_video_enabled),
         'invite_hash': to_json(invite_hash),
-    }))
+    })
+
+
+def launchPrepaidPremiumGiveaway(giveaway_id: int = None, parameters: PremiumGiveawayParameters = None, ):
+    return client.send({
+        '@type': 'launchPrepaidPremiumGiveaway',
+        'giveaway_id': to_json(giveaway_id),
+        'parameters': to_json(parameters),
+    })
 
 
 def leaveChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'leaveChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def leaveGroupCall(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'leaveGroupCall',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def loadActiveStories(story_list: StoryList = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'loadActiveStories',
         'story_list': to_json(story_list),
-    }))
+    })
 
 
 def loadChats(chat_list: ChatList = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'loadChats',
         'chat_list': to_json(chat_list),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def loadGroupCallParticipants(group_call_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'loadGroupCallParticipants',
         'group_call_id': to_json(group_call_id),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def logOut():
-    return get_object(client.func({
+    return client.send({
         '@type': 'logOut',
-    }))
+    })
 
 
 def openChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'openChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def openMessageContent(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'openMessageContent',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def openStory(story_sender_chat_id: int = None, story_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'openStory',
         'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
-    }))
+    })
 
 
-def openWebApp(chat_id: int = None, bot_user_id: int = None, url: str = None, theme: ThemeParameters = None, application_name: str = None, message_thread_id: int = None, reply_to: MessageReplyTo = None, ):
-    return get_object(client.func({
+def openWebApp(chat_id: int = None, bot_user_id: int = None, url: str = None, theme: ThemeParameters = None, application_name: str = None, message_thread_id: int = None, reply_to: InputMessageReplyTo = None, ):
+    return client.send({
         '@type': 'openWebApp',
         'chat_id': to_json(chat_id),
         'bot_user_id': to_json(bot_user_id),
@@ -17999,11 +18899,11 @@ def openWebApp(chat_id: int = None, bot_user_id: int = None, url: str = None, th
         'application_name': to_json(application_name),
         'message_thread_id': to_json(message_thread_id),
         'reply_to': to_json(reply_to),
-    }))
+    })
 
 
 def optimizeStorage(size: int = None, ttl: int = None, count: int = None, immunity_delay: int = None, file_types: list[FileType] = None, chat_ids: list[int] = None, exclude_chat_ids: list[int] = None, return_deleted_file_statistics: bool = None, chat_limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'optimizeStorage',
         'size': to_json(size),
         'ttl': to_json(ttl),
@@ -18014,7 +18914,7 @@ def optimizeStorage(size: int = None, ttl: int = None, count: int = None, immuni
         'exclude_chat_ids': to_json(exclude_chat_ids),
         'return_deleted_file_statistics': to_json(return_deleted_file_statistics),
         'chat_limit': to_json(chat_limit),
-    }))
+    })
 
 
 def parseMarkdown(text: FormattedText = None, ):
@@ -18033,548 +18933,549 @@ def parseTextEntities(text: str = None, parse_mode: TextParseMode = None, ):
 
 
 def pinChatMessage(chat_id: int = None, message_id: int = None, disable_notification: bool = None, only_for_self: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'pinChatMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'disable_notification': to_json(disable_notification),
         'only_for_self': to_json(only_for_self),
-    }))
+    })
 
 
 def pingProxy(proxy_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'pingProxy',
         'proxy_id': to_json(proxy_id),
-    }))
+    })
 
 
 def preliminaryUploadFile(file: InputFile = None, file_type: FileType = None, priority: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'preliminaryUploadFile',
         'file': to_json(file),
         'file_type': to_json(file_type),
         'priority': to_json(priority),
-    }))
+    })
 
 
-def processChatFilterNewChats(chat_filter_id: int = None, added_chat_ids: list[int] = None, ):
-    return get_object(client.func({
-        '@type': 'processChatFilterNewChats',
-        'chat_filter_id': to_json(chat_filter_id),
+def processChatFolderNewChats(chat_folder_id: int = None, added_chat_ids: list[int] = None, ):
+    return client.send({
+        '@type': 'processChatFolderNewChats',
+        'chat_folder_id': to_json(chat_folder_id),
         'added_chat_ids': to_json(added_chat_ids),
-    }))
+    })
 
 
 def processChatJoinRequest(chat_id: int = None, user_id: int = None, approve: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'processChatJoinRequest',
         'chat_id': to_json(chat_id),
         'user_id': to_json(user_id),
         'approve': to_json(approve),
-    }))
+    })
 
 
 def processChatJoinRequests(chat_id: int = None, invite_link: str = None, approve: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'processChatJoinRequests',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
         'approve': to_json(approve),
-    }))
+    })
 
 
 def processPushNotification(payload: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'processPushNotification',
         'payload': to_json(payload),
-    }))
+    })
 
 
 def rateSpeechRecognition(chat_id: int = None, message_id: int = None, is_good: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'rateSpeechRecognition',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'is_good': to_json(is_good),
-    }))
+    })
 
 
 def readAllChatMentions(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'readAllChatMentions',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def readAllChatReactions(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'readAllChatReactions',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def readAllMessageThreadMentions(chat_id: int = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'readAllMessageThreadMentions',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def readAllMessageThreadReactions(chat_id: int = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'readAllMessageThreadReactions',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def readChatList(chat_list: ChatList = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'readChatList',
         'chat_list': to_json(chat_list),
-    }))
+    })
 
 
 def readFilePart(file_id: int = None, offset: int = None, count: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'readFilePart',
         'file_id': to_json(file_id),
         'offset': to_json(offset),
         'count': to_json(count),
-    }))
+    })
 
 
 def recognizeSpeech(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'recognizeSpeech',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def recoverAuthenticationPassword(recovery_code: str = None, new_password: str = None, new_hint: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'recoverAuthenticationPassword',
         'recovery_code': to_json(recovery_code),
         'new_password': to_json(new_password),
         'new_hint': to_json(new_hint),
-    }))
+    })
 
 
 def recoverPassword(recovery_code: str = None, new_password: str = None, new_hint: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'recoverPassword',
         'recovery_code': to_json(recovery_code),
         'new_password': to_json(new_password),
         'new_hint': to_json(new_hint),
-    }))
+    })
 
 
 def registerDevice(device_token: DeviceToken = None, other_user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'registerDevice',
         'device_token': to_json(device_token),
         'other_user_ids': to_json(other_user_ids),
-    }))
+    })
 
 
 def registerUser(first_name: str = None, last_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'registerUser',
         'first_name': to_json(first_name),
         'last_name': to_json(last_name),
-    }))
+    })
 
 
 def removeAllFilesFromDownloads(only_active: bool = None, only_completed: bool = None, delete_from_cache: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeAllFilesFromDownloads',
         'only_active': to_json(only_active),
         'only_completed': to_json(only_completed),
         'delete_from_cache': to_json(delete_from_cache),
-    }))
+    })
 
 
 def removeBackground(background_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeBackground',
         'background_id': to_json(background_id),
-    }))
+    })
 
 
 def removeChatActionBar(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeChatActionBar',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def removeContacts(user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeContacts',
         'user_ids': to_json(user_ids),
-    }))
+    })
 
 
 def removeFavoriteSticker(sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeFavoriteSticker',
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def removeFileFromDownloads(file_id: int = None, delete_from_cache: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeFileFromDownloads',
         'file_id': to_json(file_id),
         'delete_from_cache': to_json(delete_from_cache),
-    }))
+    })
 
 
 def removeMessageReaction(chat_id: int = None, message_id: int = None, reaction_type: ReactionType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeMessageReaction',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reaction_type': to_json(reaction_type),
-    }))
+    })
 
 
 def removeNotification(notification_group_id: int = None, notification_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeNotification',
         'notification_group_id': to_json(notification_group_id),
         'notification_id': to_json(notification_id),
-    }))
+    })
 
 
 def removeNotificationGroup(notification_group_id: int = None, max_notification_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeNotificationGroup',
         'notification_group_id': to_json(notification_group_id),
         'max_notification_id': to_json(max_notification_id),
-    }))
+    })
 
 
 def removeProxy(proxy_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeProxy',
         'proxy_id': to_json(proxy_id),
-    }))
+    })
 
 
 def removeRecentHashtag(hashtag: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeRecentHashtag',
         'hashtag': to_json(hashtag),
-    }))
+    })
 
 
 def removeRecentSticker(is_attached: bool = None, sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeRecentSticker',
         'is_attached': to_json(is_attached),
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def removeRecentlyFoundChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeRecentlyFoundChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def removeSavedAnimation(animation: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeSavedAnimation',
         'animation': to_json(animation),
-    }))
+    })
 
 
 def removeSavedNotificationSound(notification_sound_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeSavedNotificationSound',
         'notification_sound_id': to_json(notification_sound_id),
-    }))
+    })
 
 
 def removeStickerFromSet(sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeStickerFromSet',
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def removeTopChat(category: TopChatCategory = None, chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'removeTopChat',
         'category': to_json(category),
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def reorderActiveUsernames(usernames: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reorderActiveUsernames',
         'usernames': to_json(usernames),
-    }))
+    })
 
 
 def reorderBotActiveUsernames(bot_user_id: int = None, usernames: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reorderBotActiveUsernames',
         'bot_user_id': to_json(bot_user_id),
         'usernames': to_json(usernames),
-    }))
+    })
 
 
-def reorderChatFilters(chat_filter_ids: list[int] = None, main_chat_list_position: int = None, ):
-    return get_object(client.func({
-        '@type': 'reorderChatFilters',
-        'chat_filter_ids': to_json(chat_filter_ids),
+def reorderChatFolders(chat_folder_ids: list[int] = None, main_chat_list_position: int = None, ):
+    return client.send({
+        '@type': 'reorderChatFolders',
+        'chat_folder_ids': to_json(chat_folder_ids),
         'main_chat_list_position': to_json(main_chat_list_position),
-    }))
+    })
 
 
 def reorderInstalledStickerSets(sticker_type: StickerType = None, sticker_set_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reorderInstalledStickerSets',
         'sticker_type': to_json(sticker_type),
         'sticker_set_ids': to_json(sticker_set_ids),
-    }))
+    })
 
 
 def reorderSupergroupActiveUsernames(supergroup_id: int = None, usernames: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reorderSupergroupActiveUsernames',
         'supergroup_id': to_json(supergroup_id),
         'usernames': to_json(usernames),
-    }))
+    })
 
 
 def replacePrimaryChatInviteLink(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'replacePrimaryChatInviteLink',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def replaceVideoChatRtmpUrl(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'replaceVideoChatRtmpUrl',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def reportChat(chat_id: int = None, message_ids: list[int] = None, reason: ReportReason = None, text: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reportChat',
         'chat_id': to_json(chat_id),
         'message_ids': to_json(message_ids),
         'reason': to_json(reason),
         'text': to_json(text),
-    }))
+    })
 
 
 def reportChatPhoto(chat_id: int = None, file_id: int = None, reason: ReportReason = None, text: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reportChatPhoto',
         'chat_id': to_json(chat_id),
         'file_id': to_json(file_id),
         'reason': to_json(reason),
         'text': to_json(text),
-    }))
+    })
 
 
 def reportMessageReactions(chat_id: int = None, message_id: int = None, sender_id: MessageSender = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reportMessageReactions',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'sender_id': to_json(sender_id),
-    }))
+    })
 
 
 def reportStory(story_sender_chat_id: int = None, story_id: int = None, reason: ReportReason = None, text: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reportStory',
         'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
         'reason': to_json(reason),
         'text': to_json(text),
-    }))
+    })
 
 
 def reportSupergroupAntiSpamFalsePositive(supergroup_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reportSupergroupAntiSpamFalsePositive',
         'supergroup_id': to_json(supergroup_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def reportSupergroupSpam(supergroup_id: int = None, message_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'reportSupergroupSpam',
         'supergroup_id': to_json(supergroup_id),
         'message_ids': to_json(message_ids),
-    }))
+    })
 
 
 def requestAuthenticationPasswordRecovery():
-    return get_object(client.func({
+    return client.send({
         '@type': 'requestAuthenticationPasswordRecovery',
-    }))
+    })
 
 
 def requestPasswordRecovery():
-    return get_object(client.func({
+    return client.send({
         '@type': 'requestPasswordRecovery',
-    }))
+    })
 
 
 def requestQrCodeAuthentication(other_user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'requestQrCodeAuthentication',
         'other_user_ids': to_json(other_user_ids),
-    }))
+    })
 
 
 def resendAuthenticationCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendAuthenticationCode',
-    }))
+    })
 
 
 def resendChangePhoneNumberCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendChangePhoneNumberCode',
-    }))
+    })
 
 
 def resendEmailAddressVerificationCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendEmailAddressVerificationCode',
-    }))
+    })
 
 
 def resendLoginEmailAddressCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendLoginEmailAddressCode',
-    }))
+    })
 
 
-def resendMessages(chat_id: int = None, message_ids: list[int] = None, ):
-    return get_object(client.func({
+def resendMessages(chat_id: int = None, message_ids: list[int] = None, quote: FormattedText = None, ):
+    return client.send({
         '@type': 'resendMessages',
         'chat_id': to_json(chat_id),
         'message_ids': to_json(message_ids),
-    }))
+        'quote': to_json(quote),
+    })
 
 
 def resendPhoneNumberConfirmationCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendPhoneNumberConfirmationCode',
-    }))
+    })
 
 
 def resendPhoneNumberVerificationCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendPhoneNumberVerificationCode',
-    }))
+    })
 
 
 def resendRecoveryEmailAddressCode():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resendRecoveryEmailAddressCode',
-    }))
+    })
 
 
 def resetAllNotificationSettings():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resetAllNotificationSettings',
-    }))
+    })
 
 
 def resetAuthenticationEmailAddress():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resetAuthenticationEmailAddress',
-    }))
+    })
 
 
 def resetBackgrounds():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resetBackgrounds',
-    }))
+    })
 
 
 def resetNetworkStatistics():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resetNetworkStatistics',
-    }))
+    })
 
 
 def resetPassword():
-    return get_object(client.func({
+    return client.send({
         '@type': 'resetPassword',
-    }))
+    })
 
 
 def revokeChatInviteLink(chat_id: int = None, invite_link: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'revokeChatInviteLink',
         'chat_id': to_json(chat_id),
         'invite_link': to_json(invite_link),
-    }))
+    })
 
 
 def revokeGroupCallInviteLink(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'revokeGroupCallInviteLink',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def saveApplicationLogEvent(type: str = None, chat_id: int = None, data: JsonValue = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'saveApplicationLogEvent',
         'type': to_json(type),
         'chat_id': to_json(chat_id),
         'data': to_json(data),
-    }))
+    })
 
 
 def searchBackground(name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchBackground',
         'name': to_json(name),
-    }))
+    })
 
 
 def searchCallMessages(offset: str = None, limit: int = None, only_missed: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchCallMessages',
         'offset': to_json(offset),
         'limit': to_json(limit),
         'only_missed': to_json(only_missed),
-    }))
+    })
 
 
 def searchChatMembers(chat_id: int = None, query: str = None, limit: int = None, filter: ChatMembersFilter = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchChatMembers',
         'chat_id': to_json(chat_id),
         'query': to_json(query),
         'limit': to_json(limit),
         'filter': to_json(filter),
-    }))
+    })
 
 
 def searchChatMessages(chat_id: int = None, query: str = None, sender_id: MessageSender = None, from_message_id: int = None, offset: int = None, limit: int = None, filter: SearchMessagesFilter = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchChatMessages',
         'chat_id': to_json(chat_id),
         'query': to_json(query),
@@ -18584,87 +19485,87 @@ def searchChatMessages(chat_id: int = None, query: str = None, sender_id: Messag
         'limit': to_json(limit),
         'filter': to_json(filter),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def searchChatRecentLocationMessages(chat_id: int = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchChatRecentLocationMessages',
         'chat_id': to_json(chat_id),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchChats(query: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchChats',
         'query': to_json(query),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchChatsNearby(location: Location = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchChatsNearby',
         'location': to_json(location),
-    }))
+    })
 
 
 def searchChatsOnServer(query: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchChatsOnServer',
         'query': to_json(query),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchContacts(query: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchContacts',
         'query': to_json(query),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchEmojis(text: str = None, exact_match: bool = None, input_language_codes: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchEmojis',
         'text': to_json(text),
         'exact_match': to_json(exact_match),
         'input_language_codes': to_json(input_language_codes),
-    }))
+    })
 
 
 def searchFileDownloads(query: str = None, only_active: bool = None, only_completed: bool = None, offset: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchFileDownloads',
         'query': to_json(query),
         'only_active': to_json(only_active),
         'only_completed': to_json(only_completed),
         'offset': to_json(offset),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchHashtags(prefix: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchHashtags',
         'prefix': to_json(prefix),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchInstalledStickerSets(sticker_type: StickerType = None, query: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchInstalledStickerSets',
         'sticker_type': to_json(sticker_type),
         'query': to_json(query),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchMessages(chat_list: ChatList = None, query: str = None, offset: str = None, limit: int = None, filter: SearchMessagesFilter = None, min_date: int = None, max_date: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchMessages',
         'chat_list': to_json(chat_list),
         'query': to_json(query),
@@ -18673,71 +19574,80 @@ def searchMessages(chat_list: ChatList = None, query: str = None, offset: str = 
         'filter': to_json(filter),
         'min_date': to_json(min_date),
         'max_date': to_json(max_date),
-    }))
+    })
 
 
 def searchOutgoingDocumentMessages(query: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchOutgoingDocumentMessages',
         'query': to_json(query),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchPublicChat(username: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchPublicChat',
         'username': to_json(username),
-    }))
+    })
 
 
 def searchPublicChats(query: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchPublicChats',
         'query': to_json(query),
+    })
+
+
+def searchQuote(text: FormattedText = None, quote: FormattedText = None, quote_position: int = None, ):
+    return get_object(client.func({
+        '@type': 'searchQuote',
+        'text': to_json(text),
+        'quote': to_json(quote),
+        'quote_position': to_json(quote_position),
     }))
 
 
 def searchRecentlyFoundChats(query: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchRecentlyFoundChats',
         'query': to_json(query),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchSecretMessages(chat_id: int = None, query: str = None, offset: str = None, limit: int = None, filter: SearchMessagesFilter = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchSecretMessages',
         'chat_id': to_json(chat_id),
         'query': to_json(query),
         'offset': to_json(offset),
         'limit': to_json(limit),
         'filter': to_json(filter),
-    }))
+    })
 
 
 def searchStickerSet(name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchStickerSet',
         'name': to_json(name),
-    }))
+    })
 
 
 def searchStickerSets(query: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchStickerSets',
         'query': to_json(query),
-    }))
+    })
 
 
 def searchStickers(sticker_type: StickerType = None, emojis: str = None, limit: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchStickers',
         'sticker_type': to_json(sticker_type),
         'emojis': to_json(emojis),
         'limit': to_json(limit),
-    }))
+    })
 
 
 def searchStringsByPrefix(strings: list[str] = None, query: str = None, limit: int = None, return_none_for_empty_query: bool = None, ):
@@ -18751,103 +19661,103 @@ def searchStringsByPrefix(strings: list[str] = None, query: str = None, limit: i
 
 
 def searchUserByPhoneNumber(phone_number: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchUserByPhoneNumber',
         'phone_number': to_json(phone_number),
-    }))
+    })
 
 
 def searchUserByToken(token: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchUserByToken',
         'token': to_json(token),
-    }))
+    })
 
 
 def searchWebApp(bot_user_id: int = None, web_app_short_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'searchWebApp',
         'bot_user_id': to_json(bot_user_id),
         'web_app_short_name': to_json(web_app_short_name),
-    }))
+    })
 
 
 def sendAuthenticationFirebaseSms(token: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendAuthenticationFirebaseSms',
         'token': to_json(token),
-    }))
+    })
 
 
 def sendBotStartMessage(bot_user_id: int = None, chat_id: int = None, parameter: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendBotStartMessage',
         'bot_user_id': to_json(bot_user_id),
         'chat_id': to_json(chat_id),
         'parameter': to_json(parameter),
-    }))
+    })
 
 
 def sendCallDebugInformation(call_id: int = None, debug_information: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendCallDebugInformation',
         'call_id': to_json(call_id),
         'debug_information': to_json(debug_information),
-    }))
+    })
 
 
 def sendCallLog(call_id: int = None, log_file: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendCallLog',
         'call_id': to_json(call_id),
         'log_file': to_json(log_file),
-    }))
+    })
 
 
 def sendCallRating(call_id: int = None, rating: int = None, comment: str = None, problems: list[CallProblem] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendCallRating',
         'call_id': to_json(call_id),
         'rating': to_json(rating),
         'comment': to_json(comment),
         'problems': to_json(problems),
-    }))
+    })
 
 
 def sendCallSignalingData(call_id: int = None, data: bytes = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendCallSignalingData',
         'call_id': to_json(call_id),
         'data': to_json(data),
-    }))
+    })
 
 
 def sendChatAction(chat_id: int = None, message_thread_id: int = None, action: ChatAction = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendChatAction',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'action': to_json(action),
-    }))
+    })
 
 
 def sendCustomRequest(method: str = None, parameters: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendCustomRequest',
         'method': to_json(method),
         'parameters': to_json(parameters),
-    }))
+    })
 
 
 def sendEmailAddressVerificationCode(email_address: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendEmailAddressVerificationCode',
         'email_address': to_json(email_address),
-    }))
+    })
 
 
-def sendInlineQueryResultMessage(chat_id: int = None, message_thread_id: int = None, reply_to: MessageReplyTo = None, options: MessageSendOptions = None, query_id: int = None, result_id: str = None, hide_via_bot: bool = None, ):
-    return get_object(client.func({
+def sendInlineQueryResultMessage(chat_id: int = None, message_thread_id: int = None, reply_to: InputMessageReplyTo = None, options: MessageSendOptions = None, query_id: int = None, result_id: str = None, hide_via_bot: bool = None, ):
+    return client.send({
         '@type': 'sendInlineQueryResultMessage',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
@@ -18856,11 +19766,11 @@ def sendInlineQueryResultMessage(chat_id: int = None, message_thread_id: int = N
         'query_id': to_json(query_id),
         'result_id': to_json(result_id),
         'hide_via_bot': to_json(hide_via_bot),
-    }))
+    })
 
 
-def sendMessage(chat_id: int = None, message_thread_id: int = None, reply_to: MessageReplyTo = None, options: MessageSendOptions = None, reply_markup: ReplyMarkup = None, input_message_content: InputMessageContent = None, ):
-    return get_object(client.func({
+def sendMessage(chat_id: int = None, message_thread_id: int = None, reply_to: InputMessageReplyTo = None, options: MessageSendOptions = None, reply_markup: ReplyMarkup = None, input_message_content: InputMessageContent = None, ):
+    return client.send({
         '@type': 'sendMessage',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
@@ -18868,31 +19778,30 @@ def sendMessage(chat_id: int = None, message_thread_id: int = None, reply_to: Me
         'options': to_json(options),
         'reply_markup': to_json(reply_markup),
         'input_message_content': to_json(input_message_content),
-    }))
+    })
 
 
-def sendMessageAlbum(chat_id: int = None, message_thread_id: int = None, reply_to: MessageReplyTo = None, options: MessageSendOptions = None, input_message_contents: list[InputMessageContent] = None, only_preview: bool = None, ):
-    return get_object(client.func({
+def sendMessageAlbum(chat_id: int = None, message_thread_id: int = None, reply_to: InputMessageReplyTo = None, options: MessageSendOptions = None, input_message_contents: list[InputMessageContent] = None, ):
+    return client.send({
         '@type': 'sendMessageAlbum',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'reply_to': to_json(reply_to),
         'options': to_json(options),
         'input_message_contents': to_json(input_message_contents),
-        'only_preview': to_json(only_preview),
-    }))
+    })
 
 
 def sendPassportAuthorizationForm(authorization_form_id: int = None, types: list[PassportElementType] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendPassportAuthorizationForm',
         'authorization_form_id': to_json(authorization_form_id),
         'types': to_json(types),
-    }))
+    })
 
 
 def sendPaymentForm(input_invoice: InputInvoice = None, payment_form_id: int = None, order_info_id: str = None, shipping_option_id: str = None, credentials: InputCredentials = None, tip_amount: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendPaymentForm',
         'input_invoice': to_json(input_invoice),
         'payment_form_id': to_json(payment_form_id),
@@ -18900,29 +19809,30 @@ def sendPaymentForm(input_invoice: InputInvoice = None, payment_form_id: int = N
         'shipping_option_id': to_json(shipping_option_id),
         'credentials': to_json(credentials),
         'tip_amount': to_json(tip_amount),
-    }))
+    })
 
 
 def sendPhoneNumberConfirmationCode(hash: str = None, phone_number: str = None, settings: PhoneNumberAuthenticationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendPhoneNumberConfirmationCode',
         'hash': to_json(hash),
         'phone_number': to_json(phone_number),
         'settings': to_json(settings),
-    }))
+    })
 
 
 def sendPhoneNumberVerificationCode(phone_number: str = None, settings: PhoneNumberAuthenticationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendPhoneNumberVerificationCode',
         'phone_number': to_json(phone_number),
         'settings': to_json(settings),
-    }))
+    })
 
 
-def sendStory(content: InputStoryContent = None, areas: InputStoryAreas = None, caption: FormattedText = None, privacy_settings: StoryPrivacySettings = None, active_period: int = None, is_pinned: bool = None, protect_content: bool = None, ):
-    return get_object(client.func({
+def sendStory(chat_id: int = None, content: InputStoryContent = None, areas: InputStoryAreas = None, caption: FormattedText = None, privacy_settings: StoryPrivacySettings = None, active_period: int = None, is_pinned: bool = None, protect_content: bool = None, ):
+    return client.send({
         '@type': 'sendStory',
+        'chat_id': to_json(chat_id),
         'content': to_json(content),
         'areas': to_json(areas),
         'caption': to_json(caption),
@@ -18930,380 +19840,397 @@ def sendStory(content: InputStoryContent = None, areas: InputStoryAreas = None, 
         'active_period': to_json(active_period),
         'is_pinned': to_json(is_pinned),
         'protect_content': to_json(protect_content),
-    }))
+    })
 
 
 def sendWebAppCustomRequest(bot_user_id: int = None, method: str = None, parameters: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendWebAppCustomRequest',
         'bot_user_id': to_json(bot_user_id),
         'method': to_json(method),
         'parameters': to_json(parameters),
-    }))
+    })
 
 
 def sendWebAppData(bot_user_id: int = None, button_text: str = None, data: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sendWebAppData',
         'bot_user_id': to_json(bot_user_id),
         'button_text': to_json(button_text),
         'data': to_json(data),
-    }))
+    })
+
+
+def setAccentColor(accent_color_id: int = None, background_custom_emoji_id: int = None, ):
+    return client.send({
+        '@type': 'setAccentColor',
+        'accent_color_id': to_json(accent_color_id),
+        'background_custom_emoji_id': to_json(background_custom_emoji_id),
+    })
 
 
 def setAccountTtl(ttl: AccountTtl = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setAccountTtl',
         'ttl': to_json(ttl),
-    }))
+    })
 
 
 def setAlarm(seconds: float = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setAlarm',
         'seconds': to_json(seconds),
-    }))
+    })
 
 
 def setArchiveChatListSettings(settings: ArchiveChatListSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setArchiveChatListSettings',
         'settings': to_json(settings),
-    }))
+    })
 
 
 def setAuthenticationEmailAddress(email_address: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setAuthenticationEmailAddress',
         'email_address': to_json(email_address),
-    }))
+    })
 
 
 def setAuthenticationPhoneNumber(phone_number: str = None, settings: PhoneNumberAuthenticationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setAuthenticationPhoneNumber',
         'phone_number': to_json(phone_number),
         'settings': to_json(settings),
-    }))
+    })
 
 
 def setAutoDownloadSettings(settings: AutoDownloadSettings = None, type: NetworkType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setAutoDownloadSettings',
         'settings': to_json(settings),
         'type': to_json(type),
-    }))
+    })
 
 
 def setAutosaveSettings(scope: AutosaveSettingsScope = None, settings: ScopeAutosaveSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setAutosaveSettings',
         'scope': to_json(scope),
         'settings': to_json(settings),
-    }))
+    })
 
 
 def setBackground(background: InputBackground = None, type: BackgroundType = None, for_dark_theme: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBackground',
         'background': to_json(background),
         'type': to_json(type),
         'for_dark_theme': to_json(for_dark_theme),
-    }))
+    })
 
 
 def setBio(bio: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBio',
         'bio': to_json(bio),
-    }))
+    })
 
 
 def setBotInfoDescription(bot_user_id: int = None, language_code: str = None, description: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBotInfoDescription',
         'bot_user_id': to_json(bot_user_id),
         'language_code': to_json(language_code),
         'description': to_json(description),
-    }))
+    })
 
 
 def setBotInfoShortDescription(bot_user_id: int = None, language_code: str = None, short_description: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBotInfoShortDescription',
         'bot_user_id': to_json(bot_user_id),
         'language_code': to_json(language_code),
         'short_description': to_json(short_description),
-    }))
+    })
 
 
 def setBotName(bot_user_id: int = None, language_code: str = None, name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBotName',
         'bot_user_id': to_json(bot_user_id),
         'language_code': to_json(language_code),
         'name': to_json(name),
-    }))
+    })
 
 
 def setBotProfilePhoto(bot_user_id: int = None, photo: InputChatPhoto = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBotProfilePhoto',
         'bot_user_id': to_json(bot_user_id),
         'photo': to_json(photo),
-    }))
+    })
 
 
 def setBotUpdatesStatus(pending_update_count: int = None, error_message: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setBotUpdatesStatus',
         'pending_update_count': to_json(pending_update_count),
         'error_message': to_json(error_message),
-    }))
+    })
+
+
+def setChatAccentColor(chat_id: int = None, accent_color_id: int = None, background_custom_emoji_id: int = None, ):
+    return client.send({
+        '@type': 'setChatAccentColor',
+        'chat_id': to_json(chat_id),
+        'accent_color_id': to_json(accent_color_id),
+        'background_custom_emoji_id': to_json(background_custom_emoji_id),
+    })
 
 
 def setChatActiveStoriesList(chat_id: int = None, story_list: StoryList = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatActiveStoriesList',
         'chat_id': to_json(chat_id),
         'story_list': to_json(story_list),
-    }))
+    })
 
 
 def setChatAvailableReactions(chat_id: int = None, available_reactions: ChatAvailableReactions = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatAvailableReactions',
         'chat_id': to_json(chat_id),
         'available_reactions': to_json(available_reactions),
-    }))
+    })
 
 
 def setChatBackground(chat_id: int = None, background: InputBackground = None, type: BackgroundType = None, dark_theme_dimming: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatBackground',
         'chat_id': to_json(chat_id),
         'background': to_json(background),
         'type': to_json(type),
         'dark_theme_dimming': to_json(dark_theme_dimming),
-    }))
+    })
 
 
 def setChatClientData(chat_id: int = None, client_data: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatClientData',
         'chat_id': to_json(chat_id),
         'client_data': to_json(client_data),
-    }))
+    })
 
 
 def setChatDescription(chat_id: int = None, description: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatDescription',
         'chat_id': to_json(chat_id),
         'description': to_json(description),
-    }))
+    })
 
 
 def setChatDiscussionGroup(chat_id: int = None, discussion_chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatDiscussionGroup',
         'chat_id': to_json(chat_id),
         'discussion_chat_id': to_json(discussion_chat_id),
-    }))
+    })
 
 
 def setChatDraftMessage(chat_id: int = None, message_thread_id: int = None, draft_message: DraftMessage = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatDraftMessage',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'draft_message': to_json(draft_message),
-    }))
+    })
 
 
 def setChatLocation(chat_id: int = None, location: ChatLocation = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatLocation',
         'chat_id': to_json(chat_id),
         'location': to_json(location),
-    }))
+    })
 
 
 def setChatMemberStatus(chat_id: int = None, member_id: MessageSender = None, status: ChatMemberStatus = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatMemberStatus',
         'chat_id': to_json(chat_id),
         'member_id': to_json(member_id),
         'status': to_json(status),
-    }))
+    })
 
 
 def setChatMessageAutoDeleteTime(chat_id: int = None, message_auto_delete_time: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatMessageAutoDeleteTime',
         'chat_id': to_json(chat_id),
         'message_auto_delete_time': to_json(message_auto_delete_time),
-    }))
+    })
 
 
 def setChatMessageSender(chat_id: int = None, message_sender_id: MessageSender = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatMessageSender',
         'chat_id': to_json(chat_id),
         'message_sender_id': to_json(message_sender_id),
-    }))
+    })
 
 
 def setChatNotificationSettings(chat_id: int = None, notification_settings: ChatNotificationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatNotificationSettings',
         'chat_id': to_json(chat_id),
         'notification_settings': to_json(notification_settings),
-    }))
+    })
 
 
 def setChatPermissions(chat_id: int = None, permissions: ChatPermissions = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatPermissions',
         'chat_id': to_json(chat_id),
         'permissions': to_json(permissions),
-    }))
+    })
 
 
 def setChatPhoto(chat_id: int = None, photo: InputChatPhoto = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatPhoto',
         'chat_id': to_json(chat_id),
         'photo': to_json(photo),
-    }))
+    })
 
 
 def setChatSlowModeDelay(chat_id: int = None, slow_mode_delay: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatSlowModeDelay',
         'chat_id': to_json(chat_id),
         'slow_mode_delay': to_json(slow_mode_delay),
-    }))
+    })
 
 
 def setChatTheme(chat_id: int = None, theme_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatTheme',
         'chat_id': to_json(chat_id),
         'theme_name': to_json(theme_name),
-    }))
+    })
 
 
 def setChatTitle(chat_id: int = None, title: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setChatTitle',
         'chat_id': to_json(chat_id),
         'title': to_json(title),
-    }))
+    })
 
 
 def setCloseFriends(user_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setCloseFriends',
         'user_ids': to_json(user_ids),
-    }))
+    })
 
 
 def setCommands(scope: BotCommandScope = None, language_code: str = None, commands: list[BotCommand] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setCommands',
         'scope': to_json(scope),
         'language_code': to_json(language_code),
         'commands': to_json(commands),
-    }))
+    })
 
 
 def setCustomEmojiStickerSetThumbnail(name: str = None, custom_emoji_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setCustomEmojiStickerSetThumbnail',
         'name': to_json(name),
         'custom_emoji_id': to_json(custom_emoji_id),
-    }))
+    })
 
 
 def setCustomLanguagePack(info: LanguagePackInfo = None, strings: list[LanguagePackString] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setCustomLanguagePack',
         'info': to_json(info),
         'strings': to_json(strings),
-    }))
+    })
 
 
 def setCustomLanguagePackString(language_pack_id: str = None, new_string: LanguagePackString = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setCustomLanguagePackString',
         'language_pack_id': to_json(language_pack_id),
         'new_string': to_json(new_string),
-    }))
+    })
 
 
 def setDatabaseEncryptionKey(new_encryption_key: bytes = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setDatabaseEncryptionKey',
         'new_encryption_key': to_json(new_encryption_key),
-    }))
+    })
 
 
 def setDefaultChannelAdministratorRights(default_channel_administrator_rights: ChatAdministratorRights = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setDefaultChannelAdministratorRights',
         'default_channel_administrator_rights': to_json(default_channel_administrator_rights),
-    }))
+    })
 
 
 def setDefaultGroupAdministratorRights(default_group_administrator_rights: ChatAdministratorRights = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setDefaultGroupAdministratorRights',
         'default_group_administrator_rights': to_json(default_group_administrator_rights),
-    }))
+    })
 
 
 def setDefaultMessageAutoDeleteTime(message_auto_delete_time: MessageAutoDeleteTime = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setDefaultMessageAutoDeleteTime',
         'message_auto_delete_time': to_json(message_auto_delete_time),
-    }))
+    })
 
 
 def setDefaultReactionType(reaction_type: ReactionType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setDefaultReactionType',
         'reaction_type': to_json(reaction_type),
-    }))
+    })
 
 
 def setEmojiStatus(emoji_status: EmojiStatus = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setEmojiStatus',
         'emoji_status': to_json(emoji_status),
-    }))
+    })
 
 
 def setFileGenerationProgress(generation_id: int = None, expected_size: int = None, local_prefix_size: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setFileGenerationProgress',
         'generation_id': to_json(generation_id),
         'expected_size': to_json(expected_size),
         'local_prefix_size': to_json(local_prefix_size),
-    }))
+    })
 
 
 def setForumTopicNotificationSettings(chat_id: int = None, message_thread_id: int = None, notification_settings: ChatNotificationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setForumTopicNotificationSettings',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'notification_settings': to_json(notification_settings),
-    }))
+    })
 
 
 def setGameScore(chat_id: int = None, message_id: int = None, edit_message: bool = None, user_id: int = None, score: int = None, force: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setGameScore',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
@@ -19311,58 +20238,58 @@ def setGameScore(chat_id: int = None, message_id: int = None, edit_message: bool
         'user_id': to_json(user_id),
         'score': to_json(score),
         'force': to_json(force),
-    }))
+    })
 
 
 def setGroupCallParticipantIsSpeaking(group_call_id: int = None, audio_source: int = None, is_speaking: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setGroupCallParticipantIsSpeaking',
         'group_call_id': to_json(group_call_id),
         'audio_source': to_json(audio_source),
         'is_speaking': to_json(is_speaking),
-    }))
+    })
 
 
 def setGroupCallParticipantVolumeLevel(group_call_id: int = None, participant_id: MessageSender = None, volume_level: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setGroupCallParticipantVolumeLevel',
         'group_call_id': to_json(group_call_id),
         'participant_id': to_json(participant_id),
         'volume_level': to_json(volume_level),
-    }))
+    })
 
 
 def setGroupCallTitle(group_call_id: int = None, title: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setGroupCallTitle',
         'group_call_id': to_json(group_call_id),
         'title': to_json(title),
-    }))
+    })
 
 
 def setInactiveSessionTtl(inactive_session_ttl_days: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setInactiveSessionTtl',
         'inactive_session_ttl_days': to_json(inactive_session_ttl_days),
-    }))
+    })
 
 
 def setInlineGameScore(inline_message_id: str = None, edit_message: bool = None, user_id: int = None, score: int = None, force: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setInlineGameScore',
         'inline_message_id': to_json(inline_message_id),
         'edit_message': to_json(edit_message),
         'user_id': to_json(user_id),
         'score': to_json(score),
         'force': to_json(force),
-    }))
+    })
 
 
 def setLocation(location: Location = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setLocation',
         'location': to_json(location),
-    }))
+    })
 
 
 def setLogStream(log_stream: LogStream = None, ):
@@ -19388,212 +20315,213 @@ def setLogVerbosityLevel(new_verbosity_level: int = None, ):
 
 
 def setLoginEmailAddress(new_login_email_address: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setLoginEmailAddress',
         'new_login_email_address': to_json(new_login_email_address),
-    }))
+    })
 
 
 def setMenuButton(user_id: int = None, menu_button: BotMenuButton = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setMenuButton',
         'user_id': to_json(user_id),
         'menu_button': to_json(menu_button),
-    }))
+    })
 
 
 def setMessageSenderBlockList(sender_id: MessageSender = None, block_list: BlockList = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setMessageSenderBlockList',
         'sender_id': to_json(sender_id),
         'block_list': to_json(block_list),
-    }))
+    })
 
 
 def setName(first_name: str = None, last_name: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setName',
         'first_name': to_json(first_name),
         'last_name': to_json(last_name),
-    }))
+    })
 
 
 def setNetworkType(type: NetworkType = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setNetworkType',
         'type': to_json(type),
-    }))
+    })
 
 
 def setOption(name: str = None, value: OptionValue = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setOption',
         'name': to_json(name),
         'value': to_json(value),
-    }))
+    })
 
 
 def setPassportElement(element: InputPassportElement = None, password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setPassportElement',
         'element': to_json(element),
         'password': to_json(password),
-    }))
+    })
 
 
 def setPassportElementErrors(user_id: int = None, errors: list[InputPassportElementError] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setPassportElementErrors',
         'user_id': to_json(user_id),
         'errors': to_json(errors),
-    }))
+    })
 
 
 def setPassword(old_password: str = None, new_password: str = None, new_hint: str = None, set_recovery_email_address: bool = None, new_recovery_email_address: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setPassword',
         'old_password': to_json(old_password),
         'new_password': to_json(new_password),
         'new_hint': to_json(new_hint),
         'set_recovery_email_address': to_json(set_recovery_email_address),
         'new_recovery_email_address': to_json(new_recovery_email_address),
-    }))
+    })
 
 
 def setPinnedChats(chat_list: ChatList = None, chat_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setPinnedChats',
         'chat_list': to_json(chat_list),
         'chat_ids': to_json(chat_ids),
-    }))
+    })
 
 
 def setPinnedForumTopics(chat_id: int = None, message_thread_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setPinnedForumTopics',
         'chat_id': to_json(chat_id),
         'message_thread_ids': to_json(message_thread_ids),
-    }))
+    })
 
 
 def setPollAnswer(chat_id: int = None, message_id: int = None, option_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setPollAnswer',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'option_ids': to_json(option_ids),
-    }))
+    })
 
 
 def setProfilePhoto(photo: InputChatPhoto = None, is_public: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setProfilePhoto',
         'photo': to_json(photo),
         'is_public': to_json(is_public),
-    }))
+    })
 
 
 def setRecoveryEmailAddress(password: str = None, new_recovery_email_address: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setRecoveryEmailAddress',
         'password': to_json(password),
         'new_recovery_email_address': to_json(new_recovery_email_address),
-    }))
+    })
 
 
 def setScopeNotificationSettings(scope: NotificationSettingsScope = None, notification_settings: ScopeNotificationSettings = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setScopeNotificationSettings',
         'scope': to_json(scope),
         'notification_settings': to_json(notification_settings),
-    }))
+    })
 
 
 def setStickerEmojis(sticker: InputFile = None, emojis: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStickerEmojis',
         'sticker': to_json(sticker),
         'emojis': to_json(emojis),
-    }))
+    })
 
 
 def setStickerKeywords(sticker: InputFile = None, keywords: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStickerKeywords',
         'sticker': to_json(sticker),
         'keywords': to_json(keywords),
-    }))
+    })
 
 
 def setStickerMaskPosition(sticker: InputFile = None, mask_position: MaskPosition = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStickerMaskPosition',
         'sticker': to_json(sticker),
         'mask_position': to_json(mask_position),
-    }))
+    })
 
 
 def setStickerPositionInSet(sticker: InputFile = None, position: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStickerPositionInSet',
         'sticker': to_json(sticker),
         'position': to_json(position),
-    }))
+    })
 
 
 def setStickerSetThumbnail(user_id: int = None, name: str = None, thumbnail: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStickerSetThumbnail',
         'user_id': to_json(user_id),
         'name': to_json(name),
         'thumbnail': to_json(thumbnail),
-    }))
+    })
 
 
 def setStickerSetTitle(name: str = None, title: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStickerSetTitle',
         'name': to_json(name),
         'title': to_json(title),
-    }))
+    })
 
 
-def setStoryPrivacySettings(story_id: int = None, privacy_settings: StoryPrivacySettings = None, ):
-    return get_object(client.func({
+def setStoryPrivacySettings(story_sender_chat_id: int = None, story_id: int = None, privacy_settings: StoryPrivacySettings = None, ):
+    return client.send({
         '@type': 'setStoryPrivacySettings',
+        'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
         'privacy_settings': to_json(privacy_settings),
-    }))
+    })
 
 
 def setStoryReaction(story_sender_chat_id: int = None, story_id: int = None, reaction_type: ReactionType = None, update_recent_reactions: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setStoryReaction',
         'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
         'reaction_type': to_json(reaction_type),
         'update_recent_reactions': to_json(update_recent_reactions),
-    }))
+    })
 
 
 def setSupergroupStickerSet(supergroup_id: int = None, sticker_set_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setSupergroupStickerSet',
         'supergroup_id': to_json(supergroup_id),
         'sticker_set_id': to_json(sticker_set_id),
-    }))
+    })
 
 
 def setSupergroupUsername(supergroup_id: int = None, username: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setSupergroupUsername',
         'supergroup_id': to_json(supergroup_id),
         'username': to_json(username),
-    }))
+    })
 
 
 def setTdlibParameters(use_test_dc: bool = None, database_directory: str = None, files_directory: str = None, database_encryption_key: bytes = None, use_file_database: bool = None, use_chat_info_database: bool = None, use_message_database: bool = None, use_secret_chats: bool = None, api_id: int = None, api_hash: str = None, system_language_code: str = None, device_model: str = None, system_version: str = None, application_version: str = None, enable_storage_optimizer: bool = None, ignore_file_names: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setTdlibParameters',
         'use_test_dc': to_json(use_test_dc),
         'database_directory': to_json(database_directory),
@@ -19611,209 +20539,209 @@ def setTdlibParameters(use_test_dc: bool = None, database_directory: str = None,
         'application_version': to_json(application_version),
         'enable_storage_optimizer': to_json(enable_storage_optimizer),
         'ignore_file_names': to_json(ignore_file_names),
-    }))
+    })
 
 
 def setUserPersonalProfilePhoto(user_id: int = None, photo: InputChatPhoto = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setUserPersonalProfilePhoto',
         'user_id': to_json(user_id),
         'photo': to_json(photo),
-    }))
+    })
 
 
 def setUserPrivacySettingRules(setting: UserPrivacySetting = None, rules: UserPrivacySettingRules = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setUserPrivacySettingRules',
         'setting': to_json(setting),
         'rules': to_json(rules),
-    }))
+    })
 
 
 def setUserSupportInfo(user_id: int = None, message: FormattedText = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setUserSupportInfo',
         'user_id': to_json(user_id),
         'message': to_json(message),
-    }))
+    })
 
 
 def setUsername(username: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setUsername',
         'username': to_json(username),
-    }))
+    })
 
 
 def setVideoChatDefaultParticipant(chat_id: int = None, default_participant_id: MessageSender = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'setVideoChatDefaultParticipant',
         'chat_id': to_json(chat_id),
         'default_participant_id': to_json(default_participant_id),
-    }))
+    })
 
 
 def shareChatWithBot(chat_id: int = None, message_id: int = None, button_id: int = None, shared_chat_id: int = None, only_check: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'shareChatWithBot',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'button_id': to_json(button_id),
         'shared_chat_id': to_json(shared_chat_id),
         'only_check': to_json(only_check),
-    }))
+    })
 
 
 def sharePhoneNumber(user_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'sharePhoneNumber',
         'user_id': to_json(user_id),
-    }))
+    })
 
 
 def shareUserWithBot(chat_id: int = None, message_id: int = None, button_id: int = None, shared_user_id: int = None, only_check: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'shareUserWithBot',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'button_id': to_json(button_id),
         'shared_user_id': to_json(shared_user_id),
         'only_check': to_json(only_check),
-    }))
+    })
 
 
 def startGroupCallRecording(group_call_id: int = None, title: str = None, record_video: bool = None, use_portrait_orientation: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'startGroupCallRecording',
         'group_call_id': to_json(group_call_id),
         'title': to_json(title),
         'record_video': to_json(record_video),
         'use_portrait_orientation': to_json(use_portrait_orientation),
-    }))
+    })
 
 
 def startGroupCallScreenSharing(group_call_id: int = None, audio_source_id: int = None, payload: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'startGroupCallScreenSharing',
         'group_call_id': to_json(group_call_id),
         'audio_source_id': to_json(audio_source_id),
         'payload': to_json(payload),
-    }))
+    })
 
 
 def startScheduledGroupCall(group_call_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'startScheduledGroupCall',
         'group_call_id': to_json(group_call_id),
-    }))
+    })
 
 
 def stopPoll(chat_id: int = None, message_id: int = None, reply_markup: ReplyMarkup = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'stopPoll',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'reply_markup': to_json(reply_markup),
-    }))
+    })
 
 
 def suggestUserProfilePhoto(user_id: int = None, photo: InputChatPhoto = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'suggestUserProfilePhoto',
         'user_id': to_json(user_id),
         'photo': to_json(photo),
-    }))
+    })
 
 
 def synchronizeLanguagePack(language_pack_id: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'synchronizeLanguagePack',
         'language_pack_id': to_json(language_pack_id),
-    }))
+    })
 
 
 def terminateAllOtherSessions():
-    return get_object(client.func({
+    return client.send({
         '@type': 'terminateAllOtherSessions',
-    }))
+    })
 
 
 def terminateSession(session_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'terminateSession',
         'session_id': to_json(session_id),
-    }))
+    })
 
 
 def testCallBytes(x: bytes = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallBytes',
         'x': to_json(x),
-    }))
+    })
 
 
 def testCallEmpty():
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallEmpty',
-    }))
+    })
 
 
 def testCallString(x: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallString',
         'x': to_json(x),
-    }))
+    })
 
 
 def testCallVectorInt(x: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallVectorInt',
         'x': to_json(x),
-    }))
+    })
 
 
 def testCallVectorIntObject(x: list[TestInt] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallVectorIntObject',
         'x': to_json(x),
-    }))
+    })
 
 
 def testCallVectorString(x: list[str] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallVectorString',
         'x': to_json(x),
-    }))
+    })
 
 
 def testCallVectorStringObject(x: list[TestString] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testCallVectorStringObject',
         'x': to_json(x),
-    }))
+    })
 
 
 def testGetDifference():
-    return get_object(client.func({
+    return client.send({
         '@type': 'testGetDifference',
-    }))
+    })
 
 
 def testNetwork():
-    return get_object(client.func({
+    return client.send({
         '@type': 'testNetwork',
-    }))
+    })
 
 
 def testProxy(server: str = None, port: int = None, type: ProxyType = None, dc_id: int = None, timeout: float = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testProxy',
         'server': to_json(server),
         'port': to_json(port),
         'type': to_json(type),
         'dc_id': to_json(dc_id),
         'timeout': to_json(timeout),
-    }))
+    })
 
 
 def testReturnError(error: Error = None, ):
@@ -19824,384 +20752,385 @@ def testReturnError(error: Error = None, ):
 
 
 def testSquareInt(x: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'testSquareInt',
         'x': to_json(x),
-    }))
+    })
 
 
 def testUseUpdate():
-    return get_object(client.func({
+    return client.send({
         '@type': 'testUseUpdate',
-    }))
+    })
 
 
 def toggleAllDownloadsArePaused(are_paused: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleAllDownloadsArePaused',
         'are_paused': to_json(are_paused),
-    }))
+    })
 
 
 def toggleBotIsAddedToAttachmentMenu(bot_user_id: int = None, is_added: bool = None, allow_write_access: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleBotIsAddedToAttachmentMenu',
         'bot_user_id': to_json(bot_user_id),
         'is_added': to_json(is_added),
         'allow_write_access': to_json(allow_write_access),
-    }))
+    })
 
 
 def toggleBotUsernameIsActive(bot_user_id: int = None, username: str = None, is_active: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleBotUsernameIsActive',
         'bot_user_id': to_json(bot_user_id),
         'username': to_json(username),
         'is_active': to_json(is_active),
-    }))
+    })
 
 
 def toggleChatDefaultDisableNotification(chat_id: int = None, default_disable_notification: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleChatDefaultDisableNotification',
         'chat_id': to_json(chat_id),
         'default_disable_notification': to_json(default_disable_notification),
-    }))
+    })
 
 
 def toggleChatHasProtectedContent(chat_id: int = None, has_protected_content: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleChatHasProtectedContent',
         'chat_id': to_json(chat_id),
         'has_protected_content': to_json(has_protected_content),
-    }))
+    })
 
 
 def toggleChatIsMarkedAsUnread(chat_id: int = None, is_marked_as_unread: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleChatIsMarkedAsUnread',
         'chat_id': to_json(chat_id),
         'is_marked_as_unread': to_json(is_marked_as_unread),
-    }))
+    })
 
 
 def toggleChatIsPinned(chat_list: ChatList = None, chat_id: int = None, is_pinned: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleChatIsPinned',
         'chat_list': to_json(chat_list),
         'chat_id': to_json(chat_id),
         'is_pinned': to_json(is_pinned),
-    }))
+    })
 
 
 def toggleChatIsTranslatable(chat_id: int = None, is_translatable: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleChatIsTranslatable',
         'chat_id': to_json(chat_id),
         'is_translatable': to_json(is_translatable),
-    }))
+    })
 
 
 def toggleDownloadIsPaused(file_id: int = None, is_paused: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleDownloadIsPaused',
         'file_id': to_json(file_id),
         'is_paused': to_json(is_paused),
-    }))
+    })
 
 
 def toggleForumTopicIsClosed(chat_id: int = None, message_thread_id: int = None, is_closed: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleForumTopicIsClosed',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'is_closed': to_json(is_closed),
-    }))
+    })
 
 
 def toggleForumTopicIsPinned(chat_id: int = None, message_thread_id: int = None, is_pinned: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleForumTopicIsPinned',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'is_pinned': to_json(is_pinned),
-    }))
+    })
 
 
 def toggleGeneralForumTopicIsHidden(chat_id: int = None, is_hidden: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGeneralForumTopicIsHidden',
         'chat_id': to_json(chat_id),
         'is_hidden': to_json(is_hidden),
-    }))
+    })
 
 
 def toggleGroupCallEnabledStartNotification(group_call_id: int = None, enabled_start_notification: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallEnabledStartNotification',
         'group_call_id': to_json(group_call_id),
         'enabled_start_notification': to_json(enabled_start_notification),
-    }))
+    })
 
 
 def toggleGroupCallIsMyVideoEnabled(group_call_id: int = None, is_my_video_enabled: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallIsMyVideoEnabled',
         'group_call_id': to_json(group_call_id),
         'is_my_video_enabled': to_json(is_my_video_enabled),
-    }))
+    })
 
 
 def toggleGroupCallIsMyVideoPaused(group_call_id: int = None, is_my_video_paused: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallIsMyVideoPaused',
         'group_call_id': to_json(group_call_id),
         'is_my_video_paused': to_json(is_my_video_paused),
-    }))
+    })
 
 
 def toggleGroupCallMuteNewParticipants(group_call_id: int = None, mute_new_participants: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallMuteNewParticipants',
         'group_call_id': to_json(group_call_id),
         'mute_new_participants': to_json(mute_new_participants),
-    }))
+    })
 
 
 def toggleGroupCallParticipantIsHandRaised(group_call_id: int = None, participant_id: MessageSender = None, is_hand_raised: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallParticipantIsHandRaised',
         'group_call_id': to_json(group_call_id),
         'participant_id': to_json(participant_id),
         'is_hand_raised': to_json(is_hand_raised),
-    }))
+    })
 
 
 def toggleGroupCallParticipantIsMuted(group_call_id: int = None, participant_id: MessageSender = None, is_muted: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallParticipantIsMuted',
         'group_call_id': to_json(group_call_id),
         'participant_id': to_json(participant_id),
         'is_muted': to_json(is_muted),
-    }))
+    })
 
 
 def toggleGroupCallScreenSharingIsPaused(group_call_id: int = None, is_paused: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleGroupCallScreenSharingIsPaused',
         'group_call_id': to_json(group_call_id),
         'is_paused': to_json(is_paused),
-    }))
+    })
 
 
 def toggleSessionCanAcceptCalls(session_id: int = None, can_accept_calls: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSessionCanAcceptCalls',
         'session_id': to_json(session_id),
         'can_accept_calls': to_json(can_accept_calls),
-    }))
+    })
 
 
 def toggleSessionCanAcceptSecretChats(session_id: int = None, can_accept_secret_chats: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSessionCanAcceptSecretChats',
         'session_id': to_json(session_id),
         'can_accept_secret_chats': to_json(can_accept_secret_chats),
-    }))
+    })
 
 
-def toggleStoryIsPinned(story_id: int = None, is_pinned: bool = None, ):
-    return get_object(client.func({
+def toggleStoryIsPinned(story_sender_chat_id: int = None, story_id: int = None, is_pinned: bool = None, ):
+    return client.send({
         '@type': 'toggleStoryIsPinned',
+        'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
         'is_pinned': to_json(is_pinned),
-    }))
+    })
 
 
 def toggleSupergroupHasAggressiveAntiSpamEnabled(supergroup_id: int = None, has_aggressive_anti_spam_enabled: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupHasAggressiveAntiSpamEnabled',
         'supergroup_id': to_json(supergroup_id),
         'has_aggressive_anti_spam_enabled': to_json(has_aggressive_anti_spam_enabled),
-    }))
+    })
 
 
 def toggleSupergroupHasHiddenMembers(supergroup_id: int = None, has_hidden_members: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupHasHiddenMembers',
         'supergroup_id': to_json(supergroup_id),
         'has_hidden_members': to_json(has_hidden_members),
-    }))
+    })
 
 
 def toggleSupergroupIsAllHistoryAvailable(supergroup_id: int = None, is_all_history_available: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupIsAllHistoryAvailable',
         'supergroup_id': to_json(supergroup_id),
         'is_all_history_available': to_json(is_all_history_available),
-    }))
+    })
 
 
 def toggleSupergroupIsBroadcastGroup(supergroup_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupIsBroadcastGroup',
         'supergroup_id': to_json(supergroup_id),
-    }))
+    })
 
 
 def toggleSupergroupIsForum(supergroup_id: int = None, is_forum: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupIsForum',
         'supergroup_id': to_json(supergroup_id),
         'is_forum': to_json(is_forum),
-    }))
+    })
 
 
 def toggleSupergroupJoinByRequest(supergroup_id: int = None, join_by_request: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupJoinByRequest',
         'supergroup_id': to_json(supergroup_id),
         'join_by_request': to_json(join_by_request),
-    }))
+    })
 
 
 def toggleSupergroupJoinToSendMessages(supergroup_id: int = None, join_to_send_messages: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupJoinToSendMessages',
         'supergroup_id': to_json(supergroup_id),
         'join_to_send_messages': to_json(join_to_send_messages),
-    }))
+    })
 
 
 def toggleSupergroupSignMessages(supergroup_id: int = None, sign_messages: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupSignMessages',
         'supergroup_id': to_json(supergroup_id),
         'sign_messages': to_json(sign_messages),
-    }))
+    })
 
 
 def toggleSupergroupUsernameIsActive(supergroup_id: int = None, username: str = None, is_active: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleSupergroupUsernameIsActive',
         'supergroup_id': to_json(supergroup_id),
         'username': to_json(username),
         'is_active': to_json(is_active),
-    }))
+    })
 
 
 def toggleUsernameIsActive(username: str = None, is_active: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'toggleUsernameIsActive',
         'username': to_json(username),
         'is_active': to_json(is_active),
-    }))
+    })
 
 
 def transferChatOwnership(chat_id: int = None, user_id: int = None, password: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'transferChatOwnership',
         'chat_id': to_json(chat_id),
         'user_id': to_json(user_id),
         'password': to_json(password),
-    }))
+    })
 
 
 def translateMessageText(chat_id: int = None, message_id: int = None, to_language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'translateMessageText',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'to_language_code': to_json(to_language_code),
-    }))
+    })
 
 
 def translateText(text: FormattedText = None, to_language_code: str = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'translateText',
         'text': to_json(text),
         'to_language_code': to_json(to_language_code),
-    }))
+    })
 
 
 def unpinAllChatMessages(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'unpinAllChatMessages',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def unpinAllMessageThreadMessages(chat_id: int = None, message_thread_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'unpinAllMessageThreadMessages',
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
-    }))
+    })
 
 
 def unpinChatMessage(chat_id: int = None, message_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'unpinChatMessage',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
-    }))
+    })
 
 
 def upgradeBasicGroupChatToSupergroupChat(chat_id: int = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'upgradeBasicGroupChatToSupergroupChat',
         'chat_id': to_json(chat_id),
-    }))
+    })
 
 
 def uploadStickerFile(user_id: int = None, sticker_format: StickerFormat = None, sticker: InputFile = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'uploadStickerFile',
         'user_id': to_json(user_id),
         'sticker_format': to_json(sticker_format),
         'sticker': to_json(sticker),
-    }))
+    })
 
 
 def validateOrderInfo(input_invoice: InputInvoice = None, order_info: OrderInfo = None, allow_save: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'validateOrderInfo',
         'input_invoice': to_json(input_invoice),
         'order_info': to_json(order_info),
         'allow_save': to_json(allow_save),
-    }))
+    })
 
 
 def viewMessages(chat_id: int = None, message_ids: list[int] = None, source: MessageSource = None, force_read: bool = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'viewMessages',
         'chat_id': to_json(chat_id),
         'message_ids': to_json(message_ids),
         'source': to_json(source),
         'force_read': to_json(force_read),
-    }))
+    })
 
 
 def viewPremiumFeature(feature: PremiumFeature = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'viewPremiumFeature',
         'feature': to_json(feature),
-    }))
+    })
 
 
 def viewTrendingStickerSets(sticker_set_ids: list[int] = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'viewTrendingStickerSets',
         'sticker_set_ids': to_json(sticker_set_ids),
-    }))
+    })
 
 
 def writeGeneratedFilePart(generation_id: int = None, offset: int = None, data: bytes = None, ):
-    return get_object(client.func({
+    return client.send({
         '@type': 'writeGeneratedFilePart',
         'generation_id': to_json(generation_id),
         'offset': to_json(offset),
         'data': to_json(data),
-    }))
+    })
 
 

@@ -129,8 +129,7 @@ class TelegramListWidgetItem(QWidget):
         if chat.photo is not None:
             self._photo = chat.photo.small
             if self._photo.local.can_be_downloaded:
-                tg.downloadFile(self._photo.remote.id, None, None, None, None)
-                # self._photo.download()
+                tg.downloadFile(self._photo.id, 1)
             # manager.updateFile.connect(self.update_icon)
             if self._photo.local.is_downloading_completed:
                 self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(48, 48))
