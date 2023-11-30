@@ -129,7 +129,6 @@ class _ScrollArea(QScrollArea):
 
     def _on_resized(self) -> None:
         self._last_pos = self.verticalScrollBar().value()
-        print(self._last_pos, self._last_max)
         if self._last_pos > self._last_max - 10:
             self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
         elif self._last_pos < 50:

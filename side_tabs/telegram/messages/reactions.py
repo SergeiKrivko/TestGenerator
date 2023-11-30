@@ -4,13 +4,14 @@ from side_tabs.telegram.telegram_api import tg
 
 
 class Reaction(QPushButton):
-    def __init__(self, tm, reaction: tg.ReactionType):
+    def __init__(self, tm, reaction: tg.ReactionType, count=1):
         super().__init__()
         self.tm = tm
 
         self.reaction = reaction
-        self.count = 1
+        self.count = count
         self.set_text()
+        self.set_theme()
 
     def add(self):
         self.count += 1
@@ -31,6 +32,6 @@ class Reaction(QPushButton):
                 self.setText(f"{self.reaction.emoji} {self.count}")
 
     def set_theme(self):
-        self.tm.auto_css(self)
+        self.tm.auto_css(self, border=False, palette='Menu')
 
 

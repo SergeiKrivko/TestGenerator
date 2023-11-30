@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QTextEdit
 from side_tabs.telegram.messages.context_menu import ContextMenu
 from side_tabs.telegram.messages.document import DocumentWidget
 from side_tabs.telegram.messages.photo import PhotoLabel
+from side_tabs.telegram.messages.reactions import Reaction
 from side_tabs.telegram.messages.text import TgFormattedText
 from side_tabs.telegram.messages.video import VideoPlayer
 from side_tabs.telegram.telegram_api import tg
@@ -58,19 +59,25 @@ class TelegramChatBubble(QWidget):
         self._sender_label.setContentsMargins(10, 2, 10, 2)
         self._layout.addWidget(self._sender_label)
 
-        if isinstance(self._message.content, tg.MessagePhoto):
+        if isinstance(self._message.content, tg.MessageText):
+            pass
+
+        elif isinstance(self._message.content, tg.MessagePhoto):
             self._photo_label = PhotoLabel(self._tm, self._message.content.photo.sizes[-1].photo)
             self._manager.updateFile.connect(self._photo_label.update_image)
             self._layout.addWidget(self._photo_label)
 
-        if isinstance(self._message.content, tg.MessageVideo):
+        elif isinstance(self._message.content, tg.MessageVideo):
             self._video_player = VideoPlayer(self._tm, self._message.content.video)
             self._manager.updateFile.connect(self._video_player.on_downloaded)
             self._layout.addWidget(self._video_player)
 
-        if isinstance(self._message.content, tg.MessageDocument):
+        elif isinstance(self._message.content, tg.MessageDocument):
             self._document_widget = DocumentWidget(self._tm, self._message.content.document, self._manager)
             self._layout.addWidget(self._document_widget)
+
+        else:
+            print(self._message.content.__class__.__name__)
 
         font_metrics = QFontMetrics(self._tm.font_medium)
 
@@ -88,10 +95,15 @@ class TelegramChatBubble(QWidget):
         self._layout.addWidget(self._label, 10)
 
         self._reactions_layout = QHBoxLayout()
+        self._reactions_layout.setContentsMargins(8, 2, 8, 2)
+        self._reactions_layout.setSpacing(8)
+        self._reactions_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._layout.addLayout(self._reactions_layout)
-        self._reactions = []
+        self._reactions: list[Reaction] = []
 
-        # tg.getMessageAddedReactions(self._message.chat_id, self._message.id, limit=5)
+        self._manager.get_reactions(self._message)
+        self._manager.messageInterationInfoChanged.connect(self._on_interaction_info_changed)
+        self._on_interaction_info_changed(self._message.chat_id, self._message.id)
 
         widget = QWidget()
         main_layout.addWidget(widget, 1)
@@ -119,6 +131,21 @@ class TelegramChatBubble(QWidget):
         if hasattr(self, '_photo_label'):
             self._photo_label.setMaximumWidth(width)
             self._photo_label.resize_pixmap()
+
+    def _on_interaction_info_changed(self, chat_id, message_id):
+        if message_id != self._message.id or chat_id != self._message.chat_id:
+            return
+
+        for r in self._reactions:
+            r.setParent(None)
+        self._reactions.clear()
+
+        if self._message.interaction_info is None:
+            return
+
+        for el in self._message.interaction_info.reactions:
+            self._reactions.append(r := Reaction(self._tm, el.type, el.total_count))
+            self._reactions_layout.addWidget(r)
 
     def _run_context_menu(self, pos):
         menu = ContextMenu(self._message, self._tm)
@@ -158,5 +185,3 @@ class TelegramChatBubble(QWidget):
             self._photo_label.setStyleSheet("border: none;")
         if hasattr(self, '_document_widget'):
             self._document_widget.set_theme()
-
-
