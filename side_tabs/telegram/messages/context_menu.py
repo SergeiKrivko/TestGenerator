@@ -1,7 +1,11 @@
+import math
+
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMenu
 
 from side_tabs.telegram.telegram_api import tg
+from side_tabs.telegram.telegram_manager import TelegramManager
 
 
 class ContextMenu(QMenu):
@@ -14,17 +18,23 @@ class ContextMenu(QMenu):
     PLAY_VIDEO = 7
     STOP_VIDEO = 8
     PAUSE_VIDEO = 9
+    ADD_REACTION = 10
 
-    def __init__(self, message: tg.Message, tm):
+    def __init__(self, message: tg.Message, manager: TelegramManager, tm):
         super().__init__()
         self.tm = tm
+        self._manager = manager
         self.action = 0
+        self.data = None
 
         action = self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить")
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE))
 
         action = self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить для всех")
         action.triggered.connect(lambda: self.set_action(ContextMenu.DELETE_FOR_ALL))
+
+        self.addMenu(menu := ReactionsMenu(self.tm, self._manager))
+        menu.emojiSelected.connect(lambda emoji: (self.set_action(ContextMenu.ADD_REACTION), self.set_data(emoji)))
 
         self.addSeparator()
 
@@ -55,3 +65,34 @@ class ContextMenu(QMenu):
 
     def set_action(self, action):
         self.action = action
+
+    def set_data(self, data):
+        self.data = data
+
+
+class ReactionsMenu(QMenu):
+    emojiSelected = pyqtSignal(str)
+
+    def __init__(self, tm, manager: TelegramManager):
+        super().__init__()
+        self._tm = tm
+        self.reaction = ''
+        self._manager = manager
+
+        # self.setFixedHeight(math.ceil(len(self._manager.active_reactions) ** 0.5) * 20)
+        # self.setFixedWidth(math.ceil(len(self._manager.active_reactions) ** 0.5) * 20)
+
+        self.setTitle("Добавить реакцию")
+
+        for el in self._manager.active_reactions:
+            self.add_reaction(el)
+
+        self.setStyleSheet(self._tm.menu_css(palette='Main', padding='4px 4px'))
+
+    def add_reaction(self, emoji):
+        a = self.addAction(emoji)
+        a.triggered.connect(lambda: self.set_reaction(emoji))
+
+    def set_reaction(self, emoji):
+        self.reaction = emoji
+        self.emojiSelected.emit(emoji)

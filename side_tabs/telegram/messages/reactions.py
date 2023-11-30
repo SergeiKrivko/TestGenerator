@@ -12,6 +12,7 @@ class Reaction(QPushButton):
         self.count = count
         self.set_text()
         self.set_theme()
+        self.setCheckable(True)
 
     def add(self):
         self.count += 1

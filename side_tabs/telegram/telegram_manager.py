@@ -78,6 +78,7 @@ class TelegramManager(QThread):
         self._chat_lists = {'All': tg.ChatListMain(), 'Archive': tg.ChatListArchive()}
         self._messages_to_get_reactions = []
         self._search_reactions_now = None
+        self.active_reactions = []
 
     def __getitem__(self, item):
         return self._options[item]
@@ -145,6 +146,8 @@ class TelegramManager(QThread):
 
         if isinstance(event, tg.UpdateOption):
             self._options[event.name] = event.value.value
+        if isinstance(event, tg.UpdateActiveEmojiReactions):
+            self.active_reactions = event.emojis
 
         # CHATS
 

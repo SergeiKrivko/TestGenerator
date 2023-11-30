@@ -1252,7 +1252,7 @@ QCheckBox::indicator:checked:pressed {{
     image: url({self.get_image('checkbox')});
 }}"""
 
-    def menu_css(self, palette='Bg'):
+    def menu_css(self, palette='Bg', padding='4px 16px'):
         return f"""
 QMenu {{
     color: {self['TextColor']};
@@ -1267,7 +1267,7 @@ QMenu::item {{
     border: 0px solid {self['BorderColor']};
     background-color: transparent;
     border-radius: 8px;
-    padding: 4px 16px;
+    padding: {padding};
 }}
 
 QMenu::icon {{

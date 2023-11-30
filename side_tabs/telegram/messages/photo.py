@@ -21,10 +21,11 @@ class PhotoLabel(QLabel):
             tg.downloadFile(self._photo.id, 1)
 
     def update_image(self, image: tg.File):
-        if isinstance(self._photo, tg.File) and image.id == self._photo.id and \
-                self._photo.local.is_downloading_completed:
-            self._pixmap = QPixmap(self._photo.local.path)
-            self.resize_pixmap()
+        if isinstance(self._photo, tg.File) and image.id == self._photo.id:
+            self._photo = image
+            if self._photo.local.is_downloading_completed:
+                self._pixmap = QPixmap(self._photo.local.path)
+                self.resize_pixmap()
 
     def resize_pixmap(self):
         if isinstance(self._pixmap, QPixmap):

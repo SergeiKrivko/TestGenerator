@@ -145,10 +145,23 @@ class TelegramChatBubble(QWidget):
 
         for el in self._message.interaction_info.reactions:
             self._reactions.append(r := Reaction(self._tm, el.type, el.total_count))
+            r.setChecked(el.is_chosen)
+            self._connect_reaction(r)
             self._reactions_layout.addWidget(r)
 
+    def _connect_reaction(self, reaction: Reaction):
+        def func(flag):
+            if flag:
+                print('add')
+                tg.addMessageReaction(self._message.chat_id, self._message.id, reaction.reaction)
+            else:
+                print('delete')
+                tg.removeMessageReaction(self._message.chat_id, self._message.id, reaction.reaction)
+
+        reaction.clicked.connect(func)
+
     def _run_context_menu(self, pos):
-        menu = ContextMenu(self._message, self._tm)
+        menu = ContextMenu(self._message, self._manager, self._tm)
         menu.move(self.mapToGlobal(pos))
         menu.exec()
         match menu.action:
@@ -166,6 +179,10 @@ class TelegramChatBubble(QWidget):
                 self._video_player.play()
             case ContextMenu.STOP_VIDEO:
                 self._video_player.pause()
+            case ContextMenu.ADD_REACTION:
+                if menu.data is not None:
+                    tg.addMessageReaction(self._message.chat_id, self._message.id,
+                                          tg.ReactionTypeEmoji(emoji=menu.data))
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
