@@ -24,6 +24,13 @@ class TelegramChatBubble(QWidget):
         self.customContextMenuRequested.connect(self._run_context_menu)
         self._right_side = isinstance(message.sender_id, tg.MessageSenderUser) and message.sender_id.user_id == \
                            int(self._manager.get('my_id'))
+        self._info_message = isinstance(message.content, (tg.MessageBasicGroupChatCreate,
+                                                          tg.MessageSupergroupChatCreate,
+                                                          tg.MessageChatAddMembers,
+                                                          tg.MessageChatDeleteMember,
+                                                          tg.MessageChatChangePhoto,
+                                                          tg.MessageChatChangeTitle,
+                                                          tg.MessagePinMessage,))
 
         if isinstance(message.content, tg.MessageText):
             self._text = TgFormattedText(message.content.text).html
@@ -35,12 +42,16 @@ class TelegramChatBubble(QWidget):
         main_layout = QHBoxLayout()
         main_layout.setDirection(QHBoxLayout.Direction.RightToLeft if self._right_side else
                                  QHBoxLayout.Direction.LeftToRight)
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft if self._right_side else Qt.AlignmentFlag.AlignRight)
+        main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter if self._info_message else
+                                 Qt.AlignmentFlag.AlignLeft if self._right_side else Qt.AlignmentFlag.AlignRight)
         self.setLayout(main_layout)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
         self._main_widget = QWidget()
         main_layout.addWidget(self._main_widget)
+
+        widget = QWidget()
+        main_layout.addWidget(widget, 1)
 
         self._layout = QVBoxLayout()
         self._layout.setSpacing(0)
@@ -59,6 +70,16 @@ class TelegramChatBubble(QWidget):
         self._sender_label.setContentsMargins(10, 2, 10, 2)
         self._layout.addWidget(self._sender_label)
 
+        self._info_label = QLabel()
+        self._info_label.setWordWrap(True)
+        main_layout.addWidget(self._info_label)
+
+        if self._info_message:
+            self._main_widget.hide()
+            widget.hide()
+        else:
+            self._info_label.hide()
+
         if isinstance(self._message.content, tg.MessageText):
             pass
 
@@ -76,7 +97,23 @@ class TelegramChatBubble(QWidget):
             self._document_widget = DocumentWidget(self._tm, self._message.content.document, self._manager)
             self._layout.addWidget(self._document_widget)
 
+        elif isinstance(self._message.content, tg.MessageBasicGroupChatCreate):
+            self._info_label.setText(f"{user_name} создал(а) группу \"{self._message.content.title}\"")
+
+        elif isinstance(self._message.content, tg.MessageSupergroupChatCreate):
+            self._info_label.setText(f"{user_name} создал(а) группу \"{self._message.content.title}\"")
+
+        elif isinstance(self._message.content, tg.MessageChatChangePhoto):
+            self._info_label.setText(f"{user_name} изменил(а) фотографию группы")
+
+        elif isinstance(self._message.content, tg.MessageChatChangeTitle):
+            self._info_label.setText(f"{user_name} изменил(а) название группы")
+
+        elif isinstance(self._message.content, tg.MessagePinMessage):
+            self._info_label.setText(f"{user_name} закрепил(а) сообщение")
+
         else:
+            self._text = f"Неподдерживаемое сообщение: {self._message.content.__class__.__name__}"
             print(self._message.content.__class__.__name__)
 
         font_metrics = QFontMetrics(self._tm.font_medium)
@@ -96,17 +133,13 @@ class TelegramChatBubble(QWidget):
 
         self._reactions_layout = QHBoxLayout()
         self._reactions_layout.setContentsMargins(8, 2, 8, 2)
-        self._reactions_layout.setSpacing(8)
+        self._reactions_layout.setSpacing(2)
         self._reactions_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._layout.addLayout(self._reactions_layout)
         self._reactions: list[Reaction] = []
 
-        self._manager.get_reactions(self._message)
         self._manager.messageInterationInfoChanged.connect(self._on_interaction_info_changed)
         self._on_interaction_info_changed(self._message.chat_id, self._message.id)
-
-        widget = QWidget()
-        main_layout.addWidget(widget, 1)
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
@@ -198,6 +231,11 @@ class TelegramChatBubble(QWidget):
         self._label.setFont(self._tm.font_medium)
         self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}; border: none;")
         self._sender_label.setFont(self._tm.font_small)
+        self._info_label.setStyleSheet(f"""QLabel: {{
+            {self._tm.base_css(palette='Menu', border=False)}
+            padding: 8px 3px;
+            text-align: center;
+            }}""")
         if hasattr(self, '_photo_label'):
             self._photo_label.setStyleSheet("border: none;")
         if hasattr(self, '_document_widget'):

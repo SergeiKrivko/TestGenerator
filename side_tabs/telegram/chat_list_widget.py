@@ -1,3 +1,7 @@
+import base64
+import io
+import os
+
 from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QPixmap
@@ -147,7 +151,7 @@ class TelegramListWidgetItem(QWidget):
         last_message_layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(last_message_layout)
 
-        self._last_message_label = LastMessageWidget(self._tm)
+        self._last_message_label = LastMessageWidget(self._tm, self._manager)
         self._last_message_label.mouseMoving.connect(lambda: self.set_hover(True))
         self.update_last_message(self._chat.last_message)
         last_message_layout.addWidget(self._last_message_label, 10)
@@ -237,9 +241,10 @@ class TelegramListWidgetItem(QWidget):
 class LastMessageWidget(QWidget):
     mouseMoving = pyqtSignal()
 
-    def __init__(self, tm):
+    def __init__(self, tm, manager):
         super().__init__()
         self._tm = tm
+        self._manager = manager
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -300,6 +305,6 @@ class LastMessageWidget(QWidget):
         self._text_label.setText(text[:80])
         if isinstance(icon, tg.Minithumbnail):
             self._icon_label.show()
-            # self._icon_label.setPixmap(QPixmap(icon.load()))
+            self._icon_label.setPixmap(QPixmap(self._manager.load_minithumbnail(icon)))
         else:
             self._icon_label.hide()

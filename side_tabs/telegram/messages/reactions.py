@@ -33,6 +33,6 @@ class Reaction(QPushButton):
                 self.setText(f"{self.reaction.emoji} {self.count}")
 
     def set_theme(self):
-        self.tm.auto_css(self, border=False, palette='Menu')
+        self.tm.auto_css(self, border=False, palette='Menu', padding=True)
 
 

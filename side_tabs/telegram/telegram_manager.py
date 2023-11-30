@@ -1,4 +1,7 @@
+import base64
+import io
 import os
+from uuid import uuid4
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -64,7 +67,6 @@ class TelegramManager(QThread):
                                 use_message_database=True)
         self._client.database_directory = f"{self._sm.app_data_dir}/Telegram/tdlib"
         self._client.set_update_handler(self._handler)
-        self._client.set_error_handler(self.error_handler)
         self._client.console_authentication = False
         self._client.set_authorization_handler(self.authorization.emit)
 
@@ -76,8 +78,6 @@ class TelegramManager(QThread):
         self._chats = dict()
         self._users = dict()
         self._chat_lists = {'All': tg.ChatListMain(), 'Archive': tg.ChatListArchive()}
-        self._messages_to_get_reactions = []
-        self._search_reactions_now = None
         self.active_reactions = []
 
     def __getitem__(self, item):
@@ -130,12 +130,11 @@ class TelegramManager(QThread):
     def close_chat(self, chat_id: int):
         self._client.send({'@type': 'closeChat', 'chat_id': chat_id})
 
-    def get_reactions(self, message: tg.Message):
-        self._messages_to_get_reactions.append(message)
-        if self._search_reactions_now is None:
-            message = self._messages_to_get_reactions.pop(0)
-            self._search_reactions_now = message
-            tg.getMessageAddedReactions(message.chat_id, message.id, limit=500)
+    def load_minithumbnail(self, minithumbnail: tg.Minithumbnail):
+        os.makedirs(f"{self._sm.app_data_dir}/Telegram/temp", exist_ok=True)
+        with open(path := f"{self._sm.app_data_dir}/Telegram/temp/{uuid4()}.png", 'bw') as f:
+            f.write(base64.b64decode(minithumbnail.data))
+        return path
 
     def authenticate_user(self, str1, str2):
         self._client.send_authentication(str1, str2)
@@ -190,8 +189,11 @@ class TelegramManager(QThread):
                 self.get_chat(el.chat_id).last_message_count = self.get_chat(el.chat_id).message_count()
                 self.loadingFinished.emit(self.get_chat(el.chat_id))
         elif isinstance(event, tg.UpdateMessageInteractionInfo):
-            self.get_chat(event.chat_id).get_message(event.message_id).interaction_info = event.interaction_info
-            self.messageInterationInfoChanged.emit(event.chat_id, event.message_id)
+            try:
+                self.get_chat(event.chat_id).get_message(event.message_id).interaction_info = event.interaction_info
+                self.messageInterationInfoChanged.emit(event.chat_id, event.message_id)
+            except KeyError:
+                pass
 
         # USERS
 
@@ -210,19 +212,6 @@ class TelegramManager(QThread):
             self.updateFile.emit(file)
         # else:
         #     print(tg.to_json(event))
-
-    def error_handler(self, error: dict):
-        error = tg.get_object(error)
-        if not isinstance(error, tg.Error):
-            return
-
-        if error.code == 400 and error.message == 'MSG_ID_INVALID':
-            if self._messages_to_get_reactions:
-                self._search_reactions_now = self._messages_to_get_reactions.pop(0)
-                tg.getMessageAddedReactions(self._search_reactions_now.chat_id,
-                                            self._search_reactions_now.id, limit=500)
-            else:
-                self._search_reactions_now = None
 
     def run(self):
         self._client.execute()
