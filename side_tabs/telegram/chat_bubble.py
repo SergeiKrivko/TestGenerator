@@ -6,6 +6,7 @@ from side_tabs.telegram.messages.context_menu import ContextMenu
 from side_tabs.telegram.messages.document import DocumentWidget
 from side_tabs.telegram.messages.photo import PhotoLabel
 from side_tabs.telegram.messages.text import TgFormattedText
+from side_tabs.telegram.messages.video import VideoPlayer
 from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager
 
@@ -61,6 +62,11 @@ class TelegramChatBubble(QWidget):
             self._photo_label = PhotoLabel(self._tm, self._message.content.photo.sizes[-1].photo)
             self._manager.updateFile.connect(self._photo_label.update_image)
             self._layout.addWidget(self._photo_label)
+
+        if isinstance(self._message.content, tg.MessageVideo):
+            self._video_player = VideoPlayer(self._tm, self._message.content.video)
+            self._manager.updateFile.connect(self._video_player.on_downloaded)
+            self._layout.addWidget(self._video_player)
 
         if isinstance(self._message.content, tg.MessageDocument):
             self._document_widget = DocumentWidget(self._tm, self._message.content.document, self._manager)
@@ -129,6 +135,10 @@ class TelegramChatBubble(QWidget):
                 self._document_widget.open_file()
             case ContextMenu.SHOW_IN_FOLDER:
                 self._document_widget.show_in_folder()
+            case ContextMenu.PLAY_VIDEO:
+                self._video_player.play()
+            case ContextMenu.STOP_VIDEO:
+                self._video_player.pause()
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
