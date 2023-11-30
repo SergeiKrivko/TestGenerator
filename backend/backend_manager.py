@@ -1,10 +1,11 @@
 import os.path
 import random
 import sys
+import types
 from time import sleep
-from types import FunctionType
 from typing import Literal
 
+import py7zr
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
 from backend.backend_types.unit_tests_suite import UnitTestsSuite
@@ -426,7 +427,7 @@ class BackendManager(QObject):
 
     # --------------------- process ----------------------------
 
-    def run_process(self, thread: QThread | FunctionType, group: str, name: str):
+    def run_process(self, thread: types.FunctionType | types.LambdaType | QThread, group: str, name: str):
         if not isinstance(thread, QThread):
             thread = Looper(thread)
         if group not in self._background_processes:
@@ -454,6 +455,26 @@ class BackendManager(QObject):
         for item in self._background_processes.values():
             for el in list(item.values()):
                 el.terminate()
+
+    # ---------------------- ZIP ----------------------------
+
+    def project_to_zip(self, path):
+        self.run_process(lambda: self._project_to_zip(path), 'zip', 'store')
+
+    def project_from_zip(self, zip_path, path, open_after_load=False):
+        self.run_process(lambda: self._project_from_zip(zip_path, path, open_after_load), 'zip', 'load')
+
+    def _project_to_zip(self, path):
+        with py7zr.SevenZipFile(path, mode='w') as archive:
+            archive.writeall(self.sm.project.path(), arcname='')
+
+    def _project_from_zip(self, zip_path, path, open_after_load=False):
+        path = os.path.abspath(path)
+        with py7zr.SevenZipFile(zip_path, mode='r') as archive:
+            archive.extractall(path)
+        self.sm.add_main_project(path)
+        if open_after_load:
+            self.open_main_project(self.sm.all_projects[path])
 
     # --------------------- tabs ----------------------------
 
@@ -487,8 +508,9 @@ class BackendManager(QObject):
         else:
             self.open_main_project(self.sm.get_general('project'))
 
-        while not self._loader.isFinished():
-            sleep(0.1)
+        if self._loader:
+            while not self._loader.isFinished():
+                sleep(0.1)
 
         util = None
         if args.util:

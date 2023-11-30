@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetIt
     QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
 import py7zr
 
+from backend.backend_manager import BackendManager
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
 from config import APP_NAME
@@ -26,7 +27,7 @@ LANGUAGE_ICONS[None] = 'unknown_file'
 class ProjectWidget(SidePanelWidget):
     jump_to_code = pyqtSignal(str)
 
-    def __init__(self, sm: SettingsManager, bm, tm):
+    def __init__(self, sm: SettingsManager, bm: BackendManager, tm):
         super(ProjectWidget, self).__init__(sm, tm, 'Проекты', ['add', 'delete', 'rename', 'to_zip', 'from_zip'])
         self.bm = bm
 
@@ -155,66 +156,39 @@ class ProjectWidget(SidePanelWidget):
         self.bm.open_main_project(self.list_widget.currentItem().project)
 
     def project_to_zip(self):
-        path, _ = QFileDialog.getSaveFileName(None, "Выберите путь", self.sm.path + '.7z', '7z (*.7z)')
+        path, _ = QFileDialog.getSaveFileName(None, "Выберите путь", self.sm.project.path() + '.TGProject.7z',
+                                              'TestGenerator ZIP projects (*.TGProject.7z)')
         if not path:
             return
-        if not path.endswith('.7z'):
-            path += '.7z'
+        if not path.endswith('.TGProject.7z'):
+            path += '.TGProject.7z'
 
-        self.sm.store()
-        if os.path.isdir(self.sm.path) and os.path.isdir(self.sm.data_path):
-            looper = ProjectPacker(path, self.sm.path, self.sm.data_path)
-            looper.start()
-            dialog = ProgressDialog("Запаковка проекта", "Идет запаковка проекта. Пожалуйста, подождите", self.tm)
-            looper.finished.connect(dialog.reject)
-            if dialog.exec():
-                looper.cancel()
-        else:
-            MessageBox(MessageBox.Warning, "Ошибка", "Неизвестная ошибка. Сжатие проекта невозможно", self.tm)
+        self.bm.project_to_zip(path)
 
     def project_from_zip(self, path=''):
         if not os.path.isfile(path):
             path, _ = QFileDialog.getOpenFileName(
                 None, "Выберите проект для распаковки",
-                self.sm.get_general('zip_path', self.sm.path if self.sm.path else os.getcwd()), '7z (*.7z)')
+                self.sm.get_general('zip_path', self.sm.project.path() if self.sm.project else os.getcwd()),
+                '7zip (*.TGProject.7z)')
         if not path or not os.path.isfile(path):
             return
         self.sm.set_general('zip_path', os.path.split(path)[0])
-        dialog = ProjectFromZipDialog(os.path.basename(path).rstrip('.7z'),
-                                      os.path.split(self.sm.path if self.sm.path else os.getcwd())[0], self.tm)
+        dialog = ProjectFromZipDialog(
+            os.path.basename(path)[:-len('.TGProject.7z')],
+            os.path.split(self.sm.project.path() if self.sm.project else os.getcwd())[0], self.tm)
         if dialog.exec():
             if dialog.line_edit.text() in self.sm.projects:
-                MessageBox(MessageBox.Warning, 'Распаковка проекта',
+                MessageBox(MessageBox.Icon.Warning, 'Распаковка проекта',
                            f"Проект {dialog.line_edit.text()} уже существует. "
                            f"Невозможно создать новый проект с таким же именем.", self.tm)
             elif dialog.path_edit.text() in self.sm.projects:
-                MessageBox(MessageBox.Warning, 'Распаковка проекта',
+                MessageBox(MessageBox.Icon.Warning, 'Распаковка проекта',
                            f"Директория {dialog.path_edit.text()} не существует. Невозможно создать проект.", self.tm)
             else:
-                main_path = f"{dialog.path_edit.text()}/{dialog.line_edit.text()}"
-                data_path = f"{self.sm.app_data_dir}/projects/{dialog.line_edit.text()}"
+                project_path = f"{dialog.path_edit.text()}/{dialog.line_edit.text()}"
 
-                looper = ProjectUnpacker(path, main_path, data_path, self.sm.app_data_dir)
-                looper.start()
-                progress_dialog = ProgressDialog("Распаковка проекта", "Идет распаковка проекта. Пожалуйста, подождите",
-                                                 self.tm)
-                looper.finished.connect(progress_dialog.reject)
-                if progress_dialog.exec():
-                    looper.cancel()
-                else:
-                    self.sm.projects[dialog.line_edit.text()] = main_path
-                    self.bm.set_project(dialog.line_edit.text())
-                    self.update_projects()
-
-                # with py7zr.SevenZipFile(path, mode='r') as archive:
-                #     archive.extractall(f"{self.sm.app_data_dir}/temp")
-                # if os.path.isdir(main_path):
-                #     shutil.rmtree(main_path)
-                # if os.path.isdir(data_path):
-                #     shutil.rmtree(data_path)
-                # os.rename(f"{self.sm.app_data_dir}/temp/main", main_path)
-                # os.rename(f"{self.sm.app_data_dir}/temp/data", data_path)
-                # shutil.rmtree(f"{self.sm.app_data_dir}/temp")
+                self.bm.project_from_zip(path, project_path, True)
 
     def set_theme(self):
         super().set_theme()
@@ -432,83 +406,6 @@ class ProjectPacker(QThread):
 
     def cancel(self):
         self.terminate()
-
-
-class ProjectUnpacker(QThread):
-    def __init__(self, path, main_path, data_path, app_data_dir):
-        super().__init__()
-        self.path = path
-        self.main_path = main_path
-        self.data_path = data_path
-        self.app_data_dir = app_data_dir
-
-    def run(self):
-        with py7zr.SevenZipFile(self.path, mode='r') as archive:
-            archive.extractall(f"{self.app_data_dir}/temp")
-
-        if os.path.isdir(self.main_path):
-            shutil.rmtree(self.main_path)
-        if os.path.isdir(self.data_path):
-            shutil.rmtree(self.data_path)
-        os.rename(f"{self.app_data_dir}/temp/main", self.main_path)
-        os.rename(f"{self.app_data_dir}/temp/data", self.data_path)
-        shutil.rmtree(f"{self.app_data_dir}/temp")
-
-    def cancel(self):
-        self.terminate()
-        shutil.rmtree(self.main_path, ignore_errors=True)
-        shutil.rmtree(self.data_path, ignore_errors=True)
-
-
-class OpenAsProjectDialog(CustomDialog):
-    def __init__(self, tm, sm, path):
-        super().__init__(tm, APP_NAME)
-        self.sm = sm
-
-        main_layout = QVBoxLayout()
-
-        self.label = QLabel("Название проекта:")
-        main_layout.addWidget(self.label)
-
-        self.line_edit = QLineEdit()
-        self.line_edit.setText(os.path.basename(os.path.split(path)[0]))
-        main_layout.addWidget(self.line_edit)
-
-        buttons_layout = QHBoxLayout()
-
-        self.button_cancel = QPushButton("Отмена")
-        self.button_cancel.setFixedSize(80, 24)
-        self.button_cancel.clicked.connect(self.reject)
-        buttons_layout.addWidget(self.button_cancel)
-
-        self.button_scip = QPushButton("Не создавать проект")
-        self.button_scip.setFixedSize(140, 24)
-        self.button_scip.clicked.connect(self.button_scip_triggered)
-        buttons_layout.addWidget(self.button_scip)
-
-        self.button_create = QPushButton("Создать проект")
-        self.button_create.setFixedSize(140, 24)
-        self.button_create.clicked.connect(self.button_create_triggered)
-        buttons_layout.addWidget(self.button_create)
-
-        main_layout.addLayout(buttons_layout)
-        self.setLayout(main_layout)
-
-        super().set_theme()
-        for el in [self.label, self.line_edit, self.button_cancel, self.button_scip, self.button_create]:
-            self.tm.auto_css(el)
-        self.create_temp_project = False
-
-    def button_scip_triggered(self):
-        self.create_temp_project = True
-        self.reject()
-
-    def button_create_triggered(self):
-        if self.line_edit.text() in self.sm.projects:
-            MessageBox(MessageBox.Icon.Warning, "Создание проекта", f"Невозможно создать проект {self.line_edit.text()}, так"
-                                                               f" как проект с таким названием уже существует", self.tm)
-        else:
-            self.accept()
 
 
 class NewProjectDialog(CustomDialog):
