@@ -8,6 +8,7 @@ from side_tabs.telegram.messages.photo import PhotoLabel
 from side_tabs.telegram.messages.reactions import Reaction
 from side_tabs.telegram.messages.text import TgFormattedText
 from side_tabs.telegram.messages.video import VideoPlayer
+from side_tabs.telegram.messages.voice import VoicePlayer
 from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager
 
@@ -92,6 +93,11 @@ class TelegramChatBubble(QWidget):
             self._video_player = VideoPlayer(self._tm, self._message.content.video)
             self._manager.updateFile.connect(self._video_player.on_downloaded)
             self._layout.addWidget(self._video_player)
+
+        elif isinstance(self._message.content, tg.MessageVoiceNote):
+            self._voice_player = VoicePlayer(self._tm, self._message.content.voice_note)
+            self._manager.updateFile.connect(self._voice_player.on_downloaded)
+            self._layout.addWidget(self._voice_player)
 
         elif isinstance(self._message.content, tg.MessageDocument):
             self._document_widget = DocumentWidget(self._tm, self._message.content.document, self._manager)
@@ -229,7 +235,7 @@ class TelegramChatBubble(QWidget):
         self._main_widget.setFont(self._tm.font_medium)
         self._label.setStyleSheet("border: none;")
         self._label.setFont(self._tm.font_medium)
-        self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}; border: none;")
+        self._sender_label.setStyleSheet(f"color: {self._tm['TestPassed'].name()}; border: 0px; border-radius: 8px;")
         self._sender_label.setFont(self._tm.font_small)
         self._info_label.setStyleSheet(f"""QLabel: {{
             {self._tm.base_css(palette='Menu', border=False)}
@@ -240,3 +246,5 @@ class TelegramChatBubble(QWidget):
             self._photo_label.setStyleSheet("border: none;")
         if hasattr(self, '_document_widget'):
             self._document_widget.set_theme()
+        if hasattr(self, '_voice_player'):
+            self._voice_player.set_theme()
