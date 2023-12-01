@@ -1,12 +1,14 @@
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit
+from PyQt6.QtCore import Qt, pyqtSignal, QPoint
+from PyQt6.QtGui import QKeyEvent, QIcon
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QMenu
 
+from side_tabs.telegram.send_message_dialog import SendMessageDialog, MessageTypeMenu
 from ui.button import Button
 
 
 class ChatWidget(QWidget):
     loadRequested = pyqtSignal()
+    sendMessageRequested = pyqtSignal(int)
 
     def __init__(self, sm, tm):
         super().__init__()
@@ -36,11 +38,9 @@ class ChatWidget(QWidget):
 
         self._button_document = Button(self._tm, "telegram_document")
         self._button_document.setFixedSize(30, 30)
+        self._button_document.clicked.connect(self._run_menu)
+        # self._button_document.setMenu(self.menu)
         bottom_layout.addWidget(self._button_document)
-
-        self._button_tg_project = Button(self._tm, "button_to_zip")
-        self._button_tg_project.setFixedSize(30, 30)
-        bottom_layout.addWidget(self._button_tg_project)
 
         self._text_edit = ChatInputArea()
         self._text_edit.returnPressed.connect(self.send_message)
@@ -59,6 +59,13 @@ class ChatWidget(QWidget):
 
     def add_bubble(self, text, side):
         pass
+
+    def _run_menu(self):
+        menu = MessageTypeMenu(self._tm)
+        menu.move(self.mapToGlobal(self._button_document.pos()) - QPoint(0, 100))
+        menu.exec()
+        if menu.selected_type:
+            self.sendMessageRequested.emit(menu.selected_type)
 
     def _add_buble(self, bubble):
         self._scroll_layout.addWidget(bubble)
@@ -81,7 +88,7 @@ class ChatWidget(QWidget):
             i += 1
 
     def set_theme(self):
-        for el in [self._scroll_area, self._text_edit, self._button, self._button_document, self._button_tg_project]:
+        for el in [self._scroll_area, self._text_edit, self._button, self._button_document]:
             self._tm.auto_css(el)
         for el in self._bubbles:
             el.set_theme()

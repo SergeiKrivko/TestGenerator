@@ -108,33 +108,6 @@ class TelegramManager(QThread):
     def load_zip_project(self, path):
         self._bm.side_tab_command('projects', zip=path)
 
-    # COMMANDS
-
-    def send_message(self, text, chat_id):
-        self._client.send({"@type": "sendMessage", "chat_id": chat_id, "input_message_content": {
-            "@type": "inputMessageText", "text": {"@type": "@formattedText", "text": text}}})
-
-    def send_file_message(self, text, path, chat_id):
-        self._client.send({"@type": "sendMessage", "chat_id": chat_id, "input_message_content": {
-            "@type": "inputMessageDocument", "caption": {"@type": "@formattedText", "text": text},
-            "document": {"@type": "inputFileLocal", "path": path}}})
-
-    def load_messages(self, chat: TgChat, max_count=100):
-        if chat.first_message is None:
-            self._client.send({'@type': 'getChatHistory', 'chat_id': chat.id, 'limit': max_count})
-        else:
-            self._client.send({'@type': 'getChatHistory', 'chat_id': chat.id, 'limit': max_count,
-                               'from_message_id': chat.first_message.id})
-
-    def view_messages(self, chat_id: int, message_ids: list):
-        self._client.send({'@type': "viewMessages", 'chat_id': chat_id, 'message_ids': message_ids})
-
-    def open_chat(self, chat_id: int):
-        self._client.send({'@type': 'openChat', 'chat_id': chat_id})
-
-    def close_chat(self, chat_id: int):
-        self._client.send({'@type': 'closeChat', 'chat_id': chat_id})
-
     def load_minithumbnail(self, minithumbnail: tg.Minithumbnail):
         os.makedirs(f"{self._sm.app_data_dir}/Telegram/temp", exist_ok=True)
         with open(path := f"{self._sm.app_data_dir}/Telegram/temp/{uuid4()}.png", 'bw') as f:

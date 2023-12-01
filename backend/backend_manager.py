@@ -458,8 +458,10 @@ class BackendManager(QObject):
 
     # ---------------------- ZIP ----------------------------
 
-    def project_to_zip(self, path):
-        self.run_process(lambda: self._project_to_zip(path), 'zip', 'store')
+    def project_to_zip(self, path=None):
+        if path is None:
+            path = f"{self.sm.temp_dir()}/{self.sm.project.name()}.TGProject.7z"
+        return self.run_process(lambda: self._project_to_zip(path), 'zip', 'store')
 
     def project_from_zip(self, zip_path, path, open_after_load=False):
         self.run_process(lambda: self._project_from_zip(zip_path, path, open_after_load), 'zip', 'load')

@@ -163,7 +163,7 @@ class TelegramChatBubble(QWidget):
         self._layout.setContentsMargins(1, 7, 1, 1)
 
     def set_read(self):
-        self._manager.view_messages(self._message.chat_id, [self._message.id])
+        tg.viewMessages(self._message.chat_id, [self._message.id])
 
     def set_max_width(self, width):
         self._main_widget.setMaximumWidth(width)

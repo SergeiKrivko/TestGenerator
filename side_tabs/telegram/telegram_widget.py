@@ -10,6 +10,7 @@ import config
 from side_tabs.telegram.chat_widget import ChatWidget, ChatInputArea
 from side_tabs.telegram.chat_bubble import TelegramChatBubble
 from side_tabs.telegram.chat_list_widget import TelegramListWidget
+from side_tabs.telegram.send_message_dialog import SendMessageDialog
 from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager, TgChat
 from ui.button import Button
@@ -73,9 +74,11 @@ class TelegramWidget(SidePanelWidget):
     def command(self, text, file=None, image=None, *args, **kwargs):
         dialog = SelectChatDialog(self.tm, self._manager)
         if dialog.exec():
-            dialog2 = SendFileDialog(self.tm, self._manager.get_chat(dialog.chat), text, SendFileDialog.TEXT_ONLY)
+            chat = self._manager.get_chat(dialog.chat)
+            dialog2 = SendMessageDialog(self.tm, chat, text, SendMessageDialog.TEXT_ONLY)
             if dialog2.exec():
-                self._manager.send_message(dialog2.text_area.toPlainText(), dialog.chat)
+                tg.sendMessage(dialog.chat, input_message_content=tg.InputMessageText(
+                    text=tg.FormattedText(text=dialog2.text_area.toPlainText())))
 
     def show(self):
         if enabled and not self._manager_started:
@@ -127,7 +130,7 @@ class TelegramWidget(SidePanelWidget):
             self._top_panel.set_chat(self._manager.get_chat(chat_id))
             self._chat_widgets[chat_id].show()
             self._current_chat = chat_id
-            self._manager.open_chat(chat_id)
+            tg.openChat(chat_id)
             # self._manager.get_messages(chat_id)
         else:
             if self._current_chat in self._chat_widgets:
@@ -177,7 +180,7 @@ class TelegramChatWidget(ChatWidget):
             self._text_edit.hide()
             self._button.hide()
 
-        self._button_document.clicked.connect(self._sending_document)
+        self.sendMessageRequested.connect(self._sending_document)
         self._manager.deleteMessages.connect(self._delete_messages)
 
     def show(self) -> None:
@@ -190,19 +193,18 @@ class TelegramChatWidget(ChatWidget):
         if chat_id == self._chat.id:
             self._delete_bubbles(message_ids)
 
-    def _sending_document(self):
-        path, _ = QFileDialog.getOpenFileName(caption="Выберите файл для отправки")
-        if path:
-            dialog = SendFileDialog(self._tm, self._chat, self._text_edit.toPlainText(), SendFileDialog.FILE, path)
-            if dialog.exec():
-                self._manager.send_file_message(dialog.text_area.toPlainText(), dialog.file_name_line.text(),
-                                                self._chat.id)
+    def _sending_document(self, doc_type):
+        dialog = SendMessageDialog(self._manager._bm, self._tm, self._chat, self._text_edit.toPlainText(), doc_type)
+        dialog.exec()
 
     def check_if_need_to_load(self):
         if self.loading:
             return
         if self._chat.message_count() < self._messages_to_load:
-            self._manager.load_messages(self._chat)
+            if self._chat.first_message is None:
+                tg.getChatHistory(self._chat.id, limit=50)
+            else:
+                tg.getChatHistory(self._chat.id, from_message_id=self._chat.first_message.id, limit=50)
             self.loading = True
 
     def _on_scroll_bar_value_changed(self):
@@ -243,7 +245,7 @@ class TelegramChatWidget(ChatWidget):
         if not (text := self._text_edit.toPlainText()):
             return
         # self.sendMessage.emit(text)
-        self._manager.send_message(text, self._chat.id)
+        tg.sendMessage(self._chat.id, input_message_content=tg.InputMessageText(text=tg.FormattedText(text=text)))
         self._text_edit.setText("")
 
 
@@ -383,50 +385,6 @@ class PasswordWidget(CustomDialog):
 
     def get_str2(self):
         return self._line_edit2.text()
-
-
-class SendFileDialog(CustomDialog):
-    TEXT_ONLY = 0
-    FILE = 1
-    IMAGE = 2
-
-    def __init__(self, tm, chat, text='', option=0, data=None):
-        super().__init__(tm, "Отправка сообщения")
-        self._tm = tm
-        super().set_theme()
-
-        self.setFixedSize(400, 400)
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        self._chat_label = QLabel(chat.title)
-        layout.addWidget(self._chat_label)
-
-        self.file_name_line = QLineEdit()
-        if option == SendFileDialog.FILE:
-            self.file_name_line.setText(data)
-            self.file_name_line.setReadOnly(True)
-            layout.addWidget(self.file_name_line)
-
-        self.text_area = QTextEdit()
-        self.text_area.setText(text)
-        layout.addWidget(self.text_area)
-
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
-        layout.addLayout(buttons_layout)
-
-        self._button_cancel = QPushButton("Отмена")
-        self._button_cancel.clicked.connect(self.reject)
-        buttons_layout.addWidget(self._button_cancel)
-
-        self._button_send = QPushButton("Отправить")
-        self._button_send.clicked.connect(self.accept)
-        buttons_layout.addWidget(self._button_send)
-
-        for el in [self._chat_label, self.file_name_line, self.text_area, self._button_send, self._button_cancel]:
-            self._tm.auto_css(el)
 
 
 class SelectChatDialog(CustomDialog):

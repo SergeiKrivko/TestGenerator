@@ -695,6 +695,10 @@ class ThemeManager:
 
         if isinstance(widget, QMainWindow):
             widget.setStyleSheet(self.bg_style_sheet)
+        elif isinstance(widget, Button):
+            widget.set_theme(tm=self)
+        # elif hasattr(widget, 'set_theme'):
+        #     widget.set_theme()
         elif isinstance(widget, QComboBox):
             widget.setStyleSheet(self.combobox_css(palette))
         elif isinstance(widget, QLineEdit):
@@ -705,8 +709,6 @@ class ThemeManager:
             widget.setStyleSheet(self.tree_widget_css(palette, border, border_radius))
         elif isinstance(widget, QScrollArea):
             widget.setStyleSheet(self.scroll_area_css(palette, border))
-        elif isinstance(widget, Button):
-            widget.set_theme(tm=self)
         elif isinstance(widget, QPushButton):
             widget.setStyleSheet(self.button_css(palette, border, border_radius, padding))
         elif isinstance(widget, QLabel):
