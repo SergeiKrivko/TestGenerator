@@ -85,6 +85,9 @@ class SettingsWindow(CustomDialog):
             self.sm, self.tm,
             LineEdit("Название:", '', width=500, key='name', key_type=KEY_DATA),
             ComboBox("Язык:", PROJECT_LANGUAGES, key='language', text_mode=True),
+            SwitchBox(lambda: self.sm.get('temp'), children={True: [
+                CheckBox("Временный проект", True, key='temp')
+            ]}),
             TextEdit("Описание:", '', key='description', key_type=KEY_DATA),
             key_type=KEY_LOCAL)
         self.project_settings_widget.hide()

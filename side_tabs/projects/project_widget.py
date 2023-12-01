@@ -1,18 +1,13 @@
-import json
 import os
-import shutil
-import sys
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
-    QDialog, QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
-import py7zr
+    QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
 
 from backend.backend_manager import BackendManager
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
-from config import APP_NAME
 from language.languages import PROJECT_LANGUAGES, languages
 from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
@@ -71,30 +66,6 @@ class ProjectWidget(SidePanelWidget):
             if path == (path := os.path.split(path)[0]):
                 break
         return False
-
-    def open_as_project(self, path):
-        if self.find_project(path):
-            self.jump_to_code.emit(path)
-        else:
-            dialog = OpenAsProjectDialog(self.tm, self.sm, path)
-            if not self.sm.get_general('not_create_project', False) and dialog.exec():
-                name = dialog.line_edit.text()
-            elif self.sm.get_general('not_create_project', False) or dialog.create_temp_project:
-                name = "Текущий проект"
-                i = 2
-                while name in self.sm.projects:
-                    name = f"Текущий проект {i}"
-                    i += 1
-                self.temp_project.append(name)
-                self.sm.set_general('temp_projects', json.dumps(self.temp_project))
-            else:
-                sys.exit()
-            self.sm.add_project(name, os.path.split(path)[0], temp=True)
-            self.sm.set('struct', 1, project=name)
-            self.update_projects()
-            self.select_project(name)
-
-        self.jump_to_code.emit(path)
 
     def update_projects(self):
         self._opening_project = True
@@ -189,6 +160,10 @@ class ProjectWidget(SidePanelWidget):
                 project_path = f"{dialog.path_edit.text()}/{dialog.line_edit.text()}"
 
                 self.bm.project_from_zip(path, project_path, True)
+
+    def command(self, zip=None):
+        if zip is not None:
+            self.project_from_zip(zip)
 
     def set_theme(self):
         super().set_theme()
@@ -390,22 +365,6 @@ class ProgressDialog(QMessageBox):
         button = self.button(QMessageBox.StandardButton.Cancel)
         tm.auto_css(button)
         button.setFixedSize(70, 24)
-
-
-class ProjectPacker(QThread):
-    def __init__(self, path, main_path, data_path):
-        super().__init__()
-        self.path = path
-        self.main_path = main_path
-        self.data_path = data_path
-
-    def run(self):
-        with py7zr.SevenZipFile(self.path, mode='w') as archive:
-            archive.writeall(self.main_path, arcname='main')
-            archive.writeall(self.data_path, arcname='data')
-
-    def cancel(self):
-        self.terminate()
 
 
 class NewProjectDialog(CustomDialog):

@@ -6,6 +6,7 @@ from uuid import uuid4
 from PyQt6.QtCore import QThread, pyqtSignal
 
 import config
+from backend.backend_manager import BackendManager
 from side_tabs.telegram.telegram_api import TgClient, tg
 
 
@@ -57,9 +58,10 @@ class TelegramManager(QThread):
 
     updateFile = pyqtSignal(tg.File)
 
-    def __init__(self, sm):
+    def __init__(self, sm, bm: BackendManager):
         super().__init__()
         self._sm = sm
+        self._bm = bm
         self._client = TgClient(api_id=config.TELEGRAM_API_KEY,
                                 api_hash=config.TELEGRAM_API_HASH,
                                 use_chat_info_database=True,
@@ -102,6 +104,9 @@ class TelegramManager(QThread):
     def update_file(self, file: tg.File):
         if file.id not in self._files:
             self._files[file.id] = file
+
+    def load_zip_project(self, path):
+        self._bm.side_tab_command('projects', zip=path)
 
     # COMMANDS
 

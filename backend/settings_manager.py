@@ -79,8 +79,10 @@ class SettingsManager(QObject):
         self.mainProjectChanged.emit()
         if subproject:
             self.set_project(subproject)
-        elif project.has_item('selected_project') and project.get('selected_project') in self.all_projects:
-            self.set_project(self.all_projects[project.get('selected_project')])
+        elif project.has_item('selected_project') and (path := (
+                project.get('selected_project') if os.path.isabs(project.get('selected_project')) else
+                os.path.join(project.path(), project.get('selected_project')))) in self.all_projects:
+            self.set_project(self.all_projects[path])
         else:
             self.set_project(project)
         self.store_projects_list()
@@ -98,7 +100,7 @@ class SettingsManager(QObject):
         if isinstance(self.project, Project):
             self.project.save_settings()
 
-        self.main_project['selected_project'] = project.path()
+        self.main_project['selected_project'] = os.path.relpath(project.path(), self.main_project.path())
         self.project = project
         self.project.load_settings()
         self.projectChanged.emit()

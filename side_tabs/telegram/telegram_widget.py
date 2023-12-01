@@ -20,13 +20,14 @@ enabled = config.secret_data and os.name != 'posix'
 
 
 class TelegramWidget(SidePanelWidget):
-    def __init__(self, sm, tm):
+    def __init__(self, sm, bm, tm):
         super().__init__(sm, tm, "Telegram", [])
+        self.bm = bm
 
         if not enabled:
             return
 
-        self._manager = TelegramManager(self.sm)
+        self._manager = TelegramManager(self.sm, self.bm)
         self._manager.chatsLoaded.connect(self.update_chats)
         self._manager.addMessage.connect(self.add_message)
         self._manager.insertMessage.connect(self.insert_message)
