@@ -75,6 +75,9 @@ class MarkdownParser:
             return None
         return self._lines[self._current_line]
 
+    def return_line(self):
+        self._current_line -= 1
+
     def _have_lines(self):
         return self._current_line < len(self._lines) - 1
 
@@ -133,6 +136,10 @@ class MarkdownParser:
         while (line := self._next_line()) is not None and line.strip():
             # if self.parse_simple_formula(line):
             #     continue
+            if line.lstrip().startswith('- ') or line.lstrip().startswith('[') or line.lstrip(' 1234567890').startswith(
+                    '. ') or line.lstrip().startswith('#'):
+                self.return_line()
+                break
             self.add_runs(paragraph, line.strip())
         return True
 
@@ -144,17 +151,23 @@ class MarkdownParser:
         return True
 
     def parse_bullet_list(self, line):
-        if not line.startswith('- '):
+        if not line.strip().startswith('- '):
             return False
-        level = count_in_start(line, ' ') // 2
         paragraph = self.document.add_paragraph(style="List Bullet")
+
+        margin = count_in_start(line, ' ')
+        if margin:
+            paragraph.paragraph_format.left_indent = Mm(12.5 * (margin // 4))
+
         paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
         self.add_runs(paragraph, line.lstrip().lstrip('-').strip())
         while (line := self._next_line()) is not None and line.strip():
             if line.strip().startswith('- '):
-                level = count_in_start(line, ' ') // 2
+                level = (count_in_start(line, ' ') - margin) // 2
                 paragraph = self.document.add_paragraph(style="List Bullet")
                 paragraph.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
+                if margin:
+                    paragraph.paragraph_format.left_indent = Mm(12.5 * (margin // 4))
                 MarkdownParser._billet_list(paragraph, level)
             self.add_runs(paragraph, line.lstrip().lstrip('-').strip())
         return True
@@ -609,7 +622,7 @@ class MarkdownParser:
         mathml = latex_converter.convert(text)
         tree = etree.fromstring(mathml)
         xslt = etree.parse(
-            r"other\report\MML2OMML.XSL"
+            f"{config.APP_DIR}/other/report/MML2OMML.XSL"
         )
         transform = etree.XSLT(xslt)
         new_dom = transform(tree)
