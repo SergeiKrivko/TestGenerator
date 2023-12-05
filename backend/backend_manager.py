@@ -514,6 +514,9 @@ class BackendManager(QObject):
             while not self._loader.isFinished():
                 sleep(0.1)
 
+        if not args.build and not args.testing:
+            return
+
         util = None
         if args.util:
             try:

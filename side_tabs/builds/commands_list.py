@@ -236,7 +236,7 @@ class ScenarioBox(QComboBox):
         return self._builds[self.currentIndex()]
 
     def set_theme(self):
-        self._tm.auto_css(super())
+        self._tm.auto_css(self)
         for i, build in enumerate(self._builds):
             if build is not None:
                 build = self._bm.builds[build]
