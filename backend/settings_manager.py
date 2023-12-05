@@ -33,7 +33,10 @@ class SettingsManager(QObject):
 
         self.programs = dict()
         self.searcher = None
-        self.start_search(self.get_general('search_after_start', True), wait=True)
+        forced = self.get_general('search_after_start', True)
+        if forced in {'false', 'False', '0'}:
+            forced = False
+        self.start_search(forced, wait=True)
 
     def _load_projects(self):
         self.projects = dict()

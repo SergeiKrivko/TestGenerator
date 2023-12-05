@@ -257,7 +257,7 @@ class CheckBox(_Widget):
                     el.hide()
 
     def set_value(self, value):
-        if not value or value == 'false' or value == 'False':
+        if not value or value in {'false', 'False', '0'}:
             value = 0
         else:
             value = 1
