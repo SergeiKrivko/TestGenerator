@@ -25,6 +25,7 @@ ENCODINGS = ['utf-8', 'utf-16', 'ansi', 'ascii', 'charmap']
 def cmd_command(args, **kwargs):
     if isinstance(text := kwargs.get('input', b''), str):
         kwargs['input'] = text.encode(kwargs.get('encoding', 'utf-8'))
+    print(args)
     res = subprocess.run(args, capture_output=True, startupinfo=get_si(), **kwargs)
     for encoding in ENCODINGS:
         try:

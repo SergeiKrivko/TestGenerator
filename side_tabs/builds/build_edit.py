@@ -120,6 +120,15 @@ class BuildEdit(QScrollArea):
                     ProgramField(self.sm, self.tm, PROGRAMS['gcc'], "Компилятор", checkbox=True),
                     ProgramField(self.sm, self.tm, PROGRAMS['gcov'], "Gcov", checkbox=True),
                     TreeField(self.tm, 'files', self.sm.project.path(), ('.c', '.h'), "Файлы:"))
+            case 'C-lib':
+                self._load_struct(
+                    name_edit := LineField(self.tm, 'name', '-', "Название:"),
+                    LineField(self.tm, 'keys', '', "Ключи компилятора:"),
+                    LineField(self.tm, 'linker_keys', '', "Ключи компоновки:"),
+                    CheckboxField(self.tm, 'dynamic', False, 'Динамическая библиотека'),
+                    LineField(self.tm, 'lib_file', 'lib.a', "Файл библиотеки:"),
+                    ProgramField(self.sm, self.tm, PROGRAMS['gcc'], "Компилятор", checkbox=True),
+                    TreeField(self.tm, 'files', self.sm.project.path(), ('.c', '.h'), "Файлы:"))
             case 'C++':
                 self._load_struct(
                     name_edit := LineField(self.tm, 'name', '-', "Название:"),

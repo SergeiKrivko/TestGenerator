@@ -103,10 +103,12 @@ class BuildWindow(SideBarWindow):
 
 
 class BuildTypeDialog(CustomDialog):
-    ITEMS = {'C': "Сборка C", 'C++': "Сборка C++", "python": "Python", "python_coverage": "Python Coverage",
+    ITEMS = {'C': "Сборка C", 'C-lib': "Библиотека C", 'C++': "Сборка C++",
+             "python": "Python", "python_coverage": "Python Coverage",
              'script': "Сценарий командной строки", 'bash': "Скрипт Bash", 'command': "Команда", 'report': "Отчет"}
     ITEMS_REVERSED = {item: key for key, item in ITEMS.items()}
     IMAGES = {'C': 'c',
+              'C-lib': 'c',
               'C++': 'cpp',
               'python': 'py',
               'python_coverage': 'py',

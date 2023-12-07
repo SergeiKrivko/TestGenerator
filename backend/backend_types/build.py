@@ -45,6 +45,8 @@ class Build:
         match self.get('type'):
             case 'C':
                 return c_compile(project, self, bm.sm)
+            case 'C-lib':
+                return c_compile(project, self, bm.sm, lib=True)
             case 'C++':
                 return cpp_compile(project, self, bm.sm)
             case 'report':
@@ -89,7 +91,6 @@ class Build:
                 return ""
 
     def collect_coverage(self, project, sm):
-        print('coverage')
         match self.get('type', 'C'):
             case 'C':
                 return c_collect_coverage(sm, self)

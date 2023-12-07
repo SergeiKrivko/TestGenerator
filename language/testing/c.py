@@ -5,7 +5,7 @@ from backend.commands import cmd_command, check_files_mtime
 from language.utils import get_files
 
 
-def c_compile(project, build, sm):
+def c_compile(project, build, sm, lib=False):
     coverage = build.get('coverage', False)
     compiler = PROGRAMS['gcc'].get(sm, build)
 
@@ -38,6 +38,8 @@ def c_compile(project, build, sm):
         return lst
 
     compiler_keys = build.get('keys', '')
+    if lib:
+        compiler_keys += ' -fPIC'
     for c_file, o_file in zip(c_files, o_files):
         if os.path.isfile(o_file) and check_files_mtime(o_file, get_dependencies(c_file)):
             continue
@@ -47,8 +49,12 @@ def c_compile(project, build, sm):
         errors.append(res.stderr)
 
     if code:
-        res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} -o {path}/{build.get('app_file')} "
-                       f"{' '.join(o_files)} {build.get('linker_keys', '')}")
+        if lib:
+            app_file = f"{path}/{build.get('lib_file')}"
+        else:
+            app_file = f"{path}/{build.get('app_file')}"
+        res = compiler(f"{'--coverage' if coverage else ''} -o {app_file}"
+                       f"{' -shared' if lib else ''} {' '.join(o_files)} {build.get('linker_keys', '')}")
         if res.returncode:
             code = False
         errors.append(res.stderr)
