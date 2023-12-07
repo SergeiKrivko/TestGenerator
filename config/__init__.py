@@ -10,6 +10,6 @@ except ImportError:
 ORGANISATION_NAME = "SergeiKrivko"
 ORGANISATION_URL = "https://github.com/SergeiKrivko/TestGenerator"
 APP_NAME = "TestGenerator"
-APP_VERSION = "1.9.28"
+APP_VERSION = "1.9.29"
 
 APP_DIR = os.path.split(argv[0])[0]

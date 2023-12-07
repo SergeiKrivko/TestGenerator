@@ -45,7 +45,8 @@ class Console(Terminal):
                         return
 
     def run_build(self, build_id):
-        looper = self.bm.run_process(lambda: self.bm.compile_build(build_id), 'compile', str(build_id))
+        looper = self.bm.run_process(lambda: (self.bm.run_build_preproc(build_id), self.bm.compile_build(build_id))[1],
+                                     'compile', str(build_id))
         looper.finished.connect(lambda: self._on_looper_finished(build_id, looper.res))
 
     def _on_looper_finished(self, build_id, compiling_result):

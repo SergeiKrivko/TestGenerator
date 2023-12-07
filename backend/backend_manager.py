@@ -388,6 +388,11 @@ class BackendManager(QObject):
             project = self.sm.project
         return self.builds[build_id].compile(project, self)
 
+    def run_build_preproc(self, build_id: int, project=None):
+        if project is None:
+            project = self.sm.project
+        return self.builds[build_id].run_preproc(project, self)
+
     def run_build(self, build_id, args='', in_data=None, project=None):
         if project is None:
             project = self.sm.project
