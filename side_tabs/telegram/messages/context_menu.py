@@ -19,6 +19,8 @@ class ContextMenu(QMenu):
     STOP_VIDEO = 8
     PAUSE_VIDEO = 9
     ADD_REACTION = 10
+    DOWNLOAD_DOCUMENT = 11
+    DOWNLOAD_VIDEO = 12
 
     def __init__(self, message: tg.Message, manager: TelegramManager, tm):
         super().__init__()
@@ -39,27 +41,38 @@ class ContextMenu(QMenu):
         self.addSeparator()
 
         if isinstance(message.content, tg.MessageDocument):
-            action = self.addAction("Открыть")
-            action.triggered.connect(lambda: self.set_action(ContextMenu.OPEN_FILE))
+            if message.content.document.document.local.is_downloading_completed:
+                action = self.addAction("Открыть")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.OPEN_FILE))
 
-            action = self.addAction(QIcon(self.tm.get_image('directory')), "Показать в папке")
-            action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_IN_FOLDER))
+                action = self.addAction(QIcon(self.tm.get_image('directory')), "Показать в папке")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.SHOW_IN_FOLDER))
 
-            action = self.addAction(QIcon(self.tm.get_image('button_save')), "Сохранить")
-            action.triggered.connect(lambda: self.set_action(ContextMenu.SAVE))
+                action = self.addAction(QIcon(self.tm.get_image('button_save')), "Сохранить")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.SAVE))
 
-            action = self.addAction(QIcon(self.tm.get_image('button_import')), "Импортировать в проект")
-            action.triggered.connect(lambda: self.set_action(ContextMenu.IMPORT))
+                # action = self.addAction(QIcon(self.tm.get_image('button_import')), "Импортировать в проект")
+                # action.triggered.connect(lambda: self.set_action(ContextMenu.IMPORT))
+
+            else:
+                action = self.addAction(QIcon(self.tm.get_image('button_import')), "Скачать")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.DOWNLOAD_DOCUMENT))
 
         elif isinstance(message.content, tg.MessageVideo):
-            action = self.addAction(QIcon(self.tm.get_image('button_run')), "Запустить")
-            action.triggered.connect(lambda: self.set_action(ContextMenu.PLAY_VIDEO))
+            print(message.content.video.video.local.path, message.content.video.video.local.is_downloading_completed)
+            if message.content.video.video.local.is_downloading_completed:
+                action = self.addAction(QIcon(self.tm.get_image('button_run')), "Запустить")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.PLAY_VIDEO))
 
-            action = self.addAction(QIcon(self.tm.get_image('button_pause')), "Приостановить")
-            action.triggered.connect(lambda: self.set_action(ContextMenu.STOP_VIDEO))
+                action = self.addAction(QIcon(self.tm.get_image('button_pause')), "Приостановить")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.STOP_VIDEO))
 
-            # action = self.addAction(QIcon(self.tm.get_image('button_save')), "Сохранить")
-            # action.triggered.connect(lambda: self.set_action(ContextMenu.SAVE_VIDEO))
+                # action = self.addAction(QIcon(self.tm.get_image('button_save')), "Сохранить")
+                # action.triggered.connect(lambda: self.set_action(ContextMenu.SAVE_VIDEO))
+
+            else:
+                action = self.addAction(QIcon(self.tm.get_image('button_import')), "Скачать")
+                action.triggered.connect(lambda: self.set_action(ContextMenu.DOWNLOAD_VIDEO))
 
         self.tm.auto_css(self)
 

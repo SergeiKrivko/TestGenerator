@@ -15,7 +15,8 @@ class VoicePlayer(QWidget):
         self.media_player = QMediaPlayer()
         self._audio = QAudioOutput()
         self.media_player.setAudioOutput(self._audio)
-        self.media_player.setSource(QUrl.fromLocalFile(self._voice.voice.local.path))
+        if self._voice.voice.local.is_downloading_completed:
+            self.media_player.setSource(QUrl.fromLocalFile(self._voice.voice.local.path))
         self.media_player.errorOccurred.connect(print)
         self.media_player.mediaStatusChanged.connect(self._on_media_status_changed)
 
@@ -51,11 +52,12 @@ class VoicePlayer(QWidget):
         self._button_play.show()
 
     def on_downloaded(self, voice: tg.File):
-        self._voice.voice = voice
-        self.media_player.setSource(QUrl.fromLocalFile(self._voice.voice.local.path))
-        self.media_player.play()
-        self._button_pause.show()
-        self._button_play.hide()
+        if self._voice.voice.id == voice.id:
+            self._voice.voice = voice
+            self.media_player.setSource(QUrl.fromLocalFile(self._voice.voice.local.path))
+            self.media_player.play()
+            self._button_pause.show()
+            self._button_play.hide()
 
     def _on_media_status_changed(self, status):
         match status:

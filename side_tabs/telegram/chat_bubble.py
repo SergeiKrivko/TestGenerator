@@ -208,12 +208,16 @@ class TelegramChatBubble(QWidget):
                 tg.deleteMessages(self._message.chat_id, [self._message.id], revoke=False)
             case ContextMenu.DELETE_FOR_ALL:
                 tg.deleteMessages(self._message.chat_id, [self._message.id], revoke=True)
+            case ContextMenu.DOWNLOAD_DOCUMENT:
+                self._document_widget.download()
             case ContextMenu.SAVE:
                 self._document_widget.save()
             case ContextMenu.OPEN_FILE:
                 self._document_widget.open_file()
             case ContextMenu.SHOW_IN_FOLDER:
                 self._document_widget.show_in_folder()
+            case ContextMenu.DOWNLOAD_VIDEO:
+                self._video_player.download()
             case ContextMenu.PLAY_VIDEO:
                 self._video_player.play()
             case ContextMenu.STOP_VIDEO:
