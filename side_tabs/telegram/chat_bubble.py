@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QTextEdit
 
 from side_tabs.telegram.messages.context_menu import ContextMenu
 from side_tabs.telegram.messages.document import DocumentWidget
+from side_tabs.telegram.messages.emoji import EmojiLabel
 from side_tabs.telegram.messages.photo import PhotoLabel
 from side_tabs.telegram.messages.reactions import Reaction
 from side_tabs.telegram.messages.text import TgFormattedText
@@ -34,9 +35,9 @@ class TelegramChatBubble(QWidget):
                                                           tg.MessagePinMessage,))
 
         if isinstance(message.content, tg.MessageText):
-            self._text = TgFormattedText(message.content.text).html
+            self._text = TgFormattedText(message.content.text, self._tm).html
         elif isinstance(message.content, (tg.MessageDocument, tg.MessagePhoto, tg.MessageVideo)):
-            self._text = TgFormattedText(message.content.caption).html
+            self._text = TgFormattedText(message.content.caption, self._tm).html
         else:
             self._text = ''
 
@@ -118,6 +119,11 @@ class TelegramChatBubble(QWidget):
         elif isinstance(self._message.content, tg.MessagePinMessage):
             self._info_label.setText(f"{user_name} закрепил(а) сообщение")
 
+        elif isinstance(self._message.content, tg.MessageAnimatedEmoji):
+            self._emoji_widget = EmojiLabel(self._tm, self._message.content.emoji)
+            tg.downloadFile(self._message.content.animated_emoji.sticker.sticker.id, 1)
+            self._layout.addWidget(self._emoji_widget)
+
         else:
             self._text = f"Неподдерживаемое сообщение: {self._message.content.__class__.__name__}"
             print(self._message.content.__class__.__name__)
@@ -125,6 +131,7 @@ class TelegramChatBubble(QWidget):
         font_metrics = QFontMetrics(self._tm.font_medium)
 
         self._label = QTextEdit()
+        self._label.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self._label.setHtml(self._text)
         if not self._text:
             self._label.hide()
@@ -191,16 +198,14 @@ class TelegramChatBubble(QWidget):
     def _connect_reaction(self, reaction: Reaction):
         def func(flag):
             if flag:
-                print('add')
                 tg.addMessageReaction(self._message.chat_id, self._message.id, reaction.reaction)
             else:
-                print('delete')
                 tg.removeMessageReaction(self._message.chat_id, self._message.id, reaction.reaction)
 
         reaction.clicked.connect(func)
 
     def _run_context_menu(self, pos):
-        menu = ContextMenu(self._message, self._manager, self._tm)
+        menu = ContextMenu(self._message, self._manager.get_chat(self._message.chat_id), self._manager, self._tm)
         menu.move(self.mapToGlobal(pos))
         menu.exec()
         match menu.action:
@@ -252,3 +257,5 @@ class TelegramChatBubble(QWidget):
             self._document_widget.set_theme()
         if hasattr(self, '_voice_player'):
             self._voice_player.set_theme()
+        if hasattr(self, '_emoji_widget'):
+            self._emoji_widget.set_theme()

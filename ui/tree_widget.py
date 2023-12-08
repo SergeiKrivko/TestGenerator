@@ -83,12 +83,12 @@ class TreeBranch(QWidget):
         if not self._maximize:
             main_layout.addLayout(self._top_layout)
 
-        self._button_maximize = Button(self.tm, 'button_maximize')
+        self._button_maximize = Button(self.tm, 'buttons/button_maximize')
         self._button_maximize.setFixedSize(17, 17)
         self._button_maximize.clicked.connect(self.maximize)
         self._top_layout.addWidget(self._button_maximize)
 
-        self._button_minimize = Button(self.tm, 'button_minimize')
+        self._button_minimize = Button(self.tm, 'buttons/button_minimize')
         self._button_minimize.setFixedSize(17, 17)
         self._button_minimize.clicked.connect(self.minimize)
         self._button_minimize.hide()

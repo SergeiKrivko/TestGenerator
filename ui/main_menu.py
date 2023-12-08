@@ -49,27 +49,27 @@ class MainMenu(QWidget):
         right_layout.setSpacing(5)
         layout.addLayout(right_layout)
 
-        self.button_settings = Button(self.tm, 'generate', css='Menu', color='TextColor')
+        self.button_settings = Button(self.tm, 'buttons/generate', css='Menu', color='TextColor')
         self.button_settings.setFixedSize(30, 30)
         right_layout.addWidget(self.button_settings)
 
-        self.button_hide = Button(self.tm, 'button_hide_window', css='Menu', color='TextColor')
+        self.button_hide = Button(self.tm, 'buttons/button_hide_window', css='Menu', color='TextColor')
         self.button_hide.clicked.connect(self.hideWindow.emit)
         self.button_hide.setFixedSize(30, 30)
         right_layout.addWidget(self.button_hide)
 
-        self.button_minimize = Button(self.tm, 'button_minimize_window', css='Menu', color='TextColor')
+        self.button_minimize = Button(self.tm, 'buttons/button_minimize_window', css='Menu', color='TextColor')
         self.button_minimize.hide()
         self.button_minimize.clicked.connect(self._on_minimize_clicked)
         self.button_minimize.setFixedSize(30, 30)
         right_layout.addWidget(self.button_minimize)
 
-        self.button_maximize = Button(self.tm, 'button_maximize_window', css='Menu', color='TextColor')
+        self.button_maximize = Button(self.tm, 'buttons/button_maximize_window', css='Menu', color='TextColor')
         self.button_maximize.setFixedSize(30, 30)
         self.button_maximize.clicked.connect(self._on_maximize_clicked)
         right_layout.addWidget(self.button_maximize)
 
-        self.button_close = Button(self.tm, 'button_close', css='Menu', color='TextColor')
+        self.button_close = Button(self.tm, 'buttons/button_close', css='Menu', color='TextColor')
         self.button_close.setFixedSize(30, 30)
         self.button_close.clicked.connect(self.closeButtonClicked.emit)
         right_layout.addWidget(self.button_close)

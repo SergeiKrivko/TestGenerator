@@ -24,13 +24,13 @@ class UtilsEdit(QWidget):
         buttons_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.addLayout(buttons_layout)
 
-        self.button_add = Button(self.tm, 'plus', css='Main')
+        self.button_add = Button(self.tm, 'buttons/plus', css='Main')
         self.button_add.setFixedHeight(22)
         self.button_add.setMaximumWidth(40)
         self.button_add.clicked.connect(self.new_util)
         buttons_layout.addWidget(self.button_add, 1)
 
-        self.button_delete = Button(self.tm, 'delete', css='Main')
+        self.button_delete = Button(self.tm, 'buttons/delete', css='Main')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(40)
         self.button_delete.clicked.connect(self._on_delete_pressed)

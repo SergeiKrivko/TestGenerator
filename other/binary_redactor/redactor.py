@@ -102,7 +102,7 @@ class RedactorWidget(QWidget):
         self._tab_bar.currentChanged.connect(self._on_tab_selected)
         top_layout.addWidget(self._tab_bar)
 
-        self._button = Button(self.tm, 'plus', css='Bg')
+        self._button = Button(self.tm, 'buttons/plus', css='Bg')
         self._button.setFixedSize(20, 20)
         self._button.clicked.connect(self.addTab.emit)
         top_layout.addWidget(self._button)
@@ -227,10 +227,10 @@ QTabBar::tab:!selected {{
     margin-top: 3px;
 }}
 QTabBar::close-button {{
-    image: url({self.tm.get_image('button_close_tab')});
+    image: url({self.tm.get_image('buttons/button_close_tab')});
 }}
 QTabBar::close-button:hover {{
-    image: url({self.tm.get_image('button_close_tab_hover')});
+    image: url({self.tm.get_image('buttons/button_close_tab_hover')});
 }}
 """
         self._tab_bar.setFont(self.tm.font_medium)

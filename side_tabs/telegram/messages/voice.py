@@ -24,12 +24,12 @@ class VoicePlayer(QWidget):
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setLayout(layout)
 
-        self._button_play = Button(self._tm, 'button_run', css='Menu')
+        self._button_play = Button(self._tm, 'buttons/run', css='Menu')
         self._button_play.setFixedSize(30, 30)
         self._button_play.clicked.connect(self.play)
         layout.addWidget(self._button_play)
 
-        self._button_pause = Button(self._tm, 'button_pause', css='Menu')
+        self._button_pause = Button(self._tm, 'buttons/button_pause', css='Menu')
         self._button_pause.hide()
         self._button_pause.setFixedSize(30, 30)
         self._button_pause.clicked.connect(self.pause)

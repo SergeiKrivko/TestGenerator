@@ -36,7 +36,7 @@ class ChatWidget(QWidget):
         bottom_layout = QHBoxLayout()
         layout.addLayout(bottom_layout)
 
-        self._button_document = Button(self._tm, "telegram_document")
+        self._button_document = Button(self._tm, "icons/telegram_document")
         self._button_document.setFixedSize(30, 30)
         self._button_document.clicked.connect(self._run_menu)
         # self._button_document.setMenu(self.menu)
@@ -46,7 +46,7 @@ class ChatWidget(QWidget):
         self._text_edit.returnPressed.connect(self.send_message)
         bottom_layout.addWidget(self._text_edit, 1)
 
-        self._button = Button(self._tm, "button_send")
+        self._button = Button(self._tm, "buttons/button_send")
         self._button.setFixedSize(30, 30)
         self._button.clicked.connect(self.send_message)
         bottom_layout.addWidget(self._button)
@@ -136,9 +136,10 @@ class _ScrollArea(QScrollArea):
 
     def _on_resized(self) -> None:
         self._last_pos = self.verticalScrollBar().value()
-        if self._last_pos > self._last_max - 10:
+        if self._last_pos > self._last_max - 30:
             self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
-        elif self._last_pos < 50:
+        # elif self._last_pos < 50:
+        else:
             self.verticalScrollBar().setValue(self.verticalScrollBar().maximum() -
                                               self._last_max + self._last_pos)
 

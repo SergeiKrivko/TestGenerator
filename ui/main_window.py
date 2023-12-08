@@ -85,7 +85,6 @@ class MainWindow(QMainWindow):
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
             'gpt': (ChatPanel(self.sm, self.bm, self.tm), "Чат"),
             'telegram': (TelegramWidget(self.sm, self.bm, self.tm), "Telegram"),
-            'document': (ReportWindow(self.bm, self.sm, self.tm), "Отчет"),
             'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
         }.items():
             self.side_bar.add_tab(key, *item)

@@ -239,12 +239,12 @@ class TestingLooper(QThread):
         if self._build is None:
             self.compileFailed.emit("Invalid build data!")
             return
-        res, errors = self._manager.compile_build(self._build_id, self._project)
+        res, errors = self._manager.run_build_preproc(self._build_id, self._project)
+        if res:
+            res, errors = self._manager.compile_build(self._build_id, self._project)
         if not res:
             self.compileFailed.emit(errors)
             return
-        command = self._project.get('preprocessor', [])
-        self._manager.run_scenarios(command, self.path)
 
         self.utils = [self._manager.get_util(item['data']) for item in self._build.get('utils', [])]
         for util in self.utils:
@@ -273,8 +273,10 @@ class TestingLooper(QThread):
 
         for util in self.utils:
             self.run_postproc_util(util)
-        command = self._project.get('postprocessor', '')
-        self._manager.run_scenarios(command, self.path)
+        res, errors = self._manager.run_build_postproc(self._build_id, self._project)
+        if not res:
+            self.compileFailed.emit(errors)
+            return
 
         self.coverage, self.coverage_html = self._manager.collect_coverage(self._project.get('build'), self._project)
 

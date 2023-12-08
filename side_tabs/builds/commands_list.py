@@ -32,25 +32,25 @@ class CommandsList(QWidget):
         self._label = QLabel(name)
         top_layout.addWidget(self._label)
 
-        self.button_add = Button(self.tm, 'plus', css='Main')
+        self.button_add = Button(self.tm, 'buttons/plus', css='Main')
         self.button_add.setFixedHeight(22)
         self.button_add.setMaximumWidth(40)
         self.button_add.clicked.connect(self.add_scenario)
         top_layout.addWidget(self.button_add, 1)
 
-        self.button_delete = Button(self.tm, 'delete', css='Main')
+        self.button_delete = Button(self.tm, 'buttons/delete', css='Main')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(40)
         self.button_delete.clicked.connect(self.delete_scenario)
         top_layout.addWidget(self.button_delete, 1)
 
-        self.button_up = Button(self.tm, 'button_up', css='Main')
+        self.button_up = Button(self.tm, 'buttons/button_up', css='Main')
         self.button_up.setFixedHeight(22)
         self.button_up.setMaximumWidth(40)
         self.button_up.clicked.connect(self.move_scenario_up)
         top_layout.addWidget(self.button_up, 1)
 
-        self.button_down = Button(self.tm, 'button_down', css='Main')
+        self.button_down = Button(self.tm, 'buttons/button_down', css='Main')
         self.button_down.setFixedHeight(22)
         self.button_down.setMaximumWidth(40)
         self.button_down.clicked.connect(self.move_scenario_down)
@@ -241,7 +241,7 @@ class ScenarioBox(QComboBox):
             if build is not None:
                 build = self._bm.builds[build]
                 self.setItemIcon(i, QIcon(self._tm.get_image(builds.BuildTypeDialog.IMAGES.get(build.get('type')),
-                                                             'unknown_file')))
+                                                             'icons/unknown_file')))
 
 
 class _ListWidgetItem(QListWidgetItem):
@@ -255,13 +255,13 @@ class _ListWidgetItem(QListWidgetItem):
         match self._type:
             case CommandsList.TYPE_CMD:
                 self.setText(self._data)
-                self.setIcon(QIcon(self._tm.get_image('cmd')))
+                self.setIcon(QIcon(self._tm.get_image('files/cmd')))
             case CommandsList.TYPE_BUILD:
                 self.setText(self.bm.get_build(self._data).get('name', '-'))
-                self.setIcon(QIcon(self._tm.get_image('icon_build')))
+                self.setIcon(QIcon(self._tm.get_image('icons/build')))
             case CommandsList.TYPE_UTIL:
                 self.setText(self.bm.get_util(self._data).get('name', '-'))
-                self.setIcon(QIcon(self._tm.get_image('passed')))
+                self.setIcon(QIcon(self._tm.get_image('icons/passed')))
 
     def store(self):
         return {'type': self._type, 'data': self._data}

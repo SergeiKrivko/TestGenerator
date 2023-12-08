@@ -31,16 +31,16 @@ class DocumentWidget(QWidget):
         self.setLayout(main_layout)
 
         file_name = self._document.file_name
-        self._extension = 'unknown_file' if '.' not in self._document.file_name else \
+        self._extension = 'icons/unknown_file' if '.' not in self._document.file_name else \
             self._document.file_name[self._document.file_name.rindex('.') + 1:]
         if self._extension not in resources:
-            icon = 'unknown_file'
+            icon = 'icons/unknown_file'
         else:
             icon = self._extension
 
         if file_name.endswith('.TGProject.7z'):
             self._type = DocumentWidget.TYPE_PROJECT
-            icon = 'button_projects'
+            icon = 'icons/projects'
             file_name = self._document.file_name[:-len('.TGProject.7z')]
 
         self._button = Button(self._tm, icon, css='Menu')

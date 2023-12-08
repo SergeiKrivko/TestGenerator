@@ -1,7 +1,5 @@
 import g4f
 
-g4f.check_version = False  # Disable automatic version checking
-
 
 def stream_response(messages: list[dict[str: str]], model=None, **kwargs):
     if model is None or model == 'default':

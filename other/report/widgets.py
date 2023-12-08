@@ -47,22 +47,22 @@ class ReportWidget(QWidget):
         self._name_label = QLabel(widget_name)
         self._top_layout.addWidget(self._name_label)
 
-        self._button_up = Button(self.tm, 'button_up')
+        self._button_up = Button(self.tm, 'buttons/button_up')
         self._button_up.setFixedSize(ReportWidget.WIDGET_HEIGHT, ReportWidget.WIDGET_HEIGHT)
         self._button_up.clicked.connect(lambda: self.moveUpRequested.emit(self))
         self._top_layout.addWidget(self._button_up)
 
-        self._button_down = Button(self.tm, 'button_down')
+        self._button_down = Button(self.tm, 'buttons/button_down')
         self._button_down.setFixedSize(ReportWidget.WIDGET_HEIGHT, ReportWidget.WIDGET_HEIGHT)
         self._button_down.clicked.connect(lambda: self.moveDownRequested.emit(self))
         self._top_layout.addWidget(self._button_down)
 
-        self._button_delete = Button(self.tm, 'delete')
+        self._button_delete = Button(self.tm, 'buttons/delete')
         self._button_delete.setFixedSize(ReportWidget.WIDGET_HEIGHT, ReportWidget.WIDGET_HEIGHT)
         self._button_delete.clicked.connect(lambda: self.deleteRequested.emit(self))
         self._top_layout.addWidget(self._button_delete)
 
-        self._button_plus = Button(self.tm, 'plus')
+        self._button_plus = Button(self.tm, 'buttons/plus')
         self._button_plus.setFixedSize(ReportWidget.WIDGET_HEIGHT, ReportWidget.WIDGET_HEIGHT)
         self._button_plus.clicked.connect(self.select_child)
         self._top_layout.addWidget(self._button_plus)

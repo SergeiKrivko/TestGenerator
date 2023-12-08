@@ -54,12 +54,12 @@ class SearchPanel(QWidget):
         top_layout.addWidget(self.label)
         self.label.setFixedWidth(120)
 
-        self.button_up = Button(self._tm, 'button_up', css='Main')
+        self.button_up = Button(self._tm, 'buttons/button_up', css='Main')
         self.button_up.setFixedSize(20, 20)
         self.button_up.clicked.connect(self.search_previous)
         top_layout.addWidget(self.button_up)
 
-        self.button_down = Button(self._tm, 'button_down', css='Main')
+        self.button_down = Button(self._tm, 'buttons/button_down', css='Main')
         self.button_down.setFixedSize(20, 20)
         self.button_down.clicked.connect(self.search_next)
         top_layout.addWidget(self.button_down)

@@ -27,13 +27,13 @@ class TreeFile(QTreeWidgetItem):
         self.path = path
         self.name = os.path.basename(self.path)
         if '.' not in self.name or (ind := self.name.rindex('.')) == 0:
-            self.file_type = 'unknown_file'
+            self.file_type = 'icons/unknown_file'
         else:
             self.file_type = self.name[ind + 1:]
 
         super().__init__([self.name])
 
-        self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
+        self.setIcon(0, QIcon(self.tm.get_image('files/' + self.file_type, 'icons/unknown_file')))
         self.setFont(0, self.tm.font_medium)
 
 
@@ -47,7 +47,7 @@ class TreeDirectory(QTreeWidgetItem):
 
         super().__init__([self.name])
 
-        self.setIcon(0, QIcon(self.tm.get_image(self.file_type, 'unknown_file')))
+        self.setIcon(0, QIcon(self.tm.get_image('icons/' + self.file_type, 'icons/unknown_file')))
         self.setFont(0, self.tm.font_medium)
 
         self.update_files_list()
@@ -171,33 +171,33 @@ class ContextMenu(QMenu):
 
         self.create_menu = QMenu()
         self.create_menu.setMinimumWidth(150)
-        self.create_menu.setIcon(QIcon(self.tm.get_image('plus')))
+        self.create_menu.setIcon(QIcon(self.tm.get_image('buttons/plus')))
         self.create_menu.setTitle("Создать")
-        self.create_menu.addAction(QIcon(self.tm.get_image('plus')), "Файл").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('buttons/plus')), "Файл").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_FILE))
-        self.create_menu.addAction(QIcon(self.tm.get_image('directory')), "Папку").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('icons/directory')), "Папку").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_DIR))
-        self.create_menu.addAction(QIcon(self.tm.get_image('py')), "Python file").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('files/py')), "Python file").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_PY))
-        self.create_menu.addAction(QIcon(self.tm.get_image('c')), "C source file").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('files/c')), "C source file").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_C))
-        self.create_menu.addAction(QIcon(self.tm.get_image('h')), "Header file").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('files/h')), "Header file").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_H))
-        self.create_menu.addAction(QIcon(self.tm.get_image('md')), "Markdown file").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('files/md')), "Markdown file").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_MD))
-        self.create_menu.addAction(QIcon(self.tm.get_image('t2b')), "Text-to-Binary file").triggered.connect(
+        self.create_menu.addAction(QIcon(self.tm.get_image('files/t2b')), "Text-to-Binary file").triggered.connect(
             lambda: self.set_action(ContextMenu.CREATE_T2B))
         self.addMenu(self.create_menu)
 
         self.addSeparator()
 
-        self.addAction(QIcon(self.tm.get_image('cut')), "Вырезать").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/cut')), "Вырезать").triggered.connect(
             lambda: self.set_action(ContextMenu.CUT_FILES))
-        self.addAction(QIcon(self.tm.get_image('copy')), "Копировать").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/copy')), "Копировать").triggered.connect(
             lambda: self.set_action(ContextMenu.COPY_FILES))
-        self.addAction(QIcon(self.tm.get_image('copy_path')), "Копировать как путь").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/copy_path')), "Копировать как путь").triggered.connect(
             lambda: self.set_action(ContextMenu.COPY_PATH))
-        self.addAction(QIcon(self.tm.get_image('paste')), "Вставить").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/paste')), "Вставить").triggered.connect(
             lambda: self.set_action(ContextMenu.PASTE_FILES))
 
         self.addSeparator()
@@ -206,13 +206,13 @@ class ContextMenu(QMenu):
 
         self.addSeparator()
 
-        self.addAction(QIcon(self.tm.get_image('button_delete')), "Удалить").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/button_delete')), "Удалить").triggered.connect(
             lambda: self.set_action(ContextMenu.DELETE_FILE))
-        self.addAction(QIcon(self.tm.get_image('button_delete')), "Переместить в корзину").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/button_delete')), "Переместить в корзину").triggered.connect(
             lambda: self.set_action(ContextMenu.MOVE_TO_TRASH))
-        self.addAction(QIcon(self.tm.get_image('button_rename')), "Переименовать").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/button_rename')), "Переименовать").triggered.connect(
             lambda: self.set_action(ContextMenu.RENAME_FILE))
-        self.addAction(QIcon(self.tm.get_image('button_to_zip')), "Сжать в ZIP").triggered.connect(
+        self.addAction(QIcon(self.tm.get_image('buttons/button_to_zip')), "Сжать в ZIP").triggered.connect(
             lambda: self.set_action(ContextMenu.COMPRESS_TO_ZIP))
 
         self.addSeparator()
@@ -221,11 +221,11 @@ class ContextMenu(QMenu):
         self.open_menu.setMinimumWidth(150)
         self.open_menu.setTitle("Открыть")
         if directory:
-            self.open_menu.addAction(QIcon(self.tm.get_image('directory')), "Проводник").triggered.connect(
+            self.open_menu.addAction(QIcon(self.tm.get_image('icons/directory')), "Проводник").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_EXPLORER))
-            self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')), "Терминал").triggered.connect(
+            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')), "Терминал").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
-            self.open_menu.addAction(QIcon(self.tm.get_image('button_terminal')),
+            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
                                      "Системный терминал").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
         else:
@@ -620,7 +620,7 @@ class FileListWidgetItem(QListWidgetItem):
         if path == '..':
             self.name = '..'
             self.setText(self.name)
-            self.setIcon(QIcon(self.tm.get_image('directory')))
+            self.setIcon(QIcon(self.tm.get_image('icons/directory')))
             # self.setText('▲ ..')
             self.file_type = 'dir'
             self.priority = 0
@@ -630,7 +630,7 @@ class FileListWidgetItem(QListWidgetItem):
             if os.path.isdir(self.path):
                 # self.setText(f"▼ {self.name}")
                 self.file_type = 'dir'
-                self.setIcon(QIcon(self.tm.get_image('directory')))
+                self.setIcon(QIcon(self.tm.get_image('icons/directory')))
                 self.priority = 1
             elif self.path.endswith(f"main{language.get('files')[0]}"):
                 # self.setText(f"◆ {self.name}")
@@ -682,11 +682,11 @@ class FileListWidgetItem(QListWidgetItem):
         self.setForeground(color)
 
         if self.file_type == 'dir':
-            self.setIcon(QIcon(self.tm.get_image('directory', color=color)))
+            self.setIcon(QIcon(self.tm.get_image('icons/directory', color=color)))
         elif '.' in self.name:
             self.setIcon(QIcon(self.tm.get_image(self.name.split('.')[1], 'unknown_file', color=color)))
         else:
-            self.setIcon(QIcon(self.tm.get_image('unknown_file', color=color)))
+            self.setIcon(QIcon(self.tm.get_image('icons/unknown_file', color=color)))
         self.setFont(self.tm.font_medium)
 
 

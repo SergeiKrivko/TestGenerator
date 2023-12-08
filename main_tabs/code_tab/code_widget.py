@@ -327,20 +327,20 @@ class TopPanelWidget(QWidget):
         self.tab_bar.setTabsClosable(True)
         main_layout.addWidget(self.tab_bar, 1000, Qt.AlignmentFlag.AlignLeft)
 
-        self.button_open = Button(self.tm, 'plus', css='Bg', tooltip='Открыть файл')
+        self.button_open = Button(self.tm, 'buttons/plus', css='Bg', tooltip='Открыть файл')
         self.button_open.setFixedSize(20, 20)
         main_layout.addWidget(self.button_open, 1, Qt.AlignmentFlag.AlignLeft)
 
-        self.button_search = Button(self.tm, 'search', css='Bg', tooltip='Поиск')
+        self.button_search = Button(self.tm, 'buttons/search', css='Bg', tooltip='Поиск')
         self.button_search.setFixedSize(20, 20)
         self.button_search.setCheckable(True)
         main_layout.addWidget(self.button_search, 1, Qt.AlignmentFlag.AlignRight)
 
-        self.button_run = Button(self.tm, 'run', css='Bg', tooltip='Запустить')
+        self.button_run = Button(self.tm, 'buttons/run', css='Bg', tooltip='Запустить')
         self.button_run.setFixedSize(20, 20)
         main_layout.addWidget(self.button_run, 1, Qt.AlignmentFlag.AlignRight)
 
-        self.button_preview = Button(self.tm, 'button_preview', css='Bg', tooltip='Предпросмотр')
+        self.button_preview = Button(self.tm, 'buttons/button_preview', css='Bg', tooltip='Предпросмотр')
         self.button_preview.setFixedSize(20, 20)
         self.button_preview.setCheckable(True)
         main_layout.addWidget(self.button_preview, 1, Qt.AlignmentFlag.AlignRight)
@@ -376,7 +376,7 @@ class TopPanelWidget(QWidget):
             file_type = name[ind + 1:]
         else:
             file_type = 'unknown_file'
-        self.tab_bar.addTab(QIcon(self.tm.get_image(file_type, 'unknown_file')), name)
+        self.tab_bar.addTab(QIcon(self.tm.get_image(file_type, 'icons/unknown_file')), name)
         self.tabs.append(path)
         self.tab_bar.setCurrentIndex(self.tab_bar.count() - 1)
         self.tabSelected.emit(path)
@@ -404,10 +404,10 @@ QTabBar:tab:selected {{
 background-color: {self.tm['BgSelectedColor']};
 }}
 QTabBar::close-button {{
-    image: url({self.tm.get_image('button_close_tab')});
+    image: url({self.tm.get_image('buttons/button_close_tab')});
 }}
 QTabBar::close-button:hover {{
-    image: url({self.tm.get_image('button_close_tab_hover')});
+    image: url({self.tm.get_image('buttons/button_close_tab_hover')});
 }}
 QTabBar QToolButton {{
     background-color: {self.tm['BgColor']};
@@ -417,10 +417,10 @@ QTabBar QToolButton::hover {{
     background-color: {self.tm['BgHoverColor']};
 }}
 QTabBar QToolButton::right-arrow {{
-    image: url({self.tm.get_image('right_arrow')});
+    image: url({self.tm.get_image('buttons/right_arrow')});
 }}
 QTabBar QToolButton::left-arrow {{
-    image: url({self.tm.get_image('left_arrow')});
+    image: url({self.tm.get_image('buttons/left_arrow')});
 }}
 """)
         self.button_open.set_theme()

@@ -106,16 +106,16 @@ class TestingPanelItem(QListWidgetItem):
         self.setFont(self.tm.code_font)
         if self.status == FuncTest.IN_PROGRESS:
             self.setForeground(self.tm['TestInProgress'])
-            self.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestInProgress'])))
+            self.setIcon(QIcon(self.tm.get_image('icons/running', color=self.tm['TestInProgress'])))
         elif self.status == FuncTest.PASSED:
             self.setForeground(self.tm['TestPassed'])
-            self.setIcon(QIcon(self.tm.get_image('passed', color=self.tm['TestPassed'])))
+            self.setIcon(QIcon(self.tm.get_image('icons/passed', color=self.tm['TestPassed'])))
         elif self.status == FuncTest.FAILED:
             self.setForeground(self.tm['TestFailed'])
-            self.setIcon(QIcon(self.tm.get_image('failed', color=self.tm['TestFailed'])))
+            self.setIcon(QIcon(self.tm.get_image('icons/failed', color=self.tm['TestFailed'])))
         elif self.status == FuncTest.TIMEOUT:
             self.setForeground(self.tm['TestFailed'])
-            self.setIcon(QIcon(self.tm.get_image('running', color=self.tm['TestFailed'])))
+            self.setIcon(QIcon(self.tm.get_image('icons/running', color=self.tm['TestFailed'])))
         elif self.status == FuncTest.TERMINATED:
             self.setForeground(self.tm['TestInProgress'])
-            self.setIcon(QIcon(self.tm.get_image('failed', color=self.tm['TestInProgress'])))
+            self.setIcon(QIcon(self.tm.get_image('icons/failed', color=self.tm['TestInProgress'])))

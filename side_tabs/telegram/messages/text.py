@@ -2,7 +2,8 @@ from side_tabs.telegram.telegram_api import tg
 
 
 class TgFormattedText:
-    def __init__(self, formatted_text: tg.FormattedText):
+    def __init__(self, formatted_text: tg.FormattedText, tm):
+        self._tm = tm
         self.text = formatted_text.text
         self.entities = formatted_text.entities
 
@@ -31,6 +32,15 @@ class TgFormattedText:
             elif isinstance(entity.type, tg.TextEntityTypeTextUrl):
                 self._include(f"<a href='{entity.type.url}'>", entity.offset)
                 self._include('</a>', entity.offset + entity.length)
+            else:
+                print(entity.type)
+
+        # for key, item in {'😁': 'emoji/😁',
+        #                   '😭': 'emoji/😭',
+        #                   # '🤦🏻‍♂': 'emoji/🤷\u200d♂️'
+        #                   }.items():
+        #     if key in self.html:
+        #         self.html = self.html.replace(key, f"<img src=\"{self._tm.get_image(item, mini=True)}\">")
 
     def _include(self, text, pos):
         index = pos

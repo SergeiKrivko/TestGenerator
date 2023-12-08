@@ -37,11 +37,11 @@ class ProgramBox(QWidget):
         layout.addWidget(self.button_return)
         self.button_return.setFixedSize(1, 22)
 
-        self.button_update = Button(None, 'update')
+        self.button_update = Button(None, 'buttons/update')
         layout.addWidget(self.button_update)
         self.button_update.setFixedSize(24, 22)
 
-        self.button_add = Button(None, 'plus')
+        self.button_add = Button(None, 'buttons/plus')
         layout.addWidget(self.button_add)
         self.button_add.clicked.connect(self._on_plus_clicked)
         self.button_add.setFixedSize(24, 22)
@@ -80,7 +80,7 @@ class ProgramBox(QWidget):
         self.combo_box.addItems([item.name() for item in items])
         for i, item in enumerate(self._items):
             if not item.valid:
-                self.combo_box.setItemIcon(i, QIcon(self._tm.get_image('failed', color=self._tm['TestFailed'])))
+                self.combo_box.setItemIcon(i, QIcon(self._tm.get_image('icons/failed', color=self._tm['TestFailed'])))
         self.combo_box.setCurrentText(text)
 
     def add_item(self, item: ProgramInstance):
@@ -89,7 +89,7 @@ class ProgramBox(QWidget):
         self.combo_box.addItem(item.name(), None)
         if not item.valid:
             self.combo_box.setItemIcon(self.combo_box.count() - 1,
-                                       QIcon(self._tm.get_image('failed', color=self._tm['TestFailed'])))
+                                       QIcon(self._tm.get_image('icons/failed', color=self._tm['TestFailed'])))
             self._sm.store_programs()
 
     def _on_plus_clicked(self):

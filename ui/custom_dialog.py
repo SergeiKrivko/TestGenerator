@@ -27,7 +27,7 @@ class CustomDialog(QDialog):
         if name:
             top_layout.addWidget(self.__label)
 
-        self.__button_close = Button(self.tm, 'button_close', css='Menu' if panel else 'Bg')
+        self.__button_close = Button(self.tm, 'buttons/button_close', css='Menu' if panel else 'Bg')
         self.__button_close.setFixedSize(25, 25)
         if button_close:
             top_layout.addWidget(self.__button_close)

@@ -15,8 +15,8 @@ from ui.options_window import OptionsWidget
 from ui.side_panel_widget import SidePanelWidget
 
 LANGUAGES = PROJECT_LANGUAGES
-LANGUAGE_ICONS = {key: languages[key]['files'][0][1:] for key in PROJECT_LANGUAGES}
-LANGUAGE_ICONS[None] = 'unknown_file'
+LANGUAGE_ICONS = {key: f"files/{languages[key]['files'][0][1:]}" for key in PROJECT_LANGUAGES}
+LANGUAGE_ICONS[None] = 'icons/unknown_file'
 
 
 class ProjectWidget(SidePanelWidget):
@@ -71,7 +71,7 @@ class ProjectWidget(SidePanelWidget):
         self._opening_project = True
         self.list_widget.clear()
         for pr in self.sm.projects.values():
-            item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS.get(pr.get('language'), 'unknown_file'))
+            item = ProjectListWidgetItem(pr, self.tm, LANGUAGE_ICONS.get(pr.get('language'), 'icons/unknown_file'))
             item.setFont(self.tm.font_medium)
             item.set_icon()
             self.list_widget.addItem(item)

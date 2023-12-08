@@ -1,32 +1,33 @@
-import os
 import shutil
-from time import time, sleep
-from uuid import UUID
+from time import sleep
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QWidget, QVBoxLayout, QMenu, QPushButton
 
-from side_tabs.chat import gpt
 from side_tabs.chat.chat_widget import ChatWidget
 from side_tabs.chat.chats_list import GPTListWidget
-from side_tabs.chat.gpt_dialog import GPTDialog
 from side_tabs.chat.settings_window import ChatSettingsWindow
+from side_tabs.chat.chat import GPTChat
+from side_tabs.chat.database import Database
 from ui.button import Button
 from ui.side_panel_widget import SidePanelWidget
 
 
 class ChatPanel(SidePanelWidget):
+    WIDTH = 550
+
     def __init__(self, sm, bm, tm):
-        super().__init__(sm, tm, "Чат", [])
+        super().__init__(sm, tm, "GPT", [])
+        self.sm = sm
         self.bm = bm
-        self._data_path = self.sm.get_general('gpt_dialogs_path', '').strip()
-        if not self._data_path:
-            self._data_path = f"{self.sm.app_data_dir}/GPT/dialogs"
+        self.tm = tm
+        self.db = Database(self.sm)
+        self._data_path = f"{self.sm.app_data_dir}/dialogs"
 
         self._layout = QHBoxLayout()
         self._layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self._layout.setContentsMargins(3, 3, 3, 3)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self._layout)
 
         main_layout = QVBoxLayout()
@@ -42,114 +43,112 @@ class ChatPanel(SidePanelWidget):
         layout.setSpacing(0)
         top_layout.addLayout(layout)
 
-        self._button_add = Button(self.tm, 'plus', css='Main')
+        self._button_add = Button(self.tm, 'buttons/plus', css='Bg')
         self._button_add.setFixedSize(36, 36)
-        self._button_add.clicked.connect(lambda: self._new_dialog())
+        self._button_add.clicked.connect(lambda: self._new_chat())
         layout.addWidget(self._button_add)
 
         self._button_add_special = QPushButton()
         self._button_add_special.setFixedSize(20, 36)
-        self._button_add_special.setMenu(NewChatMenu(self.tm, self._new_dialog))
+        self._button_add_special.setMenu(NewChatMenu(self.tm, self._new_chat))
         layout.addWidget(self._button_add_special)
 
-        self._button_settings = Button(self.tm, 'generate', css='Main')
+        self._button_settings = Button(self.tm, 'buttons/generate', css='Bg')
         self._button_settings.setFixedSize(36, 36)
         self._button_settings.clicked.connect(self._open_settings)
         top_layout.addWidget(self._button_settings)
 
         self._list_widget = GPTListWidget(tm)
         main_layout.addWidget(self._list_widget)
-        self._list_widget.deleteItem.connect(self._delete_dialog)
-        self._list_widget.currentItemChanged.connect(self._select_dialog)
+        self._list_widget.deleteItem.connect(self._delete_chat)
+        self._list_widget.currentItemChanged.connect(self._select_chat)
 
-        self.dialogs = dict()
+        self.chats = dict()
         self.chat_widgets = dict()
         self.current = None
 
         try:
-            self._last_dialog = UUID(self.sm.get('current_dialog', ''))
+            self._last_chat = int(self.sm.get('current_dialog', ''))
         except ValueError:
-            self._last_dialog = None
+            self._last_chat = None
         self._loading_started = False
 
     def _open_settings(self):
-        dialog = None if self.current is None else self.dialogs[self.current]
-        window = ChatSettingsWindow(self.sm, self.tm, dialog)
+        chat = None if self.current is None else self.chats[self.current]
+        window = ChatSettingsWindow(self.sm, self.tm, chat)
         window.exec()
         window.save()
-        if dialog:
-            dialog.store()
+        if chat:
+            self.db.commit()
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
         if not self._loading_started:
             self._loading_started = True
-            self._load_dialogs()
+            self._load_chats()
 
-    def _load_dialogs(self):
-        self._loader = DialogLoader(self._data_path, str(self._last_dialog))
-        self._loader.addDialog.connect(self._on_dialog_loaded)
-        self._loader.finished.connect(lambda: (self._list_widget.sort_dialogs(), self._resize()))
+    def _load_chats(self):
+        self._loader = ChatLoader(list(self.db.chats), str(self._last_chat))
+        self._loader.addChat.connect(self._on_chat_loaded)
+        self._loader.finished.connect(lambda: (self._list_widget.sort_chats(), self._resize()))
         self.bm.run_process(self._loader, 'GPT', 'loading')
 
-    def _on_dialog_loaded(self, dialog: GPTDialog):
-        self._add_dialog(dialog)
-        if dialog.id == self._last_dialog:
-            self._list_widget.select(dialog.id)
+    def _on_chat_loaded(self, chat: GPTChat):
+        self._add_chat(chat)
+        if chat.id == self._last_chat:
+            self._list_widget.select(chat.id)
 
-    def _new_dialog(self, dialog_type=GPTDialog.SIMPLE):
-        dialog = GPTDialog(self._data_path)
-        dialog.time = time()
-        dialog.type = dialog_type
+    def _new_chat(self, chat_type=GPTChat.SIMPLE):
+        chat = self.db.add_chat()
 
-        match dialog_type:
-            case GPTDialog.TRANSLATE:
-                dialog.data['language1'] = 'russian'
-                dialog.data['language2'] = 'english'
-                dialog.name = f"{dialog.data['language1'].capitalize()} ↔ {dialog.data['language2'].capitalize()}"
-                dialog.used_messages = 1
-            case GPTDialog.SUMMARY:
-                dialog.name = f"Краткое содержание"
-                dialog.used_messages = 1
+        match chat_type:
+            case GPTChat.TRANSLATE:
+                chat.data['language1'] = 'russian'
+                chat.data['language2'] = 'english'
+                chat.name = f"{chat.data['language1'].capitalize()} ↔ {chat.data['language2'].capitalize()}"
+                chat.used_messages = 1
+            case GPTChat.SUMMARY:
+                chat.name = f"Краткое содержание"
+                chat.used_messages = 1
 
-        self._add_dialog(dialog)
+        self._add_chat(chat)
 
-    def _add_dialog(self, dialog):
-        self.dialogs[dialog.id] = dialog
+    def _add_chat(self, chat):
+        self.chats[chat.id] = chat
 
-        chat_widget = ChatWidget(self.sm, self.bm, self.tm, dialog)
-        chat_widget.buttonBackPressed.connect(self._close_dialog)
+        chat_widget = ChatWidget(self.bm, self.tm, chat)
+        chat_widget.buttonBackPressed.connect(self._close_chat)
         chat_widget.hide()
-        chat_widget.updated.connect(lambda: self._list_widget.move_to_top(dialog.id))
+        chat_widget.updated.connect(lambda: self._list_widget.move_to_top(chat.id))
         self._layout.addWidget(chat_widget, 2)
-        self.chat_widgets[dialog.id] = chat_widget
+        self.chat_widgets[chat.id] = chat_widget
         chat_widget.set_theme()
 
-        self._list_widget.add_item(dialog)
+        self._list_widget.add_item(chat)
 
-    def _delete_dialog(self, dialog_id):
-        if dialog_id == self.current:
-            self._close_dialog(dialog_id)
-        self.dialogs[dialog_id].delete()
-        self.chat_widgets.pop(dialog_id)
-        self._list_widget.delete_item(dialog_id)
-        self.dialogs.pop(dialog_id)
+    def _delete_chat(self, chat_id):
+        if chat_id == self.current:
+            self._close_chat(chat_id)
+        self.chats[chat_id].delete()
+        self.chat_widgets.pop(chat_id)
+        self._list_widget.delete_item(chat_id)
+        self.chats.pop(chat_id)
 
-    def _select_dialog(self, dialog_id):
+    def _select_chat(self, chat_id):
         if self.current is not None:
-            self._close_dialog(self.current)
-        self.sm.set('current_dialog', str(dialog_id))
-        self.chat_widgets[dialog_id].show()
-        self.current = dialog_id
+            self._close_chat(self.current)
+        self.sm.set('current_dialog', str(chat_id))
+        self.chat_widgets[chat_id].show()
+        self.current = chat_id
         self._resize()
 
-    def _close_dialog(self, dialog_id):
-        self.chat_widgets[dialog_id].hide()
+    def _close_chat(self, chat_id):
+        self.chat_widgets[chat_id].hide()
         self.set_list_hidden(False)
         self.current = None
         self._resize()
-        self._list_widget.deselect(dialog_id)
-        self._list_widget.update_item_name(dialog_id)
+        self._list_widget.deselect(chat_id)
+        self._list_widget.update_item_name(chat_id)
         self.sm.set('current_dialog', '')
 
     def set_list_hidden(self, hidden):
@@ -175,15 +174,18 @@ class ChatPanel(SidePanelWidget):
         super().resizeEvent(a0)
         self._resize()
 
-    def finish_work(self):
-        if os.path.isdir(path := f"{self.sm.app_data_dir}/GPT/temp"):
-            shutil.rmtree(path)
+    def closeEvent(self, a0) -> None:
+        super().closeEvent(a0)
+        self.db.commit()
+        try:
+            shutil.rmtree(f"{self.sm.app_data_dir}/temp")
+        except Exception:
+            pass
 
     def set_theme(self):
-        super().set_theme()
         self._button_add.set_theme()
         self._button_settings.set_theme()
-        self.tm.auto_css(self._button_add_special, palette='Main', border=False)
+        self.tm.auto_css(self._button_add_special, palette='Bg', border=False)
         self._list_widget.set_theme()
         for el in self.chat_widgets.values():
             el.set_theme()
@@ -195,39 +197,27 @@ class NewChatMenu(QMenu):
         self.tm = tm
         self.func = func
 
-        action = self.addAction(QIcon(self.tm.get_image('simple_chat')), "Обычный диалог")
-        action.triggered.connect(lambda: func(GPTDialog.SIMPLE))
+        action = self.addAction(QIcon(self.tm.get_image('icons/simple_chat')), "Обычный диалог")
+        action.triggered.connect(lambda: func(GPTChat.SIMPLE))
 
-        action = self.addAction(QIcon(self.tm.get_image('translate')), "Переводчик")
-        action.triggered.connect(lambda: func(GPTDialog.TRANSLATE))
+        action = self.addAction(QIcon(self.tm.get_image('icons/translate')), "Переводчик")
+        action.triggered.connect(lambda: func(GPTChat.TRANSLATE))
 
-        action = self.addAction(QIcon(self.tm.get_image('summary')), "Краткое содержание")
-        action.triggered.connect(lambda: func(GPTDialog.SUMMARY))
+        action = self.addAction(QIcon(self.tm.get_image('icons/summary')), "Краткое содержание")
+        action.triggered.connect(lambda: func(GPTChat.SUMMARY))
 
         self.tm.auto_css(self)
 
 
-class DialogLoader(QThread):
-    addDialog = pyqtSignal(GPTDialog)
+class ChatLoader(QThread):
+    addChat = pyqtSignal(GPTChat)
 
-    def __init__(self, data_path, first=None):
+    def __init__(self, chats: list[GPTChat], first=None):
         super().__init__()
-        self._data_path = data_path
+        self._chats: chats = chats
         self._first = first
 
     def run(self) -> None:
-        os.makedirs(self._data_path, exist_ok=True)
-        if self._first:
-            try:
-                dialog = GPTDialog(self._data_path, self._first)
-                dialog.load()
-                self.addDialog.emit(dialog)
-                sleep(0.1)
-            except Exception as ex:
-                pass
-        for el in os.listdir(self._data_path):
-            if el.endswith('.json') and el[:-len('.json')] != self._first:
-                dialog = GPTDialog(self._data_path, el[:-len('.json')])
-                dialog.load()
-                self.addDialog.emit(dialog)
-                sleep(0.1)
+        for c in self._chats:
+            self.addChat.emit(c)
+            sleep(0.1)

@@ -46,42 +46,42 @@ class UnitTestingWidget(MainTab):
         buttons_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.addLayout(buttons_layout)
 
-        self.button_add_dir = Button(self.tm, 'add_dir', css='Bg')
+        self.button_add_dir = Button(self.tm, 'buttons/add_dir', css='Bg')
         self.button_add_dir.setFixedHeight(22)
         self.button_add_dir.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.button_add_dir.clicked.connect(self.bm.new_suite)
         buttons_layout.addWidget(self.button_add_dir)
 
-        self.button_add = Button(self.tm, 'plus', css='Bg')
+        self.button_add = Button(self.tm, 'buttons/plus', css='Bg')
         self.button_add.setFixedHeight(22)
         self.button_add.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.button_add.clicked.connect(self.add_test)
         buttons_layout.addWidget(self.button_add)
 
-        self.button_delete = Button(self.tm, 'delete', css='Bg')
+        self.button_delete = Button(self.tm, 'buttons/delete', css='Bg')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.button_delete.clicked.connect(self.delete_item)
         buttons_layout.addWidget(self.button_delete)
 
-        self.button_up = Button(self.tm, 'button_up', css='Bg')
+        self.button_up = Button(self.tm, 'buttons/button_up', css='Bg')
         self.button_up.setFixedHeight(22)
         self.button_up.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.button_up.clicked.connect(self.move_up)
         buttons_layout.addWidget(self.button_up)
 
-        self.button_down = Button(self.tm, 'button_down', css='Bg')
+        self.button_down = Button(self.tm, 'buttons/button_down', css='Bg')
         self.button_down.setFixedHeight(22)
         self.button_down.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.button_down.clicked.connect(self.move_down)
         buttons_layout.addWidget(self.button_down)
 
-        self.button_copy = Button(self.tm, 'copy', css='Bg')
+        self.button_copy = Button(self.tm, 'buttons/copy', css='Bg')
         self.button_copy.setFixedHeight(22)
         self.button_copy.setMaximumWidth(BUTTONS_MAX_WIDTH)
         buttons_layout.addWidget(self.button_copy)
 
-        self.button_run = Button(self.tm, 'button_run', css='Bg')
+        self.button_run = Button(self.tm, 'buttons/run', css='Bg')
         self.button_run.setFixedHeight(22)
         self.button_run.setMaximumWidth(BUTTONS_MAX_WIDTH)
         self.button_run.clicked.connect(self.run_tests)
@@ -334,7 +334,7 @@ class TreeSuiteItem(QTreeWidgetItem):
         return self.suite.id.__hash__()
 
     def set_theme(self):
-        self.setIcon(0, QIcon(self._tm.get_image('c')))
+        self.setIcon(0, QIcon(self._tm.get_image('files/c')))
         self.setFont(0, self._tm.font_medium)
         for i in range(self.childCount()):
             self.child(i).set_theme()
@@ -364,10 +364,10 @@ class TreeItem(QTreeWidgetItem):
         self.setFont(0, self._tm.font_medium)
         match self.test.get('status', UnitTest.CHANGED):
             case UnitTest.PASSED:
-                self.setIcon(0, QIcon(self._tm.get_image('passed', color=self._tm['TestPassed'].name())))
+                self.setIcon(0, QIcon(self._tm.get_image('icons/passed', color=self._tm['TestPassed'].name())))
             case UnitTest.FAILED:
-                self.setIcon(0, QIcon(self._tm.get_image('failed', color=self._tm['TestFailed'].name())))
+                self.setIcon(0, QIcon(self._tm.get_image('icons/failed', color=self._tm['TestFailed'].name())))
             case UnitTest.CHANGED:
-                self.setIcon(0, QIcon(self._tm.get_image('running', color=self._tm['TestInProgress'].name())))
+                self.setIcon(0, QIcon(self._tm.get_image('icons/running', color=self._tm['TestInProgress'].name())))
 
 

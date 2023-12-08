@@ -208,9 +208,12 @@ class TelegramChatWidget(ChatWidget):
             self.loading = True
 
     def _on_scroll_bar_value_changed(self):
+        el = None
         for el in self._bubbles:
-            if 0 < el.y() - self._scroll_bar.value() + el.height() < self.height():
-                el.set_read()
+            if not (0 < el.y() - self._scroll_bar.value() + el.height() < self.height()):
+                break
+        if el is not None:
+            el.set_read()
 
     def add_messages_to_load(self):
         self._messages_to_load = self._chat.message_count() + 10
@@ -263,7 +266,7 @@ class TelegramTopWidget(QWidget):
         layout.setContentsMargins(3, 3, 3, 3)
         self.setLayout(layout)
 
-        self._button_back = Button(self._tm, 'button_back')
+        self._button_back = Button(self._tm, 'buttons/button_back')
         self._button_back.setFixedSize(36, 36)
         self._button_back.clicked.connect(self.buttonBackPressed.emit)
         layout.addWidget(self._button_back)

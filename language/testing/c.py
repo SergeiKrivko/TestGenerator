@@ -38,12 +38,11 @@ def c_compile(project, build, sm, lib=False):
         return lst
 
     compiler_keys = build.get('keys', '')
-    if lib:
-        compiler_keys += ' -fPIC'
     for c_file, o_file in zip(c_files, o_files):
         if os.path.isfile(o_file) and check_files_mtime(o_file, get_dependencies(c_file)):
             continue
-        res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} {h_dirs} -c -o {o_file} {c_file}")
+        res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} {h_dirs} {'-fPIC' if lib else ''} "
+                       f"-c -o {o_file} {c_file}", cwd=project.path())
         if res.returncode:
             code = False
         errors.append(res.stderr)
@@ -53,11 +52,25 @@ def c_compile(project, build, sm, lib=False):
             app_file = f"{path}/{build.get('lib_file')}"
         else:
             app_file = f"{path}/{build.get('app_file')}"
-        res = compiler(f"{'--coverage' if coverage else ''} -o {app_file}"
-                       f"{' -shared' if lib else ''} {' '.join(o_files)} {build.get('linker_keys', '')}")
-        if res.returncode:
-            code = False
-        errors.append(res.stderr)
+
+        if lib and not build.get('dynamic', False):
+            res = cmd_command(f"ar cr {app_file} {' '.join(o_files)}", cwd=project.path())
+            if not res.returncode:
+                res = cmd_command(f"ranlib {app_file}", cwd=project.path())
+                if res.returncode:
+                    code = False
+                errors.append(res.stderr)
+            else:
+                code = False
+                errors.append(res.returncode)
+
+        else:
+            res = compiler(f"{'--coverage' if coverage else ''} -o {app_file}"
+                           f"{' -shared' if lib else ''} {' '.join(o_files)} {build.get('linker_keys', '')}",
+                           cwd=project.path())
+            if res.returncode:
+                code = False
+            errors.append(res.stderr)
 
     return code, ''.join(map(str, errors))
 

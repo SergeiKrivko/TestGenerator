@@ -360,10 +360,10 @@ class _ListFieldItem(QListWidgetItem):
     def set_theme(self):
         self.setFont(self._tm.font_medium)
         if self._status:
-            self.setIcon(QIcon(self._tm.get_image('passed', color=self._tm['TestPassed'])))
+            self.setIcon(QIcon(self._tm.get_image('icons/passed', color=self._tm['TestPassed'])))
             self.setForeground(self._tm['TestPassed'])
         else:
-            self.setIcon(QIcon(self._tm.get_image('failed', color=self._tm['TestFailed'])))
+            self.setIcon(QIcon(self._tm.get_image('icons/failed', color=self._tm['TestFailed'])))
             self.setForeground(self._tm['TestFailed'])
 
 

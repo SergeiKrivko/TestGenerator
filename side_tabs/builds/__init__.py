@@ -26,13 +26,13 @@ class BuildWindow(SideBarWindow):
         buttons_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.addLayout(buttons_layout)
 
-        self.button_add = Button(self.tm, 'plus', css='Main')
+        self.button_add = Button(self.tm, 'buttons/plus', css='Main')
         self.button_add.setFixedHeight(22)
         self.button_add.setMaximumWidth(40)
         self.button_add.clicked.connect(self.new_build)
         buttons_layout.addWidget(self.button_add, 1)
 
-        self.button_delete = Button(self.tm, 'delete', css='Main')
+        self.button_delete = Button(self.tm, 'buttons/delete', css='Main')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(40)
         self.button_delete.clicked.connect(self._on_delete_pressed)
@@ -107,15 +107,15 @@ class BuildTypeDialog(CustomDialog):
              "python": "Python", "python_coverage": "Python Coverage",
              'script': "Сценарий командной строки", 'bash': "Скрипт Bash", 'command': "Команда", 'report': "Отчет"}
     ITEMS_REVERSED = {item: key for key, item in ITEMS.items()}
-    IMAGES = {'C': 'c',
-              'C-lib': 'c',
-              'C++': 'cpp',
-              'python': 'py',
-              'python_coverage': 'py',
-              'bash': 'sh',
-              'script': 'bat',
-              'command': 'cmd',
-              'report': 'md'}
+    IMAGES = {'C': 'files/c',
+              'C-lib': 'files/c',
+              'C++': 'files/cpp',
+              'python': 'files/py',
+              'python_coverage': 'files/py',
+              'bash': 'files/sh',
+              'script': 'files/bat',
+              'command': 'files/cmd',
+              'report': 'files/md'}
 
     def __init__(self, tm):
         super().__init__(tm, "Новая конфигурация")
@@ -174,4 +174,4 @@ class ListWidgetItem(QListWidgetItem):
     def set_theme(self):
         self.update_name()
         self.setFont(self.tm.font_medium)
-        self.setIcon(QIcon(self.tm.get_image(BuildTypeDialog.IMAGES.get(self.build.get('type')), 'unknown_file')))
+        self.setIcon(QIcon(self.tm.get_image(BuildTypeDialog.IMAGES.get(self.build.get('type')), 'icons/unknown_file')))

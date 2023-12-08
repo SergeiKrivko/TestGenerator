@@ -106,7 +106,7 @@ class SideBar(QWidget):
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         strange_widget.setLayout(self._layout)
 
-        self._button_more = SideBarButton(tm, 'more', 'button_more')
+        self._button_more = SideBarButton(tm, 'more', 'buttons/button_more')
         self._button_more.hide()
         self._button_more.setCheckable(False)
         self._layout.addWidget(self._button_more)
@@ -125,13 +125,13 @@ class SideBar(QWidget):
         self._menu.move(pos.x() + SideBar.BUTTON_SIZE + 5, pos.y())
 
     def add_tab(self, name: str, widget: SidePanelWidget | SideBarWindow | SideBarDialog, desc: str = ''):
-        button = SideBarButton(self.tm, name, f'button_{name}')
+        button = SideBarButton(self.tm, name, f'icons/{name}')
         self.buttons[name] = button
         self.desc[name] = desc
         if desc:
             button.setToolTip(desc)
 
-        action = self._menu.addAction(QIcon(self.tm.get_image(f'button_{name}')), desc)
+        action = self._menu.addAction(QIcon(self.tm.get_image(f'icons/{name}')), desc)
         self.actions[name] = action
         action.setVisible(False)
 

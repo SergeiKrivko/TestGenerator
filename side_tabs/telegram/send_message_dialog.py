@@ -99,7 +99,7 @@ class ProjectWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(main_layout)
 
-        self._button = Button(self._tm, 'button_projects')
+        self._button = Button(self._tm, 'buttons/button_projects')
         self._button.setFixedSize(32, 32)
         main_layout.addWidget(self._button)
 
@@ -124,13 +124,13 @@ class MessageTypeMenu(QMenu):
         self._tm = tm
         self.selected_type = 0
 
-        action = self.addAction(QIcon(self._tm.get_image('telegram_document')), "Файл")
+        action = self.addAction(QIcon(self._tm.get_image('icons/telegram_document')), "Файл")
         action.triggered.connect(lambda: self.set_type(SendMessageDialog.FILE))
 
-        action = self.addAction(QIcon(self._tm.get_image('button_preview')), "Изображение")
+        action = self.addAction(QIcon(self._tm.get_image('buttons/button_preview')), "Изображение")
         action.triggered.connect(lambda: self.set_type(SendMessageDialog.IMAGE))
 
-        action = self.addAction(QIcon(self._tm.get_image('button_projects')), "Текущий проект")
+        action = self.addAction(QIcon(self._tm.get_image('icons/projects')), "Текущий проект")
         action.triggered.connect(lambda: self.set_type(SendMessageDialog.PROJECT))
 
         self._tm.auto_css(self)

@@ -27,7 +27,7 @@ class InDataWidget(QWidget):
         buttons_layout.setContentsMargins(10, 10, 10, 0)
         layout.addLayout(buttons_layout)
 
-        self._button_plus = Button(self._tm, 'plus')
+        self._button_plus = Button(self._tm, 'buttons/plus')
         self._button_plus.setFixedSize(24, 24)
         self._button_plus.clicked.connect(self.add_elem)
         buttons_layout.addWidget(self._button_plus)
@@ -311,7 +311,7 @@ class _StructEdit(QWidget):
         self._checkbox = QCheckBox("Ввод в строку")
         top_layout.addWidget(self._checkbox)
 
-        self._button = Button(self._tm, 'plus')
+        self._button = Button(self._tm, 'buttons/plus')
         self._button.setFixedSize(BUTTON_WIDTH, HEIGHT)
         self._button.clicked.connect(self._add_item)
         top_layout.addWidget(self._button)

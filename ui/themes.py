@@ -1,5 +1,7 @@
 import os
 import shutil
+from io import BytesIO
+from uuid import uuid4
 
 from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtCore import Qt
@@ -653,6 +655,8 @@ class ThemeManager:
                 }),
         }
 
+        self.__emojis = dict()
+
         self.theme_name = ''
         self.theme = None
         self.style_sheet = ''
@@ -883,10 +887,10 @@ QTreeView::branch::selected {{
 }}
 
 QTreeView::branch:closed:has-children {{
-        image: url({self.get_image('right_arrow')});
+        image: url({self.get_image('buttons/right_arrow')});
 }}
 QTreeView::branch:open:has-children {{
-        image: url({self.get_image('down_arrow')});
+        image: url({self.get_image('buttons/down_arrow')});
 }}
 
 QTreeWidget QScrollBar:vertical {{
@@ -1063,7 +1067,7 @@ QComboBox::drop-down:button {{
     border-radius: 5px;
 }}
 QComboBox::down-arrow {{
-    image: url({self.get_image('down_arrow')});
+    image: url({self.get_image('buttons/down_arrow')});
 }}
 QComboBox QAbstractItemView {{
     color: {self['TextColor']};
@@ -1134,7 +1138,7 @@ QSpinBox::up-button::hover {{
     background-color: {self[f'{palette}HoverColor']};
 }}
 QSpinBox::up-arrow {{
-    image: url({self.get_image('up_arrow')});
+    image: url({self.get_image('buttons/up_arrow')});
 }}
 QSpinBox::down-button {{
     color: {self['TextColor']};
@@ -1150,7 +1154,7 @@ QSpinBox::down-button::hover {{
     background-color: {self[f'{palette}HoverColor']};
 }}
 QSpinBox::down-arrow {{
-    image: url({self.get_image('down_arrow')});
+    image: url({self.get_image('buttons/down_arrow')});
 }}
 QSpinBox::disabled {{
     color: {self['BgColor']};
@@ -1181,7 +1185,7 @@ QPushButton::checked {{
     background-color: {self[f'{palette}SelectedColor']};
 }}
 QPushButton::menu-indicator {{
-    image: url({self.get_image('down_arrow')});
+    image: url({self.get_image('buttons/down_arrow')});
     subcontrol-origin: padding;
     padding-right: 5px;
     subcontrol-position: right;
@@ -1214,10 +1218,10 @@ QTabBar QToolButton::hover {{
     background-color: {self[f'{palette}HoverColor']};
 }}
 QTabBar QToolButton::right-arrow {{
-    image: url({self.get_image('right_arrow')});
+    image: url({self.get_image('buttons/right_arrow')});
 }}
 QTabBar QToolButton::left-arrow {{
-    image: url({self.get_image('left_arrow')});
+    image: url({self.get_image('buttons/left_arrow')});
 }}
 """
 
@@ -1236,22 +1240,22 @@ QCheckBox::indicator {{
     height: 13px;
 }}
 QCheckBox::indicator:unchecked {{
-    image: url({self.get_image('checkbox_unchecked')});
+    image: url({self.get_image('buttons/checkbox_unchecked')});
 }}
 QCheckBox::indicator:unchecked:hover {{
-    image: url({self.get_image('checkbox_unchecked')});
+    image: url({self.get_image('buttons/checkbox_unchecked')});
 }}
 QCheckBox::indicator:unchecked:pressed {{
-    image: url({self.get_image('checkbox_unchecked')});
+    image: url({self.get_image('buttons/checkbox_unchecked')});
 }}
 QCheckBox::indicator:checked {{
-    image: url({self.get_image('checkbox')});
+    image: url({self.get_image('buttons/checkbox')});
 }}
 QCheckBox::indicator:checked:hover {{
-    image: url({self.get_image('checkbox')});
+    image: url({self.get_image('buttons/checkbox')});
 }}
 QCheckBox::indicator:checked:pressed {{
-    image: url({self.get_image('checkbox')});
+    image: url({self.get_image('buttons/checkbox')});
 }}"""
 
     def menu_css(self, palette='Bg', padding='4px 16px'):
@@ -1285,10 +1289,45 @@ QMenu::separator {{
     margin: 4px 10px;
 }}"""
 
-    def get_image(self, name: str, default=None, color=None):
-        if name not in resources and default is not None:
-            name = default
+    def get_image(self, name: str, default=None, color=None, mini=False):
+        name = name.replace('❤', "❤️").replace('⚡', '⚡️').replace('✍', '✍️').replace('☃', '☃️').replace(
+            '♂', '♂️').replace('♀', '♀️')
+        if name not in resources:
+            if default is not None:
+                name = default
+            else:
+                raise KeyError(f"Image not found: {repr(name)}")
 
+        if resources[name][0] == 'mono':
+            return self._convert_mono_png(name, color)
+
+        if resources[name][0] == 'emoji':
+            return self._convert_emoji(name, mini)
+
+        path = f"{self.sm.app_data_dir}/images/{name.replace('/', '_')}.png"
+        if not os.path.isfile(path):
+            image = Image.open(BytesIO(resources[name][1]))
+            image.save(path)
+
+        return path
+
+    def _convert_emoji(self, name, mini=False):
+        if name in self.__emojis:
+            emoji_id = self.__emojis[name]
+        else:
+            emoji_id = uuid4()
+            self.__emojis[name] = emoji_id
+        path = f"{self.sm.app_data_dir}/images/{emoji_id}{'_m' if mini else ''}.png"
+        if not os.path.isfile(path):
+            image = Image.open(BytesIO(resources[name][1]))
+
+            if mini:
+                image = image.resize((20, 20))
+
+            image.save(path)
+        return path
+
+    def _convert_mono_png(self, name, color=None):
         if color is None:
             color = self['ImageColor']
         elif isinstance(color, str):
@@ -1297,10 +1336,10 @@ QMenu::separator {{
         elif isinstance(color, QColor):
             color = color.red(), color.green(), color.blue()
 
-        path = f"{self.sm.app_data_dir}/images/{name}_{QColor(*color).name()}.png"
+        path = f"{self.sm.app_data_dir}/images/{name.replace('/', '_')}_{QColor(*color).name()}.png"
         if not os.path.isfile(path):
             os.makedirs(f"{self.sm.app_data_dir}/images", exist_ok=True)
-            image = Image.frombytes(*resources[name])
+            image = Image.open(BytesIO(resources[name][1]))
 
             image = image.convert("RGBA")
             datas = image.getdata()

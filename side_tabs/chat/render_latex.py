@@ -30,8 +30,8 @@ def render_latex(sm, tm, latex: str):
     # Установка размеров области отрисовки
     fig.set_size_inches(bbox.width / 100, bbox.height / 100)  # dpi=80
 
-    os.makedirs(f"{sm.app_data_dir}/GPT/temp", exist_ok=True)
+    os.makedirs(f"{sm.app_data_dir}/temp", exist_ok=True)
     image_id = uuid4()
-    path = f"{sm.app_data_dir}/GPT/temp/{image_id}.svg"
+    path = f"{sm.app_data_dir}/temp/{image_id}.svg"
     plt.savefig(path)
     return path

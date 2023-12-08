@@ -69,11 +69,26 @@ class Build:
                 return True, ''
 
     def run_preproc(self, project, bm):
+        res, errors = True, ''
         for el in self.get('preproc', []):
             match el['type']:
                 case 0:
                     build = bm.get_build(el['data'])
-                    build.execute(project, bm)
+                    res, errors = build.execute(project, bm)
+            if not res:
+                break
+        return res, errors
+
+    def run_postproc(self, project, bm):
+        res, errors = True, ''
+        for el in self.get('postproc', []):
+            match el['type']:
+                case 0:
+                    build = bm.get_build(el['data'])
+                    res, errors = build.execute(project, bm)
+            if not res:
+                break
+        return res, errors
 
     def run(self, project, sm, args=''):
         match self.get('type'):
@@ -116,12 +131,21 @@ class Build:
             case _:
                 return None
 
-    def run_postproc(self, project, bm):
-        pass
-
     def execute(self, project, bm):
-        self.run_preproc(project, bm)
-        self.compile(project, bm)
+        res, errors = self.run_preproc(project, bm)
+        if not res:
+            return res, errors
+
+        res, errors = self.compile(project, bm)
+        if not res:
+            return res, errors
+
         if command := self.run(project, bm.sm):
-            cmd_command(command)
-        self.run_postproc(project, bm)
+            run_res = cmd_command(command)
+            res = not run_res.returncode
+            errors = run_res.stdout + run_res.stderr
+        if not res:
+            return res, errors
+        res, errors = self.run_postproc(project, bm)
+
+        return res, errors

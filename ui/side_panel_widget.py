@@ -9,22 +9,22 @@ from ui.button import Button
 class SidePanelWidget(QWidget):
     startResizing = pyqtSignal()
     __Buttons = {
-        'add': lambda tm: SidePanelButton(tm, 'plus', tooltip='Создать'),
-        'add_dir': lambda tm: SidePanelButton(tm, 'add_dir', tooltip='Создать папку'),
-        'delete': lambda tm: SidePanelButton(tm, 'button_delete', tooltip='Удалить'),
-        'rename': lambda tm: SidePanelButton(tm, 'button_rename', tooltip='Переименовать'),
-        'to_zip': lambda tm: SidePanelButton(tm, 'button_to_zip', tooltip='Сжать в zip'),
-        'from_zip': lambda tm: SidePanelButton(tm, 'button_from_zip', tooltip='Распаковать из zip'),
-        'run': lambda tm: SidePanelButton(tm, 'run', tooltip='Запустить'),
-        'preview': lambda tm: SidePanelButton(tm, 'button_preview', tooltip='Предпросмотр'),
-        'pull': lambda tm: SidePanelButton(tm, 'button_pull', tooltip='Pull'),
-        'commit': lambda tm: SidePanelButton(tm, 'button_commit', tooltip='Commit'),
-        'push': lambda tm: SidePanelButton(tm, 'button_push', tooltip='Push'),
-        'save': lambda tm: SidePanelButton(tm, 'button_save', tooltip='Сохранить'),
-        'load': lambda tm: SidePanelButton(tm, 'button_load', tooltip='Открыть'),
-        'update': lambda tm: SidePanelButton(tm, 'update', tooltip='Обновить'),
-        'cancel': lambda tm: SidePanelButton(tm, 'button_cancel', tooltip='Отменить'),
-        'close': lambda tm: SidePanelButton(tm, 'delete', tooltip='Закрыть'),
+        'add': lambda tm: SidePanelButton(tm, 'buttons/plus', tooltip='Создать'),
+        'add_dir': lambda tm: SidePanelButton(tm, 'buttons/add_dir', tooltip='Создать папку'),
+        'delete': lambda tm: SidePanelButton(tm, 'buttons/button_delete', tooltip='Удалить'),
+        'rename': lambda tm: SidePanelButton(tm, 'buttons/button_rename', tooltip='Переименовать'),
+        'to_zip': lambda tm: SidePanelButton(tm, 'buttons/button_to_zip', tooltip='Сжать в zip'),
+        'from_zip': lambda tm: SidePanelButton(tm, 'buttons/button_from_zip', tooltip='Распаковать из zip'),
+        'run': lambda tm: SidePanelButton(tm, 'buttons/run', tooltip='Запустить'),
+        'preview': lambda tm: SidePanelButton(tm, 'buttons/button_preview', tooltip='Предпросмотр'),
+        'pull': lambda tm: SidePanelButton(tm, 'buttons/button_pull', tooltip='Pull'),
+        'commit': lambda tm: SidePanelButton(tm, 'buttons/button_commit', tooltip='Commit'),
+        'push': lambda tm: SidePanelButton(tm, 'buttons/button_push', tooltip='Push'),
+        'save': lambda tm: SidePanelButton(tm, 'buttons/button_save', tooltip='Сохранить'),
+        'load': lambda tm: SidePanelButton(tm, 'buttons/button_load', tooltip='Открыть'),
+        'update': lambda tm: SidePanelButton(tm, 'buttons/update', tooltip='Обновить'),
+        'cancel': lambda tm: SidePanelButton(tm, 'buttons/button_cancel', tooltip='Отменить'),
+        'close': lambda tm: SidePanelButton(tm, 'buttons/delete', tooltip='Закрыть'),
     }
 
     def __init__(self, sm: SettingsManager, tm, name, buttons):

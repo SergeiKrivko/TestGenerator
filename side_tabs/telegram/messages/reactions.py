@@ -1,3 +1,4 @@
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QPushButton
 
 from side_tabs.telegram.telegram_api import tg
@@ -28,9 +29,12 @@ class Reaction(QPushButton):
     def set_text(self):
         if isinstance(self.reaction, tg.ReactionTypeEmoji):
             if self.count == 1:
-                self.setText(self.reaction.emoji)
+                self.setIcon(QIcon(self.tm.get_image(f"emoji/{self.reaction.emoji}")))
+                # self.setText(self.reaction.emoji)
             else:
-                self.setText(f"{self.reaction.emoji} {self.count}")
+                # self.setText(f"{self.reaction.emoji} {self.count}")
+                self.setIcon(QIcon(self.tm.get_image(f"emoji/{self.reaction.emoji}")))
+                self.setText(str(self.count))
 
     def set_theme(self):
         self.tm.auto_css(self, border=False, palette='Menu', padding=True)
