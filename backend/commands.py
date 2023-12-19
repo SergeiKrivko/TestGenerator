@@ -25,7 +25,8 @@ ENCODINGS = ['utf-8', 'utf-16', 'ansi', 'ascii', 'charmap']
 def cmd_command(args, **kwargs):
     if isinstance(text := kwargs.get('input', b''), str):
         kwargs['input'] = text.encode(kwargs.get('encoding', 'utf-8'))
-    print(args, f"({kwargs.get('cwd')})")
+    print_args(args)
+    # print(args, f"({kwargs.get('cwd')})")
     res = subprocess.run(args, capture_output=True, startupinfo=get_si(), **kwargs)
     for encoding in ENCODINGS:
         try:
@@ -156,3 +157,19 @@ def check_files_mtime(file, dependencies):
         if os.path.getmtime(el) > os.path.getmtime(file):
             return False
     return True
+
+
+def print_args(args: str):
+    if args.startswith('wsl -e'):
+        args = args[len('wsl -e'):]
+        print(f"\033[32mwsl -e\033[0m", end=' ')
+    i = 0
+    for arg in args.split():
+        if i == 0:
+            print(f"\033[31m{arg}\033[0m", end=' ')
+        elif arg.startswith('-'):
+            print(f"\033[36m{arg}\033[0m", end=' ')
+        else:
+            print(f"\033[33m{arg}\033[0m", end=' ')
+        i += 1
+    print()
