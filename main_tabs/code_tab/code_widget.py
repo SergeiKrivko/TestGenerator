@@ -375,8 +375,8 @@ class TopPanelWidget(QWidget):
         if '.' in name and (ind := name.rindex('.')):
             file_type = name[ind + 1:]
         else:
-            file_type = 'unknown_file'
-        self.tab_bar.addTab(QIcon(self.tm.get_image(file_type, 'icons/unknown_file')), name)
+            file_type = 'icons/unknown_file'
+        self.tab_bar.addTab(QIcon(self.tm.get_image('files/' + file_type, 'icons/unknown_file')), name)
         self.tabs.append(path)
         self.tab_bar.setCurrentIndex(self.tab_bar.count() - 1)
         self.tabSelected.emit(path)

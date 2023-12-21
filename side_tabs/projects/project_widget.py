@@ -11,7 +11,6 @@ from backend.settings_manager import SettingsManager
 from language.languages import PROJECT_LANGUAGES, languages
 from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
-from ui.options_window import OptionsWidget
 from ui.side_panel_widget import SidePanelWidget
 
 LANGUAGES = PROJECT_LANGUAGES
@@ -102,7 +101,7 @@ class ProjectWidget(SidePanelWidget):
     def new_project(self):
         dialog = NewProjectDialog(self.sm, self.tm)
         if dialog.exec():
-            project_name = dialog.options_widget['Название проекта:']
+            project_name = dialog.proj_name_edit.text()
             path = dialog.dir_edit.text()
             if not dialog.checkbox.isChecked():
                 path = os.path.join(path, project_name)
@@ -112,8 +111,8 @@ class ProjectWidget(SidePanelWidget):
             self.update_projects()
             self.select_project(project)
 
-            project['language'] = dialog.options_widget.widgets["Язык:"].currentText()
-            project['func_tests_in_project'] = dialog.options_widget["Сохранять тесты в папке проекта"]
+            project['language'] = dialog.lang_edit.currentText()
+            project['func_tests_in_project'] = dialog.save_tests_checkbox.isChecked()
             self.update_projects()
 
     def open_project(self, forced=False):
@@ -123,7 +122,6 @@ class ProjectWidget(SidePanelWidget):
             return
         if self.list_widget.currentItem().project == self.sm.main_project:
             return
-        print(f"ProjectWidget: open({repr(self.list_widget.currentItem().project.path())})")
         self.bm.open_main_project(self.list_widget.currentItem().project)
 
     def project_to_zip(self):
@@ -371,18 +369,14 @@ class NewProjectDialog(CustomDialog):
     def __init__(self, sm, tm):
         super().__init__(tm, "Новый проект")
         self.sm = sm
+        self.setFixedWidth(300)
 
         main_layout = QVBoxLayout()
         self.labels = []
 
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.checkbox = QCheckBox()
-        layout.addWidget(self.checkbox)
-        label = QLabel("Из существующей папки")
-        self.labels.append(label)
-        layout.addWidget(label)
-        main_layout.addLayout(layout)
+        self.checkbox = QCheckBox("Из существующей папки")
+        main_layout.addWidget(self.checkbox)
+        main_layout.addLayout(main_layout)
 
         layout = QHBoxLayout()
         layout.setSpacing(2)
@@ -395,12 +389,29 @@ class NewProjectDialog(CustomDialog):
         layout.addWidget(self.dir_button)
         main_layout.addLayout(layout)
 
-        self.options_widget = OptionsWidget({
-            "Название проекта:": {'type': str, 'width': 300},
-            "Язык:": {'type': 'combo', 'values': PROJECT_LANGUAGES, 'name': OptionsWidget.NAME_LEFT},
-            "Сохранять тесты в папке проекта": {'type': bool, 'name': OptionsWidget.NAME_RIGHT}
-        })
-        main_layout.addWidget(self.options_widget)
+        label = QLabel("Название проекта:")
+        self.labels.append(label)
+        main_layout.addWidget(label)
+
+        self.proj_name_edit = QLineEdit()
+        main_layout.addWidget(self.proj_name_edit)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        main_layout.addLayout(layout)
+
+        label = QLabel("Язык:")
+        self.labels.append(label)
+        layout.addWidget(label)
+
+        self.lang_edit = QComboBox()
+        self.lang_edit.addItems(PROJECT_LANGUAGES)
+        layout.addWidget(self.lang_edit)
+
+        self.save_tests_checkbox = QCheckBox("Сохранять тесты в папке проекта")
+        main_layout.addWidget(self.checkbox)
+        main_layout.addWidget(self.save_tests_checkbox)
 
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 10, 0, 0)
@@ -427,12 +438,12 @@ class NewProjectDialog(CustomDialog):
             self.dir_edit.text()) else os.getcwd() if self.sm.project is None else self.sm.project.path())
         self.dir_edit.setText(path)
         if self.checkbox.isChecked():
-            self.options_widget.set_value("Название проекта:", os.path.basename(path))
+            self.proj_name_edit.setText(os.path.basename(path))
 
     def set_theme(self):
         super().set_theme()
-        for el in [self.checkbox, self.dir_edit, self.dir_button, self.button_ok, self.button_cancel]:
+        for el in [self.checkbox, self.dir_edit, self.dir_button, self.button_ok, self.button_cancel,
+                   self.save_tests_checkbox, self.proj_name_edit, self.lang_edit]:
             self.tm.auto_css(el)
         for el in self.labels:
             self.tm.auto_css(el)
-        self.tm.css_to_options_widget(self.options_widget)

@@ -11,7 +11,6 @@ import PIL.Image as Image
 
 from settings.program_combo_box import ProgramComboBox
 from ui.button import Button
-from ui.options_window import FileWidget
 from ui.resources import resources
 
 basic_theme = {
@@ -1347,7 +1346,7 @@ QMenu::separator {{
             for item in datas:
                 if item[0] == 255 and item[1] == 255 and item[2] == 255:
                     new_data.append((255, 255, 255, 0))
-                elif item[0] == 0 and item[1] == 0 and item[2] == 0:
+                elif item[0] == 0 and item[1] == 0 and item[2] == 0 and item[3] == 255:
                     new_data.append(color)
                 else:
                     new_data.append(item)

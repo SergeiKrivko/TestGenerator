@@ -26,10 +26,10 @@ class TreeFile(QTreeWidgetItem):
         self.tm = tm
         self.path = path
         self.name = os.path.basename(self.path)
-        if '.' not in self.name or (ind := self.name.rindex('.')) == 0:
+        if '.' not in self.name:
             self.file_type = 'icons/unknown_file'
         else:
-            self.file_type = self.name[ind + 1:]
+            self.file_type = self.name[self.name.rindex('.') + 1:]
 
         super().__init__([self.name])
 
@@ -580,7 +580,7 @@ class FilesWidget(SidePanelWidget):
             return
         if to_trash:
             try:
-                send2trash.send2trash(self.files_list.currentItem().path)
+                send2trash.send2trash([item.path for item in self.files_list.selectedItems()])
             except FileExistsError:
                 pass
             except Exception as ex:

@@ -103,7 +103,6 @@ class ProgramInstance:
         return ' '.join(vs_args)
 
     def command(self):
-
         return self.vs_args() + ' ' + self.path
 
     def __call__(self, args, **kwargs):

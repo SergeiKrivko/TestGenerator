@@ -141,9 +141,9 @@ languages = {
             QsciLexerMarkdown.Link: 'String',
             QsciLexerMarkdown.Default: 'Identifier'
         }, 'preview': True,
-        'fast_run': [('Конвертировать в Docx', 'docx', lambda path, pr, bm: (other.report.markdown_parser.convert(
+        'fast_run': [('Конвертировать в Docx', 'files/docx', lambda path, pr, bm: (other.report.markdown_parser.convert(
             path, pr, bm, pdf=False), '')),
-                     ('Конвертировать в Pdf', 'pdf', lambda path, pr, bm: (other.report.markdown_parser.convert(
+                     ('Конвертировать в Pdf', 'files/pdf', lambda path, pr, bm: (other.report.markdown_parser.convert(
                          path, pr, bm, pdf=True), ''))],
     },
     'HTML': {
@@ -249,11 +249,11 @@ languages = {
             LexerBin.Comment: 'Comment'
         },
         'run': lambda path, *args, **kwargs: convert_binary(in_path=path),
-        'fast_run': [('Конвертировать', 'bin', lambda path, project, bm: ('', convert_binary(
+        'fast_run': [('Конвертировать', 'files/bin', lambda path, project, bm: ('', convert_binary(
             in_path=path, exceptions=False)))]
     },
     'ZIP': {'files': ['.zip'],
-            'fast_run': [('Распаковать', 'zip', lambda path, *args: ('', ZipManager.extract(path)))]}
+            'fast_run': [('Распаковать', 'files/zip', lambda path, *args: ('', ZipManager.extract(path)))]}
 }
 
 PROJECT_LANGUAGES = ['C', 'C++', 'Python']

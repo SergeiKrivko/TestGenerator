@@ -54,15 +54,16 @@ def c_compile(project, build, sm, lib=False):
             app_file = f"{path}/{build.get('app_file')}"
 
         if lib and not build.get('dynamic', False):
-            res = cmd_command(f"ar cr {app_file} {' '.join(o_files)}", cwd=project.path())
+            res = cmd_command(f"{compiler.vs_args()} ar cr {app_file} {' '.join(o_files)}", cwd=project.path())
+            print(res)
             if not res.returncode:
-                res = cmd_command(f"ranlib {app_file}", cwd=project.path())
+                res = cmd_command(f"{compiler.vs_args()} ranlib {app_file}", cwd=project.path())
                 if res.returncode:
                     code = False
                 errors.append(res.stderr)
             else:
                 code = False
-                errors.append(res.returncode)
+                errors.append(res.stderr)
 
         else:
             res = compiler(f"{'--coverage' if coverage else ''} -o {app_file}"

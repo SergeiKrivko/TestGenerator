@@ -6,7 +6,7 @@ from backend.commands import cmd_command
 
 def python_run(project, sm, build, args=''):
     interpreter = PROGRAMS['python'].get(sm, build)
-    return f"{interpreter.path} " \
+    return f"{interpreter.command()} " \
            f"{interpreter.convert_path(os.path.join(project.path(), build.get('file', 'main.py')))} {args}"
 
 

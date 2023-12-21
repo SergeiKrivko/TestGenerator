@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QListWidget, QLab
 from main_tabs.tests.gpt_generator import GPTTestGenerator
 from side_tabs.builds.commands_list import ScenarioBox
 from ui.button import Button
-from ui.options_window import OptionsWidget
 
 BUTTONS_MAX_WIDTH = 30
 
@@ -286,88 +285,3 @@ class TestTableWidget(QWidget):
             self.ctrl_pressed = False
         if a0.key() == Qt.Key.Key_Shift:
             self.shift_pressed = False
-
-
-class ExportDialog(QDialog):
-    def __init__(self, sm, cm, tm):
-        super().__init__()
-        self._tm = tm
-        self._sm = sm
-        self._cm = cm
-        self.tests = []
-        self._looper = None
-
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
-
-        self._options_widget = OptionsWidget({
-            "Формат файла:": {'type': 'combo', 'values': ['Txt', 'Docx', "Markdown"], 'name': OptionsWidget.NAME_LEFT},
-            "Путь:": {'type': 'file', 'width': 300},
-            "Ожидаемый вывод": {'type': bool, 'name': OptionsWidget.NAME_RIGHT},
-            "Фактический вывод": {'type': bool, 'name': OptionsWidget.NAME_RIGHT},
-            "Результат": {'type': bool, 'name': OptionsWidget.NAME_RIGHT},
-            "Запустить тестирование": {'type': bool, 'name': OptionsWidget.NAME_RIGHT},
-        })
-        main_layout.addWidget(self._options_widget)
-
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setContentsMargins(0, 0, 0, 0)
-        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        main_layout.addLayout(buttons_layout)
-
-        self._button_export = QPushButton("Экспортировать")
-        self._button_export.setFixedSize(160, 24)
-        self._button_export.clicked.connect(self._execute)
-        buttons_layout.addWidget(self._button_export)
-
-        self._tm.css_to_options_widget(self._options_widget)
-        self._tm.auto_css(self._button_export)
-        self.setStyleSheet(self._tm.bg_style_sheet)
-
-    def _execute(self, skip_looper=False):
-        if not skip_looper and self._options_widget["Запустить тестирование"]:
-            # self._looper = TestingLooper(self._sm, self._cm, self.tests)
-            self._looper.finished.connect(lambda: self._execute(skip_looper=True))
-            self._looper.start()
-            return
-
-        if self._options_widget["Формат файла:"] == 0:
-            self._export_txt()
-        elif self._options_widget["Формат файла:"] == 1:
-            self._export_docx()
-        self.accept()
-
-    def _prepare_data(self):
-        for test in self.tests:
-            flag = test.is_loaded()
-            if not flag:
-                test.load()
-            lst = [test.get('desc', ''), test.get('in', '')]
-            if self._options_widget["Ожидаемый вывод"]:
-                lst.append(test.get('out', ''))
-            if self._options_widget["Фактический вывод"]:
-                if self._options_widget["Запустить тестирование"]:
-                    lst.append(test.prog_out['STDOUT'])
-            if self._options_widget["Результат"]:
-                lst.append("OK" if test.res() else "FAIL")
-            if not flag:
-                test.unload()
-            yield lst
-
-    def _export_txt(self):
-        with open(self._options_widget["Путь:"], 'w', encoding='utf-8') as f:
-            for test in self._prepare_data():
-                f.write(' '.join(test) + '\n')
-
-    def _export_docx(self):
-        document = docx.Document()
-
-        lst = list(self._prepare_data())
-
-        table = document.add_table(rows=len(lst), cols=len(lst[0]))
-        table.style = 'Table Grid'
-        for i in range(len(lst)):
-            for j in range(len(lst[i])):
-                table.cell(i, j).text = str(lst[i][j])
-
-        document.save(self._options_widget["Путь:"])

@@ -113,7 +113,7 @@ class NewCommandDialog(CustomDialog):
         self.bm = bm
         self._fixed_type = fixed_type
 
-        self.setFixedSize(300, 100)
+        self.setFixedWidth(300)
 
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
