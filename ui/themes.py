@@ -733,18 +733,6 @@ class ThemeManager:
         elif isinstance(widget, QMenu):
             widget.setStyleSheet(self.menu_css(palette))
 
-    def css_to_options_widget(self, widget):
-        widget.setFont(self.font_medium)
-        for el in widget.widgets.values():
-            if isinstance(el, ProgramComboBox):
-                el.set_theme(self)
-            elif isinstance(el, FileWidget):
-                self.auto_css(el.line_edit)
-                self.auto_css(el.button)
-            self.auto_css(el)
-        for el in widget.labels.values():
-            self.auto_css(el)
-
     def set_theme(self, theme_name):
         self.theme_name = theme_name
         self.clear_images()

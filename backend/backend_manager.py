@@ -27,6 +27,7 @@ class BackendManager(QObject):
     startChangingProject = pyqtSignal()
     finishChangingProject = pyqtSignal()
     allProcessFinished = pyqtSignal()
+    processStatusChanged = pyqtSignal(str, str)
     loadingStart = pyqtSignal(Project)
     updateProgress = pyqtSignal(int, int)
 
@@ -449,17 +450,25 @@ class BackendManager(QObject):
         self._background_process_count += 1
         thread.finished.connect(lambda: self._on_thread_finished(group, name, thread))
         thread.start()
+        self.processStatusChanged.emit(group, name)
         return thread
 
     def _on_thread_finished(self, group, name, process):
         self._background_process_count -= 1
         if self._background_processes[group][name] == process:
             self._background_processes[group].pop(name)
+        self.processStatusChanged.emit(group, name)
         if self._background_process_count == 0:
             self.allProcessFinished.emit()
 
     def all_finished(self):
         return self._background_process_count == 0
+
+    def get_process_groups(self):
+        return self._background_processes.keys()
+
+    def get_processes_of_group(self, group: str):
+        return self._background_processes.get(group, dict()).keys()
 
     def terminate_all(self):
         for item in self._background_processes.values():

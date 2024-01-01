@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 from ui.lab_widget import LabWidget
 from ui.button import Button
+from ui.process_manager_widget import ProcessManagerWidget
 
 
 class MainMenu(QWidget):
@@ -40,6 +41,9 @@ class MainMenu(QWidget):
 
         self.lab_widget = LabWidget(self.tm, self.sm, self.bm)
         layout.addWidget(self.lab_widget)
+
+        self.process_widget = ProcessManagerWidget(self.bm, self.tm)
+        layout.addWidget(self.process_widget)
 
         self._widget = QWidget()
         layout.addWidget(self._widget, 1000)
@@ -141,6 +145,7 @@ class MainMenu(QWidget):
             el.setStyleSheet(self.tm.button_css(palette='Menu', border=False, padding=True))
             el.setFont(self.tm.font_medium)
         self.lab_widget.set_theme()
+        self.process_widget.set_theme()
         for el in [self.button_minimize, self.button_maximize, self.button_settings, self.button_close,
                    self.button_hide]:
             el.set_theme()

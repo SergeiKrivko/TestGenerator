@@ -18,5 +18,5 @@ def notification(title, message, on_click=None):
         '''
         os.system(command)
     elif plt == "Windows":
-        win11toast.toast(title, message, on_click=on_click, dialogue=title,
+        win11toast.toast(title, message, on_click=on_click,
                          icon=r"file:///C:\Users\sergi\AppData\Local\SergeiKrivko\TestGenerator\icon.png")
