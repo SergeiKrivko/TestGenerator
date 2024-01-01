@@ -122,7 +122,7 @@ class TelegramManager(QThread):
         # OPTIONS
 
         if isinstance(event, tg.UpdateOption):
-            self._options[event.name] = event.value.value
+            self._options[event.name] = None if not hasattr(event.value, 'value') else event.value.value
         if isinstance(event, tg.UpdateActiveEmojiReactions):
             self.active_reactions = event.emojis
 

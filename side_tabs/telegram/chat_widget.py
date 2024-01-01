@@ -1,16 +1,21 @@
+from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint
 from PyQt6.QtGui import QKeyEvent, QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QMenu
 
+from side_tabs.telegram.chat_bubble import TelegramChatBubble
 from side_tabs.telegram.send_message_dialog import SendMessageDialog, MessageTypeMenu
+from side_tabs.telegram.telegram_api import tg
+from side_tabs.telegram.telegram_manager import TgChat, TelegramManager
 from ui.button import Button
 
 
-class ChatWidget(QWidget):
+class TelegramChatWidget(QWidget):
     loadRequested = pyqtSignal()
     sendMessageRequested = pyqtSignal(int)
+    sendMessage = pyqtSignal(str)
 
-    def __init__(self, sm, tm):
+    def __init__(self, sm, tm, chat: TgChat, manager: TelegramManager):
         super().__init__()
         self._sm = sm
         self._tm = tm
@@ -54,11 +59,90 @@ class ChatWidget(QWidget):
         self._last_pos = 0
         self._last_max = 0
 
-    def send_message(self):
-        pass
+        self._chat = chat
+        self._manager = manager
+        self.loading = False
 
-    def add_bubble(self, text, side):
-        pass
+        self._scroll_bar = self._scroll_area.verticalScrollBar()
+        self._scroll_bar.valueChanged.connect(self._on_scroll_bar_value_changed)
+
+        self._messages_to_load = 20
+        self.loadRequested.connect(self.add_messages_to_load)
+
+        if not self._chat.permissions.can_send_basic_messages:
+            self._text_edit.hide()
+            self._button.hide()
+
+        self.sendMessageRequested.connect(self._sending_document)
+        self._manager.deleteMessages.connect(self._delete_messages)
+
+    def show(self) -> None:
+        if self.isHidden():
+            # self._scroll_bar.setValue(self._scroll_bar.maximum())
+            self.check_if_need_to_load()
+        super().show()
+
+    def _delete_messages(self, chat_id, message_ids):
+        if chat_id == self._chat.id:
+            self._delete_bubbles(message_ids)
+
+    def _sending_document(self, doc_type):
+        dialog = SendMessageDialog(self._manager._bm, self._tm, self._chat, self._text_edit.toPlainText(), doc_type)
+        dialog.exec()
+
+    def check_if_need_to_load(self):
+        if self.loading:
+            return
+        if self._chat.message_count() < self._messages_to_load:
+            if self._chat.first_message is None:
+                tg.getChatHistory(self._chat.id, limit=50)
+            else:
+                tg.getChatHistory(self._chat.id, from_message_id=self._chat.first_message.id, limit=50)
+            self.loading = True
+
+    def _on_scroll_bar_value_changed(self):
+        el = None
+        for el in self._bubbles:
+            if not (0 < el.y() - self._scroll_bar.value() + el.height() < self.height()):
+                break
+        if el is not None:
+            el.set_read()
+
+    def add_messages_to_load(self):
+        self._messages_to_load = self._chat.message_count() + 10
+        self.check_if_need_to_load()
+
+    def add_message(self, message: tg.Message):
+        self.add_bubble(message)
+
+    def insert_message(self, message: tg.Message):
+        self.insert_bubble(message)
+
+    def insert_bubble(self, message: tg.Message):
+        bubble = TelegramChatBubble(self._tm, message, self._manager)
+        bubble.set_max_width(int(self.width() * 0.8))
+        if isinstance(self._chat.type, tg.ChatTypePrivate):
+            bubble.hide_sender()
+        self._insert_bubble(bubble)
+
+    def add_bubble(self, message: tg.Message, *args):
+        bubble = TelegramChatBubble(self._tm, message, self._manager)
+        bubble.set_max_width(int(self.width() * 0.8))
+        if isinstance(self._chat.type, tg.ChatTypePrivate):
+            bubble.hide_sender()
+        self._add_buble(bubble)
+
+    def resizeEvent(self, a0: QtGui.QResizeEvent) -> None:
+        super().resizeEvent(a0)
+        for el in self._bubbles:
+            el.set_max_width(min(750, int(self.width() * 0.7)))
+
+    def send_message(self):
+        if not (text := self._text_edit.toPlainText()):
+            return
+        # self.sendMessage.emit(text)
+        tg.sendMessage(self._chat.id, input_message_content=tg.InputMessageText(text=tg.FormattedText(text=text)))
+        self._text_edit.setText("")
 
     def _run_menu(self):
         menu = MessageTypeMenu(self._tm)

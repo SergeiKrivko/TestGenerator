@@ -34,6 +34,8 @@ class AccentColor(Object):
         self.light_theme_colors: list[int] = get_object(kwargs.get('light_theme_colors'))
         # The list of 1-3 colors in RGB format, describing the accent color, as expected to be shown in dark themes.
         self.dark_theme_colors: list[int] = get_object(kwargs.get('dark_theme_colors'))
+        # The minimum chat boost level required to use the color.
+        self.min_chat_boost_level: int = get_object(kwargs.get('min_chat_boost_level'))
 
 
 class AccountTtl(Object):
@@ -78,7 +80,7 @@ class AddedReactions(Object):
         self.total_count: int = get_object(kwargs.get('total_count'))
         # The list of added reactions.
         self.reactions: list[AddedReaction] = get_object(kwargs.get('reactions'))
-        # The offset for the next request. If empty, there are no more results.
+        # The offset for the next request. If empty, then there are no more results.
         self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
@@ -714,7 +716,7 @@ class Background(Object):
         self.is_dark: bool = get_object(kwargs.get('is_dark'))
         # Unique background name.
         self.name: str = get_object(kwargs.get('name'))
-        # Document with the background; may be null. Null only for filled backgrounds.
+        # Document with the background; may be null. Null only for filled and chat theme backgrounds.
         self.document: Document = get_object(kwargs.get('document'))
         # Type of the background.
         self.type: BackgroundType = get_object(kwargs.get('type'))
@@ -784,6 +786,14 @@ class BackgroundTypeFill(BackgroundType):
         self._data = kwargs
         # The background fill.
         self.fill: BackgroundFill = get_object(kwargs.get('fill'))
+
+
+class BackgroundTypeChatTheme(BackgroundType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Name of the chat theme.
+        self.theme_name: str = get_object(kwargs.get('theme_name'))
 
 
 class Backgrounds(Object):
@@ -1568,7 +1578,7 @@ class ChatBackground(Object):
         self._data = kwargs
         # The background.
         self.background: Background = get_object(kwargs.get('background'))
-        # Dimming of the background in dark themes, as a percentage; 0-100.
+        # Dimming of the background in dark themes, as a percentage; 0-100. Applied only to Wallpaper and Fill types of background.
         self.dark_theme_dimming: int = get_object(kwargs.get('dark_theme_dimming'))
 
 
@@ -1624,7 +1634,7 @@ class ChatPermissions(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # True, if the user can send text messages, contacts, giveaways, invoices, locations, and venues.
+        # True, if the user can send text messages, contacts, giveaways, giveaway winners, invoices, locations, and venues.
         self.can_send_basic_messages: bool = get_object(kwargs.get('can_send_basic_messages'))
         # True, if the user can send music files.
         self.can_send_audios: bool = get_object(kwargs.get('can_send_audios'))
@@ -1694,6 +1704,16 @@ class DraftMessage(Object):
         self.date: int = get_object(kwargs.get('date'))
         # Content of the message draft; must be of the type inputMessageText.
         self.input_message_text: InputMessageContent = get_object(kwargs.get('input_message_text'))
+
+
+class EmojiStatus(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the custom emoji in stickerFormatTgs format.
+        self.custom_emoji_id: int = get_object(kwargs.get('custom_emoji_id'))
+        # Point in time (Unix timestamp) when the status will expire; 0 if never.
+        self.expiration_date: int = get_object(kwargs.get('expiration_date'))
 
 
 class Message(Object):
@@ -1808,8 +1828,12 @@ class Chat(Object):
         self.photo: ChatPhotoInfo = get_object(kwargs.get('photo'))
         # Identifier of the accent color for message sender name, and backgrounds of chat photo, reply header, and link preview.
         self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
-        # Identifier of a custom emoji to be shown on the reply header background in replies to messages sent by the chat; 0 if none.
+        # Identifier of a custom emoji to be shown on the reply header and link preview background for messages sent by the chat; 0 if none.
         self.background_custom_emoji_id: int = get_object(kwargs.get('background_custom_emoji_id'))
+        # Identifier of the profile accent color for the chat's profile; -1 if none.
+        self.profile_accent_color_id: int = get_object(kwargs.get('profile_accent_color_id'))
+        # Identifier of a custom emoji to be shown on the background of the chat's profile; 0 if none.
+        self.profile_background_custom_emoji_id: int = get_object(kwargs.get('profile_background_custom_emoji_id'))
         # Actions that non-administrator chat members are allowed to take in the chat.
         self.permissions: ChatPermissions = get_object(kwargs.get('permissions'))
         # Last message in the chat; may be null if none or unknown.
@@ -1826,6 +1850,8 @@ class Chat(Object):
         self.is_translatable: bool = get_object(kwargs.get('is_translatable'))
         # True, if the chat is marked as unread.
         self.is_marked_as_unread: bool = get_object(kwargs.get('is_marked_as_unread'))
+        # True, if the chat is a forum supergroup that must be shown in the &quot;View as topics&quot; mode.
+        self.view_as_topics: bool = get_object(kwargs.get('view_as_topics'))
         # True, if the chat has scheduled messages.
         self.has_scheduled_messages: bool = get_object(kwargs.get('has_scheduled_messages'))
         # True, if the chat messages can be deleted only for the current user while other users will continue to see the messages.
@@ -1852,6 +1878,8 @@ class Chat(Object):
         self.available_reactions: ChatAvailableReactions = get_object(kwargs.get('available_reactions'))
         # Current message auto-delete or self-destruct timer setting for the chat, in seconds; 0 if disabled. Self-destruct timer in secret chats starts after the message or its content is viewed. Auto-delete timer in other chats starts from the send date.
         self.message_auto_delete_time: int = get_object(kwargs.get('message_auto_delete_time'))
+        # Emoji status to be shown along with chat title; may be null.
+        self.emoji_status: EmojiStatus = get_object(kwargs.get('emoji_status'))
         # Background set for the chat; may be null if none.
         self.background: ChatBackground = get_object(kwargs.get('background'))
         # If non-empty, name of a theme, set for the chat.
@@ -2122,6 +2150,42 @@ class ChatBoost(Object):
         self.expiration_date: int = get_object(kwargs.get('expiration_date'))
 
 
+class ChatBoostLevelFeatures(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Target chat boost level.
+        self.level: int = get_object(kwargs.get('level'))
+        # Number of stories that the chat can publish daily.
+        self.story_per_day_count: int = get_object(kwargs.get('story_per_day_count'))
+        # Number of custom emoji reactions that can be added to the list of available reactions.
+        self.custom_emoji_reaction_count: int = get_object(kwargs.get('custom_emoji_reaction_count'))
+        # Number of custom colors for chat title.
+        self.title_color_count: int = get_object(kwargs.get('title_color_count'))
+        # Number of custom colors for profile photo background.
+        self.profile_accent_color_count: int = get_object(kwargs.get('profile_accent_color_count'))
+        # True, if custom emoji for profile background can be set.
+        self.can_set_profile_background_custom_emoji: bool = get_object(kwargs.get('can_set_profile_background_custom_emoji'))
+        # Number of custom colors for background of empty chat photo, replies to messages and link previews.
+        self.accent_color_count: int = get_object(kwargs.get('accent_color_count'))
+        # True, if custom emoji for reply header and link preview background can be set.
+        self.can_set_background_custom_emoji: bool = get_object(kwargs.get('can_set_background_custom_emoji'))
+        # True, if emoji status can be set.
+        self.can_set_emoji_status: bool = get_object(kwargs.get('can_set_emoji_status'))
+        # Number of chat theme backgrounds that can be set as chat background.
+        self.chat_theme_background_count: int = get_object(kwargs.get('chat_theme_background_count'))
+        # True, if custom background can be set in the chat for all users.
+        self.can_set_custom_background: bool = get_object(kwargs.get('can_set_custom_background'))
+
+
+class ChatBoostFeatures(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The list of features.
+        self.features: list[ChatBoostLevelFeatures] = get_object(kwargs.get('features'))
+
+
 class ChatBoostLink(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -2206,7 +2270,7 @@ class PrepaidPremiumGiveaway(Object):
         self.id: int = get_object(kwargs.get('id'))
         # Number of users which will receive Telegram Premium subscription gift codes.
         self.winner_count: int = get_object(kwargs.get('winner_count'))
-        # Number of month the Telegram Premium subscription will be active after code activation.
+        # Number of months the Telegram Premium subscription will be active after code activation.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # Point in time (Unix timestamp) when the giveaway was paid.
         self.payment_date: int = get_object(kwargs.get('payment_date'))
@@ -2412,6 +2476,16 @@ class ChatEventAvailableReactionsChanged(ChatEventAction):
         self.new_available_reactions: ChatAvailableReactions = get_object(kwargs.get('new_available_reactions'))
 
 
+class ChatEventBackgroundChanged(ChatEventAction):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Previous background; may be null if none.
+        self.old_background: ChatBackground = get_object(kwargs.get('old_background'))
+        # New background; may be null if none.
+        self.new_background: ChatBackground = get_object(kwargs.get('new_background'))
+
+
 class ChatEventDescriptionChanged(ChatEventAction):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -2420,6 +2494,16 @@ class ChatEventDescriptionChanged(ChatEventAction):
         self.old_description: str = get_object(kwargs.get('old_description'))
         # New chat description.
         self.new_description: str = get_object(kwargs.get('new_description'))
+
+
+class ChatEventEmojiStatusChanged(ChatEventAction):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Previous emoji status; may be null if none.
+        self.old_emoji_status: EmojiStatus = get_object(kwargs.get('old_emoji_status'))
+        # New emoji status; may be null if none.
+        self.new_emoji_status: EmojiStatus = get_object(kwargs.get('new_emoji_status'))
 
 
 class ChatEventLinkedChatChanged(ChatEventAction):
@@ -2528,18 +2612,26 @@ class ChatEventAccentColorChanged(ChatEventAction):
         self._data = kwargs
         # Previous identifier of chat accent color.
         self.old_accent_color_id: int = get_object(kwargs.get('old_accent_color_id'))
+        # Previous identifier of the custom emoji; 0 if none.
+        self.old_background_custom_emoji_id: int = get_object(kwargs.get('old_background_custom_emoji_id'))
         # New identifier of chat accent color.
         self.new_accent_color_id: int = get_object(kwargs.get('new_accent_color_id'))
+        # New identifier of the custom emoji; 0 if none.
+        self.new_background_custom_emoji_id: int = get_object(kwargs.get('new_background_custom_emoji_id'))
 
 
-class ChatEventBackgroundCustomEmojiChanged(ChatEventAction):
+class ChatEventProfileAccentColorChanged(ChatEventAction):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
+        # Previous identifier of chat's profile accent color; -1 if none.
+        self.old_profile_accent_color_id: int = get_object(kwargs.get('old_profile_accent_color_id'))
         # Previous identifier of the custom emoji; 0 if none.
-        self.old_background_custom_emoji_id: int = get_object(kwargs.get('old_background_custom_emoji_id'))
+        self.old_profile_background_custom_emoji_id: int = get_object(kwargs.get('old_profile_background_custom_emoji_id'))
+        # New identifier of chat's profile accent color; -1 if none.
+        self.new_profile_accent_color_id: int = get_object(kwargs.get('new_profile_accent_color_id'))
         # New identifier of the custom emoji; 0 if none.
-        self.new_background_custom_emoji_id: int = get_object(kwargs.get('new_background_custom_emoji_id'))
+        self.new_profile_background_custom_emoji_id: int = get_object(kwargs.get('new_profile_background_custom_emoji_id'))
 
 
 class ChatEventHasProtectedContentToggled(ChatEventAction):
@@ -3250,6 +3342,20 @@ class ChatStatisticsAdministratorActionsInfo(Object):
         self.restricted_user_count: int = get_object(kwargs.get('restricted_user_count'))
 
 
+class ChatStatisticsInteractionInfo(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Type of the object.
+        self.object_type: ChatStatisticsObjectType = get_object(kwargs.get('object_type'))
+        # Number of times the object was viewed.
+        self.view_count: int = get_object(kwargs.get('view_count'))
+        # Number of times the object was forwarded.
+        self.forward_count: int = get_object(kwargs.get('forward_count'))
+        # Number of times reactions were added to the object.
+        self.reaction_count: int = get_object(kwargs.get('reaction_count'))
+
+
 class ChatStatisticsInviterInfo(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -3258,18 +3364,6 @@ class ChatStatisticsInviterInfo(Object):
         self.user_id: int = get_object(kwargs.get('user_id'))
         # Number of new members invited by the user.
         self.added_member_count: int = get_object(kwargs.get('added_member_count'))
-
-
-class ChatStatisticsMessageInteractionInfo(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Message identifier.
-        self.message_id: int = get_object(kwargs.get('message_id'))
-        # Number of times the message was viewed.
-        self.view_count: int = get_object(kwargs.get('view_count'))
-        # Number of times the message was forwarded.
-        self.forward_count: int = get_object(kwargs.get('forward_count'))
 
 
 class ChatStatisticsMessageSenderInfo(Object):
@@ -3358,10 +3452,18 @@ class ChatStatisticsChannel(ChatStatistics):
         self.period: DateRange = get_object(kwargs.get('period'))
         # Number of members in the chat.
         self.member_count: StatisticalValue = get_object(kwargs.get('member_count'))
-        # Mean number of times the recently sent messages was viewed.
-        self.mean_view_count: StatisticalValue = get_object(kwargs.get('mean_view_count'))
-        # Mean number of times the recently sent messages was shared.
-        self.mean_share_count: StatisticalValue = get_object(kwargs.get('mean_share_count'))
+        # Mean number of times the recently sent messages were viewed.
+        self.mean_message_view_count: StatisticalValue = get_object(kwargs.get('mean_message_view_count'))
+        # Mean number of times the recently sent messages were shared.
+        self.mean_message_share_count: StatisticalValue = get_object(kwargs.get('mean_message_share_count'))
+        # Mean number of times reactions were added to the recently sent messages.
+        self.mean_message_reaction_count: StatisticalValue = get_object(kwargs.get('mean_message_reaction_count'))
+        # Mean number of times the recently sent stories were viewed.
+        self.mean_story_view_count: StatisticalValue = get_object(kwargs.get('mean_story_view_count'))
+        # Mean number of times the recently sent stories were shared.
+        self.mean_story_share_count: StatisticalValue = get_object(kwargs.get('mean_story_share_count'))
+        # Mean number of times reactions were added to the recently sent stories.
+        self.mean_story_reaction_count: StatisticalValue = get_object(kwargs.get('mean_story_reaction_count'))
         # A percentage of users with enabled notifications for the chat; 0-100.
         self.enabled_notifications_percentage: float = get_object(kwargs.get('enabled_notifications_percentage'))
         # A graph containing number of members in the chat.
@@ -3380,10 +3482,38 @@ class ChatStatisticsChannel(ChatStatistics):
         self.language_graph: StatisticalGraph = get_object(kwargs.get('language_graph'))
         # A graph containing number of chat message views and shares.
         self.message_interaction_graph: StatisticalGraph = get_object(kwargs.get('message_interaction_graph'))
+        # A graph containing number of reactions on messages.
+        self.message_reaction_graph: StatisticalGraph = get_object(kwargs.get('message_reaction_graph'))
+        # A graph containing number of story views and shares.
+        self.story_interaction_graph: StatisticalGraph = get_object(kwargs.get('story_interaction_graph'))
+        # A graph containing number of reactions on stories.
+        self.story_reaction_graph: StatisticalGraph = get_object(kwargs.get('story_reaction_graph'))
         # A graph containing number of views of associated with the chat instant views.
         self.instant_view_interaction_graph: StatisticalGraph = get_object(kwargs.get('instant_view_interaction_graph'))
-        # Detailed statistics about number of views and shares of recently sent messages.
-        self.recent_message_interactions: list[ChatStatisticsMessageInteractionInfo] = get_object(kwargs.get('recent_message_interactions'))
+        # Detailed statistics about number of views and shares of recently sent messages and stories.
+        self.recent_interactions: list[ChatStatisticsInteractionInfo] = get_object(kwargs.get('recent_interactions'))
+
+
+class ChatStatisticsObjectType(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class ChatStatisticsObjectTypeMessage(ChatStatisticsObjectType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Message identifier.
+        self.message_id: int = get_object(kwargs.get('message_id'))
+
+
+class ChatStatisticsObjectTypeStory(ChatStatisticsObjectType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Story identifier.
+        self.story_id: int = get_object(kwargs.get('story_id'))
 
 
 class ThemeSettings(Object):
@@ -4010,16 +4140,6 @@ class EmojiReaction(Object):
         self.center_animation: Sticker = get_object(kwargs.get('center_animation'))
 
 
-class EmojiStatus(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Identifier of the custom emoji in stickerFormatTgs format.
-        self.custom_emoji_id: int = get_object(kwargs.get('custom_emoji_id'))
-        # Point in time (Unix timestamp) when the status will expire; 0 if never.
-        self.expiration_date: int = get_object(kwargs.get('expiration_date'))
-
-
 class EmojiStatuses(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -4362,7 +4482,7 @@ class FoundChatBoosts(Object):
         self.total_count: int = get_object(kwargs.get('total_count'))
         # List of boosts.
         self.boosts: list[ChatBoost] = get_object(kwargs.get('boosts'))
-        # The offset for the next request. If empty, there are no more results.
+        # The offset for the next request. If empty, then there are no more results.
         self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
@@ -4386,7 +4506,7 @@ class FoundFileDownloads(Object):
         self.total_counts: DownloadedFileCounts = get_object(kwargs.get('total_counts'))
         # The list of files.
         self.files: list[FileDownload] = get_object(kwargs.get('files'))
-        # The offset for the next request. If empty, there are no more results.
+        # The offset for the next request. If empty, then there are no more results.
         self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
@@ -4398,7 +4518,7 @@ class FoundMessages(Object):
         self.total_count: int = get_object(kwargs.get('total_count'))
         # List of messages.
         self.messages: list[Message] = get_object(kwargs.get('messages'))
-        # The offset for the next request. If empty, there are no more results.
+        # The offset for the next request. If empty, then there are no more results.
         self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
@@ -5024,7 +5144,7 @@ class InlineQueryResults(Object):
         self.button: InlineQueryResultsButton = get_object(kwargs.get('button'))
         # Results of the query.
         self.results: list[InlineQueryResult] = get_object(kwargs.get('results'))
-        # The offset for the next request. If empty, there are no more results.
+        # The offset for the next request. If empty, then there are no more results.
         self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
@@ -5682,7 +5802,7 @@ class InputMessageDocument(InputMessageContent):
         self.document: InputFile = get_object(kwargs.get('document'))
         # Document thumbnail; pass null to skip thumbnail uploading.
         self.thumbnail: InputThumbnail = get_object(kwargs.get('thumbnail'))
-        # True, if automatic file type detection is disabled and the document must be sent as a file. Always true for files sent to secret chats.
+        # Pass true to disable automatic file type detection and send the document as a file. Always true for files sent to secret chats.
         self.disable_content_type_detection: bool = get_object(kwargs.get('disable_content_type_detection'))
         # Document caption; pass null to use an empty caption; 0-getOption(&quot;message_caption_length_max&quot;) characters.
         self.caption: FormattedText = get_object(kwargs.get('caption'))
@@ -5904,6 +6024,16 @@ class InputMessageForwarded(InputMessageContent):
         self.copy_options: MessageCopyOptions = get_object(kwargs.get('copy_options'))
 
 
+class InputTextQuote(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Text of the quote; 0-getOption(&quot;message_reply_quote_length_max&quot;) characters. Only Bold, Italic, Underline, Strikethrough, Spoiler, and CustomEmoji entities are allowed to be kept and must be kept in the quote.
+        self.text: FormattedText = get_object(kwargs.get('text'))
+        # Quote position in the original message in UTF-16 code units.
+        self.position: int = get_object(kwargs.get('position'))
+
+
 class InputMessageReplyToMessage(InputMessageReplyTo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -5912,8 +6042,8 @@ class InputMessageReplyToMessage(InputMessageReplyTo):
         self.chat_id: int = get_object(kwargs.get('chat_id'))
         # The identifier of the message to be replied in the same or the specified chat.
         self.message_id: int = get_object(kwargs.get('message_id'))
-        # Manually chosen quote from the message to be replied; pass null if none; 0-getOption(&quot;message_reply_quote_length_max&quot;) characters. Must always be null for replies in secret chats. Only Bold, Italic, Underline, Strikethrough, Spoiler, and CustomEmoji entities are allowed to be kept and must be kept in the quote.
-        self.quote: FormattedText = get_object(kwargs.get('quote'))
+        # Quote from the message to be replied; pass null if none. Must always be null for replies in secret chats.
+        self.quote: InputTextQuote = get_object(kwargs.get('quote'))
 
 
 class InputMessageReplyToStory(InputMessageReplyTo):
@@ -6264,11 +6394,21 @@ class InputStoryAreaTypeSuggestedReaction(InputStoryAreaType):
         self.is_flipped: bool = get_object(kwargs.get('is_flipped'))
 
 
+class InputStoryAreaTypeMessage(InputStoryAreaType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the chat with the message. Currently, the chat must be a supergroup or a channel chat.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # Identifier of the message. Only successfully sent non-scheduled messages can be specified.
+        self.message_id: int = get_object(kwargs.get('message_id'))
+
+
 class InputStoryAreas(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # List of 0-10 input story areas.
+        # List of input story areas. Currently, a story can have up to 10 inputStoryAreaTypeLocation, inputStoryAreaTypeFoundVenue, and inputStoryAreaTypePreviousVenue areas, up to getOption(&quot;story_suggested_reaction_area_count_max&quot;) inputStoryAreaTypeSuggestedReaction areas, and up to 1 inputStoryAreaTypeMessage area.
         self.areas: list[InputStoryArea] = get_object(kwargs.get('areas'))
 
 
@@ -6511,6 +6651,14 @@ class InternalLinkTypePhoneNumberConfirmation(InternalLinkType):
 
 
 class InternalLinkTypePremiumFeatures(InternalLinkType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Referrer specified in the link.
+        self.referrer: str = get_object(kwargs.get('referrer'))
+
+
+class InternalLinkTypePremiumGift(InternalLinkType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -6802,20 +6950,22 @@ class KeyboardButtonTypeRequestPoll(KeyboardButtonType):
         self.force_quiz: bool = get_object(kwargs.get('force_quiz'))
 
 
-class KeyboardButtonTypeRequestUser(KeyboardButtonType):
+class KeyboardButtonTypeRequestUsers(KeyboardButtonType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
         # Unique button identifier.
         self.id: int = get_object(kwargs.get('id'))
-        # True, if the shared user must or must not be a bot.
+        # True, if the shared users must or must not be bots.
         self.restrict_user_is_bot: bool = get_object(kwargs.get('restrict_user_is_bot'))
-        # True, if the shared user must be a bot; otherwise, the shared user must no be a bot. Ignored if restrict_user_is_bot is false.
+        # True, if the shared users must be bots; otherwise, the shared users must not be bots. Ignored if restrict_user_is_bot is false.
         self.user_is_bot: bool = get_object(kwargs.get('user_is_bot'))
-        # True, if the shared user must or must not be a Telegram Premium user.
+        # True, if the shared users must or must not be Telegram Premium users.
         self.restrict_user_is_premium: bool = get_object(kwargs.get('restrict_user_is_premium'))
-        # True, if the shared user must be a Telegram Premium user; otherwise, the shared user must no be a Telegram Premium user. Ignored if restrict_user_is_premium is false.
+        # True, if the shared users must be Telegram Premium users; otherwise, the shared users must not be Telegram Premium users. Ignored if restrict_user_is_premium is false.
         self.user_is_premium: bool = get_object(kwargs.get('user_is_premium'))
+        # The maximum number of users to share.
+        self.max_quantity: int = get_object(kwargs.get('max_quantity'))
 
 
 class KeyboardButtonTypeRequestChat(KeyboardButtonType):
@@ -7214,10 +7364,14 @@ class PremiumGiveawayParameters(Object):
         self.additional_chat_ids: list[int] = get_object(kwargs.get('additional_chat_ids'))
         # Point in time (Unix timestamp) when the giveaway is expected to be performed; must be 60-getOption(&quot;giveaway_duration_max&quot;) seconds in the future in scheduled giveaways.
         self.winners_selection_date: int = get_object(kwargs.get('winners_selection_date'))
-        # True, if only new subscribers of the chats will be eligible for the giveaway.
+        # True, if only new members of the chats will be eligible for the giveaway.
         self.only_new_members: bool = get_object(kwargs.get('only_new_members'))
+        # True, if the list of winners of the giveaway will be available to everyone.
+        self.has_public_winners: bool = get_object(kwargs.get('has_public_winners'))
         # The list of two-letter ISO 3166-1 alpha-2 codes of countries, users from which will be eligible for the giveaway. If empty, then all users can participate in the giveaway. There can be up to getOption(&quot;giveaway_country_count_max&quot;) chosen countries. Users with phone number that was bought on Fragment can participate in any giveaway and the country code &quot;FT&quot; must not be specified in the list.
         self.country_codes: list[str] = get_object(kwargs.get('country_codes'))
+        # Additional description of the giveaway prize; 0-128 characters.
+        self.prize_description: str = get_object(kwargs.get('prize_description'))
 
 
 class VideoNote(Object):
@@ -7688,6 +7842,8 @@ class MessageChatSetBackground(MessageContent):
         self.old_background_message_id: int = get_object(kwargs.get('old_background_message_id'))
         # The new background.
         self.background: ChatBackground = get_object(kwargs.get('background'))
+        # True, if the background was set only for self.
+        self.only_for_self: bool = get_object(kwargs.get('only_for_self'))
 
 
 class MessageChatSetTheme(MessageContent):
@@ -7830,9 +7986,9 @@ class MessageGiftedPremium(MessageContent):
         self.amount: int = get_object(kwargs.get('amount'))
         # Cryptocurrency used to pay for the gift; may be empty if none.
         self.cryptocurrency: str = get_object(kwargs.get('cryptocurrency'))
-        # The paid amount, in the smallest units of the cryptocurrency.
+        # The paid amount, in the smallest units of the cryptocurrency; 0 if none.
         self.cryptocurrency_amount: int = get_object(kwargs.get('cryptocurrency_amount'))
-        # Number of month the Telegram Premium subscription will be active.
+        # Number of months the Telegram Premium subscription will be active.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # A sticker to be shown in the message; may be null if unknown.
         self.sticker: Sticker = get_object(kwargs.get('sticker'))
@@ -7842,13 +7998,21 @@ class MessagePremiumGiftCode(MessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Identifier of a chat or a user that created the gift code.
+        # Identifier of a chat or a user that created the gift code; may be null if unknown.
         self.creator_id: MessageSender = get_object(kwargs.get('creator_id'))
         # True, if the gift code was created for a giveaway.
         self.is_from_giveaway: bool = get_object(kwargs.get('is_from_giveaway'))
         # True, if the winner for the corresponding Telegram Premium subscription wasn't chosen.
         self.is_unclaimed: bool = get_object(kwargs.get('is_unclaimed'))
-        # Number of month the Telegram Premium subscription will be active after code activation.
+        # Currency for the paid amount; empty if unknown.
+        self.currency: str = get_object(kwargs.get('currency'))
+        # The paid amount, in the smallest units of the currency; 0 if unknown.
+        self.amount: int = get_object(kwargs.get('amount'))
+        # Cryptocurrency used to pay for the gift; may be empty if none or unknown.
+        self.cryptocurrency: str = get_object(kwargs.get('cryptocurrency'))
+        # The paid amount, in the smallest units of the cryptocurrency; 0 if unknown.
+        self.cryptocurrency_amount: int = get_object(kwargs.get('cryptocurrency_amount'))
+        # Number of months the Telegram Premium subscription will be active after code activation.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # A sticker to be shown in the message; may be null if unknown.
         self.sticker: Sticker = get_object(kwargs.get('sticker'))
@@ -7870,10 +8034,50 @@ class MessagePremiumGiveaway(MessageContent):
         self.parameters: PremiumGiveawayParameters = get_object(kwargs.get('parameters'))
         # Number of users which will receive Telegram Premium subscription gift codes.
         self.winner_count: int = get_object(kwargs.get('winner_count'))
-        # Number of month the Telegram Premium subscription will be active after code activation.
+        # Number of months the Telegram Premium subscription will be active after code activation.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # A sticker to be shown in the message; may be null if unknown.
         self.sticker: Sticker = get_object(kwargs.get('sticker'))
+
+
+class MessagePremiumGiveawayCompleted(MessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the message with the giveaway; can be 0 if the message was deleted.
+        self.giveaway_message_id: int = get_object(kwargs.get('giveaway_message_id'))
+        # Number of winners in the giveaway.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Number of undistributed prizes.
+        self.unclaimed_prize_count: int = get_object(kwargs.get('unclaimed_prize_count'))
+
+
+class MessagePremiumGiveawayWinners(MessageContent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the channel chat, which was automatically boosted by the winners of the giveaway for duration of the Premium subscription.
+        self.boosted_chat_id: int = get_object(kwargs.get('boosted_chat_id'))
+        # Identifier of the message with the giveaway in the boosted chat.
+        self.giveaway_message_id: int = get_object(kwargs.get('giveaway_message_id'))
+        # Number of other chats that participated in the giveaway.
+        self.additional_chat_count: int = get_object(kwargs.get('additional_chat_count'))
+        # Point in time (Unix timestamp) when the winners were selected. May be bigger than winners selection date specified in parameters of the giveaway.
+        self.actual_winners_selection_date: int = get_object(kwargs.get('actual_winners_selection_date'))
+        # True, if only new members of the chats were eligible for the giveaway.
+        self.only_new_members: bool = get_object(kwargs.get('only_new_members'))
+        # True, if the giveaway was canceled and was fully refunded.
+        self.was_refunded: bool = get_object(kwargs.get('was_refunded'))
+        # Number of months the Telegram Premium subscription will be active after code activation.
+        self.month_count: int = get_object(kwargs.get('month_count'))
+        # Additional description of the giveaway prize.
+        self.prize_description: str = get_object(kwargs.get('prize_description'))
+        # Total number of winners in the giveaway.
+        self.winner_count: int = get_object(kwargs.get('winner_count'))
+        # Up to 100 user identifiers of the winners of the giveaway.
+        self.winner_user_ids: list[int] = get_object(kwargs.get('winner_user_ids'))
+        # Number of undistributed prizes.
+        self.unclaimed_prize_count: int = get_object(kwargs.get('unclaimed_prize_count'))
 
 
 class MessageContactRegistered(MessageContent):
@@ -7882,12 +8086,12 @@ class MessageContactRegistered(MessageContent):
         self._data = kwargs
 
 
-class MessageUserShared(MessageContent):
+class MessageUsersShared(MessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Identifier of the shared user.
-        self.user_id: int = get_object(kwargs.get('user_id'))
+        # Identifier of the shared users.
+        self.user_ids: list[int] = get_object(kwargs.get('user_ids'))
         # Identifier of the keyboard button with the request.
         self.button_id: int = get_object(kwargs.get('button_id'))
 
@@ -8162,6 +8366,18 @@ class MessagePositions(Object):
         self.positions: list[MessagePosition] = get_object(kwargs.get('positions'))
 
 
+class TextQuote(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Text of the quote. Only Bold, Italic, Underline, Strikethrough, Spoiler, and CustomEmoji entities can be present in the text.
+        self.text: FormattedText = get_object(kwargs.get('text'))
+        # Approximate quote position in the original message in UTF-16 code units as specified by the message sender.
+        self.position: int = get_object(kwargs.get('position'))
+        # True, if the quote was manually chosen by the message sender.
+        self.is_manual: bool = get_object(kwargs.get('is_manual'))
+
+
 class MessageReplyToMessage(MessageReplyTo):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -8170,15 +8386,13 @@ class MessageReplyToMessage(MessageReplyTo):
         self.chat_id: int = get_object(kwargs.get('chat_id'))
         # The identifier of the message; may be 0 if the replied message is in unknown chat.
         self.message_id: int = get_object(kwargs.get('message_id'))
-        # Manually or automatically chosen quote from the replied message; may be null if none. Only Bold, Italic, Underline, Strikethrough, Spoiler, and CustomEmoji entities can be present in the quote.
-        self.quote: FormattedText = get_object(kwargs.get('quote'))
-        # True, if the quote was manually chosen by the message sender.
-        self.is_quote_manual: bool = get_object(kwargs.get('is_quote_manual'))
+        # Chosen quote from the replied message; may be null if none.
+        self.quote: TextQuote = get_object(kwargs.get('quote'))
         # Information about origin of the message if the message was from another chat or topic; may be null for messages from the same chat.
         self.origin: MessageOrigin = get_object(kwargs.get('origin'))
         # Point in time (Unix timestamp) when the message was sent if the message was from another chat or topic; 0 for messages from the same chat.
         self.origin_send_date: int = get_object(kwargs.get('origin_send_date'))
-        # Media content of the message if the message was from another chat or topic; may be null for messages from the same chat and messages without media. Can be only one of the following types: messageAnimation, messageAudio, messageContact, messageDice, messageDocument, messageGame, messageInvoice, messageLocation, messagePhoto, messagePoll, messagePremiumGiveaway, messageSticker, messageStory, messageText (for link preview), messageVenue, messageVideo, messageVideoNote, or messageVoiceNote.
+        # Media content of the message if the message was from another chat or topic; may be null for messages from the same chat and messages without media. Can be only one of the following types: messageAnimation, messageAudio, messageContact, messageDice, messageDocument, messageGame, messageInvoice, messageLocation, messagePhoto, messagePoll, messagePremiumGiveaway, messagePremiumGiveawayWinners, messageSticker, messageStory, messageText (for link preview), messageVenue, messageVideo, messageVideoNote, or messageVoiceNote.
         self.content: MessageContent = get_object(kwargs.get('content'))
 
 
@@ -8386,6 +8600,16 @@ class MessageSponsorTypeBot(MessageSponsorType):
         self.link: InternalLinkType = get_object(kwargs.get('link'))
 
 
+class MessageSponsorTypeWebApp(MessageSponsorType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Web App title.
+        self.web_app_title: str = get_object(kwargs.get('web_app_title'))
+        # An internal link to be opened when the sponsored message is clicked.
+        self.link: InternalLinkType = get_object(kwargs.get('link'))
+
+
 class MessageSponsorTypePublicChannel(MessageSponsorType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -8422,6 +8646,8 @@ class MessageStatistics(Object):
         self._data = kwargs
         # A graph containing number of message views and shares.
         self.message_interaction_graph: StatisticalGraph = get_object(kwargs.get('message_interaction_graph'))
+        # A graph containing number of message reactions.
+        self.message_reaction_graph: StatisticalGraph = get_object(kwargs.get('message_reaction_graph'))
 
 
 class MessageThreadInfo(Object):
@@ -9592,6 +9818,8 @@ class PaymentProviderSmartGlocal(PaymentProvider):
         self._data = kwargs
         # Public payment token.
         self.public_token: str = get_object(kwargs.get('public_token'))
+        # URL for sending card tokenization requests.
+        self.tokenize_url: str = get_object(kwargs.get('tokenize_url'))
 
 
 class PaymentProviderStripe(PaymentProvider):
@@ -9856,6 +10084,12 @@ class PremiumFeatureAccentColor(PremiumFeature):
         self._data = kwargs
 
 
+class PremiumFeatureBackgroundForBoth(PremiumFeature):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class PremiumFeaturePromotionAnimation(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -9894,7 +10128,7 @@ class PremiumGiftCodeInfo(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Identifier of a chat or a user that created the gift code.
+        # Identifier of a chat or a user that created the gift code; may be null if unknown. If null and the code is from messagePremiumGiftCode message, then creator_id from the message can be used.
         self.creator_id: MessageSender = get_object(kwargs.get('creator_id'))
         # Point in time (Unix timestamp) when the code was created.
         self.creation_date: int = get_object(kwargs.get('creation_date'))
@@ -9902,7 +10136,7 @@ class PremiumGiftCodeInfo(Object):
         self.is_from_giveaway: bool = get_object(kwargs.get('is_from_giveaway'))
         # Identifier of the corresponding giveaway message in the creator_id chat; can be 0 or an identifier of a deleted message.
         self.giveaway_message_id: int = get_object(kwargs.get('giveaway_message_id'))
-        # Number of month the Telegram Premium subscription will be active after code activation.
+        # Number of months the Telegram Premium subscription will be active after code activation.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # Identifier of a user for which the code was created; 0 if none.
         self.user_id: int = get_object(kwargs.get('user_id'))
@@ -9920,7 +10154,7 @@ class PremiumGiftCodePaymentOption(Object):
         self.amount: int = get_object(kwargs.get('amount'))
         # Number of users which will be able to activate the gift codes.
         self.user_count: int = get_object(kwargs.get('user_count'))
-        # Number of month the Telegram Premium subscription will be active.
+        # Number of months the Telegram Premium subscription will be active.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # Identifier of the store product associated with the option; may be empty if none.
         self.store_product_id: str = get_object(kwargs.get('store_product_id'))
@@ -10122,6 +10356,12 @@ class PremiumLimitTypeStorySuggestedReactionAreaCount(PremiumLimitType):
         self._data = kwargs
 
 
+class PremiumLimitTypeSimilarChatCount(PremiumLimitType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class PremiumPaymentOption(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -10132,7 +10372,7 @@ class PremiumPaymentOption(Object):
         self.amount: int = get_object(kwargs.get('amount'))
         # The discount associated with this option, as a percentage.
         self.discount_percentage: int = get_object(kwargs.get('discount_percentage'))
-        # Number of month the Telegram Premium subscription will be active.
+        # Number of months the Telegram Premium subscription will be active.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # Identifier of the store product associated with the option.
         self.store_product_id: str = get_object(kwargs.get('store_product_id'))
@@ -10252,6 +10492,32 @@ class PremiumStoryFeatureLinksAndFormatting(PremiumStoryFeature):
         self._data = kwargs
 
 
+class ProfileAccentColors(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The list of 1-2 colors in RGB format, describing the colors, as expected to be shown in the color palette settings.
+        self.palette_colors: list[int] = get_object(kwargs.get('palette_colors'))
+        # The list of 1-2 colors in RGB format, describing the colors, as expected to be used for the profile photo background.
+        self.background_colors: list[int] = get_object(kwargs.get('background_colors'))
+        # The list of 2 colors in RGB format, describing the colors of the gradient to be used for the unread active story indicator around profile photo.
+        self.story_colors: list[int] = get_object(kwargs.get('story_colors'))
+
+
+class ProfileAccentColor(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Profile accent color identifier.
+        self.id: int = get_object(kwargs.get('id'))
+        # Accent colors expected to be used in light themes.
+        self.light_theme_colors: ProfileAccentColors = get_object(kwargs.get('light_theme_colors'))
+        # Accent colors expected to be used in dark themes.
+        self.dark_theme_colors: ProfileAccentColors = get_object(kwargs.get('dark_theme_colors'))
+        # The minimum chat boost level required to use the color.
+        self.min_chat_boost_level: int = get_object(kwargs.get('min_chat_boost_level'))
+
+
 class ProfilePhoto(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -10342,6 +10608,92 @@ class PublicChatTypeIsLocationBased(PublicChatType):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
+
+
+class Story(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Unique story identifier among stories of the given sender.
+        self.id: int = get_object(kwargs.get('id'))
+        # Identifier of the chat that posted the story.
+        self.sender_chat_id: int = get_object(kwargs.get('sender_chat_id'))
+        # Point in time (Unix timestamp) when the story was published.
+        self.date: int = get_object(kwargs.get('date'))
+        # True, if the story is being sent by the current user.
+        self.is_being_sent: bool = get_object(kwargs.get('is_being_sent'))
+        # True, if the story is being edited by the current user.
+        self.is_being_edited: bool = get_object(kwargs.get('is_being_edited'))
+        # True, if the story was edited.
+        self.is_edited: bool = get_object(kwargs.get('is_edited'))
+        # True, if the story is saved in the sender's profile and will be available there after expiration.
+        self.is_pinned: bool = get_object(kwargs.get('is_pinned'))
+        # True, if the story is visible only for the current user.
+        self.is_visible_only_for_self: bool = get_object(kwargs.get('is_visible_only_for_self'))
+        # True, if the story can be deleted.
+        self.can_be_deleted: bool = get_object(kwargs.get('can_be_deleted'))
+        # True, if the story can be edited.
+        self.can_be_edited: bool = get_object(kwargs.get('can_be_edited'))
+        # True, if the story can be forwarded as a message. Otherwise, screenshots and saving of the story content must be also forbidden.
+        self.can_be_forwarded: bool = get_object(kwargs.get('can_be_forwarded'))
+        # True, if the story can be replied in the chat with the story sender.
+        self.can_be_replied: bool = get_object(kwargs.get('can_be_replied'))
+        # True, if the story's is_pinned value can be changed.
+        self.can_toggle_is_pinned: bool = get_object(kwargs.get('can_toggle_is_pinned'))
+        # True, if the story statistics are available through getStoryStatistics.
+        self.can_get_statistics: bool = get_object(kwargs.get('can_get_statistics'))
+        # True, if interactions with the story can be received through getStoryInteractions.
+        self.can_get_interactions: bool = get_object(kwargs.get('can_get_interactions'))
+        # True, if users viewed the story can't be received, because the story has expired more than getOption(&quot;story_viewers_expiration_delay&quot;) seconds ago.
+        self.has_expired_viewers: bool = get_object(kwargs.get('has_expired_viewers'))
+        # Information about the original story; may be null if the story wasn't reposted.
+        self.repost_info: StoryRepostInfo = get_object(kwargs.get('repost_info'))
+        # Information about interactions with the story; may be null if the story isn't owned or there were no interactions.
+        self.interaction_info: StoryInteractionInfo = get_object(kwargs.get('interaction_info'))
+        # Type of the chosen reaction; may be null if none.
+        self.chosen_reaction_type: ReactionType = get_object(kwargs.get('chosen_reaction_type'))
+        # Privacy rules affecting story visibility; may be approximate for non-owned stories.
+        self.privacy_settings: StoryPrivacySettings = get_object(kwargs.get('privacy_settings'))
+        # Content of the story.
+        self.content: StoryContent = get_object(kwargs.get('content'))
+        # Clickable areas to be shown on the story content.
+        self.areas: list[StoryArea] = get_object(kwargs.get('areas'))
+        # Caption of the story.
+        self.caption: FormattedText = get_object(kwargs.get('caption'))
+
+
+class PublicForward(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class PublicForwardMessage(PublicForward):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Information about the message.
+        self.message: Message = get_object(kwargs.get('message'))
+
+
+class PublicForwardStory(PublicForward):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Information about the story.
+        self.story: Story = get_object(kwargs.get('story'))
+
+
+class PublicForwards(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Approximate total number of messages and stories found.
+        self.total_count: int = get_object(kwargs.get('total_count'))
+        # List of found public forwards and reposts.
+        self.forwards: list[PublicForward] = get_object(kwargs.get('forwards'))
+        # The offset for the next request. If empty, then there are no more results.
+        self.next_offset: str = get_object(kwargs.get('next_offset'))
 
 
 class PushMessageContentHidden(PushMessageContent):
@@ -10472,7 +10824,7 @@ class PushMessageContentPremiumGiftCode(PushMessageContent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # Number of month the Telegram Premium subscription will be active after code activation.
+        # Number of months the Telegram Premium subscription will be active after code activation.
         self.month_count: int = get_object(kwargs.get('month_count'))
 
 
@@ -10482,7 +10834,7 @@ class PushMessageContentPremiumGiveaway(PushMessageContent):
         self._data = kwargs
         # Number of users which will receive Telegram Premium subscription gift codes; 0 for pinned message.
         self.winner_count: int = get_object(kwargs.get('winner_count'))
-        # Number of month the Telegram Premium subscription will be active after code activation; 0 for pinned message.
+        # Number of months the Telegram Premium subscription will be active after code activation; 0 for pinned message.
         self.month_count: int = get_object(kwargs.get('month_count'))
         # True, if the message is a pinned message with the specified content.
         self.is_pinned: bool = get_object(kwargs.get('is_pinned'))
@@ -11414,6 +11766,8 @@ class SponsoredMessage(Object):
         self.content: MessageContent = get_object(kwargs.get('content'))
         # Information about the sponsor of the message.
         self.sponsor: MessageSponsor = get_object(kwargs.get('sponsor'))
+        # If non-empty, text for the message action button.
+        self.button_text: str = get_object(kwargs.get('button_text'))
         # If non-empty, additional information about the sponsored message to be shown along with the message.
         self.additional_info: str = get_object(kwargs.get('additional_info'))
 
@@ -11542,6 +11896,8 @@ class StickerSet(Object):
         self.sticker_type: StickerType = get_object(kwargs.get('sticker_type'))
         # True, if stickers in the sticker set are custom emoji that must be repainted; for custom emoji sticker sets only.
         self.needs_repainting: bool = get_object(kwargs.get('needs_repainting'))
+        # True, if stickers in the sticker set are custom emoji that can be used as chat emoji status; for custom emoji sticker sets only.
+        self.is_allowed_as_chat_emoji_status: bool = get_object(kwargs.get('is_allowed_as_chat_emoji_status'))
         # True for already viewed trending sticker sets.
         self.is_viewed: bool = get_object(kwargs.get('is_viewed'))
         # List of stickers in this set.
@@ -11560,7 +11916,7 @@ class StickerSetInfo(Object):
         self.title: str = get_object(kwargs.get('title'))
         # Name of the sticker set.
         self.name: str = get_object(kwargs.get('name'))
-        # Sticker set thumbnail in WEBP, TGS, or WEBM format with width and height 100; may be null.
+        # Sticker set thumbnail in WEBP, TGS, or WEBM format with width and height 100; may be null. The file can be downloaded only before the thumbnail is changed.
         self.thumbnail: Thumbnail = get_object(kwargs.get('thumbnail'))
         # Sticker set thumbnail's outline represented as a list of closed vector paths; may be empty. The coordinate system origin is in the upper-left corner.
         self.thumbnail_outline: list[ClosedVectorPath] = get_object(kwargs.get('thumbnail_outline'))
@@ -11576,6 +11932,8 @@ class StickerSetInfo(Object):
         self.sticker_type: StickerType = get_object(kwargs.get('sticker_type'))
         # True, if stickers in the sticker set are custom emoji that must be repainted; for custom emoji sticker sets only.
         self.needs_repainting: bool = get_object(kwargs.get('needs_repainting'))
+        # True, if stickers in the sticker set are custom emoji that can be used as chat emoji status; for custom emoji sticker sets only.
+        self.is_allowed_as_chat_emoji_status: bool = get_object(kwargs.get('is_allowed_as_chat_emoji_status'))
         # True for already viewed trending sticker sets.
         self.is_viewed: bool = get_object(kwargs.get('is_viewed'))
         # Total number of stickers in the set.
@@ -11728,54 +12086,6 @@ class StorePaymentPurposePremiumGiveaway(StorePaymentPurpose):
         self.amount: int = get_object(kwargs.get('amount'))
 
 
-class Story(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Unique story identifier among stories of the given sender.
-        self.id: int = get_object(kwargs.get('id'))
-        # Identifier of the chat that posted the story.
-        self.sender_chat_id: int = get_object(kwargs.get('sender_chat_id'))
-        # Point in time (Unix timestamp) when the story was published.
-        self.date: int = get_object(kwargs.get('date'))
-        # True, if the story is being sent by the current user.
-        self.is_being_sent: bool = get_object(kwargs.get('is_being_sent'))
-        # True, if the story is being edited by the current user.
-        self.is_being_edited: bool = get_object(kwargs.get('is_being_edited'))
-        # True, if the story was edited.
-        self.is_edited: bool = get_object(kwargs.get('is_edited'))
-        # True, if the story is saved in the sender's profile and will be available there after expiration.
-        self.is_pinned: bool = get_object(kwargs.get('is_pinned'))
-        # True, if the story is visible only for the current user.
-        self.is_visible_only_for_self: bool = get_object(kwargs.get('is_visible_only_for_self'))
-        # True, if the story can be deleted.
-        self.can_be_deleted: bool = get_object(kwargs.get('can_be_deleted'))
-        # True, if the story can be edited.
-        self.can_be_edited: bool = get_object(kwargs.get('can_be_edited'))
-        # True, if the story can be forwarded as a message. Otherwise, screenshots and saving of the story content must be also forbidden.
-        self.can_be_forwarded: bool = get_object(kwargs.get('can_be_forwarded'))
-        # True, if the story can be replied in the chat with the story sender.
-        self.can_be_replied: bool = get_object(kwargs.get('can_be_replied'))
-        # True, if the story's is_pinned value can be changed.
-        self.can_toggle_is_pinned: bool = get_object(kwargs.get('can_toggle_is_pinned'))
-        # True, if users viewed the story can be received through getStoryViewers.
-        self.can_get_viewers: bool = get_object(kwargs.get('can_get_viewers'))
-        # True, if users viewed the story can't be received, because the story has expired more than getOption(&quot;story_viewers_expiration_delay&quot;) seconds ago.
-        self.has_expired_viewers: bool = get_object(kwargs.get('has_expired_viewers'))
-        # Information about interactions with the story; may be null if the story isn't owned or there were no interactions.
-        self.interaction_info: StoryInteractionInfo = get_object(kwargs.get('interaction_info'))
-        # Type of the chosen reaction; may be null if none.
-        self.chosen_reaction_type: ReactionType = get_object(kwargs.get('chosen_reaction_type'))
-        # Privacy rules affecting story visibility; may be approximate for non-owned stories.
-        self.privacy_settings: StoryPrivacySettings = get_object(kwargs.get('privacy_settings'))
-        # Content of the story.
-        self.content: StoryContent = get_object(kwargs.get('content'))
-        # Clickable areas to be shown on the story content.
-        self.areas: list[StoryArea] = get_object(kwargs.get('areas'))
-        # Caption of the story.
-        self.caption: FormattedText = get_object(kwargs.get('caption'))
-
-
 class Stories(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -11822,6 +12132,16 @@ class StoryInteractionInfo(Object):
         self.recent_viewer_user_ids: list[int] = get_object(kwargs.get('recent_viewer_user_ids'))
 
 
+class StoryRepostInfo(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Origin of the story that was reposted.
+        self.origin: StoryOrigin = get_object(kwargs.get('origin'))
+        # True, if story content was modified during reposting; otherwise, story wasn't modified.
+        self.is_content_modified: bool = get_object(kwargs.get('is_content_modified'))
+
+
 class StoryAreaType(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -11856,6 +12176,16 @@ class StoryAreaTypeSuggestedReaction(StoryAreaType):
         self.is_dark: bool = get_object(kwargs.get('is_dark'))
         # True, if reaction corner is flipped.
         self.is_flipped: bool = get_object(kwargs.get('is_flipped'))
+
+
+class StoryAreaTypeMessage(StoryAreaType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the chat with the message.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # Identifier of the message.
+        self.message_id: int = get_object(kwargs.get('message_id'))
 
 
 class StoryVideo(Object):
@@ -11906,6 +12236,76 @@ class StoryContentUnsupported(StoryContent):
         self._data = kwargs
 
 
+class StoryFullId(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the chat that posted the story.
+        self.sender_chat_id: int = get_object(kwargs.get('sender_chat_id'))
+        # Unique story identifier among stories of the given sender.
+        self.story_id: int = get_object(kwargs.get('story_id'))
+
+
+class StoryInteractionType(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class StoryInteraction(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the user or chat that made the interaction.
+        self.actor_id: MessageSender = get_object(kwargs.get('actor_id'))
+        # Approximate point in time (Unix timestamp) when the interaction happened.
+        self.interaction_date: int = get_object(kwargs.get('interaction_date'))
+        # Block list to which the actor is added; may be null if none or for chat stories.
+        self.block_list: BlockList = get_object(kwargs.get('block_list'))
+        # Type of the interaction.
+        self.type: StoryInteractionType = get_object(kwargs.get('type'))
+
+
+class StoryInteractionTypeView(StoryInteractionType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Type of the reaction that was chosen by the viewer; may be null if none.
+        self.chosen_reaction_type: ReactionType = get_object(kwargs.get('chosen_reaction_type'))
+
+
+class StoryInteractionTypeForward(StoryInteractionType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The message with story forward.
+        self.message: Message = get_object(kwargs.get('message'))
+
+
+class StoryInteractionTypeRepost(StoryInteractionType):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The reposted story.
+        self.story: Story = get_object(kwargs.get('story'))
+
+
+class StoryInteractions(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Approximate total number of interactions found.
+        self.total_count: int = get_object(kwargs.get('total_count'))
+        # Approximate total number of found forwards and reposts; always 0 for chat stories.
+        self.total_forward_count: int = get_object(kwargs.get('total_forward_count'))
+        # Approximate total number of found reactions; always 0 for chat stories.
+        self.total_reaction_count: int = get_object(kwargs.get('total_reaction_count'))
+        # List of story interactions.
+        self.interactions: list[StoryInteraction] = get_object(kwargs.get('interactions'))
+        # The offset for the next request. If empty, then there are no more results.
+        self.next_offset: str = get_object(kwargs.get('next_offset'))
+
+
 class StoryListMain(StoryList):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -11916,6 +12316,30 @@ class StoryListArchive(StoryList):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
+
+
+class StoryOrigin(Object):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
+class StoryOriginPublicStory(StoryOrigin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Identifier of the chat that posted original story.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # Story identifier of the original story.
+        self.story_id: int = get_object(kwargs.get('story_id'))
+
+
+class StoryOriginHiddenUser(StoryOrigin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Name of the story sender.
+        self.sender_name: str = get_object(kwargs.get('sender_name'))
 
 
 class StoryPrivacySettingsEveryone(StoryPrivacySettings):
@@ -11948,32 +12372,14 @@ class StoryPrivacySettingsSelectedUsers(StoryPrivacySettings):
         self.user_ids: list[int] = get_object(kwargs.get('user_ids'))
 
 
-class StoryViewer(Object):
+class StoryStatistics(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # User identifier of the viewer.
-        self.user_id: int = get_object(kwargs.get('user_id'))
-        # Approximate point in time (Unix timestamp) when the story was viewed.
-        self.view_date: int = get_object(kwargs.get('view_date'))
-        # Block list to which the user is added; may be null if none.
-        self.block_list: BlockList = get_object(kwargs.get('block_list'))
-        # Type of the reaction that was chosen by the user; may be null if none.
-        self.chosen_reaction_type: ReactionType = get_object(kwargs.get('chosen_reaction_type'))
-
-
-class StoryViewers(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Approximate total number of story viewers found.
-        self.total_count: int = get_object(kwargs.get('total_count'))
-        # Approximate total number of reactions set by found story viewers.
-        self.total_reaction_count: int = get_object(kwargs.get('total_reaction_count'))
-        # List of story viewers.
-        self.viewers: list[StoryViewer] = get_object(kwargs.get('viewers'))
-        # The offset for the next request. If empty, there are no more results.
-        self.next_offset: str = get_object(kwargs.get('next_offset'))
+        # A graph containing number of story views and shares.
+        self.story_interaction_graph: StatisticalGraph = get_object(kwargs.get('story_interaction_graph'))
+        # A graph containing number of story reactions.
+        self.story_reaction_graph: StatisticalGraph = get_object(kwargs.get('story_reaction_graph'))
 
 
 class SuggestedAction(Object):
@@ -12040,6 +12446,12 @@ class SuggestedActionSubscribeToAnnualPremium(SuggestedAction):
         self._data = kwargs
 
 
+class SuggestedActionGiftPremiumForChristmas(SuggestedAction):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+
+
 class Usernames(Object):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -12064,8 +12476,10 @@ class Supergroup(Object):
         self.date: int = get_object(kwargs.get('date'))
         # Status of the current user in the supergroup or channel; custom title will always be empty.
         self.status: ChatMemberStatus = get_object(kwargs.get('status'))
-        # Number of members in the supergroup or channel; 0 if unknown. Currently, it is guaranteed to be known only if the supergroup or channel was received through getChatsToSendStories, getCreatedPublicChats, getGroupsInCommon, getInactiveSupergroupChats, getSuitableDiscussionChats, getUserPrivacySettingRules, getVideoChatAvailableParticipants, searchChatsNearby, searchPublicChats, or in chatFolderInviteLinkInfo.missing_chat_ids.
+        # Number of members in the supergroup or channel; 0 if unknown. Currently, it is guaranteed to be known only if the supergroup or channel was received through getChatSimilarChats, getChatsToSendStories, getCreatedPublicChats, getGroupsInCommon, getInactiveSupergroupChats, getSuitableDiscussionChats, getUserPrivacySettingRules, getVideoChatAvailableParticipants, searchChatsNearby, searchPublicChats, or in chatFolderInviteLinkInfo.missing_chat_ids, or for public chats in which where sent messages and posted stories from publicForwards, or for public chats in which where sent messages from getMessagePublicForwards response.
         self.member_count: int = get_object(kwargs.get('member_count'))
+        # Approximate boost level for the chat.
+        self.boost_level: int = get_object(kwargs.get('boost_level'))
         # True, if the channel has a discussion group, or the supergroup is the designated discussion group for a channel.
         self.has_linked_chat: bool = get_object(kwargs.get('has_linked_chat'))
         # True, if the supergroup is connected to a location, i.e. the supergroup is a location-based supergroup.
@@ -12082,7 +12496,7 @@ class Supergroup(Object):
         self.is_channel: bool = get_object(kwargs.get('is_channel'))
         # True, if the supergroup is a broadcast group, i.e. only administrators can send messages and there is no limit on the number of members.
         self.is_broadcast_group: bool = get_object(kwargs.get('is_broadcast_group'))
-        # True, if the supergroup must be shown as a forum by default.
+        # True, if the supergroup is a forum with topics.
         self.is_forum: bool = get_object(kwargs.get('is_forum'))
         # True, if the supergroup or channel is verified.
         self.is_verified: bool = get_object(kwargs.get('is_verified'))
@@ -12316,7 +12730,7 @@ class TelegramPaymentPurposePremiumGiftCodes(TelegramPaymentPurpose):
         self.amount: int = get_object(kwargs.get('amount'))
         # Identifiers of the users which can activate the gift codes.
         self.user_ids: list[int] = get_object(kwargs.get('user_ids'))
-        # Number of month the Telegram Premium subscription will be active for the users.
+        # Number of months the Telegram Premium subscription will be active for the users.
         self.month_count: int = get_object(kwargs.get('month_count'))
 
 
@@ -12332,7 +12746,7 @@ class TelegramPaymentPurposePremiumGiveaway(TelegramPaymentPurpose):
         self.amount: int = get_object(kwargs.get('amount'))
         # Number of users which will be able to activate the gift codes.
         self.winner_count: int = get_object(kwargs.get('winner_count'))
-        # Number of month the Telegram Premium subscription will be active for the users.
+        # Number of months the Telegram Premium subscription will be active for the users.
         self.month_count: int = get_object(kwargs.get('month_count'))
 
 
@@ -12764,10 +13178,14 @@ class User(Object):
         self.status: UserStatus = get_object(kwargs.get('status'))
         # Profile photo of the user; may be null.
         self.profile_photo: ProfilePhoto = get_object(kwargs.get('profile_photo'))
-        # Identifier of the accent color for name, and backgrounds of profile photo, reply header, and link preview.
+        # Identifier of the accent color for name, and backgrounds of profile photo, reply header, and link preview. For Telegram Premium users only.
         self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
-        # Identifier of a custom emoji to be shown on the reply header background; 0 if none. For Telegram Premium users only.
+        # Identifier of a custom emoji to be shown on the reply header and link preview background; 0 if none. For Telegram Premium users only.
         self.background_custom_emoji_id: int = get_object(kwargs.get('background_custom_emoji_id'))
+        # Identifier of the accent color for the user's profile; -1 if none. For Telegram Premium users only.
+        self.profile_accent_color_id: int = get_object(kwargs.get('profile_accent_color_id'))
+        # Identifier of a custom emoji to be shown on the background of the user's profile; 0 if none. For Telegram Premium users only.
+        self.profile_background_custom_emoji_id: int = get_object(kwargs.get('profile_background_custom_emoji_id'))
         # Emoji status to be shown instead of the default Telegram Premium badge; may be null. For Telegram Premium users only.
         self.emoji_status: EmojiStatus = get_object(kwargs.get('emoji_status'))
         # The user is a contact of the current user.
@@ -12828,6 +13246,8 @@ class UserFullInfo(Object):
         self.has_pinned_stories: bool = get_object(kwargs.get('has_pinned_stories'))
         # True, if the current user needs to explicitly allow to share their phone number with the user when the method addContact is used.
         self.need_phone_number_privacy_exception: bool = get_object(kwargs.get('need_phone_number_privacy_exception'))
+        # True, if the user set chat background for both chat users and it wasn't reverted yet.
+        self.set_chat_background: bool = get_object(kwargs.get('set_chat_background'))
         # A short user bio; may be null for bots.
         self.bio: FormattedText = get_object(kwargs.get('bio'))
         # The list of available options for gifting Telegram Premium to the user.
@@ -13024,7 +13444,7 @@ class UpdateChatPhoto(Update):
         self.photo: ChatPhotoInfo = get_object(kwargs.get('photo'))
 
 
-class UpdateChatAccentColor(Update):
+class UpdateChatAccentColors(Update):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
@@ -13032,16 +13452,12 @@ class UpdateChatAccentColor(Update):
         self.chat_id: int = get_object(kwargs.get('chat_id'))
         # The new chat accent color identifier.
         self.accent_color_id: int = get_object(kwargs.get('accent_color_id'))
-
-
-class UpdateChatBackgroundCustomEmoji(Update):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._data = kwargs
-        # Chat identifier.
-        self.chat_id: int = get_object(kwargs.get('chat_id'))
-        # The new identifier of a custom emoji to be shown on the reply header background; 0 if none.
+        # The new identifier of a custom emoji to be shown on the reply header and link preview background; 0 if none.
         self.background_custom_emoji_id: int = get_object(kwargs.get('background_custom_emoji_id'))
+        # The new chat profile accent color identifier; -1 if none.
+        self.profile_accent_color_id: int = get_object(kwargs.get('profile_accent_color_id'))
+        # The new identifier of a custom emoji to be shown on the profile background; 0 if none.
+        self.profile_background_custom_emoji_id: int = get_object(kwargs.get('profile_background_custom_emoji_id'))
 
 
 class UpdateChatPermissions(Update):
@@ -13128,6 +13544,16 @@ class UpdateChatDraftMessage(Update):
         self.draft_message: DraftMessage = get_object(kwargs.get('draft_message'))
         # The new chat positions in the chat lists.
         self.positions: list[ChatPosition] = get_object(kwargs.get('positions'))
+
+
+class UpdateChatEmojiStatus(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # The new chat emoji status; may be null.
+        self.emoji_status: EmojiStatus = get_object(kwargs.get('emoji_status'))
 
 
 class UpdateChatMessageSender(Update):
@@ -13268,6 +13694,16 @@ class UpdateChatIsMarkedAsUnread(Update):
         self.chat_id: int = get_object(kwargs.get('chat_id'))
         # New value of is_marked_as_unread.
         self.is_marked_as_unread: bool = get_object(kwargs.get('is_marked_as_unread'))
+
+
+class UpdateChatViewAsTopics(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # New value of view_as_topics.
+        self.view_as_topics: bool = get_object(kwargs.get('view_as_topics'))
 
 
 class UpdateChatBlockList(Update):
@@ -13782,13 +14218,13 @@ class UpdateSavedNotificationSounds(Update):
         self.notification_sound_ids: list[int] = get_object(kwargs.get('notification_sound_ids'))
 
 
-class UpdateSelectedBackground(Update):
+class UpdateDefaultBackground(Update):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._data = kwargs
-        # True, if background for dark theme has changed.
+        # True, if default background for dark theme has changed.
         self.for_dark_theme: bool = get_object(kwargs.get('for_dark_theme'))
-        # The new selected background; may be null.
+        # The new default background; may be null.
         self.background: Background = get_object(kwargs.get('background'))
 
 
@@ -13807,6 +14243,16 @@ class UpdateAccentColors(Update):
         # Information about supported colors; colors with identifiers 0 (red), 1 (orange), 2 (purple/violet), 3 (green), 4 (cyan), 5 (blue), 6 (pink) must always be supported and aren't included in the list. The exact colors for the accent colors with identifiers 0-6 must be taken from the app theme.
         self.colors: list[AccentColor] = get_object(kwargs.get('colors'))
         # The list of accent color identifiers, which can be set through setAccentColor and setChatAccentColor. The colors must be shown in the specififed order.
+        self.available_accent_color_ids: list[int] = get_object(kwargs.get('available_accent_color_ids'))
+
+
+class UpdateProfileAccentColors(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Information about supported colors.
+        self.colors: list[ProfileAccentColor] = get_object(kwargs.get('colors'))
+        # The list of accent color identifiers, which can be set through setProfileAccentColor and setChatProfileAccentColor. The colors must be shown in the specififed order.
         self.available_accent_color_ids: list[int] = get_object(kwargs.get('available_accent_color_ids'))
 
 
@@ -13886,6 +14332,20 @@ class UpdateDefaultReactionType(Update):
         self._data = kwargs
         # The new type of the default reaction.
         self.reaction_type: ReactionType = get_object(kwargs.get('reaction_type'))
+
+
+class UpdateSpeechRecognitionTrial(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # The maximum allowed duration of media for speech recognition without Telegram Premium subscription.
+        self.max_media_duration: int = get_object(kwargs.get('max_media_duration'))
+        # The total number of allowed speech recognitions per week; 0 if none.
+        self.weekly_count: int = get_object(kwargs.get('weekly_count'))
+        # Number of left speech recognition attempts this week.
+        self.left_count: int = get_object(kwargs.get('left_count'))
+        # Point in time (Unix timestamp) when the weekly number of tries will reset; 0 if unknown.
+        self.next_reset_date: int = get_object(kwargs.get('next_reset_date'))
 
 
 class UpdateDiceEmojis(Update):
@@ -14098,7 +14558,7 @@ class UpdateChatMember(Update):
         self.chat_id: int = get_object(kwargs.get('chat_id'))
         # Identifier of the user, changing the rights.
         self.actor_user_id: int = get_object(kwargs.get('actor_user_id'))
-        # Point in time (Unix timestamp) when the user rights was changed.
+        # Point in time (Unix timestamp) when the user rights were changed.
         self.date: int = get_object(kwargs.get('date'))
         # If user has joined the chat using an invite link, the invite link; may be null.
         self.invite_link: ChatInviteLink = get_object(kwargs.get('invite_link'))
@@ -14132,6 +14592,38 @@ class UpdateChatBoost(Update):
         self.chat_id: int = get_object(kwargs.get('chat_id'))
         # New information about the boost.
         self.boost: ChatBoost = get_object(kwargs.get('boost'))
+
+
+class UpdateMessageReaction(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # Message identifier.
+        self.message_id: int = get_object(kwargs.get('message_id'))
+        # Identifier of the user or chat that changed reactions.
+        self.actor_id: MessageSender = get_object(kwargs.get('actor_id'))
+        # Point in time (Unix timestamp) when the reactions were changed.
+        self.date: int = get_object(kwargs.get('date'))
+        # Old list of chosen reactions.
+        self.old_reaction_types: list[ReactionType] = get_object(kwargs.get('old_reaction_types'))
+        # New list of chosen reactions.
+        self.new_reaction_types: list[ReactionType] = get_object(kwargs.get('new_reaction_types'))
+
+
+class UpdateMessageReactions(Update):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._data = kwargs
+        # Chat identifier.
+        self.chat_id: int = get_object(kwargs.get('chat_id'))
+        # Message identifier.
+        self.message_id: int = get_object(kwargs.get('message_id'))
+        # Point in time (Unix timestamp) when the reactions were changed.
+        self.date: int = get_object(kwargs.get('date'))
+        # The list of reactions added to the message.
+        self.reactions: list[MessageReaction] = get_object(kwargs.get('reactions'))
 
 
 class Updates(Object):
@@ -14510,6 +15002,7 @@ types = {
     'backgroundTypeWallpaper': BackgroundTypeWallpaper,
     'backgroundTypePattern': BackgroundTypePattern,
     'backgroundTypeFill': BackgroundTypeFill,
+    'backgroundTypeChatTheme': BackgroundTypeChatTheme,
     'backgrounds': Backgrounds,
     'bankCardActionOpenUrl': BankCardActionOpenUrl,
     'bankCardInfo': BankCardInfo,
@@ -14601,6 +15094,7 @@ types = {
     'chatPhotoInfo': ChatPhotoInfo,
     'chatPosition': ChatPosition,
     'draftMessage': DraftMessage,
+    'emojiStatus': EmojiStatus,
     'message': Message,
     'videoChat': VideoChat,
     'chat': Chat,
@@ -14636,6 +15130,8 @@ types = {
     'chatAvailableReactionsSome': ChatAvailableReactionsSome,
     'ChatBoostSource': ChatBoostSource,
     'chatBoost': ChatBoost,
+    'chatBoostLevelFeatures': ChatBoostLevelFeatures,
+    'chatBoostFeatures': ChatBoostFeatures,
     'chatBoostLink': ChatBoostLink,
     'chatBoostLinkInfo': ChatBoostLinkInfo,
     'chatBoostSlot': ChatBoostSlot,
@@ -14662,7 +15158,9 @@ types = {
     'chatEventMemberPromoted': ChatEventMemberPromoted,
     'chatEventMemberRestricted': ChatEventMemberRestricted,
     'chatEventAvailableReactionsChanged': ChatEventAvailableReactionsChanged,
+    'chatEventBackgroundChanged': ChatEventBackgroundChanged,
     'chatEventDescriptionChanged': ChatEventDescriptionChanged,
+    'chatEventEmojiStatusChanged': ChatEventEmojiStatusChanged,
     'chatEventLinkedChatChanged': ChatEventLinkedChatChanged,
     'chatEventLocationChanged': ChatEventLocationChanged,
     'chatEventMessageAutoDeleteTimeChanged': ChatEventMessageAutoDeleteTimeChanged,
@@ -14674,7 +15172,7 @@ types = {
     'chatEventUsernameChanged': ChatEventUsernameChanged,
     'chatEventActiveUsernamesChanged': ChatEventActiveUsernamesChanged,
     'chatEventAccentColorChanged': ChatEventAccentColorChanged,
-    'chatEventBackgroundCustomEmojiChanged': ChatEventBackgroundCustomEmojiChanged,
+    'chatEventProfileAccentColorChanged': ChatEventProfileAccentColorChanged,
     'chatEventHasProtectedContentToggled': ChatEventHasProtectedContentToggled,
     'chatEventInvitesToggled': ChatEventInvitesToggled,
     'chatEventIsAllHistoryAvailableToggled': ChatEventIsAllHistoryAvailableToggled,
@@ -14747,14 +15245,17 @@ types = {
     'chatSourcePublicServiceAnnouncement': ChatSourcePublicServiceAnnouncement,
     'StatisticalGraph': StatisticalGraph,
     'chatStatisticsAdministratorActionsInfo': ChatStatisticsAdministratorActionsInfo,
+    'chatStatisticsInteractionInfo': ChatStatisticsInteractionInfo,
     'chatStatisticsInviterInfo': ChatStatisticsInviterInfo,
-    'chatStatisticsMessageInteractionInfo': ChatStatisticsMessageInteractionInfo,
     'chatStatisticsMessageSenderInfo': ChatStatisticsMessageSenderInfo,
     'dateRange': DateRange,
     'statisticalValue': StatisticalValue,
     'ChatStatistics': ChatStatistics,
     'chatStatisticsSupergroup': ChatStatisticsSupergroup,
     'chatStatisticsChannel': ChatStatisticsChannel,
+    'ChatStatisticsObjectType': ChatStatisticsObjectType,
+    'chatStatisticsObjectTypeMessage': ChatStatisticsObjectTypeMessage,
+    'chatStatisticsObjectTypeStory': ChatStatisticsObjectTypeStory,
     'themeSettings': ThemeSettings,
     'chatTheme': ChatTheme,
     'chatTypePrivate': ChatTypePrivate,
@@ -14826,7 +15327,6 @@ types = {
     'emojiCategoryTypeEmojiStatus': EmojiCategoryTypeEmojiStatus,
     'emojiCategoryTypeChatPhoto': EmojiCategoryTypeChatPhoto,
     'emojiReaction': EmojiReaction,
-    'emojiStatus': EmojiStatus,
     'emojiStatuses': EmojiStatuses,
     'emojis': Emojis,
     'encryptedCredentials': EncryptedCredentials,
@@ -14986,6 +15486,7 @@ types = {
     'inputMessagePoll': InputMessagePoll,
     'inputMessageStory': InputMessageStory,
     'inputMessageForwarded': InputMessageForwarded,
+    'inputTextQuote': InputTextQuote,
     'inputMessageReplyToMessage': InputMessageReplyToMessage,
     'inputMessageReplyToStory': InputMessageReplyToStory,
     'inputPersonalDocument': InputPersonalDocument,
@@ -15024,6 +15525,7 @@ types = {
     'inputStoryAreaTypeFoundVenue': InputStoryAreaTypeFoundVenue,
     'inputStoryAreaTypePreviousVenue': InputStoryAreaTypePreviousVenue,
     'inputStoryAreaTypeSuggestedReaction': InputStoryAreaTypeSuggestedReaction,
+    'inputStoryAreaTypeMessage': InputStoryAreaTypeMessage,
     'inputStoryAreas': InputStoryAreas,
     'InputStoryContent': InputStoryContent,
     'inputStoryContentPhoto': InputStoryContentPhoto,
@@ -15053,6 +15555,7 @@ types = {
     'internalLinkTypePassportDataRequest': InternalLinkTypePassportDataRequest,
     'internalLinkTypePhoneNumberConfirmation': InternalLinkTypePhoneNumberConfirmation,
     'internalLinkTypePremiumFeatures': InternalLinkTypePremiumFeatures,
+    'internalLinkTypePremiumGift': InternalLinkTypePremiumGift,
     'internalLinkTypePremiumGiftCode': InternalLinkTypePremiumGiftCode,
     'internalLinkTypePrivacyAndSecuritySettings': InternalLinkTypePrivacyAndSecuritySettings,
     'internalLinkTypeProxy': InternalLinkTypeProxy,
@@ -15089,7 +15592,7 @@ types = {
     'keyboardButtonTypeRequestPhoneNumber': KeyboardButtonTypeRequestPhoneNumber,
     'keyboardButtonTypeRequestLocation': KeyboardButtonTypeRequestLocation,
     'keyboardButtonTypeRequestPoll': KeyboardButtonTypeRequestPoll,
-    'keyboardButtonTypeRequestUser': KeyboardButtonTypeRequestUser,
+    'keyboardButtonTypeRequestUsers': KeyboardButtonTypeRequestUsers,
     'keyboardButtonTypeRequestChat': KeyboardButtonTypeRequestChat,
     'keyboardButtonTypeWebApp': KeyboardButtonTypeWebApp,
     'languagePackInfo': LanguagePackInfo,
@@ -15185,8 +15688,10 @@ types = {
     'messagePremiumGiftCode': MessagePremiumGiftCode,
     'messagePremiumGiveawayCreated': MessagePremiumGiveawayCreated,
     'messagePremiumGiveaway': MessagePremiumGiveaway,
+    'messagePremiumGiveawayCompleted': MessagePremiumGiveawayCompleted,
+    'messagePremiumGiveawayWinners': MessagePremiumGiveawayWinners,
     'messageContactRegistered': MessageContactRegistered,
-    'messageUserShared': MessageUserShared,
+    'messageUsersShared': MessageUsersShared,
     'messageChatShared': MessageChatShared,
     'messageBotWriteAccessAllowed': MessageBotWriteAccessAllowed,
     'messageWebAppDataSent': MessageWebAppDataSent,
@@ -15214,6 +15719,7 @@ types = {
     'messageOriginChannel': MessageOriginChannel,
     'messagePosition': MessagePosition,
     'messagePositions': MessagePositions,
+    'textQuote': TextQuote,
     'messageReplyToMessage': MessageReplyToMessage,
     'messageReplyToStory': MessageReplyToStory,
     'messageSchedulingStateSendAtDate': MessageSchedulingStateSendAtDate,
@@ -15240,6 +15746,7 @@ types = {
     'MessageSponsorType': MessageSponsorType,
     'messageSponsor': MessageSponsor,
     'messageSponsorTypeBot': MessageSponsorTypeBot,
+    'messageSponsorTypeWebApp': MessageSponsorTypeWebApp,
     'messageSponsorTypePublicChannel': MessageSponsorTypePublicChannel,
     'messageSponsorTypePrivateChannel': MessageSponsorTypePrivateChannel,
     'messageSponsorTypeWebsite': MessageSponsorTypeWebsite,
@@ -15406,6 +15913,7 @@ types = {
     'premiumFeatureUpgradedStories': PremiumFeatureUpgradedStories,
     'premiumFeatureChatBoost': PremiumFeatureChatBoost,
     'premiumFeatureAccentColor': PremiumFeatureAccentColor,
+    'premiumFeatureBackgroundForBoth': PremiumFeatureBackgroundForBoth,
     'premiumFeaturePromotionAnimation': PremiumFeaturePromotionAnimation,
     'premiumLimit': PremiumLimit,
     'premiumFeatures': PremiumFeatures,
@@ -15439,6 +15947,7 @@ types = {
     'premiumLimitTypeMonthlySentStoryCount': PremiumLimitTypeMonthlySentStoryCount,
     'premiumLimitTypeStoryCaptionLength': PremiumLimitTypeStoryCaptionLength,
     'premiumLimitTypeStorySuggestedReactionAreaCount': PremiumLimitTypeStorySuggestedReactionAreaCount,
+    'premiumLimitTypeSimilarChatCount': PremiumLimitTypeSimilarChatCount,
     'premiumPaymentOption': PremiumPaymentOption,
     'PremiumStoryFeature': PremiumStoryFeature,
     'PremiumSource': PremiumSource,
@@ -15455,6 +15964,8 @@ types = {
     'premiumStoryFeatureCustomExpirationDuration': PremiumStoryFeatureCustomExpirationDuration,
     'premiumStoryFeatureSaveStories': PremiumStoryFeatureSaveStories,
     'premiumStoryFeatureLinksAndFormatting': PremiumStoryFeatureLinksAndFormatting,
+    'profileAccentColors': ProfileAccentColors,
+    'profileAccentColor': ProfileAccentColor,
     'profilePhoto': ProfilePhoto,
     'proxy': Proxy,
     'proxies': Proxies,
@@ -15464,6 +15975,11 @@ types = {
     'PublicChatType': PublicChatType,
     'publicChatTypeHasUsername': PublicChatTypeHasUsername,
     'publicChatTypeIsLocationBased': PublicChatTypeIsLocationBased,
+    'story': Story,
+    'PublicForward': PublicForward,
+    'publicForwardMessage': PublicForwardMessage,
+    'publicForwardStory': PublicForwardStory,
+    'publicForwards': PublicForwards,
     'pushMessageContentHidden': PushMessageContentHidden,
     'pushMessageContentAnimation': PushMessageContentAnimation,
     'pushMessageContentAudio': PushMessageContentAudio,
@@ -15621,28 +16137,38 @@ types = {
     'storePaymentPurposeGiftedPremium': StorePaymentPurposeGiftedPremium,
     'storePaymentPurposePremiumGiftCodes': StorePaymentPurposePremiumGiftCodes,
     'storePaymentPurposePremiumGiveaway': StorePaymentPurposePremiumGiveaway,
-    'story': Story,
     'stories': Stories,
     'StoryContent': StoryContent,
     'StoryPrivacySettings': StoryPrivacySettings,
     'storyArea': StoryArea,
     'storyInteractionInfo': StoryInteractionInfo,
+    'storyRepostInfo': StoryRepostInfo,
     'StoryAreaType': StoryAreaType,
     'storyAreaTypeLocation': StoryAreaTypeLocation,
     'storyAreaTypeVenue': StoryAreaTypeVenue,
     'storyAreaTypeSuggestedReaction': StoryAreaTypeSuggestedReaction,
+    'storyAreaTypeMessage': StoryAreaTypeMessage,
     'storyVideo': StoryVideo,
     'storyContentPhoto': StoryContentPhoto,
     'storyContentVideo': StoryContentVideo,
     'storyContentUnsupported': StoryContentUnsupported,
+    'storyFullId': StoryFullId,
+    'StoryInteractionType': StoryInteractionType,
+    'storyInteraction': StoryInteraction,
+    'storyInteractionTypeView': StoryInteractionTypeView,
+    'storyInteractionTypeForward': StoryInteractionTypeForward,
+    'storyInteractionTypeRepost': StoryInteractionTypeRepost,
+    'storyInteractions': StoryInteractions,
     'storyListMain': StoryListMain,
     'storyListArchive': StoryListArchive,
+    'StoryOrigin': StoryOrigin,
+    'storyOriginPublicStory': StoryOriginPublicStory,
+    'storyOriginHiddenUser': StoryOriginHiddenUser,
     'storyPrivacySettingsEveryone': StoryPrivacySettingsEveryone,
     'storyPrivacySettingsContacts': StoryPrivacySettingsContacts,
     'storyPrivacySettingsCloseFriends': StoryPrivacySettingsCloseFriends,
     'storyPrivacySettingsSelectedUsers': StoryPrivacySettingsSelectedUsers,
-    'storyViewer': StoryViewer,
-    'storyViewers': StoryViewers,
+    'storyStatistics': StoryStatistics,
     'SuggestedAction': SuggestedAction,
     'suggestedActionEnableArchiveAndMuteNewChats': SuggestedActionEnableArchiveAndMuteNewChats,
     'suggestedActionCheckPassword': SuggestedActionCheckPassword,
@@ -15653,6 +16179,7 @@ types = {
     'suggestedActionUpgradePremium': SuggestedActionUpgradePremium,
     'suggestedActionRestorePremium': SuggestedActionRestorePremium,
     'suggestedActionSubscribeToAnnualPremium': SuggestedActionSubscribeToAnnualPremium,
+    'suggestedActionGiftPremiumForChristmas': SuggestedActionGiftPremiumForChristmas,
     'usernames': Usernames,
     'supergroup': Supergroup,
     'supergroupFullInfo': SupergroupFullInfo,
@@ -15753,8 +16280,7 @@ types = {
     'updateNewChat': UpdateNewChat,
     'updateChatTitle': UpdateChatTitle,
     'updateChatPhoto': UpdateChatPhoto,
-    'updateChatAccentColor': UpdateChatAccentColor,
-    'updateChatBackgroundCustomEmoji': UpdateChatBackgroundCustomEmoji,
+    'updateChatAccentColors': UpdateChatAccentColors,
     'updateChatPermissions': UpdateChatPermissions,
     'updateChatLastMessage': UpdateChatLastMessage,
     'updateChatPosition': UpdateChatPosition,
@@ -15763,6 +16289,7 @@ types = {
     'updateChatActionBar': UpdateChatActionBar,
     'updateChatAvailableReactions': UpdateChatAvailableReactions,
     'updateChatDraftMessage': UpdateChatDraftMessage,
+    'updateChatEmojiStatus': UpdateChatEmojiStatus,
     'updateChatMessageSender': UpdateChatMessageSender,
     'updateChatMessageAutoDeleteTime': UpdateChatMessageAutoDeleteTime,
     'updateChatNotificationSettings': UpdateChatNotificationSettings,
@@ -15777,6 +16304,7 @@ types = {
     'updateChatHasProtectedContent': UpdateChatHasProtectedContent,
     'updateChatIsTranslatable': UpdateChatIsTranslatable,
     'updateChatIsMarkedAsUnread': UpdateChatIsMarkedAsUnread,
+    'updateChatViewAsTopics': UpdateChatViewAsTopics,
     'updateChatBlockList': UpdateChatBlockList,
     'updateChatHasScheduledMessages': UpdateChatHasScheduledMessages,
     'updateChatFolders': UpdateChatFolders,
@@ -15827,9 +16355,10 @@ types = {
     'updateFavoriteStickers': UpdateFavoriteStickers,
     'updateSavedAnimations': UpdateSavedAnimations,
     'updateSavedNotificationSounds': UpdateSavedNotificationSounds,
-    'updateSelectedBackground': UpdateSelectedBackground,
+    'updateDefaultBackground': UpdateDefaultBackground,
     'updateChatThemes': UpdateChatThemes,
     'updateAccentColors': UpdateAccentColors,
+    'updateProfileAccentColors': UpdateProfileAccentColors,
     'updateLanguagePackStrings': UpdateLanguagePackStrings,
     'updateConnectionState': UpdateConnectionState,
     'updateTermsOfService': UpdateTermsOfService,
@@ -15839,6 +16368,7 @@ types = {
     'updateWebAppMessageSent': UpdateWebAppMessageSent,
     'updateActiveEmojiReactions': UpdateActiveEmojiReactions,
     'updateDefaultReactionType': UpdateDefaultReactionType,
+    'updateSpeechRecognitionTrial': UpdateSpeechRecognitionTrial,
     'updateDiceEmojis': UpdateDiceEmojis,
     'updateAnimatedEmojiMessageClicked': UpdateAnimatedEmojiMessageClicked,
     'updateAnimationSearchParameters': UpdateAnimationSearchParameters,
@@ -15858,6 +16388,8 @@ types = {
     'updateChatMember': UpdateChatMember,
     'updateNewChatJoinRequest': UpdateNewChatJoinRequest,
     'updateChatBoost': UpdateChatBoost,
+    'updateMessageReaction': UpdateMessageReaction,
+    'updateMessageReactions': UpdateMessageReactions,
     'updates': Updates,
     'UserType': UserType,
     'userLink': UserLink,
@@ -15948,13 +16480,6 @@ def acceptTermsOfService(terms_of_service_id: str = None, ):
 def activateStoryStealthMode():
     return client.send({
         '@type': 'activateStoryStealthMode',
-    })
-
-
-def addApplicationChangelog(previous_application_version: str = None, ):
-    return client.send({
-        '@type': 'addApplicationChangelog',
-        'previous_application_version': to_json(previous_application_version),
     })
 
 
@@ -16719,6 +17244,14 @@ def deleteChat(chat_id: int = None, ):
     })
 
 
+def deleteChatBackground(chat_id: int = None, restore_previous: bool = None, ):
+    return client.send({
+        '@type': 'deleteChatBackground',
+        'chat_id': to_json(chat_id),
+        'restore_previous': to_json(restore_previous),
+    })
+
+
 def deleteChatFolder(chat_folder_id: int = None, leave_chat_ids: list[int] = None, ):
     return client.send({
         '@type': 'deleteChatFolder',
@@ -16775,6 +17308,13 @@ def deleteCommands(scope: BotCommandScope = None, language_code: str = None, ):
         '@type': 'deleteCommands',
         'scope': to_json(scope),
         'language_code': to_json(language_code),
+    })
+
+
+def deleteDefaultBackground(for_dark_theme: bool = None, ):
+    return client.send({
+        '@type': 'deleteDefaultBackground',
+        'for_dark_theme': to_json(for_dark_theme),
     })
 
 
@@ -17252,13 +17792,6 @@ def getBackgroundUrl(name: str = None, type: BackgroundType = None, ):
     })
 
 
-def getBackgrounds(for_dark_theme: bool = None, ):
-    return client.send({
-        '@type': 'getBackgrounds',
-        'for_dark_theme': to_json(for_dark_theme),
-    })
-
-
 def getBankCardInfo(bank_card_number: str = None, ):
     return client.send({
         '@type': 'getBankCardInfo',
@@ -17365,6 +17898,19 @@ def getChatAvailableMessageSenders(chat_id: int = None, ):
     return client.send({
         '@type': 'getChatAvailableMessageSenders',
         'chat_id': to_json(chat_id),
+    })
+
+
+def getChatBoostFeatures():
+    return client.send({
+        '@type': 'getChatBoostFeatures',
+    })
+
+
+def getChatBoostLevelFeatures(level: int = None, ):
+    return client.send({
+        '@type': 'getChatBoostLevelFeatures',
+        'level': to_json(level),
     })
 
 
@@ -17594,6 +18140,21 @@ def getChatScheduledMessages(chat_id: int = None, ):
     })
 
 
+def getChatSimilarChatCount(chat_id: int = None, return_local: bool = None, ):
+    return client.send({
+        '@type': 'getChatSimilarChatCount',
+        'chat_id': to_json(chat_id),
+        'return_local': to_json(return_local),
+    })
+
+
+def getChatSimilarChats(chat_id: int = None, ):
+    return client.send({
+        '@type': 'getChatSimilarChats',
+        'chat_id': to_json(chat_id),
+    })
+
+
 def getChatSparseMessagePositions(chat_id: int = None, filter: SearchMessagesFilter = None, from_message_id: int = None, limit: int = None, ):
     return client.send({
         '@type': 'getChatSparseMessagePositions',
@@ -17616,6 +18177,18 @@ def getChatStatistics(chat_id: int = None, is_dark: bool = None, ):
         '@type': 'getChatStatistics',
         'chat_id': to_json(chat_id),
         'is_dark': to_json(is_dark),
+    })
+
+
+def getChatStoryInteractions(story_sender_chat_id: int = None, story_id: int = None, reaction_type: ReactionType = None, prefer_forwards: bool = None, offset: str = None, limit: int = None, ):
+    return client.send({
+        '@type': 'getChatStoryInteractions',
+        'story_sender_chat_id': to_json(story_sender_chat_id),
+        'story_id': to_json(story_id),
+        'reaction_type': to_json(reaction_type),
+        'prefer_forwards': to_json(prefer_forwards),
+        'offset': to_json(offset),
+        'limit': to_json(limit),
     })
 
 
@@ -17723,6 +18296,12 @@ def getDefaultBackgroundCustomEmojiStickers():
     })
 
 
+def getDefaultChatEmojiStatuses():
+    return client.send({
+        '@type': 'getDefaultChatEmojiStatuses',
+    })
+
+
 def getDefaultChatPhotoCustomEmojiStickers():
     return client.send({
         '@type': 'getDefaultChatPhotoCustomEmojiStickers',
@@ -17744,6 +18323,12 @@ def getDefaultMessageAutoDeleteTime():
 def getDefaultProfilePhotoCustomEmojiStickers():
     return client.send({
         '@type': 'getDefaultProfilePhotoCustomEmojiStickers',
+    })
+
+
+def getDisallowedChatEmojiStatuses():
+    return client.send({
+        '@type': 'getDisallowedChatEmojiStatuses',
     })
 
 
@@ -17931,6 +18516,13 @@ def getInlineQueryResults(bot_user_id: int = None, chat_id: int = None, user_loc
         'user_location': to_json(user_location),
         'query': to_json(query),
         'offset': to_json(offset),
+    })
+
+
+def getInstalledBackgrounds(for_dark_theme: bool = None, ):
+    return client.send({
+        '@type': 'getInstalledBackgrounds',
+        'for_dark_theme': to_json(for_dark_theme),
     })
 
 
@@ -18535,21 +19127,41 @@ def getStoryAvailableReactions(row_size: int = None, ):
     })
 
 
+def getStoryInteractions(story_id: int = None, query: str = None, only_contacts: bool = None, prefer_forwards: bool = None, prefer_with_reaction: bool = None, offset: str = None, limit: int = None, ):
+    return client.send({
+        '@type': 'getStoryInteractions',
+        'story_id': to_json(story_id),
+        'query': to_json(query),
+        'only_contacts': to_json(only_contacts),
+        'prefer_forwards': to_json(prefer_forwards),
+        'prefer_with_reaction': to_json(prefer_with_reaction),
+        'offset': to_json(offset),
+        'limit': to_json(limit),
+    })
+
+
 def getStoryNotificationSettingsExceptions():
     return client.send({
         '@type': 'getStoryNotificationSettingsExceptions',
     })
 
 
-def getStoryViewers(story_id: int = None, query: str = None, only_contacts: bool = None, prefer_with_reaction: bool = None, offset: str = None, limit: int = None, ):
+def getStoryPublicForwards(story_sender_chat_id: int = None, story_id: int = None, offset: str = None, limit: int = None, ):
     return client.send({
-        '@type': 'getStoryViewers',
+        '@type': 'getStoryPublicForwards',
+        'story_sender_chat_id': to_json(story_sender_chat_id),
         'story_id': to_json(story_id),
-        'query': to_json(query),
-        'only_contacts': to_json(only_contacts),
-        'prefer_with_reaction': to_json(prefer_with_reaction),
         'offset': to_json(offset),
         'limit': to_json(limit),
+    })
+
+
+def getStoryStatistics(chat_id: int = None, story_id: int = None, is_dark: bool = None, ):
+    return client.send({
+        '@type': 'getStoryStatistics',
+        'chat_id': to_json(chat_id),
+        'story_id': to_json(story_id),
+        'is_dark': to_json(is_dark),
     })
 
 
@@ -18627,6 +19239,12 @@ def getThemeParametersJsonString(theme: ThemeParameters = None, ):
     return client.send({
         '@type': 'getThemeParametersJsonString',
         'theme': to_json(theme),
+    })
+
+
+def getThemedChatEmojiStatuses():
+    return client.send({
+        '@type': 'getThemedChatEmojiStatuses',
     })
 
 
@@ -18873,6 +19491,14 @@ def openChat(chat_id: int = None, ):
     })
 
 
+def openChatSimilarChat(chat_id: int = None, opened_chat_id: int = None, ):
+    return client.send({
+        '@type': 'openChatSimilarChat',
+        'chat_id': to_json(chat_id),
+        'opened_chat_id': to_json(opened_chat_id),
+    })
+
+
 def openMessageContent(chat_id: int = None, message_id: int = None, ):
     return client.send({
         '@type': 'openMessageContent',
@@ -19097,13 +19723,6 @@ def removeAllFilesFromDownloads(only_active: bool = None, only_completed: bool =
     })
 
 
-def removeBackground(background_id: int = None, ):
-    return client.send({
-        '@type': 'removeBackground',
-        'background_id': to_json(background_id),
-    })
-
-
 def removeChatActionBar(chat_id: int = None, ):
     return client.send({
         '@type': 'removeChatActionBar',
@@ -19130,6 +19749,13 @@ def removeFileFromDownloads(file_id: int = None, delete_from_cache: bool = None,
         '@type': 'removeFileFromDownloads',
         'file_id': to_json(file_id),
         'delete_from_cache': to_json(delete_from_cache),
+    })
+
+
+def removeInstalledBackground(background_id: int = None, ):
+    return client.send({
+        '@type': 'removeInstalledBackground',
+        'background_id': to_json(background_id),
     })
 
 
@@ -19367,7 +19993,7 @@ def resendLoginEmailAddressCode():
     })
 
 
-def resendMessages(chat_id: int = None, message_ids: list[int] = None, quote: FormattedText = None, ):
+def resendMessages(chat_id: int = None, message_ids: list[int] = None, quote: InputTextQuote = None, ):
     return client.send({
         '@type': 'resendMessages',
         'chat_id': to_json(chat_id),
@@ -19406,9 +20032,9 @@ def resetAuthenticationEmailAddress():
     })
 
 
-def resetBackgrounds():
+def resetInstalledBackgrounds():
     return client.send({
-        '@type': 'resetBackgrounds',
+        '@type': 'resetInstalledBackgrounds',
     })
 
 
@@ -19634,9 +20260,10 @@ def searchStickerSet(name: str = None, ):
     })
 
 
-def searchStickerSets(query: str = None, ):
+def searchStickerSets(sticker_type: StickerType = None, query: str = None, ):
     return client.send({
         '@type': 'searchStickerSets',
+        'sticker_type': to_json(sticker_type),
         'query': to_json(query),
     })
 
@@ -19829,7 +20456,7 @@ def sendPhoneNumberVerificationCode(phone_number: str = None, settings: PhoneNum
     })
 
 
-def sendStory(chat_id: int = None, content: InputStoryContent = None, areas: InputStoryAreas = None, caption: FormattedText = None, privacy_settings: StoryPrivacySettings = None, active_period: int = None, is_pinned: bool = None, protect_content: bool = None, ):
+def sendStory(chat_id: int = None, content: InputStoryContent = None, areas: InputStoryAreas = None, caption: FormattedText = None, privacy_settings: StoryPrivacySettings = None, active_period: int = None, from_story_full_id: StoryFullId = None, is_pinned: bool = None, protect_content: bool = None, ):
     return client.send({
         '@type': 'sendStory',
         'chat_id': to_json(chat_id),
@@ -19838,6 +20465,7 @@ def sendStory(chat_id: int = None, content: InputStoryContent = None, areas: Inp
         'caption': to_json(caption),
         'privacy_settings': to_json(privacy_settings),
         'active_period': to_json(active_period),
+        'from_story_full_id': to_json(from_story_full_id),
         'is_pinned': to_json(is_pinned),
         'protect_content': to_json(protect_content),
     })
@@ -19921,15 +20549,6 @@ def setAutosaveSettings(scope: AutosaveSettingsScope = None, settings: ScopeAuto
     })
 
 
-def setBackground(background: InputBackground = None, type: BackgroundType = None, for_dark_theme: bool = None, ):
-    return client.send({
-        '@type': 'setBackground',
-        'background': to_json(background),
-        'type': to_json(type),
-        'for_dark_theme': to_json(for_dark_theme),
-    })
-
-
 def setBio(bio: str = None, ):
     return client.send({
         '@type': 'setBio',
@@ -20005,13 +20624,14 @@ def setChatAvailableReactions(chat_id: int = None, available_reactions: ChatAvai
     })
 
 
-def setChatBackground(chat_id: int = None, background: InputBackground = None, type: BackgroundType = None, dark_theme_dimming: int = None, ):
+def setChatBackground(chat_id: int = None, background: InputBackground = None, type: BackgroundType = None, dark_theme_dimming: int = None, only_for_self: bool = None, ):
     return client.send({
         '@type': 'setChatBackground',
         'chat_id': to_json(chat_id),
         'background': to_json(background),
         'type': to_json(type),
         'dark_theme_dimming': to_json(dark_theme_dimming),
+        'only_for_self': to_json(only_for_self),
     })
 
 
@@ -20045,6 +20665,14 @@ def setChatDraftMessage(chat_id: int = None, message_thread_id: int = None, draf
         'chat_id': to_json(chat_id),
         'message_thread_id': to_json(message_thread_id),
         'draft_message': to_json(draft_message),
+    })
+
+
+def setChatEmojiStatus(chat_id: int = None, emoji_status: EmojiStatus = None, ):
+    return client.send({
+        '@type': 'setChatEmojiStatus',
+        'chat_id': to_json(chat_id),
+        'emoji_status': to_json(emoji_status),
     })
 
 
@@ -20102,6 +20730,15 @@ def setChatPhoto(chat_id: int = None, photo: InputChatPhoto = None, ):
         '@type': 'setChatPhoto',
         'chat_id': to_json(chat_id),
         'photo': to_json(photo),
+    })
+
+
+def setChatProfileAccentColor(chat_id: int = None, profile_accent_color_id: int = None, profile_background_custom_emoji_id: int = None, ):
+    return client.send({
+        '@type': 'setChatProfileAccentColor',
+        'chat_id': to_json(chat_id),
+        'profile_accent_color_id': to_json(profile_accent_color_id),
+        'profile_background_custom_emoji_id': to_json(profile_background_custom_emoji_id),
     })
 
 
@@ -20173,6 +20810,15 @@ def setDatabaseEncryptionKey(new_encryption_key: bytes = None, ):
     return client.send({
         '@type': 'setDatabaseEncryptionKey',
         'new_encryption_key': to_json(new_encryption_key),
+    })
+
+
+def setDefaultBackground(background: InputBackground = None, type: BackgroundType = None, for_dark_theme: bool = None, ):
+    return client.send({
+        '@type': 'setDefaultBackground',
+        'background': to_json(background),
+        'type': to_json(type),
+        'for_dark_theme': to_json(for_dark_theme),
     })
 
 
@@ -20329,6 +20975,16 @@ def setMenuButton(user_id: int = None, menu_button: BotMenuButton = None, ):
     })
 
 
+def setMessageReactions(chat_id: int = None, message_id: int = None, reaction_types: list[ReactionType] = None, is_big: bool = None, ):
+    return client.send({
+        '@type': 'setMessageReactions',
+        'chat_id': to_json(chat_id),
+        'message_id': to_json(message_id),
+        'reaction_types': to_json(reaction_types),
+        'is_big': to_json(is_big),
+    })
+
+
 def setMessageSenderBlockList(sender_id: MessageSender = None, block_list: BlockList = None, ):
     return client.send({
         '@type': 'setMessageSenderBlockList',
@@ -20409,6 +21065,14 @@ def setPollAnswer(chat_id: int = None, message_id: int = None, option_ids: list[
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'option_ids': to_json(option_ids),
+    })
+
+
+def setProfileAccentColor(profile_accent_color_id: int = None, profile_background_custom_emoji_id: int = None, ):
+    return client.send({
+        '@type': 'setProfileAccentColor',
+        'profile_accent_color_id': to_json(profile_accent_color_id),
+        'profile_background_custom_emoji_id': to_json(profile_background_custom_emoji_id),
     })
 
 
@@ -20599,13 +21263,13 @@ def sharePhoneNumber(user_id: int = None, ):
     })
 
 
-def shareUserWithBot(chat_id: int = None, message_id: int = None, button_id: int = None, shared_user_id: int = None, only_check: bool = None, ):
+def shareUsersWithBot(chat_id: int = None, message_id: int = None, button_id: int = None, shared_user_ids: list[int] = None, only_check: bool = None, ):
     return client.send({
-        '@type': 'shareUserWithBot',
+        '@type': 'shareUsersWithBot',
         'chat_id': to_json(chat_id),
         'message_id': to_json(message_id),
         'button_id': to_json(button_id),
-        'shared_user_id': to_json(shared_user_id),
+        'shared_user_ids': to_json(shared_user_ids),
         'only_check': to_json(only_check),
     })
 
@@ -20827,6 +21491,14 @@ def toggleChatIsTranslatable(chat_id: int = None, is_translatable: bool = None, 
         '@type': 'toggleChatIsTranslatable',
         'chat_id': to_json(chat_id),
         'is_translatable': to_json(is_translatable),
+    })
+
+
+def toggleChatViewAsTopics(chat_id: int = None, view_as_topics: bool = None, ):
+    return client.send({
+        '@type': 'toggleChatViewAsTopics',
+        'chat_id': to_json(chat_id),
+        'view_as_topics': to_json(view_as_topics),
     })
 
 

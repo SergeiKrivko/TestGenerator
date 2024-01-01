@@ -1,6 +1,8 @@
-from PyQt6.QtCore import Qt
+import webbrowser
+
+from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QTextEdit
+from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QTextEdit, QTextBrowser
 
 from side_tabs.telegram.messages.context_menu import ContextMenu
 from side_tabs.telegram.messages.document import DocumentWidget
@@ -130,7 +132,8 @@ class TelegramChatBubble(QWidget):
 
         font_metrics = QFontMetrics(self._tm.font_medium)
 
-        self._label = QTextEdit()
+        self._label = QTextBrowser()
+        self._label.anchorClicked.connect(self._on_href_clicked)
         self._label.setContextMenuPolicy(Qt.ContextMenuPolicy.NoContextMenu)
         self._label.setHtml(self._text)
         if not self._text:
@@ -231,6 +234,10 @@ class TelegramChatBubble(QWidget):
                 if menu.data is not None:
                     tg.addMessageReaction(self._message.chat_id, self._message.id,
                                           tg.ReactionTypeEmoji(emoji=menu.data))
+
+    def _on_href_clicked(self, href: QUrl):
+        webbrowser.open(href.url())
+        self._label.setHtml(self._text)
 
     def set_theme(self):
         css = f"""color: {self._tm['TextColor']}; 
