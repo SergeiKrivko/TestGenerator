@@ -131,6 +131,8 @@ class TelegramManager(QThread):
         elif isinstance(event, tg.UpdateNewChat):
             self._chats[event.chat.id] = TgChat(**tg.to_json(event.chat))
             self.updateChat.emit(str(event.chat.id))
+            if isinstance(event.chat.type, tg.ChatTypeSupergroup):
+                tg.getSupergroupFullInfo(event.chat.type.supergroup_id)
         elif isinstance(event, tg.UpdateChatReadInbox):
             self._chats[event.chat_id].unread_count = event.unread_count
             self.updateChat.emit(str(event.chat_id))
@@ -143,6 +145,8 @@ class TelegramManager(QThread):
             for el in event.chat_folders:
                 self._chat_lists[el.title] = tg.ChatListFolder(chat_folder_id=el.id)
             self.updateFolders.emit(self._chat_lists)
+        elif isinstance(event, tg.UpdateSupergroupFullInfo):
+            print(tg.to_json(event.supergroup_full_info))
 
         # MESSAGES
 

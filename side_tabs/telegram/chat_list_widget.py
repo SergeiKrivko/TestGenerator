@@ -129,15 +129,22 @@ class TelegramListWidgetItem(QWidget):
 
         self._icon_label = Label()
         self._icon_label.mouseMoving.connect(lambda: self.set_hover(True))
-        self._icon_label.setFixedWidth(54)
+        self._icon_label.setFixedWidth(50)
         self._photo = None
         if chat.photo is not None:
             self._photo = chat.photo.small
             if self._photo.local.can_be_downloaded:
                 tg.downloadFile(self._photo.id, 1)
-            # manager.updateFile.connect(self.update_icon)
+            manager.updateFile.connect(self.update_icon)
             if self._photo.local.is_downloading_completed:
                 self._icon_label.setPixmap(QPixmap(self._photo.local.path).scaled(48, 48))
+        else:
+            self._icon_label.setText(self._chat.title[0])
+            self._icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self._icon_label.setFont(self._tm.font_big)
+            self._icon_label.setStyleSheet(f"""background-color: {self._tm['MenuColor']};
+                                               border: 0px solid black;
+                                               border-radius: 25px;""")
         main_layout.addWidget(self._icon_label)
 
         layout = QVBoxLayout()

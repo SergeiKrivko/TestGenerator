@@ -9,6 +9,7 @@ from side_tabs.telegram.messages.document import DocumentWidget
 from side_tabs.telegram.messages.emoji import EmojiLabel
 from side_tabs.telegram.messages.photo import PhotoLabel
 from side_tabs.telegram.messages.reactions import Reaction
+from side_tabs.telegram.messages.sticker import StickerWidget
 from side_tabs.telegram.messages.text import TgFormattedText
 from side_tabs.telegram.messages.video import VideoPlayer
 from side_tabs.telegram.messages.voice import VoicePlayer
@@ -37,9 +38,9 @@ class TelegramChatBubble(QWidget):
                                                           tg.MessagePinMessage,))
 
         if isinstance(message.content, tg.MessageText):
-            self._text = TgFormattedText(message.content.text, self._tm).html
+            self._text = TgFormattedText(message.content.text, self._tm, self._message).html
         elif isinstance(message.content, (tg.MessageDocument, tg.MessagePhoto, tg.MessageVideo)):
-            self._text = TgFormattedText(message.content.caption, self._tm).html
+            self._text = TgFormattedText(message.content.caption, self._tm, self._message).html
         else:
             self._text = ''
 
@@ -105,6 +106,10 @@ class TelegramChatBubble(QWidget):
         elif isinstance(self._message.content, tg.MessageDocument):
             self._document_widget = DocumentWidget(self._tm, self._message.content.document, self._manager)
             self._layout.addWidget(self._document_widget)
+
+        elif isinstance(self._message.content, tg.MessageSticker):
+            self._sticker_widget = StickerWidget(self._tm, self._manager, self._message.content.sticker)
+            self._layout.addWidget(self._sticker_widget)
 
         elif isinstance(self._message.content, tg.MessageBasicGroupChatCreate):
             self._info_label.setText(f"{user_name} создал(а) группу \"{self._message.content.title}\"")

@@ -2,8 +2,9 @@ from side_tabs.telegram.telegram_api import tg
 
 
 class TgFormattedText:
-    def __init__(self, formatted_text: tg.FormattedText, tm):
+    def __init__(self, formatted_text: tg.FormattedText, tm, message: tg.Message = None):
         self._tm = tm
+        self._message = message
         self.text = formatted_text.text
         self.entities = formatted_text.entities
 
@@ -12,7 +13,7 @@ class TgFormattedText:
         self.to_html()
 
     def to_html(self):
-        self.html = self.text
+        self.html = self.text.replace('\n', '<br>')
         for entity in self.entities:
             if isinstance(entity.type, tg.TextEntityTypeBold):
                 self._include('<b>', entity.offset)
@@ -27,13 +28,20 @@ class TgFormattedText:
                 self._include("<ins>", entity.offset)
                 self._include('</ins>', entity.offset + entity.length)
             elif isinstance(entity.type, tg.TextEntityTypePre):
-                self._include("<pre>", entity.offset)
-                self._include('</pre>', entity.offset + entity.length)
+                self._include("<table border='1' width='100%'><tr><th><pre>", entity.offset)
+                self._include('</th></tr></pre>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypePreCode):
+                self._include("<table border='1' width='100%' cellpadding='5'><tr><td><pre>", entity.offset)
+                self._include('</td></tr></pre>', entity.offset + entity.length)
             elif isinstance(entity.type, tg.TextEntityTypeTextUrl):
                 self._include(f"<a href='{entity.type.url}'>", entity.offset)
                 self._include('</a>', entity.offset + entity.length)
+            elif isinstance(entity.type, tg.TextEntityTypeUrl) and self._message and \
+                    isinstance(self._message.content, tg.MessageText):
+                self._include(f"<a href='{self._message.content.web_page.url}'>", entity.offset)
+                self._include('</a>', entity.offset + entity.length)
             else:
-                print(entity.type)
+                print(entity.type, self._message.content)
 
         # for key, item in {'😁': 'emoji/😁',
         #                   '😭': 'emoji/😭',
