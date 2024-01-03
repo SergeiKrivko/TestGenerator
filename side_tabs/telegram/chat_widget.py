@@ -1,7 +1,7 @@
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, pyqtSignal, QPoint
-from PyQt6.QtGui import QKeyEvent, QIcon
-from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit, QMenu
+from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtWidgets import QVBoxLayout, QScrollArea, QWidget, QHBoxLayout, QTextEdit
 
 from side_tabs.telegram.chat_bubble import TelegramChatBubble
 from side_tabs.telegram.send_message_dialog import SendMessageDialog, MessageTypeMenu
@@ -14,8 +14,9 @@ class TelegramChatWidget(QWidget):
     loadRequested = pyqtSignal()
     sendMessageRequested = pyqtSignal(int)
     sendMessage = pyqtSignal(str)
+    jumpRequested = pyqtSignal(object, object)
 
-    def __init__(self, sm, tm, chat: TgChat, manager: TelegramManager):
+    def __init__(self, sm, tm, manager: TelegramManager, chat: TgChat, thread=None, messages=None):
         super().__init__()
         self._sm = sm
         self._tm = tm
@@ -60,13 +61,14 @@ class TelegramChatWidget(QWidget):
         self._last_max = 0
 
         self._chat = chat
+        self._thread = thread
         self._manager = manager
         self.loading = False
 
         self._scroll_bar = self._scroll_area.verticalScrollBar()
         self._scroll_bar.valueChanged.connect(self._on_scroll_bar_value_changed)
 
-        self._messages_to_load = 20
+        self._messages_to_load = 10
         self.loadRequested.connect(self.add_messages_to_load)
 
         if not self._chat.permissions.can_send_basic_messages:
@@ -75,6 +77,11 @@ class TelegramChatWidget(QWidget):
 
         self.sendMessageRequested.connect(self._sending_document)
         self._manager.deleteMessages.connect(self._delete_messages)
+
+        if messages:
+            self.loading = True
+            for el in messages:
+                self.add_message(el)
 
     def show(self) -> None:
         if self.isHidden():
@@ -94,10 +101,11 @@ class TelegramChatWidget(QWidget):
         if self.loading:
             return
         if self._chat.message_count() < self._messages_to_load:
-            if self._chat.first_message is None:
-                tg.getChatHistory(self._chat.id, limit=50)
+            first_message = None if self._chat.first_message is None else self._chat.first_message.id
+            if self._thread == 0:
+                tg.getChatHistory(self._chat.id, from_message_id=first_message, limit=10)
             else:
-                tg.getChatHistory(self._chat.id, from_message_id=self._chat.first_message.id, limit=50)
+                tg.getMessageThreadHistory(self._chat.id, self._thread, from_message_id=first_message, limit=10)
             self.loading = True
 
     def _on_scroll_bar_value_changed(self):
@@ -120,6 +128,7 @@ class TelegramChatWidget(QWidget):
 
     def insert_bubble(self, message: tg.Message):
         bubble = TelegramChatBubble(self._tm, message, self._manager)
+        bubble.jumpRequested.connect(self.jumpRequested.emit)
         bubble.set_max_width(int(self.width() * 0.8))
         if isinstance(self._chat.type, tg.ChatTypePrivate):
             bubble.hide_sender()
@@ -127,6 +136,7 @@ class TelegramChatWidget(QWidget):
 
     def add_bubble(self, message: tg.Message, *args):
         bubble = TelegramChatBubble(self._tm, message, self._manager)
+        bubble.jumpRequested.connect(self.jumpRequested.emit)
         bubble.set_max_width(int(self.width() * 0.8))
         if isinstance(self._chat.type, tg.ChatTypePrivate):
             bubble.hide_sender()

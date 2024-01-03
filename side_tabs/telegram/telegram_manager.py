@@ -35,7 +35,7 @@ class TgChat(tg.Chat):
     def set_last_message(self, message: tg.Message):
         self.last_message = message
 
-    def get_message(self, message_id):
+    def get_message(self, message_id) -> tg.Message:
         return self._messages[message_id]
 
     def message_count(self):
@@ -49,7 +49,8 @@ class TelegramManager(QThread):
     updateChat = pyqtSignal(str)
     addMessage = pyqtSignal(tg.Message)
     insertMessage = pyqtSignal(tg.Message)
-    loadingFinished = pyqtSignal(TgChat)
+    loadingFinished = pyqtSignal(TgChat, object)
+    threadLoaded = pyqtSignal(tg.MessageThreadInfo)
     updateFolders = pyqtSignal(dict)
     messageInterationInfoChanged = pyqtSignal(object, object)
     deleteMessages = pyqtSignal(object, list)
@@ -79,6 +80,7 @@ class TelegramManager(QThread):
         self._files = dict()
         self._chats = dict()
         self._users = dict()
+        self._supergroups = dict()
         self._chat_lists = {'All': tg.ChatListMain(), 'Archive': tg.ChatListArchive()}
         self.active_reactions = []
 
@@ -96,6 +98,9 @@ class TelegramManager(QThread):
 
     def get_user(self, user_id: int) -> tg.User:
         return self._users[user_id]
+
+    def get_supergroup(self, id) -> tuple[tg.Supergroup, tg.SupergroupFullInfo]:
+        return self._supergroups[id]
 
     def update_chat(self, chat: TgChat):
         if chat.id not in self._chats:
@@ -132,6 +137,9 @@ class TelegramManager(QThread):
             self._chats[event.chat.id] = TgChat(**tg.to_json(event.chat))
             self.updateChat.emit(str(event.chat.id))
             if isinstance(event.chat.type, tg.ChatTypeSupergroup):
+                if event.chat.type.supergroup_id not in self._supergroups:
+                    self._supergroups[event.chat.type.supergroup_id] = [None, None]
+                # tg.getSupergroup(event.chat.type.supergroup_id)
                 tg.getSupergroupFullInfo(event.chat.type.supergroup_id)
         elif isinstance(event, tg.UpdateChatReadInbox):
             self._chats[event.chat_id].unread_count = event.unread_count
@@ -146,7 +154,12 @@ class TelegramManager(QThread):
                 self._chat_lists[el.title] = tg.ChatListFolder(chat_folder_id=el.id)
             self.updateFolders.emit(self._chat_lists)
         elif isinstance(event, tg.UpdateSupergroupFullInfo):
-            print(tg.to_json(event.supergroup_full_info))
+            self._supergroups[event.supergroup_id][1] = event.supergroup_full_info
+        elif isinstance(event, tg.UpdateSupergroup):
+            if event.supergroup.id not in self._supergroups:
+                self._supergroups[event.supergroup.id] = [event.supergroup, None]
+            else:
+                self._supergroups[event.supergroup.id][0] = event.supergroup
 
         # MESSAGES
 
@@ -162,6 +175,7 @@ class TelegramManager(QThread):
         elif isinstance(event, tg.UpdateDeleteMessages):
             self.deleteMessages.emit(event.chat_id, event.message_ids)
         elif isinstance(event, tg.Messages):
+            print(tg.to_json(event.messages))
             el = None
             for el in event.messages:
                 self.get_chat(el.chat_id).insert_message(el)
@@ -169,13 +183,15 @@ class TelegramManager(QThread):
             if el is not None and self.get_chat(el.chat_id).last_message_count < self.get_chat(
                     el.chat_id).message_count():
                 self.get_chat(el.chat_id).last_message_count = self.get_chat(el.chat_id).message_count()
-                self.loadingFinished.emit(self.get_chat(el.chat_id))
+                self.loadingFinished.emit(self.get_chat(el.chat_id), event.messages[0].message_thread_id)
         elif isinstance(event, tg.UpdateMessageInteractionInfo):
             try:
                 self.get_chat(event.chat_id).get_message(event.message_id).interaction_info = event.interaction_info
                 self.messageInterationInfoChanged.emit(event.chat_id, event.message_id)
             except KeyError:
                 pass
+        elif isinstance(event, tg.MessageThreadInfo):
+            self.threadLoaded.emit(event)
 
         # USERS
 

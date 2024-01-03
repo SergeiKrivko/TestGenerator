@@ -1,8 +1,8 @@
 import webbrowser
 
-from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QFontMetrics
-from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QTextEdit, QTextBrowser
+from PyQt6.QtWidgets import QLabel, QHBoxLayout, QWidget, QVBoxLayout, QTextBrowser, QPushButton
 
 from side_tabs.telegram.messages.context_menu import ContextMenu
 from side_tabs.telegram.messages.document import DocumentWidget
@@ -15,10 +15,12 @@ from side_tabs.telegram.messages.video import VideoPlayer
 from side_tabs.telegram.messages.voice import VoicePlayer
 from side_tabs.telegram.telegram_api import tg
 from side_tabs.telegram.telegram_manager import TelegramManager
+from ui.flow_layout import FlowLayout
 
 
 class TelegramChatBubble(QWidget):
     _BORDER_RADIUS = 10
+    jumpRequested = pyqtSignal(object, object)
 
     def __init__(self, tm, message: tg.Message, manager: TelegramManager):
         super().__init__()
@@ -152,15 +154,25 @@ class TelegramChatBubble(QWidget):
         self._label.setMaximumWidth(self._fm_width)
         self._layout.addWidget(self._label, 10)
 
-        self._reactions_layout = QHBoxLayout()
+        self._reactions_layout = FlowLayout()
         self._reactions_layout.setContentsMargins(8, 2, 8, 2)
         self._reactions_layout.setSpacing(2)
         self._reactions_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._layout.addLayout(self._reactions_layout)
         self._reactions: list[Reaction] = []
 
+        if self._message.is_channel_post:
+            self._button_comments = QPushButton("Комментарии")
+            self._button_comments.clicked.connect(self._on_jump)
+            self._layout.addWidget(self._button_comments)
+
         self._manager.messageInterationInfoChanged.connect(self._on_interaction_info_changed)
         self._on_interaction_info_changed(self._message.chat_id, self._message.id)
+
+    def _on_jump(self):
+        chat_id = self._manager.get_supergroup(self._manager.get_chat(
+            self._message.chat_id).type.supergroup_id)[1].linked_chat_id
+        tg.getMessageThread(self._message.chat_id, self._message.id)
 
     def showEvent(self, a0) -> None:
         super().showEvent(a0)
@@ -271,3 +283,5 @@ class TelegramChatBubble(QWidget):
             self._voice_player.set_theme()
         if hasattr(self, '_emoji_widget'):
             self._emoji_widget.set_theme()
+        if hasattr(self, '_button_comments'):
+            self._tm.auto_css(self._button_comments, border=False, palette='Menu', padding=True)

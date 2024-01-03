@@ -30,6 +30,7 @@ class TelegramWidget(SidePanelWidget):
         self._manager.addMessage.connect(self.add_message)
         self._manager.insertMessage.connect(self.insert_message)
         self._manager.loadingFinished.connect(self.loading_finished)
+        self._manager.threadLoaded.connect(self._jump)
         self._manager.authorization.connect(self.get_authentication_data)
         self._manager.updateFolders.connect(self.update_folders)
 
@@ -58,11 +59,12 @@ class TelegramWidget(SidePanelWidget):
 
         self._top_panel = TelegramTopWidget(self.tm, self._manager)
         self._top_panel.hide()
-        self._top_panel.buttonBackPressed.connect(lambda: self.show_chat(None))
+        self._top_panel.buttonBackPressed.connect(self.hide_chat)
         self._chats_layout.addWidget(self._top_panel)
 
         self._chat_widgets = dict()
         self._current_chat = None
+        self._last_chats = []
 
         self._manager_started = False
         self._folders = []
@@ -97,46 +99,69 @@ class TelegramWidget(SidePanelWidget):
         tg.getChats(self._folders[self._tab_bar.currentIndex()], 100)
 
     def add_message(self, message: tg.Message):
-        self._chat_widgets[message.chat_id].add_message(message)
+        if (message.chat_id, message.message_thread_id) not in self._chat_widgets:
+            return
+        self._chat_widgets[(message.chat_id, message.message_thread_id)].add_message(message)
 
     def insert_message(self, message: tg.Message):
-        self._chat_widgets[message.chat_id].insert_message(message)
+        self._chat_widgets[(message.chat_id, message.message_thread_id)].insert_message(message)
 
-    def loading_finished(self, chat: TgChat):
-        self._chat_widgets[chat.id].loading = False
-        self._chat_widgets[chat.id].check_if_need_to_load()
+    def loading_finished(self, chat: TgChat, thread=0):
+        self._chat_widgets[(chat.id, thread)].loading = False
+        self._chat_widgets[(chat.id, thread)].check_if_need_to_load()
 
-    def add_chat(self, chat):
-        self._list_widget.add_item(chat)
+    def add_chat(self, chat, thread=0, messages=None):
+        if thread == 0:
+            self._list_widget.add_item(chat)
+        if (chat.id, thread) in self._chat_widgets:
+            return
 
-        chat_widget = TelegramChatWidget(self.sm, self.tm, chat, self._manager)
+        chat_widget = TelegramChatWidget(self.sm, self.tm, self._manager, chat, thread)
         chat_widget.hide()
         chat_widget.set_theme()
-        self._chat_widgets[chat.id] = chat_widget
+        chat_widget.jumpRequested.connect(self._jump)
+        self._chat_widgets[(chat.id, thread)] = chat_widget
         self._chats_layout.addWidget(chat_widget)
 
-    def show_chat(self, chat_id):
+    def _jump(self, thread_info: tg.MessageThreadInfo):
+        self.add_chat(self._manager.get_chat(thread_info.chat_id), thread_info.message_thread_id,
+                      messages=thread_info.messages)
+        self.show_chat(thread_info.chat_id, thread_info.message_thread_id)
+
+    def show_chat(self, chat_id, thread=0):
         if isinstance(chat_id, str):
             chat_id = int(chat_id)
-        if chat_id in self._chat_widgets:
-            if self._current_chat in self._chat_widgets:
-                self._chat_widgets[self._current_chat].hide()
-            self._list_widget.hide()
-            self._tab_bar.hide()
-            self._top_panel.show()
-            self._top_panel.set_chat(self._manager.get_chat(chat_id))
-            self._chat_widgets[chat_id].show()
-            self._current_chat = chat_id
-            tg.openChat(chat_id)
-            # self._manager.get_messages(chat_id)
+        if chat_id is None:
+            self.hide_chat()
+            return
+        if (chat_id, thread) not in self._chat_widgets:
+            return
+        if self._current_chat in self._chat_widgets:
+            if len(self._last_chats) > 1 and (chat_id, thread) == self._last_chats[-1]:
+                self._last_chats.pop(-1)
+            else:
+                self._last_chats.append(self._current_chat)
+            self._chat_widgets[self._current_chat].hide()
+        self._list_widget.hide()
+        self._tab_bar.hide()
+        self._top_panel.show()
+        self._top_panel.set_chat(self._manager.get_chat(chat_id))
+        self._chat_widgets[(chat_id, thread)].show()
+        self._current_chat = (chat_id, thread)
+        tg.openChat(chat_id)
+        # self._manager.get_messages(chat_id)
+
+    def hide_chat(self):
+        if self._current_chat in self._chat_widgets:
+            self._chat_widgets[self._current_chat].hide()
+        self._current_chat = None
+        if self._last_chats:
+            self.show_chat(*self._last_chats.pop(-1))
         else:
-            if self._current_chat in self._chat_widgets:
-                self._chat_widgets[self._current_chat].hide()
             self._list_widget.show()
             self._tab_bar.show()
             self._top_panel.hide()
             self._list_widget.set_current_id(None)
-            self._current_chat = None
 
     def get_authentication_data(self, state):
         dialog = PasswordWidget(self.tm, state)
