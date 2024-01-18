@@ -54,6 +54,7 @@ class TelegramManager(QThread):
     updateFolders = pyqtSignal(dict)
     messageInterationInfoChanged = pyqtSignal(object, object)
     deleteMessages = pyqtSignal(object, list)
+    chatPositionChanged = pyqtSignal(object, object)
 
     updateUserStatus = pyqtSignal(str)
 
@@ -160,6 +161,8 @@ class TelegramManager(QThread):
                 self._supergroups[event.supergroup.id] = [event.supergroup, None]
             else:
                 self._supergroups[event.supergroup.id][0] = event.supergroup
+        elif isinstance(event, tg.UpdateChatPosition):
+            self.chatPositionChanged.emit(event.chat_id, event.position)
 
         # MESSAGES
 

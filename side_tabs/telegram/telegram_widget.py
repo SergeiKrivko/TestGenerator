@@ -101,12 +101,24 @@ class TelegramWidget(SidePanelWidget):
     def add_message(self, message: tg.Message):
         if (message.chat_id, message.message_thread_id) not in self._chat_widgets:
             return
+        chat = self._manager.get_chat(message.chat_id)
+        if isinstance(chat.type, tg.ChatTypeSupergroup) and not chat.type.is_channel:
+            thread = 0
+        else:
+            thread = message.message_thread_id
         self._chat_widgets[(message.chat_id, message.message_thread_id)].add_message(message)
 
     def insert_message(self, message: tg.Message):
-        self._chat_widgets[(message.chat_id, message.message_thread_id)].insert_message(message)
+        chat = self._manager.get_chat(message.chat_id)
+        if isinstance(chat.type, tg.ChatTypeSupergroup) and not chat.type.is_channel:
+            thread = 0
+        else:
+            thread = message.message_thread_id
+        self._chat_widgets[(message.chat_id, thread)].insert_message(message)
 
     def loading_finished(self, chat: TgChat, thread=0):
+        if isinstance(chat.type, tg.ChatTypeSupergroup) and not chat.type.is_channel:
+            thread = 0
         self._chat_widgets[(chat.id, thread)].loading = False
         self._chat_widgets[(chat.id, thread)].check_if_need_to_load()
 

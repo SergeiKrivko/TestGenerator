@@ -74,6 +74,7 @@ class TelegramChatWidget(QWidget):
         if not self._chat.permissions.can_send_basic_messages:
             self._text_edit.hide()
             self._button.hide()
+            self._button_document.hide()
 
         self.sendMessageRequested.connect(self._sending_document)
         self._manager.deleteMessages.connect(self._delete_messages)
@@ -100,12 +101,12 @@ class TelegramChatWidget(QWidget):
     def check_if_need_to_load(self):
         if self.loading:
             return
-        if self._chat.message_count() < self._messages_to_load:
+        if len(self._bubbles) < self._messages_to_load:
             first_message = None if self._chat.first_message is None else self._chat.first_message.id
-            if self._thread == 0:
-                tg.getChatHistory(self._chat.id, from_message_id=first_message, limit=10)
-            else:
+            if isinstance(self._chat.type, tg.ChatTypeSupergroup) and self._chat.type.is_channel and self._thread:
                 tg.getMessageThreadHistory(self._chat.id, self._thread, from_message_id=first_message, limit=10)
+            else:
+                tg.getChatHistory(self._chat.id, from_message_id=first_message, limit=10)
             self.loading = True
 
     def _on_scroll_bar_value_changed(self):
