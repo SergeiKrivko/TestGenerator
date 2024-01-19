@@ -6,7 +6,7 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from backend.backend_types.func_test import FuncTest
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
 from language.languages import languages
@@ -136,7 +136,7 @@ class TestingWidget(MainTab):
         self.bm.testingError.connect(self.testing_is_terminated)
         self.bm.testingUtilError.connect(self.util_failed)
         self.bm.endTesting.connect(self.end_testing)
-        self.bm.changeTestStatus.connect(self.set_tests_status)
+        self.bm.func_tests.onStatusChanged.connect(self.set_tests_status)
 
     def set_theme(self):
         for el in [self.button, self.progress_bar, self.prog_out_combo_box, self.in_data_combo_box,
@@ -163,7 +163,7 @@ class TestingWidget(MainTab):
                 pass
                 # self.current_item.unload()
             try:
-                self.current_item = self.bm.get_func_test('all', index)
+                self.current_item = self.bm.func_tests.get('all', index)
             except IndexError:
                 return
             # self.current_item.load()
@@ -238,11 +238,11 @@ class TestingWidget(MainTab):
         self.test_mode(True)
         self.bm.side_tab_show('tests')
 
-        self.pos_result_bar.set_count(self.bm.func_tests_count('pos'))
-        self.neg_result_bar.set_count(self.bm.func_tests_count('neg'))
+        self.pos_result_bar.set_count(self.bm.func_tests.count('pos'))
+        self.neg_result_bar.set_count(self.bm.func_tests.count('neg'))
 
         self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(self.bm.func_tests_count('all'))
+        self.progress_bar.setMaximum(self.bm.func_tests.count('all'))
         self.progress_bar.setValue(0)
 
     def end_testing(self, coverage, html_page):

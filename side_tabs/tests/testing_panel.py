@@ -1,9 +1,8 @@
-from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QListWidget, QListWidgetItem
 
 from backend.backend_types.func_test import FuncTest
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from ui.side_panel_widget import SidePanelWidget
 
 
@@ -27,7 +26,7 @@ class TestingPanel(SidePanelWidget):
         self.sm.projectChanged.connect(self.list_widget.clear)
 
         self.bm.startTesting.connect(self.update_items)
-        self.bm.changeTestStatus.connect(self.set_status)
+        self.bm.func_tests.onStatusChanged.connect(self.set_status)
         self.bm.endTesting.connect(self.set_terminated)
 
         self.items = []
@@ -54,7 +53,7 @@ class TestingPanel(SidePanelWidget):
 
     def add_item(self, test, index):
         if test.type() != 'pos':
-            index -= self.bm.func_tests_count('pos')
+            index -= self.bm.func_tests.count('pos')
         self.list_widget.addItem(item := TestingPanelItem(test, f"{test.type()}{index + 1}", self.tm))
         self.items.append(item)
 

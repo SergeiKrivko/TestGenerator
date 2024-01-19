@@ -3,6 +3,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QDialog, QComboBox, QPushButton
 
 from backend.backend_types.build import Build
+from backend.managers import BackendManager
 from side_tabs.builds.build_edit import BuildEdit
 from ui.button import Button
 from ui.custom_dialog import CustomDialog
@@ -10,7 +11,7 @@ from ui.side_bar_window import SideBarWindow
 
 
 class BuildWindow(SideBarWindow):
-    def __init__(self, bm, sm, tm):
+    def __init__(self, bm: BackendManager, sm, tm):
         super().__init__(bm, sm, tm)
 
         self.setFixedSize(720, 480)
@@ -47,9 +48,10 @@ class BuildWindow(SideBarWindow):
         self._build_edit.nameChanged.connect(self._update_item_text)
         layout.addWidget(self._build_edit)
 
-        self.bm.addBuild.connect(self.add_build)
-        self.bm.deleteBuild.connect(self.delete_build)
-        self.bm.clearBuilds.connect(self.clear)
+        self.bm.builds.onLoad.connect(lambda builds: [self.add_build(el) for el in builds])
+        self.bm.builds.onAdd.connect(self.add_build)
+        self.bm.builds.onDelete.connect(self.delete_build)
+        self.bm.builds.onClear.connect(self.clear)
 
     def add_build(self, build):
         self._list_widget.addItem(ListWidgetItem(self.tm, build))
@@ -75,22 +77,19 @@ class BuildWindow(SideBarWindow):
         if not isinstance(item, ListWidgetItem):
             return
         item.build['name'] = text
-        self.bm.renameBuild.emit(item.build)
+        self.bm.builds.onRename.emit(item.build)
         item.setText(text)
 
     def new_build(self):
         dialog = BuildTypeDialog(self.tm)
         if dialog.exec():
-            build = Build(build_id := self.bm.generate_build_id(),
-                          f"{self.sm.project.data_path()}/scenarios/{build_id}.json")
-            build['type'] = dialog.value()
-            self.bm.add_build(build)
+            build = self.bm.builds.new(dialog.value())
 
     def _on_delete_pressed(self):
         item = self._list_widget.currentItem()
         if not isinstance(item, ListWidgetItem):
             return
-        self.bm.delete_build(item.build.id)
+        self.bm.builds.delete(item.build.id)
 
     def set_theme(self):
         self.setStyleSheet(self.tm.bg_style_sheet)
@@ -174,4 +173,4 @@ class ListWidgetItem(QListWidgetItem):
     def set_theme(self):
         self.update_name()
         self.setFont(self.tm.font_medium)
-        self.setIcon(QIcon(self.tm.get_image(BuildTypeDialog.IMAGES.get(self.build.get('type')), 'icons/unknown_file')))
+        self.setIcon(QIcon(self.tm.get_image(BuildTypeDialog.IMAGES.get(self.build.type), 'icons/unknown_file')))

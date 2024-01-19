@@ -1,12 +1,12 @@
 import os.path
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QDialog, QLineEdit, \
-    QPushButton, QMenuBar, QMenu, QCheckBox
+from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, \
+    QPushButton, QMenu, QCheckBox
 
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from ui.custom_dialog import CustomDialog
 
 
@@ -90,7 +90,7 @@ class ProjectMenu(QMenu):
     def delete_subproject(self):
         dialog = DeleteSubProjectDialog(self._tm, self._project)
         if dialog.exec():
-            self._bm.sm.delete_project(self._project, directory=dialog.checkbox.isChecked())
+            self._bm._sm.delete_project(self._project, directory=dialog.checkbox.isChecked())
             self.updateRequested.emit()
 
     def set_theme(self):

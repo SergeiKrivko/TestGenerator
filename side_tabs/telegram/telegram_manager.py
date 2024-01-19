@@ -1,12 +1,11 @@
 import base64
-import io
 import os
 from uuid import uuid4
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
 import config
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from side_tabs.telegram.telegram_api import TgClient, tg
 
 

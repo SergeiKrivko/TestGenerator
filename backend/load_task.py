@@ -1,5 +1,6 @@
 import os
 import shutil
+from uuid import uuid4, UUID
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -20,7 +21,7 @@ class Loader(QThread):
         if not isinstance(project, Project) and project is not None:
             raise Exception
         self._manager = manager
-        self._sm = manager.sm
+        self._sm = manager._sm
         self._project = project
         self._main_project = main
 
@@ -59,7 +60,7 @@ class Loader(QThread):
     def store_builds(self):
         if os.path.isdir(data_path := f"{self._old_data_path}/scenarios"):
             shutil.rmtree(data_path)
-        for key, item in self._manager.builds.items():
+        for key, item in self._manager.builds.all.items():
             item.store()
 
     def store_utils(self):
@@ -70,8 +71,8 @@ class Loader(QThread):
             item.store(path)
 
     def clear_all(self):
-        self._manager.clear_func_tests()
-        self._manager.clear_builds()
+        self._manager.func_tests.clear()
+        self._manager.builds.clear()
         self._manager.clear_unit_tests()
         self.next_step()
 
@@ -88,11 +89,11 @@ class Loader(QThread):
             if isinstance(lst := self._sm.project.get_data(f'{test_type}_func_tests'), str):
                 for test_id in lst.split(';'):
                     if test_id:
-                        self._manager.add_func_test(FuncTest(
+                        self._manager.func_tests.add(FuncTest(
                             f"{self._new_data_path}/func_tests/{test_type}", test_id, test_type=test_type))
             else:
                 for i, el in enumerate(get_sorted_jsons(f"{self._new_data_path}/func_tests/{test_type}")):
-                    self._manager.add_func_test(FuncTest.from_file(
+                    self._manager.func_tests.add(FuncTest.from_file(
                         f"{self._new_data_path}/func_tests/{test_type}/{el}", test_type))
 
     def load_unit_tests(self):
@@ -105,9 +106,22 @@ class Loader(QThread):
         path = f"{self._new_data_path}/scenarios"
         if not os.path.isdir(path):
             return
-        for el in get_sorted_jsons(path):
+        builds = []
+        for el in os.listdir(path):
+            if not el.endswith('.json'):
+                continue
             build_path = os.path.join(path, el)
-            self._manager.add_build(Build(int(el.rstrip('.json')), build_path))
+            try:
+                int(el[:-5])
+            except ValueError:
+                id = UUID(el[:-5])
+            else:
+                id = uuid4()
+                new_path = os.path.join(path, f"{id}.json")
+                os.rename(build_path, new_path)
+                build_path = new_path
+            builds.append(Build(id, build_path))
+        self._manager.builds.load(builds)
 
     def load_utils(self):
         path = f"{self._sm.app_data_dir}/utils"

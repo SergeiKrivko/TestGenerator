@@ -2,7 +2,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QLineEdit, QTextEdit, QHBoxLayout, QPushButton, QLabel, QFileDialog, QWidget, \
     QMenu
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from side_tabs.telegram.telegram_api import tg
 from ui.button import Button
 from ui.custom_dialog import CustomDialog
@@ -81,7 +81,7 @@ class SendMessageDialog(CustomDialog):
                     document=tg.InputFileLocal(path=self.specific_widget.text()),
                     caption=tg.FormattedText(text=self.text_area.toPlainText())))
             case SendMessageDialog.PROJECT:
-                path = f"{self._bm.sm.temp_dir()}/{self._bm.sm.project.name()}.TGProject.7z"
+                path = f"{self._bm._sm.temp_dir()}/{self._bm._sm.project.name()}.TGProject.7z"
                 self._bm.project_to_zip(path).finished.connect(
                     lambda: tg.sendMessage(self._chat.id, input_message_content=tg.InputMessageDocument(
                         document=tg.InputFileLocal(path=path),
@@ -110,7 +110,7 @@ class ProjectWidget(QWidget):
         self._label1 = QLabel("Проект")
         layout.addWidget(self._label1)
 
-        self._label2 = QLabel(self._bm.sm.project.name())
+        self._label2 = QLabel(self._bm._sm.project.name())
         layout.addWidget(self._label2)
 
     def set_theme(self):

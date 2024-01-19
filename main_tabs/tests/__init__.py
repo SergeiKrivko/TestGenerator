@@ -6,7 +6,7 @@ from copy import deepcopy
 from PyQt6.QtCore import QMimeData
 from PyQt6.QtWidgets import QVBoxLayout, QListWidgetItem, QApplication
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from backend.backend_types.func_test import FuncTest
 from main_tabs.tests.test_edit_widget import TestEditWidget
 from main_tabs.tests.test_table_widget import TestTableWidget
@@ -35,7 +35,7 @@ class TestsWidget(MainTab):
         self.test_list_widget.cutTests.connect(self.cut_tests)
         self.test_list_widget.pasteTests.connect(self.paste_tests)
         self.test_list_widget.deleteTests.connect(self.delete_tests)
-        self.test_list_widget.undo.connect(self.bm.undo_func_tests)
+        self.test_list_widget.undo.connect(self.bm.func_tests.undo)
 
         # self.test_list_widget.neg_button_generate.clicked.connect(self.generate_neg_tests)
         self.test_list_widget.pos_test_list.itemSelectionChanged.connect(self.select_pos_test)
@@ -60,9 +60,9 @@ class TestsWidget(MainTab):
         self.temp_file_index = 0
         self.tests_changed = False
 
-        self.bm.addFuncTest.connect(self._on_test_added)
-        self.bm.deleteFuncTest.connect(self._on_test_deleted)
-        self.bm.clearFuncTests.connect(self._on_tests_cleared)
+        self.bm.func_tests.onAdd.connect(self._on_test_added)
+        self.bm.func_tests.onDelete.connect(self._on_test_deleted)
+        self.bm.func_tests.onClear.connect(self._on_tests_cleared)
 
     def _on_test_added(self, test: FuncTest, index: int):
         item = Test(test, self.tm)
@@ -96,7 +96,7 @@ class TestsWidget(MainTab):
             index = self.test_list_widget.pos_test_list.currentRow() + 1
         else:
             index = self.test_list_widget.pos_test_list.count()
-        self.bm.new_func_test('pos', index)
+        self.bm.func_tests.new('pos', index)
         self.test_list_widget.pos_test_list.setCurrentRow(index)
 
     def add_neg_test(self):
@@ -104,7 +104,7 @@ class TestsWidget(MainTab):
             index = self.test_list_widget.neg_test_list.currentRow() + 1
         else:
             index = self.test_list_widget.neg_test_list.count()
-        self.bm.new_func_test('neg', index)
+        self.bm.func_tests.new('neg', index)
         self.test_list_widget.neg_test_list.setCurrentRow(index)
 
     def delete_tests(self, test_type=''):
@@ -115,7 +115,7 @@ class TestsWidget(MainTab):
         else:
             test_type = 'pos'
         self.tests_changed = True
-        self.bm.delete_some_func_tests(test_type, [index.row() for index in lst])
+        self.bm.func_tests.delete_some(test_type, [index.row() for index in lst])
 
     def copy_tests(self, *args):
         if not (items := self.test_list_widget.pos_test_list.selectedItems()):
@@ -151,7 +151,7 @@ class TestsWidget(MainTab):
         if tests:
             try:
                 tests = json.loads(tests.data().decode('utf-8'))
-                self.bm.add_some_func_tests(tests_type, {i + index: el for i, el in enumerate(tests)})
+                self.bm.func_tests.add_some(tests_type, {i + index: el for i, el in enumerate(tests)})
             except UnicodeDecodeError:
                 pass
             except json.JSONDecodeError:
@@ -180,22 +180,22 @@ class TestsWidget(MainTab):
 
     def move_pos_test_up(self):
         self.tests_changed = True
-        self.bm.move_func_test('pos', 'up', ind := self.test_list_widget.pos_test_list.currentRow())
+        self.bm.func_tests.move('pos', 'up', ind := self.test_list_widget.pos_test_list.currentRow())
         self.test_list_widget.move_selection('pos', 'up', ind)
 
     def move_pos_test_down(self):
         self.tests_changed = True
-        self.bm.move_func_test('pos', 'down', ind := self.test_list_widget.pos_test_list.currentRow())
+        self.bm.func_tests.move('pos', 'down', ind := self.test_list_widget.pos_test_list.currentRow())
         self.test_list_widget.move_selection('pos', 'down', ind)
 
     def move_neg_test_up(self):
         self.tests_changed = True
-        self.bm.move_func_test('neg', 'up', ind := self.test_list_widget.neg_test_list.currentRow())
+        self.bm.func_tests.move('neg', 'up', ind := self.test_list_widget.neg_test_list.currentRow())
         self.test_list_widget.move_selection('neg', 'up', ind)
 
     def move_neg_test_down(self):
         self.tests_changed = True
-        self.bm.move_func_test('neg', 'down', ind := self.test_list_widget.neg_test_list.currentRow())
+        self.bm.func_tests.move('neg', 'down', ind := self.test_list_widget.neg_test_list.currentRow())
         self.test_list_widget.move_selection('neg', 'down', ind)
 
     def get_path(self, from_settings=False):

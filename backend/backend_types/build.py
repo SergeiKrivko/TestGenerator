@@ -1,6 +1,7 @@
 import json
 import os.path
 import shutil
+from uuid import UUID
 
 from backend.commands import read_json, read_file
 
@@ -12,10 +13,18 @@ from other.report.markdown_parser import MarkdownParser
 
 
 class Build:
-    def __init__(self, id, path=None):
+    def __init__(self, id: UUID, path=None):
         self._data = dict() if path is None else read_json(path)
-        self.id = id
+        self._id = id
         self._path = path
+
+    @property
+    def type(self):
+        return self.get('type')
+
+    @property
+    def id(self):
+        return self._id
 
     def get(self, key, default=None):
         return self._data.get(key, default)
@@ -44,18 +53,18 @@ class Build:
         # self.clear(bm.sm)
         match self.get('type'):
             case 'C':
-                return c_compile(project, self, bm.sm)
+                return c_compile(project, self, bm._sm)
             case 'C-lib':
-                return c_compile(project, self, bm.sm, lib=True)
+                return c_compile(project, self, bm._sm, lib=True)
             case 'C++':
-                return cpp_compile(project, self, bm.sm)
+                return cpp_compile(project, self, bm._sm)
             case 'report':
                 try:
                     path = self.get('cwd', '') if os.path.isabs(self.get('cwd', '')) else \
                         f"{project.path()}/{self.get('cwd', '')}"
                     file = f"{path}/{self.get('file', '')}"
                     if self.get('output', '').endswith('.pdf'):
-                        out_file = f"{bm.sm.temp_dir()}/out.docx"
+                        out_file = f"{bm._sm.temp_dir()}/out.docx"
                         pdf_file = f"{path}/{self.get('output', '')}"
                     else:
                         out_file = f"{path}/{self.get('output', '')}"
@@ -73,7 +82,7 @@ class Build:
         for el in self.get('preproc', []):
             match el['type']:
                 case 0:
-                    build = bm.get_build(el['data'])
+                    build = bm.builds.get(el['data'])
                     res, errors = build.execute(project, bm)
             if not res:
                 break
@@ -84,7 +93,7 @@ class Build:
         for el in self.get('postproc', []):
             match el['type']:
                 case 0:
-                    build = bm.get_build(el['data'])
+                    build = bm.builds.get(el['data'])
                     res, errors = build.execute(project, bm)
             if not res:
                 break
@@ -110,6 +119,8 @@ class Build:
                 return ""
 
     def collect_coverage(self, project, sm):
+        if not self.get('coverage'):
+            return None
         match self.get('type', 'C'):
             case 'C':
                 return c_collect_coverage(sm, self)
@@ -121,6 +132,8 @@ class Build:
                 return None
 
     def coverage_html(self, project, sm):
+        if not self.get('coverage'):
+            return None
         match self.get('type', 'C'):
             case 'C':
                 return c_coverage_html(sm, self)
@@ -140,7 +153,7 @@ class Build:
         if not res:
             return res, errors
 
-        if command := self.run(project, bm.sm):
+        if command := self.run(project, bm._sm):
             run_res = cmd_command(command)
             res = not run_res.returncode
             errors = run_res.stdout + run_res.stderr

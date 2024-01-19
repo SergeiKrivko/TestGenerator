@@ -99,7 +99,7 @@ class ConsolePanel(SidePanelWidget):
 
     def compile(self, path, func):
         self.terminal.command_clear()
-        self.looper = self.bm.run_process(lambda: func(path, self.bm.sm.project, self.bm), 'console', path)
+        self.looper = self.bm.run_process(lambda: func(path, self.bm._sm.project, self.bm), 'console', path)
         self.looper.finished.connect(self.run_file)
 
     def run_file(self):

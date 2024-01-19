@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from side_tabs.chat import gpt
 
 
@@ -10,7 +10,7 @@ class GPTTestGenerator(QThread):
     def __init__(self, bm: BackendManager):
         super().__init__()
         self.bm = bm
-        self.sm = bm.sm
+        self.sm = bm._sm
         self.project = self.sm.project
 
     def run(self):
@@ -70,7 +70,7 @@ class GPTTestGenerator(QThread):
         status = 0
         for line in text.split('\n'):
             if line.strip('* ') == 'Входные данные:':
-                test = self.bm.new_func_test(test_type)
+                test = self.bm.func_tests.new(test_type)
                 test['desc'] = desc
                 test['in'] = ''
                 test['out'] = ''

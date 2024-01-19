@@ -139,12 +139,12 @@ class ChatWidget(QWidget):
         self.looper.start()
 
     def add_bubble(self, message: GPTMessage):
-        bubble = ChatBubble(self._bm.sm, self._tm, self._chat, message)
+        bubble = ChatBubble(self._bm._sm, self._tm, self._chat, message)
         self._add_bubble(bubble)
         return bubble
 
     def insert_bubble(self, message: GPTMessage):
-        bubble = ChatBubble(self._bm.sm, self._tm, self._chat, message)
+        bubble = ChatBubble(self._bm._sm, self._tm, self._chat, message)
         self._add_bubble(bubble, 0)
         return bubble
 
@@ -229,7 +229,7 @@ class ChatWidget(QWidget):
                 bubble.disconnect()
 
     def _open_settings(self):
-        dialog = ChatSettingsWindow(self._bm.sm, self._tm, self._chat)
+        dialog = ChatSettingsWindow(self._bm._sm, self._tm, self._chat)
         dialog.exec()
         dialog.save()
         self._name_label.setText(self._chat.name if self._chat.name.strip() else 'Диалог')

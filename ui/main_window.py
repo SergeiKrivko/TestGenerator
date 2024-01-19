@@ -1,9 +1,8 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QApplication
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from backend.notification import notification
-from other.report.report_window import ReportWindow
 from side_tabs.builds import BuildWindow
 from side_tabs.console import ConsolePanel
 from side_tabs.files.files_widget import FilesWidget
@@ -41,7 +40,7 @@ class MainWindow(QMainWindow):
         self.setWindowFlags(Qt.WindowType.CustomizeWindowHint)
 
         self.bm = BackendManager()
-        self.sm = self.bm.sm
+        self.sm = self.bm._sm
         self.cm = CommandManager(self.sm)
         self.tm = ThemeManager(self.sm, self.sm.get_general('theme'))
 

@@ -205,20 +205,20 @@ class CodeWidget(MainTab):
                     self.top_panel.open_tab(path)
                     return
         return
-        extensions = json.loads(self.sm.get_general('extensions', '{}'))
+        extensions = json.loads(self._sm.get_general('extensions', '{}'))
         for ex, data in extensions.items():
             if path.endswith(ex):
                 if data.get('system_open', False):
                     CodeWidget.open_by_system(path)
                     return
                 try:
-                    code_edit = CodeEditor(self.sm, self.tm, path=path, encoding=data.get('encoding', 'utf-8'))
+                    code_edit = CodeEditor(self._sm, self.tm, path=path, encoding=data.get('encoding', 'utf-8'))
                 except UnicodeDecodeError:
                     return
                 break
         else:
             try:
-                code_edit = CodeEditor(self.sm, self.tm, path=path, encoding='utf-8')
+                code_edit = CodeEditor(self._sm, self.tm, path=path, encoding='utf-8')
             except UnicodeDecodeError:
                 dialog = UnknownFileDialog(self.tm, path)
                 if dialog.exec():
@@ -226,7 +226,7 @@ class CodeWidget(MainTab):
                     if all_files:
                         name = os.path.basename(path)
                         extensions[name if '.' not in name else name[name.rindex('.'):]] = data
-                        self.sm.set_general('extensions', json.dumps(extensions))
+                        self._sm.set_general('extensions', json.dumps(extensions))
                         self.open_code(path)
                         return
                 return

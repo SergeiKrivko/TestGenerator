@@ -3,6 +3,7 @@ import os
 import shutil
 from subprocess import TimeoutExpired
 from time import sleep, time
+from uuid import UUID
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
@@ -33,10 +34,10 @@ class TestingLooper(QThread):
         self.coverage = None
         self.coverage_html = None
         self._temp_dir = f"{self.sm.temp_dir()}/out"
-        self._build_id = self._project.get('build')
+        self._build_id = UUID(self._project.get('build'))
         self._build = None
         if self._build_id is not None:
-            self._build = self._manager.get_build(self._build_id)
+            self._build = self._manager.builds.get(self._build_id)
         self.verbose = verbose
 
     def prepare_test(self, test: FuncTest, index: int):
@@ -220,7 +221,7 @@ class TestingLooper(QThread):
         self.prepare_test(test, index)
         try:
             t = time()
-            res = self._manager.run_build(self._project.get('build'), test.args, test.get('in', ''))
+            res = self._manager.run_build(self._build_id, test.args, test.get('in', ''))
             t = time() - t
             test.exit = res.returncode
             test.prog_out = {'STDOUT': res.stdout, 'STDERR': res.stderr}
@@ -278,7 +279,7 @@ class TestingLooper(QThread):
             self.compileFailed.emit(errors)
             return
 
-        self.coverage, self.coverage_html = self._manager.collect_coverage(self._project.get('build'), self._project)
+        self.coverage, self.coverage_html = self._manager.collect_coverage(self._build_id, self._project)
 
     def convert_test_files(self, in_out, test, pos, i):
         if in_out == 'in':

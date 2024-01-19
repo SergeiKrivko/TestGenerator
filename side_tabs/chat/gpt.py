@@ -41,7 +41,7 @@ def try_response(messages: list[dict[str: str]], model=None, count=5, handler=No
             if handler is None:
                 return response
             return handler(response)
-        except RuntimeError:
+        except Exception:
             pass
     return ''
 

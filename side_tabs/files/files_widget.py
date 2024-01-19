@@ -8,7 +8,7 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import pyqtSignal, Qt, QUrl, QMimeData
 from PyQt6.QtGui import QIcon, QColor
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLineEdit, \
-    QPushButton, QDialog, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu, QWidget, QApplication
+    QPushButton, QLabel, QListWidgetItem, QTreeWidget, QTreeWidgetItem, QMenu, QWidget, QApplication
 import send2trash
 
 from language.languages import languages
@@ -18,7 +18,7 @@ from side_tabs.files.zip_manager import ZipManager
 from ui.custom_dialog import CustomDialog
 from ui.message_box import MessageBox
 from ui.side_panel_widget import SidePanelWidget
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 
 
 class TreeFile(QTreeWidgetItem):

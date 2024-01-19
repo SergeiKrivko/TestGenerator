@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QDialog, QComboBox, \
@@ -96,7 +98,7 @@ class CommandsList(QWidget):
         for el in data:
             if el['type'] == CommandsList.TYPE_UTIL and el['data'] not in self.bm.utils:
                 continue
-            if el['type'] == CommandsList.TYPE_BUILD and el['data'] not in self.bm.builds:
+            if el['type'] == CommandsList.TYPE_BUILD and el['data'] not in self.bm._builds:
                 continue
             self._list_widget.addItem(_ListWidgetItem(self.bm, self.tm, el['type'], el['data']))
 
@@ -205,20 +207,23 @@ class ScenarioBox(QComboBox):
         self.load_data()
         self.currentIndexChanged.connect(self._on_index_changed)
         self._loading = False
-        # self._bm.addBuild.connect(self.load_data)
-        # self._bm.deleteBuild.connect(self.load_data)
-        self._bm.renameBuild.connect(self.load_data)
-        # self._bm.clearBuilds.connect(self.load_data)
+        self._bm.builds.onLoad.connect(self.load_data)
+        self._bm.builds.onAdd.connect(self.load_data)
+        self._bm.builds.onDelete.connect(self.load_data)
+        self._bm.builds.onRename.connect(self.load_data)
+        # self._bm.builds.onClear.connect(self.load_data)
 
     def load_data(self):
+        text = self.currentText()
         self._loading = True
         self.clear()
-        self._builds = list(self._bm.builds.keys())
+        self._builds = list(self._bm.builds.all.keys())
         if self._default:
             self._builds.insert(0, None)
             self.addItem("")
-        self.addItems([item.get('name') for item in self._bm.builds.values()])
+        self.addItems([item.get('name') for item in self._bm.builds.all.values()])
         self._loading = False
+        self.setCurrentText(text)
         self.set_theme()
 
     def _on_index_changed(self):
@@ -226,20 +231,22 @@ class ScenarioBox(QComboBox):
             self.currentChanged.emit(self.current_scenario())
 
     def load(self, value):
+        if isinstance(value, str):
+            value = UUID(value)
         self.load_data()
         try:
             self.setCurrentIndex(self._builds.index(value))
         except ValueError:
             pass
 
-    def current_scenario(self) -> dict | None:
-        return self._builds[self.currentIndex()]
+    def current_scenario(self) -> str | None:
+        return str(self._builds[self.currentIndex()])
 
     def set_theme(self):
         self._tm.auto_css(self)
         for i, build in enumerate(self._builds):
             if build is not None:
-                build = self._bm.builds[build]
+                build = self._bm.builds.get(build)
                 self.setItemIcon(i, QIcon(self._tm.get_image(builds.BuildTypeDialog.IMAGES.get(build.get('type')),
                                                              'icons/unknown_file')))
 
@@ -257,7 +264,7 @@ class _ListWidgetItem(QListWidgetItem):
                 self.setText(self._data)
                 self.setIcon(QIcon(self._tm.get_image('files/cmd')))
             case CommandsList.TYPE_BUILD:
-                self.setText(self.bm.get_build(self._data).get('name', '-'))
+                self.setText(self.bm.builds.get(self._data).get('name', '-'))
                 self.setIcon(QIcon(self._tm.get_image('icons/build')))
             case CommandsList.TYPE_UTIL:
                 self.setText(self.bm.get_util(self._data).get('name', '-'))

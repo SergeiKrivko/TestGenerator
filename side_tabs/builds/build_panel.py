@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QListWidget, QListWidgetIt
     QLineEdit
 
 from backend.backend_types.build import Build
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from language.languages import languages
 from language.utils import get_files
 from ui.button import Button
@@ -56,10 +56,11 @@ class BuildPanel(SidePanelWidget):
         self._scenario_edit = ScenarioEdit(self.sm, self.bm, self.tm)
         main_layout.addWidget(self._scenario_edit, 4)
 
-        self.bm.addBuild.connect(self._on_add_build)
-        self.bm.deleteBuild.connect(self._on_build_deleted)
-        self.bm.clearBuilds.connect(self._on_builds_clear)
-        self.bm.renameBuild.connect(self._on_build_renamed)
+        self.bm.builds.onLoad.connect(lambda lst: [self._on_add_build(el) for el in lst])
+        self.bm.builds.onAdd.connect(self._on_add_build)
+        self.bm.builds.onDelete.connect(self._on_build_deleted)
+        self.bm.builds.onClear.connect(self._on_builds_clear)
+        self.bm.builds.onRename.connect(self._on_build_renamed)
 
     def _on_builds_clear(self):
         self._list_widget.clear()
@@ -84,12 +85,12 @@ class BuildPanel(SidePanelWidget):
             self._scenario_edit.load_scenario(item.build)
 
     def add_scenario(self):
-        self.bm.add_build(Build(''))
+        self.bm.builds.add(Build(''))
 
     def delete_scenario(self):
         item = self._list_widget.currentItem()
         if isinstance(item, ListWidgetItem):
-            self.bm.delete_build(item.build.name)
+            self.bm.builds.delete(item.build.name)
 
     def move_scenario_up(self):
         index = self._list_widget.currentRow()

@@ -5,7 +5,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QVBoxLayout, QHBoxLayout, QTreeWidget, \
     QTreeWidgetItem, QApplication
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from backend.settings_manager import SettingsManager
 from backend.backend_types.unit_test import UnitTest
 from backend.backend_types.unit_tests_suite import UnitTestsSuite

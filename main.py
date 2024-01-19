@@ -16,7 +16,7 @@ def except_hook(cls, exception, traceback):
 
 
 def run_console():
-    from backend.backend_manager import BackendManager
+    from backend.managers import BackendManager
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)

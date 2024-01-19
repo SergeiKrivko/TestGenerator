@@ -248,7 +248,7 @@ class MarkdownParser:
             return False
         default_text, image_path = line.strip()[2:line.index(')')].split('](')
         if image_path.endswith('.svg'):
-            svg2png(url=image_path, write_to=(image_path := f"{self.bm.sm.temp_dir()}/image.png"))
+            svg2png(url=image_path, write_to=(image_path := f"{self.bm._sm.temp_dir()}/image.png"))
         img = Image.open(image_path)
         height, width = img.height, img.width
         if default_text.startswith('height='):
@@ -414,7 +414,7 @@ class MarkdownParser:
                 lst.append("Фактический вывод")
             if 'STATUS' in flags:
                 lst.append("Результат")
-            tests = self.bm.func_tests['pos'] + self.bm.func_tests['neg']
+            tests = self.bm._func_tests['pos'] + self.bm._func_tests['neg']
             table = self.document.add_table(rows=len(tests) + 1, cols=len(lst), style='Table Grid')
             if 'RUN' in flags:
                 looper = self.bm.start_testing()
@@ -640,7 +640,7 @@ def convert(path, project, bm, pdf=False):
     try:
         file = path
         if pdf:
-            out_file = f"{bm.sm.temp_dir()}/out.docx"
+            out_file = f"{bm._sm.temp_dir()}/out.docx"
             pdf_file = path[:path.rindex('.')] + '.pdf'
         else:
             out_file = path[:path.rindex('.')] + '.docx'

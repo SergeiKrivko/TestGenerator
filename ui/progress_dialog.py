@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QProgressBar
+from PyQt6.QtWidgets import QVBoxLayout, QLabel, QProgressBar
 
 from backend.backend_types.project import Project
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from ui.custom_dialog import CustomDialog
 
 

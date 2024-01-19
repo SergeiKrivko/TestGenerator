@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QThread
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from side_tabs.chat import gpt
 
 
@@ -8,7 +8,7 @@ class GPTUnitTestGenerator(QThread):
     def __init__(self, bm: BackendManager):
         super().__init__()
         self.bm = bm
-        self.sm = bm.sm
+        self.sm = bm._sm
         self.project = self.sm.project
 
     def run(self):

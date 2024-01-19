@@ -5,7 +5,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QListWidget, QListWidgetItem, QPushButton, QFileDialog, \
     QLabel, QLineEdit, QCheckBox, QMessageBox, QComboBox
 
-from backend.backend_manager import BackendManager
+from backend.managers import BackendManager
 from backend.backend_types.project import Project
 from backend.settings_manager import SettingsManager
 from language.languages import PROJECT_LANGUAGES, languages
