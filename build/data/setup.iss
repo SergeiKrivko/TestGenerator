@@ -46,6 +46,6 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-; Filename: "{app}\mingw-get-setup.exe"; Description: "Установить компилятор gcc"; Flags: postinstall unchecked
+; Filename: "{app}\mingw-get-setup.exe"; Description: "РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РєРѕРјРїРёР»СЏС‚РѕСЂ gcc"; Flags: postinstall unchecked
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 

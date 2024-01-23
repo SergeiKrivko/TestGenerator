@@ -33,8 +33,7 @@ jobs:
 
       - name: Fix Qt6, Update setup.iss
         run: |
-          cd build
-          python fix_version.py
+          python -m build.fix_version
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
