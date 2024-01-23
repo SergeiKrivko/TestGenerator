@@ -11,12 +11,13 @@ from backend.commands import read_file, read_binary, cmd_command
 from backend.backend_types.func_test import FuncTest
 from backend.backend_types.project import Project
 from backend.backend_types.util import Util
+from backend.managers import CustomThread
 from language.utils import get_files
 from other.binary_redactor.binary_decoder import decode, comparator as bytes_comparator
 from backend.macros_converter import MacrosConverter
 
 
-class TestingLooper(QThread):
+class TestingLooper(CustomThread):
     testStatusChanged = pyqtSignal(FuncTest, int)
     compileFailed = pyqtSignal(str)
     utilFailed = pyqtSignal(str, str, str)
@@ -262,6 +263,7 @@ class TestingLooper(QThread):
             self.run_test(test, index)
 
             self.testStatusChanged.emit(test, test.status())
+            self.progressChanged.emit((i + 1) * 100 // len(self.tests))
 
             if self.verbose:
                 print(f"\033[33m{test.type()}{index + 1:<4}\033[33m",
@@ -270,7 +272,6 @@ class TestingLooper(QThread):
                       *[f"\033[{32 if item else 31}m'{key}'\033[33m" for key, item in test.results.items()])
 
             sleep(0.01)
-            i += 1
 
         for util in self.utils:
             self.run_postproc_util(util)

@@ -30,12 +30,22 @@ from main_tabs.tests.commands import CommandManager
 from main_tabs.unit_testing.__init__ import UnitTestingWidget
 
 
+window = None
+
+
+def win_id():
+    return window.winId()
+
+
 class MainWindow(QMainWindow):
     def __init__(self, app: QApplication, args):
         super(MainWindow, self).__init__()
         self.setWindowTitle("TestGenerator")
         self.setMinimumSize(800, 360)
         self.app = app
+
+        global window
+        window = self
 
         self.setWindowFlags(Qt.WindowType.CustomizeWindowHint)
 
@@ -188,11 +198,11 @@ class MainWindow(QMainWindow):
         self.bm.close_project()
         self.bm.close_program()
         self.sm.store()
-        if not self.bm.all_finished():
+        if not self.bm.processes.all_finished:
             dialog = ExitDialog(self.tm)
-            self.bm.allProcessFinished.connect(dialog.accept)
+            self.bm.processes.allFinished.connect(dialog.accept)
             if dialog.exec():
-                self.bm.terminate_all()
+                self.bm.processes.terminate_all()
                 self.side_panel.finish_work()
                 super(MainWindow, self).close()
             else:

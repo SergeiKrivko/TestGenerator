@@ -122,6 +122,10 @@ def wsl_path(path: str, build=None):
     return path
 
 
+def path_from_wsl_path(path: str):
+    return path[5].upper() + ':' + path[6:].replace('/', '\\')
+
+
 morph = pymorphy3.MorphAnalyzer()
 
 

@@ -91,7 +91,7 @@ class ChatPanel(SidePanelWidget):
         self._loader = ChatLoader(list(self.db.chats), str(self._last_chat))
         self._loader.addChat.connect(self._on_chat_loaded)
         self._loader.finished.connect(lambda: (self._list_widget.sort_chats(), self._resize()))
-        self.bm.run_process(self._loader, 'GPT', 'loading')
+        self.bm.processes.run(self._loader, 'GPT', 'loading')
 
     def _on_chat_loaded(self, chat: GPTChat):
         self._add_chat(chat)

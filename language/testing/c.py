@@ -9,9 +9,9 @@ def c_compile(project, build, sm, lib=False):
     coverage = build.get('coverage', False)
     compiler = PROGRAMS['gcc'].get(sm, build)
 
-    path = compiler.convert_path(project.path())
-    temp_dir = compiler.convert_path(f"{sm.temp_dir()}/build{build.id}")
-    os.makedirs(f"{sm.temp_dir()}/build{build.id}", exist_ok=True)
+    path = project.path()
+    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    os.makedirs(temp_dir, exist_ok=True)
 
     c_files = []
     h_dirs = set()
@@ -19,7 +19,7 @@ def c_compile(project, build, sm, lib=False):
         if key.endswith('.c'):
             c_files.append(f"{path}/{key}")
         else:
-            h_dirs.add(f"{path}/{os.path.split(key)[0]}")
+            h_dirs.add(compiler.convert_path(f"{path}/{os.path.split(key)[0]}"))
     o_files = [f"{temp_dir}/{os.path.basename(el)[:-2]}.o" for el in c_files]
 
     h_dirs = '-I ' + ' -I '.join(h_dirs) if h_dirs else ''
@@ -27,22 +27,24 @@ def c_compile(project, build, sm, lib=False):
     code = True
 
     def get_dependencies(file):
-        lst = compiler(f"{h_dirs} -MM {file}").stdout.split()
+        lst = compiler(f"{h_dirs} -MM {compiler.convert_path(file)}").stdout.split()
         lst.pop(0)
         i = 0
         while i < len(lst):
             if lst[i] == '\\':
                 lst.pop(i)
             else:
+                lst[i] = compiler.recover_path(lst[i])
                 i += 1
         return lst
 
     compiler_keys = build.get('keys', '')
     for c_file, o_file in zip(c_files, o_files):
+        print(o_file, os.path.isfile(o_file))
         if os.path.isfile(o_file) and check_files_mtime(o_file, get_dependencies(c_file)):
             continue
         res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} {h_dirs} {'-fPIC' if lib else ''} "
-                       f"-c -o {o_file} {c_file}", cwd=project.path())
+                       f"-c -o {compiler.convert_path(o_file)} {compiler.convert_path(c_file)}", cwd=project.path())
         if res.returncode:
             code = False
         errors.append(res.stderr)
@@ -54,10 +56,10 @@ def c_compile(project, build, sm, lib=False):
             app_file = f"{path}/{build.get('app_file')}"
 
         if lib and not build.get('dynamic', False):
-            res = cmd_command(f"{compiler.vs_args()} ar cr {app_file} {' '.join(o_files)}", cwd=project.path())
-            print(res)
+            res = cmd_command(f"{compiler.vs_args()} ar cr {compiler.convert_path(app_file)} "
+                              f"{' '.join(map(compiler.convert_path, o_files))}", cwd=project.path())
             if not res.returncode:
-                res = cmd_command(f"{compiler.vs_args()} ranlib {app_file}", cwd=project.path())
+                res = cmd_command(f"{compiler.vs_args()} ranlib {compiler.convert_path(app_file)}", cwd=project.path())
                 if res.returncode:
                     code = False
                 errors.append(res.stderr)
@@ -66,8 +68,9 @@ def c_compile(project, build, sm, lib=False):
                 errors.append(res.stderr)
 
         else:
-            res = compiler(f"{'--coverage' if coverage else ''} -o {app_file}"
-                           f"{' -shared' if lib else ''} {' '.join(o_files)} {build.get('linker_keys', '')}",
+            res = compiler(f"{'--coverage' if coverage else ''} -o {compiler.convert_path(app_file)}"
+                           f"{' -shared' if lib else ''} {' '.join(map(compiler.convert_path, o_files))} "
+                           f"{build.get('linker_keys', '')}",
                            cwd=project.path())
             if res.returncode:
                 code = False
@@ -88,10 +91,9 @@ def c_collect_coverage(sm, build):
     gcov = PROGRAMS['gcov'].get(sm, build)
 
     temp_dir = f"{sm.temp_dir()}/build{build.id}"
-    temp_dir_wsl = gcov.convert_path(f"{sm.temp_dir()}/build{build.id}")
 
     for file in build.get('files', []):
-        res = gcov(f"{file} -o {temp_dir_wsl}", shell=True, cwd=temp_dir)
+        res = gcov(f"{file} -o {gcov.convert_path(temp_dir)}", shell=True, cwd=temp_dir)
 
         for line in res.stdout.split('\n'):
             if "Lines executed:" in line:
@@ -111,15 +113,13 @@ def c_coverage_html(sm, build):
     lcov = PROGRAMS['lcov'].get(sm, build)
     genhtml = PROGRAMS['genhtml'].get(sm, build)
 
-    temp_dir_wsl = lcov.convert_path(f"{sm.temp_dir()}/build{build.id}")
-
     try:
         res = lcov(f"-t \"{build.get('name', '')}\" "
-                   f"-o {temp_dir_wsl}/coverage.info -c -d {temp_dir_wsl}", shell=True)
+                   f"-o {lcov.convert_path(temp_dir)}/coverage.info -c -d {lcov.convert_path(temp_dir)}", shell=True)
         if res.returncode:
             return None
 
-        res = genhtml(f"-o {temp_dir_wsl}/report {temp_dir_wsl}/coverage.info", shell=True)
+        res = genhtml(f"-o {lcov.convert_path(temp_dir)}/report {lcov.convert_path(temp_dir)}/coverage.info", shell=True)
         if res.returncode:
             return None
         return f"{temp_dir}/report/index.html"

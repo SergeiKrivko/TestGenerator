@@ -14,12 +14,12 @@ class ProcessManagerWidget(QPushButton):
         self.menu.setLayout(self.menu_layout)
 
         self._groups = dict()
-        self.bm.processStatusChanged.connect(self._on_process_status_changed)
+        self.bm.processes.statusChanged.connect(self._on_process_status_changed)
         self._update()
 
     def _on_process_status_changed(self, group, name):
         if group in self._groups:
-            if self.bm.get_processes_of_group(group):
+            if self.bm.processes.get_processes(group):
                 self._groups[group].update_processes()
             else:
                 self._groups.pop(group).setParent(None)
@@ -33,7 +33,7 @@ class ProcessManagerWidget(QPushButton):
         for el in self._groups.values():
             el.setParent(None)
         self._groups.clear()
-        for el in self.bm.get_process_groups():
+        for el in self.bm.processes.groups:
             item = _GroupWidget(self.bm, self.tm, el)
             self.menu_layout.addWidget(item)
             self._groups[el] = item
@@ -74,7 +74,7 @@ class _GroupWidget(QWidget):
     def update_processes(self):
         for el in self._children.values():
             el.setParent(None)
-        for el in self.bm.get_processes_of_group(self.group):
+        for el in self.bm.processes.get_processes(self.group):
             item = _ProcessWidget(self.tm, el)
             self.children_layout.addWidget(item)
             self._children[el] = item

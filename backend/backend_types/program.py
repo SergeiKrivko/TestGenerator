@@ -1,7 +1,7 @@
 import json
 import sys
 
-from backend.commands import cmd_command, wsl_path
+from backend.commands import cmd_command, wsl_path, path_from_wsl_path
 
 
 class _ProgramValidator:
@@ -130,6 +130,13 @@ class ProgramInstance:
         match self.virtual_system:
             case Program.WSL:
                 return wsl_path(path)
+            case _:
+                return path
+
+    def recover_path(self, path):
+        match self.virtual_system:
+            case Program.WSL:
+                return path_from_wsl_path(path)
             case _:
                 return path
 

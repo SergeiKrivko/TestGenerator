@@ -109,7 +109,7 @@ class ChatWidget(QWidget):
         loader = MessageLoader(list(self._chat.load_messages(to_message=to_message)))
         loader.messageLoaded.connect(self.insert_bubble)
         loader.finished.connect(self._on_load_finished)
-        self._bm.run_process(loader, 'GPT', f"load-{self._chat.id}")
+        self._bm.processes.run(loader, 'GPT', f"load-{self._chat.id}")
 
     def _on_load_finished(self):
         self._loading_messages = False

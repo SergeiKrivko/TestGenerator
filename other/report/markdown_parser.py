@@ -134,8 +134,8 @@ class MarkdownParser:
             paragraph.paragraph_format.first_line_indent = Mm(self.properties.get('first_line_indent', 0))
         self.add_runs(paragraph, line.strip())
         while (line := self._next_line()) is not None and line.strip():
-            # if self.parse_simple_formula(line):
-            #     continue
+            if self.parse_simple_formula(line, paragraph):
+                continue
             if line.lstrip().startswith('- ') or line.lstrip().startswith('[') or line.lstrip(' 1234567890').startswith(
                     '. ') or line.lstrip().startswith('#'):
                 self.return_line()
@@ -201,12 +201,12 @@ class MarkdownParser:
         self.document.add_paragraph()
         return True
 
-    def parse_formula(self, line):
+    def parse_formula(self, line, paragraph=None):
         if line.startswith('[formula-start]: <>'):
             lines = []
             while (line := self._next_line()) is not None and not line.startswith('[formula-end]: <>'):
                 lines.append(line)
-            self.convert_formula('\n'.join(lines))
+            self.convert_formula('\n'.join(lines), paragraph)
             return True
         return False
 
@@ -299,6 +299,9 @@ class MarkdownParser:
         return True
 
     def add_runs(self, paragraph, line):
+        if self.parse_simple_formula(line, paragraph):
+            self._add_runs(paragraph, ' ')
+            return
         self._add_runs(paragraph, line + ' ')
 
     def _add_runs(self, paragraph, line, bold=_UNKNOWN, italic=_UNKNOWN, code=_UNKNOWN):

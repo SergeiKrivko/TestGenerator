@@ -116,7 +116,7 @@ class FuncTestsManager(QObject):
             return
         looper = MacrosConverter(self._sm.project, {'pos': self._func_tests['pos'].copy(),
                                                     'neg': self._func_tests['neg'].copy()}, self._sm)
-        self._bm.run_process(looper, 'macros_converter', self._sm.project.path())
+        self._bm.processes.run(looper, 'macros_converter', self._sm.project.path())
 
     def undo(self, redo=False):
         if redo:

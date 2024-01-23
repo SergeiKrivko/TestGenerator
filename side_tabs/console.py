@@ -45,7 +45,7 @@ class Console(Terminal):
                         return
 
     def run_build(self, build_id):
-        looper = self.bm.run_process(lambda: (self.bm.run_build_preproc(build_id), self.bm.compile_build(build_id))[1],
+        looper = self.bm.processes.run(lambda: (self.bm.run_build_preproc(build_id), self.bm.compile_build(build_id))[1],
                                      'compile', str(build_id))
         looper.finished.connect(lambda: self._on_looper_finished(build_id, looper.res))
 
@@ -99,7 +99,7 @@ class ConsolePanel(SidePanelWidget):
 
     def compile(self, path, func):
         self.terminal.command_clear()
-        self.looper = self.bm.run_process(lambda: func(path, self.bm._sm.project, self.bm), 'console', path)
+        self.looper = self.bm.processes.run(lambda: func(path, self.bm._sm.project, self.bm), 'console', path)
         self.looper.finished.connect(self.run_file)
 
     def run_file(self):

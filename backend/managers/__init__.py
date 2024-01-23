@@ -5,8 +5,9 @@ from time import sleep
 from uuid import UUID
 
 import py7zr
-from PyQt6.QtCore import QObject, pyqtSignal, QThread
+from PyQt6.QtCore import QObject, pyqtSignal
 
+from backend.managers._processes import CustomThread
 from backend.backend_types.func_test import FuncTest
 from backend.backend_types.project import Project
 from backend.backend_types.unit_test import UnitTest
@@ -18,14 +19,13 @@ from backend.func_testing import TestingLooper
 from backend.load_task import Loader
 from backend.managers._builds import BuildsManager
 from backend.managers._func_tests import FuncTestsManager
+from backend.managers._processes import ProcessManager
 from backend.settings_manager import SettingsManager
 
 
 class BackendManager(QObject):
     startChangingProject = pyqtSignal()
     finishChangingProject = pyqtSignal()
-    allProcessFinished = pyqtSignal()
-    processStatusChanged = pyqtSignal(str, str)
     loadingStart = pyqtSignal(Project)
     updateProgress = pyqtSignal(int, int)
 
@@ -56,6 +56,7 @@ class BackendManager(QObject):
 
         self.func_tests = FuncTestsManager(self._sm, self)
         self.builds = BuildsManager(self._sm, self)
+        self.processes = ProcessManager(self._sm, self)
         self.utils = dict()
         self.unit_tests_suites: list[UnitTestsSuite] = []
 
@@ -63,9 +64,6 @@ class BackendManager(QObject):
 
         self._testing_looper = None
         self._loader = None
-
-        self._background_processes: dict[str: dict[str: QThread]] = dict()
-        self._background_process_count = 0
 
         self.changing_project = False
 
@@ -109,7 +107,7 @@ class BackendManager(QObject):
         self._loader.finished.connect(self._on_loader_finished)
         self._loader.updateProgress.connect(self.updateProgress.emit)
         self._loader.loadingStart.connect(self.loadingStart.emit)
-        self.run_process(self._loader, 'load', None if project is None else project.path())
+        self.processes.run(self._loader, 'load', None if project is None else project.path())
 
     def _on_loader_finished(self):
         if self.changing_project:
@@ -129,7 +127,7 @@ class BackendManager(QObject):
                                                                            self._testing_looper.coverage_html))
         self._testing_looper.compileFailed.connect(self.testingError.emit)
         self._testing_looper.utilFailed.connect(self.testingUtilError.emit)
-        self.run_process(self._testing_looper, 'testing', 'main')
+        self.processes.run(self._testing_looper, 'testing', 'main')
         return self._testing_looper
 
     def stop_testing(self):
@@ -194,7 +192,7 @@ class BackendManager(QObject):
         converter.convert()
 
     def run_unit_tests(self):
-        self.run_process(lambda: self._unit_testing(self._sm.project), 'unit_testing', self._sm.project.path())
+        self.processes.run(lambda: self._unit_testing(self._sm.project), 'unit_testing', self._sm.project.path())
 
     def _unit_testing(self, project):
         self.convert_unit_tests()
@@ -290,54 +288,15 @@ class BackendManager(QObject):
         html_page = build.coverage_html(project, self._sm)
         return cov, html_page
 
-    # --------------------- process ----------------------------
-
-    def run_process(self, thread: types.FunctionType | types.LambdaType | QThread, group: str, name: str):
-        if not isinstance(thread, QThread):
-            thread = Looper(thread)
-        if group not in self._background_processes:
-            self._background_processes[group] = dict()
-
-        if name in self._background_processes[group]:
-            self._background_processes[group][name].terminate()
-        self._background_processes[group][name] = thread
-        self._background_process_count += 1
-        thread.finished.connect(lambda: self._on_thread_finished(group, name, thread))
-        thread.start()
-        self.processStatusChanged.emit(group, name)
-        return thread
-
-    def _on_thread_finished(self, group, name, process):
-        self._background_process_count -= 1
-        if self._background_processes[group][name] == process:
-            self._background_processes[group].pop(name)
-        self.processStatusChanged.emit(group, name)
-        if self._background_process_count == 0:
-            self.allProcessFinished.emit()
-
-    def all_finished(self):
-        return self._background_process_count == 0
-
-    def get_process_groups(self):
-        return self._background_processes.keys()
-
-    def get_processes_of_group(self, group: str):
-        return self._background_processes.get(group, dict()).keys()
-
-    def terminate_all(self):
-        for item in self._background_processes.values():
-            for el in list(item.values()):
-                el.terminate()
-
     # ---------------------- ZIP ----------------------------
 
     def project_to_zip(self, path=None):
         if path is None:
             path = f"{self._sm.temp_dir()}/{self._sm.project.name()}.TGProject.7z"
-        return self.run_process(lambda: self._project_to_zip(path), 'zip', 'store')
+        return self.processes.run(lambda: self._project_to_zip(path), 'zip', 'store')
 
     def project_from_zip(self, zip_path, path, open_after_load=False):
-        self.run_process(lambda: self._project_from_zip(zip_path, path, open_after_load), 'zip', 'load')
+        self.processes.run(lambda: self._project_from_zip(zip_path, path, open_after_load), 'zip', 'load')
 
     def _project_to_zip(self, path):
         with py7zr.SevenZipFile(path, mode='w') as archive:
@@ -438,13 +397,3 @@ class BackendManager(QObject):
                     self._sm.delete_project(project)
             except KeyError:
                 pass
-
-
-class Looper(QThread):
-    def __init__(self, func):
-        super().__init__()
-        self._func = func
-        self.res = None
-
-    def run(self) -> None:
-        self.res = self._func()

@@ -231,7 +231,7 @@ class TestTableWidget(QWidget):
         generator = GPTTestGenerator(self.bm)
         generator.finished.connect(self._on_generation_finished)
         generator.progressChanged.connect(self._on_progress_changed)
-        self.bm.run_process(generator, 'gpt_test_generator', self.sm.project.path())
+        self.bm.processes.run(generator, 'gpt_test_generator', self.sm.project.path())
 
     def _on_progress_changed(self, current_progress, max_progress):
         self.generator_progress_bar.setMaximum(max_progress)
