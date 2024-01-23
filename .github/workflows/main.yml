@@ -38,7 +38,7 @@ jobs:
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: build\data\setup.iss
+          path: build\setup.iss
           options: /O+
 
       - name: Upload artifacts
