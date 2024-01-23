@@ -22,7 +22,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=dist
+OutputDir="..\dist"
 OutputBaseFilename=TestGeneratorSetup
 Compression=lzma
 SolidCompression=yes
@@ -35,10 +35,10 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\TestGenerator\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\TestGenerator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "build\data\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "C:\Users\sergi\PycharmProjects\TestGenerator\build\data\mingw-get-setup.exe"; DestDir: "{app}"; Flags: deleteafterinstall
+Source: "..\dist\TestGenerator\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\dist\TestGenerator\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "data\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+; Source: "data\mingw-get-setup.exe"; DestDir: "{app}"; Flags: deleteafterinstall
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
