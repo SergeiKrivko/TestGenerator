@@ -18,3 +18,4 @@ beautifulsoup4~=4.12.2
 win11toast~=0.34
 matplotlib~=3.8.2
 PyTaskbarProgress~=0.0.8
+pymorphy3-dicts-ru
