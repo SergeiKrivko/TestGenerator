@@ -1,6 +1,6 @@
 PyQt6~=6.6.1
 PyQt6-QScintilla~=2.14.1
-Pillow~=10.2.0
+Pillow
 lxml~=5.0.0
 requests~=2.31.0
 docx2pdf~=0.1.8
@@ -21,4 +21,3 @@ matplotlib~=3.8.2
 PyTaskbarProgress~=0.0.8
 pymorphy3-dicts-ru
 pylottie
-requests
