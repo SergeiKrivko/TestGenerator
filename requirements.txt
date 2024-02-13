@@ -21,3 +21,4 @@ matplotlib~=3.8.2
 PyTaskbarProgress~=0.0.8
 pymorphy3-dicts-ru
 pylottie
+requests
