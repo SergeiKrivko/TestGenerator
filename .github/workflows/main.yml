@@ -30,16 +30,12 @@ jobs:
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
           venv\Scripts\Activate.ps1
-          python -m build.download_libs
+          python -m build.add_secrets
 
       - name: Build by Pyinstaller
         run: |
           venv\Scripts\Activate.ps1
           venv\Scripts\pyinstaller --noconfirm TestGenerator.spec
-
-      - name: Fix Qt6, Update setup.iss
-        run: |
-          python -m build.fix_version
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2

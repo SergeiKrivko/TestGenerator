@@ -30,15 +30,29 @@ def download_zip(name: str, dst: str = None):
 def write_secrets():
     with open("config/secret.py", 'w', encoding='utf-8') as f:
         for key in ['TELEGRAM_API_KEY', 'TELEGRAM_API_HASH', 'CONVERTIO_API_KEY']:
-            f.write(f"{key} = {repr(os.getenv(key))}\n")
-            print(type(os.getenv(key)))
+            f.write(f"{key} = {os.getenv(key)}\n")
+
+
+def fix_version():
+    import config
+
+    with open(r"build/setup.iss", encoding='utf-8') as f:
+        text = f.read()
+
+        index = text.index('#define MyAppVersion ') + len('#define MyAppVersion ')
+        text = text[:index] + f'"{config.APP_VERSION}"' + text[index:][text[index:].index('\n'):]
+
+    with open(r"build/setup.iss", 'w', encoding='utf-8') as f:
+        f.write(text)
 
 
 if sys.platform == 'win32':
     download_zip('lib_win.zip', r"venv\Lib\site-packages\pywtdlib\lib\Windows\AMD64")
     download_zip('libcairo_win.zip', r"venv\Lib\site-packages\cairocffi\dlls")
 
-    try:
-        write_secrets()
-    except Exception as ex:
-        print(ex.__class__.__name__)
+try:
+    write_secrets()
+except Exception as ex:
+    print(ex.__class__.__name__)
+
+fix_version()
