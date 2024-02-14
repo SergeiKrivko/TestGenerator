@@ -39,6 +39,8 @@ class BuildsManager(QObject):
         self.onClear.emit()
 
     def get(self, id: UUID) -> Build:
+        if not isinstance(id, UUID):
+            id = UUID(id)
         return self._builds.get(id)
 
     def load(self, builds: list[Build]):
