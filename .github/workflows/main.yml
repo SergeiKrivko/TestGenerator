@@ -29,6 +29,7 @@ jobs:
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
+          venv\Scripts\Activate.ps1
           python -m build.download_libs
 
       - name: Build by Pyinstaller
