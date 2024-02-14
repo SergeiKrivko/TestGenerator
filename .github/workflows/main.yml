@@ -46,6 +46,7 @@ jobs:
         with:
           name: TestGeneratorSetup.exe
           path: dist\TestGeneratorSetup.exe
+          buildozer_version: master
 
 #  build-linux:
 #    name: Build for Linux
