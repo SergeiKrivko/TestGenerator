@@ -27,6 +27,18 @@ def download_zip(name: str, dst: str = None):
     os.remove(name)
 
 
+def write_secrets():
+    with open("config/secret.py", 'w', encoding='utf-8') as f:
+        for key in ['TELEGRAM_API_KEY', 'TELEGRAM_API_HASH', 'CONVERTIO_API_KEY']:
+            f.write(f"{key} = {repr(os.getenv(key))}\n")
+            print(type(os.getenv(key)))
+
+
 if sys.platform == 'win32':
-    download_zip('lib_win.zip', r"..\venv\Lib\site-packages\pywtdlib\lib\Windows\AMD64")
-    download_zip('libcairo_win.zip', r"..\venv\Lib\site-packages\cairocffi\dlls")
+    download_zip('lib_win.zip', r"venv\Lib\site-packages\pywtdlib\lib\Windows\AMD64")
+    download_zip('libcairo_win.zip', r"venv\Lib\site-packages\cairocffi\dlls")
+
+    try:
+        write_secrets()
+    except Exception as ex:
+        print(ex.__class__.__name__)

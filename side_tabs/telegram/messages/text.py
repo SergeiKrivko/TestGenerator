@@ -38,7 +38,7 @@ class TgFormattedText:
                 self._include('</a>', entity.offset + entity.length)
             elif isinstance(entity.type, tg.TextEntityTypeUrl) and self._message and \
                     isinstance(self._message.content, tg.MessageText):
-                self._include(f"<a href='{self._message.content.text[entity.offset:entity.offset + entity.length]}'>", entity.offset)
+                self._include(f"<a href='{self._message.content.text.text[entity.offset:entity.offset + entity.length]}'>", entity.offset)
                 self._include('</a>', entity.offset + entity.length)
             else:
                 print(entity.type, self._message.content)

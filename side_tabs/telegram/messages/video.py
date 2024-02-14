@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QUrl
-from PyQt6.QtMultimedia import QMediaPlayer
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 
 from side_tabs.telegram.telegram_api import tg
@@ -15,6 +15,8 @@ class VideoPlayer(QVideoWidget):
 
         self.media_player = QMediaPlayer()
         self.media_player.setVideoOutput(self)
+        self._audio = QAudioOutput()
+        self.media_player.setAudioOutput(self._audio)
         self.media_player.setLoops(QMediaPlayer.Loops.Infinite)
         if self._video.video.local.is_downloading_completed:
             self.media_player.setSource(QUrl.fromLocalFile(self._video.video.local.path))

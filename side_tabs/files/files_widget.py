@@ -233,6 +233,11 @@ class ContextMenu(QMenu):
                 lambda: self.set_action(ContextMenu.OPEN_IN_CODE))
             self.open_menu.addAction("Система").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM))
+            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')), "Терминал").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
+            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                     "Системный терминал").triggered.connect(
+                lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
 
             self.open_menu.addSeparator()
 
@@ -515,13 +520,13 @@ class FilesWidget(SidePanelWidget):
         self.update_files_list()
 
     @staticmethod
-    def open_by_system(filepath):
+    def open_by_system(path):
         if platform.system() == 'Darwin':  # macOS
-            subprocess.call(('open', filepath))
+            subprocess.call(('open', path))
         elif platform.system() == 'Windows':  # Windows
-            os.startfile(filepath)
+            os.startfile(path)
         else:  # linux variants
-            subprocess.call(('xdg-open', filepath))
+            subprocess.call(('xdg-open', path))
 
     @staticmethod
     def open_in_explorer(path):
@@ -530,14 +535,20 @@ class FilesWidget(SidePanelWidget):
                 subprocess.call(['explorer', path])
             case 'Linux':
                 subprocess.call(['nautilus', '--browser', path])
+            case 'Darwin':
+                subprocess.call(['open', path])
 
     @staticmethod
     def open_in_system_terminal(path):
+        if not os.path.isdir(path):
+            path = os.path.dirname(path)
         match platform.system():
             case 'Windows':
-                os.system(f"start cmd /K cd {path}")
+                os.system(f"start powershell.exe -noexit -command Set-Location -literalPath \"{path}\"")
             case 'Linux':
-                os.system(f"gnome-terminal --working-directory {path}")
+                os.system(f"gnome-terminal --working-directory \"{path}\"")
+            case 'Darwin':
+                os.system(f"open -a Terminal \"{path}\"")
 
     def create_directory(self):
         self.create_file(directory=True)

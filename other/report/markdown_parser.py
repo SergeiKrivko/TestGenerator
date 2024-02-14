@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 from time import sleep
 
 import docx
@@ -577,12 +578,16 @@ class MarkdownParser:
         paragraph._p.pPr.append(num_pr)
 
     def convert_to_pdf(self):
-        if os.name == 'nt':
-            docx2pdf.convert(self.dist, self.to_pdf)
+        if sys.platform == 'win32':
+            try:
+                docx2pdf.convert(self.dist, self.to_pdf)
+            except Exception:
+                docx_to_pdf_by_api(self.dist, self.to_pdf)
         elif config.secret_data:
             docx_to_pdf_by_api(self.dist, self.to_pdf)
         else:
             raise Exception("can not convert docx to pdf")
+
         if self._pdf_to_merge:
             with open(self.to_pdf, 'br') as stream:
                 pdf_reader = PdfReader(stream)

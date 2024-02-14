@@ -61,7 +61,7 @@ class ContextMenu(QMenu):
         elif isinstance(message.content, tg.MessageVideo):
             print(message.content.video.video.local.path, message.content.video.video.local.is_downloading_completed)
             if message.content.video.video.local.is_downloading_completed:
-                action = self.addAction(QIcon(self.tm.get_image('buttons/button_run')), "Запустить")
+                action = self.addAction(QIcon(self.tm.get_image('buttons/run')), "Запустить")
                 action.triggered.connect(lambda: self.set_action(ContextMenu.PLAY_VIDEO))
 
                 action = self.addAction(QIcon(self.tm.get_image('buttons/button_pause')), "Приостановить")

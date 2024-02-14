@@ -177,3 +177,12 @@ def print_args(args: str):
             print(f"\033[33m{arg}\033[0m", end=' ')
         i += 1
     print()
+
+
+def is_text_file(path):
+    try:
+        with open(path, encoding='utf-8') as f:
+            f.read()
+            return True
+    except UnicodeDecodeError:
+        return False

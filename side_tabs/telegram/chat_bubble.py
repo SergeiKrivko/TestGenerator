@@ -37,7 +37,8 @@ class TelegramChatBubble(QWidget):
                                                           tg.MessageChatDeleteMember,
                                                           tg.MessageChatChangePhoto,
                                                           tg.MessageChatChangeTitle,
-                                                          tg.MessagePinMessage,))
+                                                          tg.MessagePinMessage,
+                                                          tg.MessageChatJoinByLink,))
 
         if isinstance(message.content, tg.MessageText):
             self._text = TgFormattedText(message.content.text, self._tm, self._message).html
@@ -124,6 +125,9 @@ class TelegramChatBubble(QWidget):
 
         elif isinstance(self._message.content, tg.MessageChatChangeTitle):
             self._info_label.setText(f"{user_name} изменил(а) название группы")
+
+        elif isinstance(self._message.content, tg.MessageChatJoinByLink):
+            self._info_label.setText(f"{user_name} вступил(а) в группу по ссылке-приглашению")
 
         elif isinstance(self._message.content, tg.MessagePinMessage):
             self._info_label.setText(f"{user_name} закрепил(а) сообщение")

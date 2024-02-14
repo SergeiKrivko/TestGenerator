@@ -22,9 +22,14 @@ jobs:
           
           venv\Scripts\python -m pip install -r requirements.txt
           venv\Scripts\python -m pip install --upgrade pyinstaller==6.3.0
-          
-          cd build
-          python -m download_libs
+
+      - name: Secrets
+        env:
+          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+        run: |
+          python -m build.download_libs
 
       - name: Build by Pyinstaller
         run: |

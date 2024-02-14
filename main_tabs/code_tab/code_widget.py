@@ -9,6 +9,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog, QLabel, QComboBox, QCheckBox, \
     QPushButton
 
+from backend.commands import is_text_file
 from main_tabs.code_tab.preview_widgets import PreviewWidget
 from main_tabs.code_tab.search_panel import SearchPanel
 from language.languages import languages
@@ -176,64 +177,41 @@ class CodeWidget(MainTab):
             return
         if not os.path.isfile(path):
             return
-        self.files.append(path)
         self.save_files_list()
         self.buttons[path] = 0
 
         for language in languages.values():
             for el in language['files']:
                 if path.endswith(el):
-                    if 'lexer' in language:
-                        code_edit = CodeEditor(self.sm, self.tm, path=path)
-                        code_edit.hide()
-                        code_edit.textChanged.connect(self._on_text_changed)
-                        code_edit.cursorPositionChanged.connect(self._on_pos_changed)
-                        self.layout.addWidget(code_edit)
-                        code_edit.set_theme()
-                        self.code_widgets[path] = code_edit
-                    if language.get('preview', False):
-                        preview_widget = PreviewWidget(self.sm, self.tm, path)
-                        preview_widget.hide()
-                        self.layout.addWidget(preview_widget)
-                        preview_widget.set_theme()
-                        self.preview_widgets[path] = preview_widget
-                        self.buttons[path] = 2 if 'lexer' in language else 0
-                        if language.get('show_preview', False):
-                            self.buttons[path] = 3
-                    elif language.get('fast_run', False):
-                        self.buttons[path] = 1
-                    self.top_panel.open_tab(path)
+                    self._open_file_with_language(path, language)
                     return
-        return
-        extensions = json.loads(self._sm.get_general('extensions', '{}'))
-        for ex, data in extensions.items():
-            if path.endswith(ex):
-                if data.get('system_open', False):
-                    CodeWidget.open_by_system(path)
-                    return
-                try:
-                    code_edit = CodeEditor(self._sm, self.tm, path=path, encoding=data.get('encoding', 'utf-8'))
-                except UnicodeDecodeError:
-                    return
-                break
+
+        if is_text_file(path):
+            self._open_file_with_language(path, languages['txt'])
         else:
-            try:
-                code_edit = CodeEditor(self._sm, self.tm, path=path, encoding='utf-8')
-            except UnicodeDecodeError:
-                dialog = UnknownFileDialog(self.tm, path)
-                if dialog.exec():
-                    data, all_files = dialog.res()
-                    if all_files:
-                        name = os.path.basename(path)
-                        extensions[name if '.' not in name else name[name.rindex('.'):]] = data
-                        self._sm.set_general('extensions', json.dumps(extensions))
-                        self.open_code(path)
-                        return
-                return
-        code_edit.hide()
-        self.layout.addWidget(code_edit)
-        code_edit.set_theme()
-        self.code_widgets[path] = code_edit
+            self.open_by_system(path)
+
+    def _open_file_with_language(self, path, language):
+        self.files.append(path)
+        if 'lexer' in language:
+            code_edit = CodeEditor(self.sm, self.tm, path=path)
+            code_edit.hide()
+            code_edit.textChanged.connect(self._on_text_changed)
+            code_edit.cursorPositionChanged.connect(self._on_pos_changed)
+            self.layout.addWidget(code_edit)
+            code_edit.set_theme()
+            self.code_widgets[path] = code_edit
+        if language.get('preview', False):
+            preview_widget = PreviewWidget(self.sm, self.tm, path)
+            preview_widget.hide()
+            self.layout.addWidget(preview_widget)
+            preview_widget.set_theme()
+            self.preview_widgets[path] = preview_widget
+            self.buttons[path] = 2 if 'lexer' in language else 0
+            if language.get('show_preview', False):
+                self.buttons[path] = 3
+        elif language.get('fast_run', False):
+            self.buttons[path] = 1
         self.top_panel.open_tab(path)
 
     @staticmethod
@@ -432,8 +410,8 @@ QTabBar QToolButton::left-arrow {{
             if '.' in name and (ind := name.rindex('.')):
                 file_type = name[ind + 1:]
             else:
-                file_type = 'unknown_file'
-            self.tab_bar.setTabIcon(i, QIcon(self.tm.get_image(file_type, 'unknown_file')))
+                file_type = 'icons/unknown_file'
+            self.tab_bar.setTabIcon(i, QIcon(self.tm.get_image(file_type, 'icons/unknown_file')))
 
 
 class UnknownFileDialog(CustomDialog):
