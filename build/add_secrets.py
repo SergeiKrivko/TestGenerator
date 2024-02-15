@@ -36,7 +36,7 @@ def write_secrets():
 def write_build_config():
     with open("config/build.py", 'w', encoding='utf-8') as f:
         for key in ['USE_WEB_ENGINE', 'USE_TELEGRAM']:
-            f.write(f"{key} = {os.getenv(key, 'True')}\n")
+            f.write(f"{key} = {os.getenv(key, 'True').capitalize()}\n")
 
 
 def fix_version():
