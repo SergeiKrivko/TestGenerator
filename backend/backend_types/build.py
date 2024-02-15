@@ -44,8 +44,11 @@ class Build:
     def pop(self, key):
         self._data.pop(key)
 
+    def temp_dir(self, sm):
+        return f"{sm.temp_dir()}/build-{self.id}"
+
     def clear(self, sm):
-        temp_dir = f"{sm.temp_dir()}/build{self.id}"
+        temp_dir = self.temp_dir(sm)
         if os.path.isdir(temp_dir):
             shutil.rmtree(temp_dir)
 
@@ -143,6 +146,11 @@ class Build:
                 return python_coverage_html(sm, self)
             case _:
                 return None
+
+    def clear_coverage(self, sm):
+        match self.get('type', 'C'):
+            case 'C':
+                remove_files(self.temp_dir(sm), ['.gcda', '.gcov', 'coverage.info'])
 
     def execute(self, project, bm):
         res, errors = self.run_preproc(project, bm)

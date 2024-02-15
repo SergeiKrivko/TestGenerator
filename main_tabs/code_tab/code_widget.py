@@ -1,37 +1,36 @@
-import json
+import os
 import os
 import platform
 import subprocess
 
-from PyQt6.Qsci import QsciLexerCPP
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QTabBar, QFileDialog, QLabel, QComboBox, QCheckBox, \
     QPushButton
 
 from backend.commands import is_text_file
+from backend.managers import BackendManager
+from backend.settings_manager import SettingsManager
+from language.languages import languages
 from main_tabs.code_tab.preview_widgets import PreviewWidget
 from main_tabs.code_tab.search_panel import SearchPanel
-from language.languages import languages
 from main_tabs.code_tab.syntax_highlighter import CodeEditor
-from backend.settings_manager import SettingsManager
 from ui.button import Button
 from ui.custom_dialog import CustomDialog
 from ui.main_tab import MainTab
-from other.binary_redactor.convert_binary import convert
 
 
 class CodeWidget(MainTab):
     testing_signal = pyqtSignal()
 
-    def __init__(self, sm: SettingsManager, cm, tm):
+    def __init__(self, sm: SettingsManager, bm: BackendManager, tm):
         super(CodeWidget, self).__init__()
         self.sm = sm
-        self.cm = cm
+        self.bm = bm
         self.tm = tm
         self.current_file = ''
 
-        self.sm.projectChanged.connect(self.first_open)
+        self.bm.finishChangingProject.connect(self.first_open)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -42,7 +41,7 @@ class CodeWidget(MainTab):
         self.top_panel.tabSelected.connect(self.select_tab)
         self.top_panel.tabClosed.connect(self.close_tab)
         self.top_panel.tab_bar.tabMoved.connect(self.move_tab)
-        self.top_panel.button_run.clicked.connect(self.run_file)
+        # self.top_panel.button_run.clicked.connect(self.run_file)
         self.top_panel.button_preview.clicked.connect(self.show_preview)
         main_layout.addWidget(self.top_panel)
 
@@ -93,15 +92,15 @@ class CodeWidget(MainTab):
         self.preview_widgets.clear()
         self.files.clear()
 
-        files = self.sm.get('opened_files', [])
-        if not files:
+        self.files = self.sm.get('opened_files', [])
+        if not self.files:
             self.empty_widget.show()
         else:
-            for el in files:
+            for el in self.files:
                 self.open_code(el)
 
     def save_files_list(self):
-        self.sm.set('opened_files', self.files)
+        self.sm.set('opened_files', list(set(self.files)))
 
     def update_todo(self):
         pass
@@ -177,7 +176,6 @@ class CodeWidget(MainTab):
             return
         if not os.path.isfile(path):
             return
-        self.save_files_list()
         self.buttons[path] = 0
 
         for language in languages.values():
@@ -195,6 +193,7 @@ class CodeWidget(MainTab):
 
     def _open_file_with_language(self, path, language):
         self.files.append(path)
+        self.save_files_list()
         if 'lexer' in language:
             code_edit = CodeEditor(self.sm, self.tm, path=path)
             code_edit.hide()
@@ -232,15 +231,6 @@ class CodeWidget(MainTab):
         else:
             self.code_widgets[self.current_file].show()
             self.preview_widgets[self.current_file].hide()
-
-    def run_file(self):
-        if self.current_file.endswith('.t2b'):
-            convert(in_path=self.current_file)
-            self.files_widget.update_files_list()
-        else:
-            pass
-            # self.side_panel.tabs['run'].run_file(self.current_file)
-            # self.side_bar.select_tab('run')
 
     def select_text(self, a, b, c, d):
         if self.current_file in self.code_widgets:

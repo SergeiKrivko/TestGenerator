@@ -289,7 +289,7 @@ class TestingWidget(MainTab):
             self._coverage_window.setUrl(QUrl.fromLocalFile(self._coverage_html))
             self._coverage_window.show()
         else:
-            webbrowser.open(str(QUrl.fromLocalFile(self._coverage_html)))
+            webbrowser.open('file:///' + self._coverage_html)
 
 
 class SimpleField(QWidget):

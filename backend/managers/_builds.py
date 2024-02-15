@@ -44,7 +44,6 @@ class BuildsManager(QObject):
         return self._builds.get(id)
 
     def load(self, builds: list[Build]):
-        print(builds)
         self._builds.clear()
         for build in builds:
             self._builds[build.id] = build

@@ -245,13 +245,22 @@ class ContextMenu(QMenu):
         else:
             self.open_menu.addAction("Вкладка \"Код\"").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_CODE))
-            self.open_menu.addAction("Система").triggered.connect(
+            self.open_menu.addAction("Стандартное приложение").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM))
-            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')), "Терминал").triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
-            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
-                                     "Системный терминал").triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
+            if platform.system() == 'Windows':
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "PowerShell").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_POWER_SHELL))
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "Командная строка").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "Терминал WSL").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_WSL_TERMINAL))
+            else:
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "Терминал").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
 
             self.open_menu.addSeparator()
 

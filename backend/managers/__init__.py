@@ -286,6 +286,7 @@ class BackendManager(QObject):
         build = self.builds.get(build_id)
         cov = build.collect_coverage(project, self._sm)
         html_page = build.coverage_html(project, self._sm)
+        build.clear_coverage(self._sm)
         return cov, html_page
 
     # ---------------------- ZIP ----------------------------

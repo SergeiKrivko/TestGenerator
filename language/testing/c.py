@@ -1,7 +1,7 @@
 import os
 
 from backend.backend_types.program import PROGRAMS
-from backend.commands import cmd_command, check_files_mtime
+from backend.commands import cmd_command, check_files_mtime, remove_files
 from language.utils import get_files
 
 
@@ -10,7 +10,7 @@ def c_compile(project, build, sm, lib=False):
     compiler = PROGRAMS['gcc'].get(sm, build)
 
     path = project.path()
-    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    temp_dir = build.temp_dir(sm)
     os.makedirs(temp_dir, exist_ok=True)
 
     c_files = []
@@ -40,7 +40,6 @@ def c_compile(project, build, sm, lib=False):
 
     compiler_keys = build.get('keys', '')
     for c_file, o_file in zip(c_files, o_files):
-        print(o_file, os.path.isfile(o_file))
         if os.path.isfile(o_file) and check_files_mtime(o_file, get_dependencies(c_file)):
             continue
         res = compiler(f"{compiler_keys} {'--coverage' if coverage else ''} {h_dirs} {'-fPIC' if lib else ''} "
@@ -90,7 +89,7 @@ def c_collect_coverage(sm, build):
     count = 0
     gcov = PROGRAMS['gcov'].get(sm, build)
 
-    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    temp_dir = build.temp_dir(sm)
 
     for file in build.get('files', []):
         res = gcov(f"{file} -o {gcov.convert_path(temp_dir)}", shell=True, cwd=temp_dir)
@@ -108,7 +107,7 @@ def c_collect_coverage(sm, build):
 
 
 def c_coverage_html(sm, build):
-    temp_dir = f"{sm.temp_dir()}/build{build.id}"
+    temp_dir = build.temp_dir(sm)
 
     lcov = PROGRAMS['lcov'].get(sm, build)
     genhtml = PROGRAMS['genhtml'].get(sm, build)

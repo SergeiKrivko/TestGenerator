@@ -186,3 +186,12 @@ def is_text_file(path):
             return True
     except UnicodeDecodeError:
         return False
+
+
+def remove_files(path, extensions):
+    if isinstance(extensions, str):
+        extensions = [extensions]
+    for file in os.listdir(path):
+        for ex in extensions:
+            if file.endswith(ex):
+                os.remove(os.path.join(path, file))
