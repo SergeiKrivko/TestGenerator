@@ -5,7 +5,7 @@
 #define MyAppVersion "1.10.0"
 #define MyAppPublisher "SergeiKrivko"
 #define MyAppURL "https://github.com/SergeiKrivko/TestGenerator"
-#define MyAppExeName "TestGenerator.exe"
+#define MyAppExeName "TestGeneratorLite.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
