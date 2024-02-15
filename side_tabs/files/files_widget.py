@@ -2,6 +2,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 import typing
 
 from PyQt6 import QtGui
@@ -156,6 +157,8 @@ class ContextMenu(QMenu):
     MOVE_TO_TRASH = 108
     RUN_FILE = 109
     COMPRESS_TO_ZIP = 110
+    OPEN_BY_POWER_SHELL = 111
+    OPEN_BY_WSL_TERMINAL = 112
 
     COPY_FILES = 200
     PASTE_FILES = 201
@@ -223,11 +226,22 @@ class ContextMenu(QMenu):
         if directory:
             self.open_menu.addAction(QIcon(self.tm.get_image('icons/directory')), "Проводник").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_EXPLORER))
-            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')), "Терминал").triggered.connect(
+            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')), "Вкладка \"Терминал\"").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
-            self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
-                                     "Системный терминал").triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
+            if platform.system() == 'Windows':
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "PowerShell").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_POWER_SHELL))
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "Командная строка").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "Терминал WSL").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_WSL_TERMINAL))
+            else:
+                self.open_menu.addAction(QIcon(self.tm.get_image('icons/terminal')),
+                                         "Терминал").triggered.connect(
+                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
         else:
             self.open_menu.addAction("Вкладка \"Код\"").triggered.connect(
                 lambda: self.set_action(ContextMenu.OPEN_IN_CODE))
@@ -456,6 +470,10 @@ class FilesWidget(SidePanelWidget):
                 self.open_by_system(file)
             case ContextMenu.OPEN_BY_SYSTEM_TERMINAL:
                 self.open_in_system_terminal(file)
+            case ContextMenu.OPEN_BY_POWER_SHELL:
+                self.open_in_system_terminal(file, 'PowerShell')
+            case ContextMenu.OPEN_BY_WSL_TERMINAL:
+                self.open_in_system_terminal(file, 'WSL')
             case ContextMenu.OPEN_BY_COMMAND:
                 subprocess.call(menu.action_data)
             case ContextMenu.COPY_FILES:
@@ -539,12 +557,18 @@ class FilesWidget(SidePanelWidget):
                 subprocess.call(['open', path])
 
     @staticmethod
-    def open_in_system_terminal(path):
+    def open_in_system_terminal(path, terminal=''):
         if not os.path.isdir(path):
             path = os.path.dirname(path)
         match platform.system():
             case 'Windows':
-                os.system(f"start powershell.exe -noexit -command Set-Location -literalPath \"{path}\"")
+                match terminal:
+                    case 'PowerShell':
+                        os.system(f"start powershell.exe -noexit -command Set-Location -literalPath \"{path}\"")
+                    case 'WSL':
+                        os.system(f"start wsl.exe --cd \"{path}\"")
+                    case _:
+                        os.system(f"start cmd.exe /s /k pushd \"{path}\"")
             case 'Linux':
                 os.system(f"gnome-terminal --working-directory \"{path}\"")
             case 'Darwin':

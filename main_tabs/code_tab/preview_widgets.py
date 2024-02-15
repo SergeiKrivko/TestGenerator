@@ -1,10 +1,11 @@
 import json
+import webbrowser
 
 from PyQt6.QtCore import Qt, QUrl, QObject, pyqtSlot
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWebEngineCore import QWebEngineSettings
-from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QTextEdit, QLabel, QWidget, QHBoxLayout
+
+import config
 
 
 class PreviewWidget(QWidget):
@@ -25,10 +26,16 @@ class PreviewWidget(QWidget):
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.label)
 
-        self.web_engine = QWebEngineView()
-        self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
-        self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
-        layout.addWidget(self.web_engine)
+        if config.USE_WEB_ENGINE:
+            from PyQt6.QtWebEngineCore import QWebEngineSettings
+            from PyQt6.QtWebEngineWidgets import QWebEngineView
+
+            self.web_engine = QWebEngineView()
+            self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
+            self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
+            layout.addWidget(self.web_engine)
+        else:
+            self.web_engine = QWidget()
 
         # channel = QWebChannel()
         # handler = CallHandler(self.web_engine)  # Создание экземпляра объекта внешней обработки QWebChannel
@@ -56,8 +63,11 @@ class PreviewWidget(QWidget):
                 self.text_edit.show()
             if file.endswith('.html') or file.endswith('.pdf') or file.endswith('.svg'):
                 file = file.replace('\\', '/')
-                self.web_engine.setUrl(QUrl(f"file:///{file}"))
-                self.web_engine.show()
+                if config.USE_WEB_ENGINE:
+                    self.web_engine.setUrl(QUrl(f"file:///{file}"))
+                    self.web_engine.show()
+                else:
+                    webbrowser.open(f"file:///{file}")
             if file.endswith('.png') or file.endswith('.jpg') or file.endswith('.bmp'):
                 self.label.setPixmap(QPixmap(file))
                 self.label.show()

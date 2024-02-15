@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   build-windows:
-    name: Build for Windows
+    name: Build for Windows - Lite
     runs-on: windows-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
           python -m venv venv
           venv\Scripts\Activate.ps1
           
-          venv\Scripts\python -m pip install -r requirements.txt
+          venv\Scripts\python -m pip install -r requirements-lite.txt
           venv\Scripts\python -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
@@ -28,6 +28,8 @@ jobs:
           TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+          USE_WEB_ENGINE: False
+          USE_TELEGRAM: False
         run: |
           venv\Scripts\Activate.ps1
           python -m build.add_secrets
@@ -35,18 +37,18 @@ jobs:
       - name: Build by Pyinstaller
         run: |
           venv\Scripts\Activate.ps1
-          venv\Scripts\pyinstaller --noconfirm TestGenerator.spec
+          venv\Scripts\pyinstaller --noconfirm TestGeneratorLite.spec
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: build\setup.iss
+          path: build\setup-lite.iss
           options: /O+
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: TestGenerator_windows.exe
+          name: TestGeneratorLite_windows.exe
           path: dist\TestGeneratorSetup.exe
 
   build-linux:

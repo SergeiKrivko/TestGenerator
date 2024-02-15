@@ -33,6 +33,12 @@ def write_secrets():
             f.write(f"{key} = {os.getenv(key)}\n")
 
 
+def write_build_config():
+    with open("config/build.py", 'w', encoding='utf-8') as f:
+        for key in ['USE_WEB_ENGINE', 'USE_TELEGRAM']:
+            f.write(f"{key} = {os.getenv(key, 'True')}\n")
+
+
 def fix_version():
     import config
 
@@ -54,5 +60,6 @@ try:
     write_secrets()
 except Exception as ex:
     print(ex.__class__.__name__)
+write_build_config()
 
 fix_version()

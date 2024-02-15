@@ -181,6 +181,8 @@ class CodeWidget(MainTab):
         self.buttons[path] = 0
 
         for language in languages.values():
+            if not language.get('open_files', True):
+                continue
             for el in language['files']:
                 if path.endswith(el):
                     self._open_file_with_language(path, language)

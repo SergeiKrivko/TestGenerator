@@ -1,5 +1,7 @@
 from PyQt6.Qsci import QsciLexerCPP, QsciLexerPython, QsciLexerBash, QsciLexerBatch, QsciLexerCSharp, QsciLexerJava, \
     QsciLexerJavaScript, QsciLexerMarkdown, QsciLexerHTML, QsciLexerJSON, QsciLexerXML
+
+import config
 from language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 from language.autocomplition.c import CodeAutocompletionManager as AcMC
 from language.autocomplition.python import CodeAutocompletionManager as AcMPython
@@ -234,7 +236,7 @@ languages = {
         QsciLexerXML.UnknownTag: 'Keyword',
         QsciLexerXML.UnknownAttribute: 'Preprocessor',
     }},
-    'image': {'files': ['.bmp', '.png', '.jpg', '.pdf'], 'preview': True},
+    'image': {'files': ['.bmp', '.png', '.jpg', '.pdf'], 'preview': True, 'open_files': config.USE_WEB_ENGINE},
     'Text2Bin': {
         'lexer': LexerBin,
         'files': ['.t2b'],
@@ -252,7 +254,7 @@ languages = {
         'fast_run': [('Конвертировать', 'files/bin', lambda path, project, bm: ('', convert_binary(
             in_path=path, exceptions=False)))]
     },
-    'ZIP': {'files': ['.zip'],
+    'ZIP': {'files': ['.zip'], 'open_files': False,
             'fast_run': [('Распаковать', 'files/zip', lambda path, *args: ('', ZipManager.extract(path)))]}
 }
 

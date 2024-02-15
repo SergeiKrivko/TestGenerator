@@ -1,0 +1,2 @@
+USE_WEB_ENGINE = True
+USE_TELEGRAM = True

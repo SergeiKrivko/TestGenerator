@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QDialogButtonBox, QLabel, QHBoxLayout, QApplication
 
+import config
 from backend.managers import BackendManager
 from backend.notification import notification
 from side_tabs.builds import BuildWindow
@@ -96,6 +97,8 @@ class MainWindow(QMainWindow):
             'telegram': (TelegramWidget(self.sm, self.bm, self.tm), "Telegram"),
             'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
         }.items():
+            if key == 'telegram' and not config.USE_TELEGRAM:
+                continue
             self.side_bar.add_tab(key, *item)
 
         self.code_widget = CodeWidget(self.sm, self.bm, self.tm)
