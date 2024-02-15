@@ -1,11 +1,12 @@
 import os
+import webbrowser
 
 from PyQt6.QtCore import pyqtSignal, Qt, QUrl
 from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import QWidget, QListWidget, QListWidgetItem, QLabel, QHBoxLayout, QVBoxLayout, QTextEdit, \
     QPushButton, QProgressBar, QComboBox, QLineEdit, QScrollArea
 
+import config
 from backend.managers import BackendManager
 from backend.backend_types.func_test import FuncTest
 from main_tabs.code_tab.compiler_errors_window import CompilerErrorWindow
@@ -44,8 +45,10 @@ class TestingWidget(MainTab):
         self.progress_bar.setFixedSize(200, 26)
         top_layout.addWidget(self.progress_bar)
 
-        self._coverage_window = QWebEngineView()
-        self._coverage_window.resize(720, 480)
+        if config.USE_WEB_ENGINE:
+            from PyQt6.QtWebEngineWidgets import QWebEngineView
+            self._coverage_window = QWebEngineView()
+            self._coverage_window.resize(720, 480)
 
         self.coverage_bar = QPushButton()
         self.coverage_bar.clicked.connect(self.show_coverage_html)
@@ -282,8 +285,11 @@ class TestingWidget(MainTab):
     def show_coverage_html(self):
         if self._coverage_html is None:
             return
-        self._coverage_window.setUrl(QUrl.fromLocalFile(self._coverage_html))
-        self._coverage_window.show()
+        if config.USE_WEB_ENGINE:
+            self._coverage_window.setUrl(QUrl.fromLocalFile(self._coverage_html))
+            self._coverage_window.show()
+        else:
+            webbrowser.open(str(QUrl.fromLocalFile(self._coverage_html)))
 
 
 class SimpleField(QWidget):
