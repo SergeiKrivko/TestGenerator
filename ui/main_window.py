@@ -10,7 +10,8 @@ from side_tabs.files.files_widget import FilesWidget
 from side_tabs.terminal_tab import TerminalTab
 from side_tabs.chat import ChatPanel
 from side_tabs.git.git_panel import GitPanel
-from side_tabs.telegram.telegram_widget import TelegramWidget
+if config.USE_TELEGRAM:
+    from side_tabs.telegram.telegram_widget import TelegramWidget
 from side_tabs.time import TimePanel
 from side_tabs.todo_panel import TODOPanel
 from side_tabs.projects.project_widget import ProjectWidget
@@ -94,12 +95,11 @@ class MainWindow(QMainWindow):
             'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
             'gpt': (ChatPanel(self.sm, self.bm, self.tm), "Чат"),
-            'telegram': (TelegramWidget(self.sm, self.bm, self.tm), "Telegram"),
-            'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
+            # 'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")
         }.items():
-            if key == 'telegram' and not config.USE_TELEGRAM:
-                continue
             self.side_bar.add_tab(key, *item)
+        if config.USE_TELEGRAM:
+            self.side_bar.add_tab('telegram', TelegramWidget(self.sm, self.bm, self.tm), "Telegram")
 
         self.code_widget = CodeWidget(self.sm, self.bm, self.tm)
         self.add_tab(self.code_widget, 'code', "Код")

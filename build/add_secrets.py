@@ -52,14 +52,27 @@ def fix_version():
         f.write(text)
 
 
-if sys.platform == 'win32':
-    download_zip('lib_win.zip', r"venv\Lib\site-packages\pywtdlib\lib\Windows\AMD64")
-    download_zip('libcairo_win.zip', r"venv\Lib\site-packages\cairocffi\dlls")
+def delete_unused_code():
+    import config
 
-try:
-    write_secrets()
-except Exception as ex:
-    print(ex.__class__.__name__)
-write_build_config()
+    if not config.USE_TELEGRAM:
+        shutil.rmtree('side_tabs/telegram')
 
-fix_version()
+
+def main():
+    if sys.platform == 'win32':
+        download_zip('lib_win.zip', r"venv\Lib\site-packages\pywtdlib\lib\Windows\AMD64")
+        download_zip('libcairo_win.zip', r"venv\Lib\site-packages\cairocffi\dlls")
+
+    try:
+        write_secrets()
+    except Exception as ex:
+        print(ex.__class__.__name__)
+    write_build_config()
+    delete_unused_code()
+
+    fix_version()
+
+
+if __name__ == '__main__':
+    main()

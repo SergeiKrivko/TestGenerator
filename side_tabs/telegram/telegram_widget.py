@@ -14,7 +14,7 @@ from ui.button import Button
 from ui.custom_dialog import CustomDialog
 from ui.side_panel_widget import SidePanelWidget
 
-enabled = config.secret_data and os.name != 'posix'
+enabled = config.USE_TELEGRAM and config.secret_data and os.name != 'posix'
 
 
 class TelegramWidget(SidePanelWidget):
