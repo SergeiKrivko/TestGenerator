@@ -3,15 +3,19 @@ import shutil
 from io import BytesIO
 from uuid import uuid4
 
-from PyQt6.QtGui import QColor, QFont
+import PIL.Image as Image
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu
-import PIL.Image as Image
 
-from settings.program_combo_box import ProgramComboBox
+import config
 from ui.button import Button
 from ui.resources import resources
+
+if config.USE_TELEGRAM:
+    from ui.resources_emoji import resources as r
+    resources.update(r)
 
 basic_theme = {
     'Identifier': Qt.GlobalColor.black,

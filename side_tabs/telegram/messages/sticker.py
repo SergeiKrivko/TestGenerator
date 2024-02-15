@@ -1,5 +1,4 @@
 import os.path
-from uuid import uuid4
 
 import pylottie
 from PyQt6.QtCore import QSize
