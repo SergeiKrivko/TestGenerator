@@ -57,7 +57,7 @@ def delete_unused_code():
 
     if not config.USE_TELEGRAM:
         shutil.rmtree('side_tabs/telegram')
-        os.remove('ui/resources_emoji')
+        os.remove('ui/resources_emoji.py')
 
 
 def main():
