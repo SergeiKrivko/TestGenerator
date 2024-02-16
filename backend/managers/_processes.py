@@ -2,7 +2,8 @@ import sys
 import types
 
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
-import PyTaskbar
+if sys.platform == 'win32':
+    import PyTaskbar
 
 from backend.settings_manager import SettingsManager
 from ui import main_window
