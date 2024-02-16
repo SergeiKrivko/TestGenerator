@@ -16,10 +16,11 @@ class _ProgramValidator:
 class Program:
     WSL = 1
 
-    def __init__(self, name, win=None, linux=None, validator: _ProgramValidator = None):
+    def __init__(self, name, win=None, linux=None, mac=None, validator: _ProgramValidator = None):
         self.name = name
         self.win_name = win if win else self.name + '.exe'
         self.linux_name = linux if linux else self.name
+        self.mac_name = mac if mac else self.linux_name
         self._existing = dict()
         self._validator = validator
 
