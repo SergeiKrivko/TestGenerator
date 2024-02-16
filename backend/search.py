@@ -60,3 +60,5 @@ class Searcher(QThread):
                             prog.add_existing(ProgramInstance(prog, prog.linux_name, Program.WSL))
                 case 'linux':
                     find_programs('/usr', {item.linux_name: item for item in PROGRAMS.values()})
+                case 'darwin':
+                    find_programs('/usr', {item.mac_name: item for item in PROGRAMS.values()})
