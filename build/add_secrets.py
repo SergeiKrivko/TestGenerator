@@ -40,7 +40,7 @@ def write_build_config():
 
 
 def fix_version():
-    import config
+    from src import config
 
     with open(r"build/setup.iss", encoding='utf-8') as f:
         text = f.read()
@@ -53,7 +53,7 @@ def fix_version():
 
 
 def delete_unused_code():
-    import config
+    from src import config
 
     if not config.USE_TELEGRAM:
         shutil.rmtree('side_tabs/telegram')

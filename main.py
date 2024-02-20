@@ -1,7 +1,7 @@
 import sys
 
-import config
-from backend.arg_parser import args
+from src import config
+from src.backend.arg_parser import args
 
 
 def main():
@@ -16,7 +16,7 @@ def except_hook(cls, exception, traceback):
 
 
 def run_console():
-    from backend.managers import BackendManager
+    from src.backend.managers import BackendManager
     from PyQt6.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
@@ -31,7 +31,7 @@ def run_console():
 
 def run_ui():
     from PyQt6.QtWidgets import QApplication
-    from ui.main_window import MainWindow
+    from src.ui.main_window import MainWindow
 
     app = QApplication(sys.argv)
     app.setOrganizationName(config.ORGANISATION_NAME)
