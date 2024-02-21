@@ -164,6 +164,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3.11 -m pip install -r requirements/linux-lite.txt
+          python3.11 -m pip install pymorphy3-dicts-ru
           python3.11 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
@@ -222,6 +223,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3.11 -m pip install -r requirements/linux-lite.txt
+          python3.11 -m pip install pymorphy3-dicts-ru
           python3.11 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
