@@ -169,6 +169,7 @@ jobs:
           python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
+        id: secrets
         env:
           TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
@@ -196,7 +197,7 @@ jobs:
           package: testgenerator
           package_root: dist/debpkg
           maintainer: SergeiKrivko
-          version: ${{ steps.build.outputs.version }}
+          version: ${{ steps.secrets.outputs.version }}
           arch: 'amd64'
           desc: 'TestGeneratorLite'
 
