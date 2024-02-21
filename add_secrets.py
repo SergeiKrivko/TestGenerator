@@ -37,7 +37,7 @@ def write_build_config():
     with open("src/config/build.py", 'w', encoding='utf-8') as f:
         for key in ['USE_WEB_ENGINE', 'USE_TELEGRAM']:
             f.write(f"{key} = {os.getenv(key, 'True').capitalize()}\n")
-        f.write(f"{key} \"{os.getenv('BUILD_NAME', '').capitalize()}\"\n")
+        f.write(f"{key} = \"{os.getenv('BUILD_NAME', '').capitalize()}\"\n")
 
 
 def fix_version():
