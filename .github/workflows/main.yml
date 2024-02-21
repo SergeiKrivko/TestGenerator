@@ -207,7 +207,7 @@ jobs:
           path: testgenerator_${{ steps.build.outputs.version }}_amd64.deb
 
   build-macos-lite:
-    name: Build for macOS
+    name: Build for macOS - Lite
     runs-on: macos-latest
 
     steps:
