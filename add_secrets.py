@@ -53,16 +53,15 @@ def fix_version():
 
 
 def delete_unused_code():
-    import src.config as config
-
-    if not config.USE_TELEGRAM:
-        shutil.rmtree('side_tabs/telegram')
-        os.remove('ui/resources_emoji.py')
+    if not os.getenv('USE_TELEGRAM'):
+        shutil.rmtree('src/side_tabs/telegram')
+        os.remove('src/ui/resources_emoji.py')
 
 
 def main():
     if sys.platform == 'win32':
-        download_zip('lib_win.zip', r"build/venv/Lib/site-packages/pywtdlib/lib/Windows/AMD64")
+        if not os.getenv('USE_TELEGRAM'):
+            download_zip('lib_win.zip', r"build/venv/Lib/site-packages/pywtdlib/lib/Windows/AMD64")
         download_zip('libcairo_win.zip', r"build/venv/Lib/site-packages/cairocffi/dlls")
 
     try:
