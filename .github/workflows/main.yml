@@ -183,6 +183,7 @@ jobs:
         run: |
           source venv/bin/activate
           pyinstaller --noconfirm TestGeneratorLite.spec
+          mv dist/TestGeneratorLite dist/TestGenerator
 
       - name: Prepare DEP package
         run: |
@@ -230,11 +231,6 @@ jobs:
           python3.11 -m venv venv
           source venv/bin/activate
           python3 -m pip install -r requirements/linux-lite.txt
-          ls venv
-          echo "----"
-          ls venv/lib/python3.11
-          echo "----"
-          ls venv/lib/python3.11/site-packages/pymorphy3_dicts_ru
           python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets

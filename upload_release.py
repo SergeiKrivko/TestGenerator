@@ -72,7 +72,7 @@ def upload_version():
 
 
 def compress_to_zip(path):
-    zip_path = f"{os.path.dirname(path)}/{get_system()}{build_suffix}.zip"
+    zip_path = f"{os.path.dirname(path) or '.'}/{get_system()}{build_suffix}.zip"
     archive = zipfile.ZipFile(zip_path, 'w')
     archive.write(path, os.path.basename(path))
     archive.close()
