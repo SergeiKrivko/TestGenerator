@@ -53,7 +53,7 @@ def fix_version():
 
 
 def delete_unused_code():
-    from src import config
+    import src.config as config
 
     if not config.USE_TELEGRAM:
         shutil.rmtree('side_tabs/telegram')

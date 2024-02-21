@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "TestGenerator"
-#define MyAppVersion "1.10.0"
+#define MyAppVersion "1.10.5"
 #define MyAppPublisher "SergeiKrivko"
 #define MyAppURL "https://github.com/SergeiKrivko/TestGenerator"
 #define MyAppExeName "TestGenerator.exe"
