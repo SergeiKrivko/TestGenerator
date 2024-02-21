@@ -54,3 +54,8 @@ coll = COLLECT(
     upx_exclude=[],
     name='TestGeneratorLite',
 )
+
+app = BUNDLE(coll,
+             name='GPT-chat.app',
+             icon='icon.png',
+             bundle_identifier=None)
