@@ -62,8 +62,8 @@ def delete_unused_code():
 
 def main():
     if sys.platform == 'win32':
-        download_zip('lib_win.zip', r"venv\Lib\site-packages\pywtdlib\lib\Windows\AMD64")
-        download_zip('libcairo_win.zip', r"venv\Lib\site-packages\cairocffi\dlls")
+        download_zip('lib_win.zip', r"build/venv/Lib/site-packages/pywtdlib/lib/Windows/AMD64")
+        download_zip('libcairo_win.zip', r"build/venv/Lib/site-packages/cairocffi/dlls")
 
     try:
         write_secrets()

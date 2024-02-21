@@ -30,7 +30,7 @@ jobs:
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
           venv\Scripts\Activate.ps1
-          python -m build.add_secrets
+          python -m add_secrets
 
       - name: Build by Pyinstaller
         run: |
@@ -78,7 +78,7 @@ jobs:
 #          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
 #          CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
 #        run: |
-#          python -m build.add_secrets
+#          python -m add_secrets
 #
 #      - name: Build by Pyinstaller
 #        run: |
@@ -122,7 +122,7 @@ jobs:
           USE_TELEGRAM: False
         run: |
           venv\Scripts\Activate.ps1
-          python -m build.add_secrets
+          python -m add_secrets
 
       - name: Build by Pyinstaller
         run: |
@@ -172,7 +172,7 @@ jobs:
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
-          python -m build.add_secrets
+          python -m add_secrets
           cd src
           python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
 
@@ -230,7 +230,7 @@ jobs:
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
-          python -m build.add_secrets
+          python -m add_secrets
 
       - name: Build by Pyinstaller
         run: |
