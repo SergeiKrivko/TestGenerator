@@ -230,6 +230,8 @@ jobs:
           python3.11 -m venv venv
           source venv/bin/activate
           python3 -m pip install -r requirements/linux-lite.txt
+          ls venv
+          echo "----"
           ls venv/Lib/site-packages
           echo "----"
           ls venv/Lib/site-packages/pymorphy3_dicts_ru
