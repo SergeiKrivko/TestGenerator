@@ -232,9 +232,9 @@ jobs:
           python3 -m pip install -r requirements/linux-lite.txt
           ls venv
           echo "----"
-          ls venv/Lib/site-packages
+          ls venv/lib/site-packages
           echo "----"
-          ls venv/Lib/site-packages/pymorphy3_dicts_ru
+          ls venv/lib/site-packages/pymorphy3_dicts_ru
           python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets

@@ -21,7 +21,7 @@ a = Analysis(
     pathex=[],
     binaries=binaries,
     datas=[(r"src/other/report/MML2OMML.XSL", r"src/other/report/MML2OMML.XSL"),
-           (os.path.abspath("venv/Lib/site-packages/pymorphy3_dicts_ru/data"), r"pymorphy3_dicts_ru\data"),],
+           ("venv/{'Lib' if sys.platform == 'win32' else 'lib'}/site-packages/pymorphy3_dicts_ru/data", r"pymorphy3_dicts_ru/data"),],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
