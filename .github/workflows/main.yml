@@ -163,9 +163,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python3.11 -m venv venv
+          source venv/bin/activate
           python3.11 -m pip install -r requirements/linux-lite.txt
-          python3.11 -m pip install pymorphy3-dicts-ru
-          ls venv/Lib/site-packages/pymorphy3_dicts_ru
           python3.11 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
@@ -174,16 +174,19 @@ jobs:
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
-          python -m add_secrets
+          source venv/bin/activate
+          python3 -m add_secrets
           cd src
           python3 -c "print('version=', __import__('config').APP_VERSION, sep='')" >> $GITHUB_OUTPUT
 
       - name: Build by Pyinstaller
         run: |
+          source venv/bin/activate
           pyinstaller --noconfirm TestGeneratorLite.spec
 
       - name: Prepare DEP package
         run: |
+          source venv/bin/activate
           python3 create_debpkg.py
 
       - name: Create DEB package
@@ -200,6 +203,7 @@ jobs:
         env:
           BUILD_TYPE: Lite
         run: |
+          source venv/bin/activate
           python3 upload_release.py
 
       - name: Upload artifacts
@@ -223,10 +227,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3.11 -m pip install -r requirements/linux-lite.txt
-          python3.11 -m pip install pymorphy3-dicts-ru
-          ls venv/Lib/site-packages/pymorphy3_dicts_ru
-          python3.11 -m pip install --upgrade pyinstaller==6.3.0
+          python3.11 -m venv venv
+          source venv/bin/activate
+          python3 -m pip install -r requirements/linux-lite.txt
+          python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
         env:
@@ -234,10 +238,12 @@ jobs:
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
-          python -m add_secrets
+          source venv/bin/activate
+          python3 -m add_secrets
 
       - name: Build by Pyinstaller
         run: |
+          source venv/bin/activate
           pyinstaller --noconfirm TestGeneratorLite.spec
           rm -rf dist/TestGeneratorLite
 
@@ -251,6 +257,7 @@ jobs:
         env:
           BUILD_TYPE: Lite
         run: |
+          source venv/bin/activate
           python3 upload_release.py
 
       - name: Upload artifacts
