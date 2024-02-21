@@ -4,10 +4,10 @@ from sys import argv
 try:
     from src.config.secret import *
     secret_data = True
+    from src.config.build import *
 except ImportError:
     secret_data = False
 
-from src.config.build import *
 
 ORGANISATION_NAME = "SergeiKrivko"
 ORGANISATION_URL = "https://github.com/SergeiKrivko/TestGenerator"
