@@ -61,11 +61,12 @@ def version_file():
     return f"{get_system()}{build_suffix}.json"
 
 
-def upload_version():
+def upload_info(zip_file):
     url = f"https://firebasestorage.googleapis.com/v0/b/testgenerator-bf37c.appspot.com/o/" \
           f"{quote(f'releases/{version_file()}', safe='')}"
     resp = requests.post(url, data=json.dumps({
         'version': config.APP_VERSION,
+        'file_size': os.path.getsize(zip_file),
     }, indent=2).encode('utf-8'))
     if not resp.ok:
         raise Exception(resp.text)
@@ -80,8 +81,9 @@ def compress_to_zip(path):
 
 
 def main():
-    upload_file(compress_to_zip(release_file()), get_system())
-    upload_version()
+    zip_file = compress_to_zip(release_file())
+    upload_file(zip_file, f"{get_system()}{build_suffix}")
+    upload_info(zip_file)
 
 
 if __name__ == '__main__':

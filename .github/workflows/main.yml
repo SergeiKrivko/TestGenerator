@@ -120,6 +120,7 @@ jobs:
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
           USE_WEB_ENGINE: False
           USE_TELEGRAM: False
+          BUILD_NAME: Lite
         run: |
           venv\Scripts\Activate.ps1
           python -m add_secrets
@@ -174,6 +175,9 @@ jobs:
           TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+          USE_WEB_ENGINE: False
+          USE_TELEGRAM: False
+          BUILD_NAME: Lite
         run: |
           source venv/bin/activate
           python3 -m add_secrets
@@ -212,7 +216,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: TestGeneratorLite_linux
-          path: testgenerator_${{ steps.build.outputs.version }}_amd64.deb
+          path: testgenerator_${{ steps.secrets.outputs.version }}_amd64.deb
 
   build-macos-lite:
     name: Build for macOS - Lite
@@ -239,6 +243,9 @@ jobs:
           TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+          USE_WEB_ENGINE: False
+          USE_TELEGRAM: False
+          BUILD_NAME: Lite
         run: |
           source venv/bin/activate
           python3 -m add_secrets
