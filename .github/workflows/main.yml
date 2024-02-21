@@ -178,7 +178,7 @@ jobs:
 
       - name: Build by Pyinstaller
         run: |
-          pyinstaller --noconfirm TestGenerator.spec
+          pyinstaller --noconfirm TestGeneratorLite.spec
 
       - name: Prepare DEP package
         run: |

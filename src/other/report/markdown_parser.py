@@ -630,7 +630,7 @@ class MarkdownParser:
         mathml = latex_converter.convert(text)
         tree = etree.fromstring(mathml)
         xslt = etree.parse(
-            f"{config.APP_DIR}/other/report/MML2OMML.XSL"
+            f"{config.APP_DIR}/src/other/report/MML2OMML.XSL"
         )
         transform = etree.XSLT(xslt)
         new_dom = transform(tree)

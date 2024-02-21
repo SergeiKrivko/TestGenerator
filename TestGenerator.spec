@@ -12,7 +12,7 @@ a = Analysis(
     pathex=[],
     binaries=[(r"venv/Lib/site-packages/pywtdlib/lib/Windows/AMD64/libtdjson.dll", "pywtdlib/lib/Windows/AMD64"),
               ('icon.png', '.')],
-    datas=[(r"other/report/MML2OMML.XSL", r"other/report/MML2OMML.XSL"),
+    datas=[(r"src/other/report/MML2OMML.XSL", r"src/other/report/MML2OMML.XSL"),
            (os.path.abspath("venv/Lib/site-packages/pymorphy3_dicts_ru/data"), r"pymorphy3_dicts_ru\data"),],
     hiddenimports=[],
     hookspath=[],
