@@ -165,6 +165,7 @@ jobs:
         run: |
           python3.11 -m pip install -r requirements/linux-lite.txt
           python3.11 -m pip install pymorphy3-dicts-ru
+          ls venv/Lib/site-packages/pymorphy3_dicts_ru
           python3.11 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
@@ -224,6 +225,7 @@ jobs:
         run: |
           python3.11 -m pip install -r requirements/linux-lite.txt
           python3.11 -m pip install pymorphy3-dicts-ru
+          ls venv/Lib/site-packages/pymorphy3_dicts_ru
           python3.11 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
