@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidg
     QLineEdit, QPushButton
 
 from src.backend.settings_manager import SettingsManager
-from src import side_tabs as builds
+from src.side_tabs import builds as builds
 from src.ui.button import Button
 from src.ui.custom_dialog import CustomDialog
 

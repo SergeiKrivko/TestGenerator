@@ -4,9 +4,13 @@ from sys import argv
 try:
     from src.config.secret import *
     secret_data = True
-    from src.config.build import *
 except ImportError:
     secret_data = False
+
+try:
+    from src.config.build import *
+except ImportError:
+    pass
 
 
 ORGANISATION_NAME = "SergeiKrivko"

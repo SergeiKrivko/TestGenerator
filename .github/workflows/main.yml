@@ -51,7 +51,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: TestGenerator_windows.exe
+          name: TestGenerator_windows
           path: dist\TestGeneratorSetup.exe
 
 #  build-linux:

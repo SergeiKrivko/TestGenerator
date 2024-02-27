@@ -57,5 +57,5 @@ coll = COLLECT(
 
 app = BUNDLE(coll,
              name='TestGeneratorLite.app',
-             icon='icon.png',
+             icon='icon_macos.png',
              bundle_identifier=None)

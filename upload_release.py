@@ -54,7 +54,7 @@ def release_file():
         case 'linux':
             return f"testgenerator_{config.APP_VERSION}_amd64.deb"
         case 'darwin':
-            return f"TestGenerator{os.getenv('BUILD_TYPE').capitalize()}.dmg"
+            return f"TestGenerator{os.getenv('BUILD_TYPE', '').capitalize()}.dmg"
 
 
 def version_file():

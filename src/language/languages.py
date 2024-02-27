@@ -61,7 +61,7 @@ languages = {
         },
         'run': src.language.testing.python.python_run,
         'coverage': src.language.testing.python.python_collect_coverage,
-        'fast_run': [('Запустить', 'run', src.language.testing.python.python_fast_run)],
+        'fast_run': [('Запустить', 'icons/run', src.language.testing.python.python_fast_run)],
     },
     'C++': {
         'lexer': QsciLexerCPP,
@@ -103,7 +103,7 @@ languages = {
             QsciLexerBash.Error: 'Preprocessor'
         },
         'run': src.language.testing.shell.bash_run,
-        'fast_run': [('Запустить', 'run', src.language.testing.python.python_fast_run)],
+        'fast_run': [('Запустить', 'icons/run', src.language.testing.python.python_fast_run)],
     },
     'Batch': {
         'lexer': QsciLexerBatch,
@@ -119,7 +119,7 @@ languages = {
             QsciLexerBatch.Default: 'Identifier'
         },
         'run': src.language.testing.shell.batch_run,
-        'fast_run': [('Запустить', 'run', src.language.testing.python.python_fast_run)],
+        'fast_run': [('Запустить', 'icons/run', src.language.testing.python.python_fast_run)],
     },
     'Markdown': {
         'lexer': QsciLexerMarkdown,
