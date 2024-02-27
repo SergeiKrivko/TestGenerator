@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import PIL.Image as Image
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QColor, QFont, QFontDatabase
 from PyQt6.QtWidgets import QWidget, QMainWindow, QLineEdit, QTextEdit, QScrollArea, QPushButton, QSpinBox, \
     QDoubleSpinBox, QComboBox, QProgressBar, QTabWidget, QListWidget, QCheckBox, QLabel, QTabBar, QTreeWidget, QMenu
 
@@ -51,8 +51,8 @@ basic_theme = {
     'HFile': QColor('#99922C'),
     'TxtFile': QColor('#2065D4'),
     'Directory': QColor('#2F7519'),
-    'FontFamily': "Calibri",
-    'CodeFontFamily': "Consolas",
+    'FontFamily': "Roboto",
+    'CodeFontFamily': "Roboto Mono",
 }
 
 
@@ -79,6 +79,10 @@ class ThemeManager:
 
     def __init__(self, sm, theme_name='basic'):
         self.sm = sm
+
+        for el in os.listdir(f"{config.ASSETS_DIR}/fonts"):
+            QFontDatabase.addApplicationFont(f"{config.ASSETS_DIR}/fonts/{el}")
+
         self.themes = {
             ThemeManager.BASIC_THEME: Theme(basic_theme),
             'darcula':
