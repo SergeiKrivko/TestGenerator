@@ -64,6 +64,6 @@ coll = COLLECT(
 )
 
 app = BUNDLE(coll,
-             name='GPT-chat.app',
+             name='TestGenerator.app',
              icon='icon.png',
              bundle_identifier=None)

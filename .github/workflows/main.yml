@@ -254,12 +254,15 @@ jobs:
         run: |
           source venv/bin/activate
           pyinstaller --noconfirm TestGeneratorLite.spec
+          ls dist
           rm -rf dist/TestGeneratorLite
+          echo "------"
+          ls dist
 
       - name: Create installer
         uses: QQxiaoming/create-dmg-action@v0.0.2
         with:
-          name: 'TestGenerator'
+          name: 'TestGeneratorLite'
           srcdir: 'dist/TestGeneratorLite.app'
 
       - name: Upload release
@@ -272,5 +275,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: TestGeneratorLite_macos.dmg
-          path: TestGenerator.dmg
+          name: TestGeneratorLite_macos
+          path: TestGeneratorLite.dmg
