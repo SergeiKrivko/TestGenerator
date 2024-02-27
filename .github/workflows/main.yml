@@ -254,10 +254,7 @@ jobs:
         run: |
           source venv/bin/activate
           pyinstaller --noconfirm TestGeneratorLite.spec
-          ls dist
           rm -rf dist/TestGeneratorLite
-          echo "------"
-          ls dist
 
       - name: Create installer
         uses: QQxiaoming/create-dmg-action@v0.0.2
