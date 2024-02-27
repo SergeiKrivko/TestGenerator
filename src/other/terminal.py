@@ -1,5 +1,6 @@
 import os
 import subprocess
+from time import sleep
 
 from PyQt6.QtCore import QByteArray, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QTextCursor
@@ -103,11 +104,11 @@ class Terminal(QTextEdit):
         self.process = subprocess.Popen(command, text=True, startupinfo=get_si(), cwd=self.current_dir,
                                         shell=True, bufsize=1, encoding='utf-8',
                                         stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        self.stdout_reader = PipeReader(self.process.stdout)
+        self.stdout_reader = BufferReader(self.process.stdout)
         self.stdout_reader.readyToRead.connect(self.write_text)
         self.stdout_reader.finished.connect(self.end_process)
         self.stdout_reader.start()
-        self.stderr_reader = PipeReader(self.process.stderr)
+        self.stderr_reader = BufferReader(self.process.stderr)
         self.stderr_reader.readyToRead.connect(lambda text: self.write_text(text, self._error_color))
         self.stderr_reader.finished.connect(self.end_process)
         self.stderr_reader.start()
@@ -118,6 +119,8 @@ class Terminal(QTextEdit):
         self.current_process = ''
         self.process.stdout.close()
         self.process.stderr.close()
+        self.write_text(self.stdout_reader.read())
+        self.write_text(self.stderr_reader.read(), self._error_color)
         self.return_code = self.process.poll()
         self.write_prompt()
         self.processFinished.emit()
@@ -175,12 +178,42 @@ class Terminal(QTextEdit):
 
 
 class PipeReader(QThread):
+    def __init__(self, stream, buffer):
+        super().__init__()
+        self._stream = stream
+        self._buffer = buffer
+
+    def run(self) -> None:
+        for symbol in iter(lambda: self._stream.read(1), ''):
+            self._buffer.buffer.append(symbol)
+
+
+class BufferReader(QThread):
     readyToRead = pyqtSignal(str)
 
     def __init__(self, stream):
         super().__init__()
-        self._stream = stream
+        self._pipe_reader = PipeReader(stream, self)
+        self.buffer = []
+
+    def start(self, priority: 'QThread.Priority' = ...) -> None:
+        super().start()
+        self._pipe_reader.start()
+
+    def terminate(self) -> None:
+        super().terminate()
+        self._pipe_reader.terminate()
 
     def run(self) -> None:
-        for symbol in iter(lambda: self._stream.read(1), ''):
-            self.readyToRead.emit(symbol)
+        while not self._pipe_reader.isFinished():
+            buffer = self.buffer
+            self.buffer = []
+            self.readyToRead.emit(''.join(buffer))
+            sleep(0.3)
+
+    def read(self):
+        buffer = self.buffer
+        self.buffer = []
+        return ''.join(buffer)
+
+
