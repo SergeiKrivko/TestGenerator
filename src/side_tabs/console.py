@@ -9,7 +9,7 @@ from src.ui.side_panel_widget import SidePanelWidget
 
 class Console(Terminal):
     def __init__(self, sm, tm, bm):
-        super().__init__(sm, tm)
+        super().__init__(bm, sm, tm, id='2')
         self.bm = bm
 
     def write_prompt(self):

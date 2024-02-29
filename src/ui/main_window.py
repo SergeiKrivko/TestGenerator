@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
             # 'todo': (TODOPanel(self.sm, self.cm, self.tm), "TODO"),
             # 'git': (GitPanel(self.sm, self.cm, self.tm), "Git"),
             'generator': (GeneratorTab(self.sm, self.bm, self.tm), "Генерация тестов"),
-            'terminal': (TerminalTab(self.sm, self.tm), "Терминал"),
+            'terminal': (TerminalTab(self.bm, self.tm), "Терминал"),
             'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
             # 'gpt': (ChatPanel(self.sm, self.bm, self.tm), "Чат"),
             # 'time': (TimePanel(self.sm, self.bm, self.tm), "Замеры времени")

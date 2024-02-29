@@ -66,6 +66,10 @@ class BackendManager(QObject):
 
         self.changing_project = False
 
+    @property
+    def sm(self):
+        return self._sm
+
     # ------------------------- SETTINGS ------------------------------
 
     def open_project(self, project: Project | str):

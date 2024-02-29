@@ -1,22 +1,27 @@
 import os
 import subprocess
 from time import sleep
+from uuid import uuid4
 
 from PyQt6.QtCore import QByteArray, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
 
 from src.backend.commands import get_si
+from src.backend.managers import BackendManager
 
 
 class Terminal(QTextEdit):
     processFinished = pyqtSignal()
 
-    def __init__(self, sm, tm):
+    def __init__(self, bm: BackendManager, sm, tm, terminal_app='', id=''):
         super().__init__(None)
+        self.bm = bm
         self.sm = sm
         self.sm.projectChanged.connect(self.select_project)
         self.tm = tm
+        self._id = id or str(uuid4())
+        self._terminal_app = terminal_app
 
         self.fixed_text = ""
         self.fixed_html = ""
@@ -101,17 +106,17 @@ class Terminal(QTextEdit):
             return
 
         self.current_process = command
-        self.process = subprocess.Popen(command, text=True, startupinfo=get_si(), cwd=self.current_dir,
-                                        shell=True, bufsize=1, encoding='utf-8',
+        self.process = subprocess.Popen(self.current_process + ' ' + command, text=True, startupinfo=get_si(),
+                                        cwd=self.current_dir, shell=True, bufsize=1, encoding='utf-8',
                                         stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         self.stdout_reader = BufferReader(self.process.stdout)
         self.stdout_reader.readyToRead.connect(self.write_text)
         self.stdout_reader.finished.connect(self.end_process)
-        self.stdout_reader.start()
+        self.bm.processes.run(self.stdout_reader, f'Terminal-{self._id}', 'STDOUT')
         self.stderr_reader = BufferReader(self.process.stderr)
         self.stderr_reader.readyToRead.connect(lambda text: self.write_text(text, self._error_color))
         self.stderr_reader.finished.connect(self.end_process)
-        self.stderr_reader.start()
+        self.bm.processes.run(self.stderr_reader, f'Terminal-{self._id}', 'STDERR')
 
     def end_process(self):
         if not self.stdout_reader.isFinished() or not self.stderr_reader.isFinished() or not self.current_process:
@@ -147,7 +152,6 @@ class Terminal(QTextEdit):
         os.chdir(self.current_dir)
         if os.path.isdir(command[3:].strip()):
             self.current_dir = os.path.abspath(command[3:].strip())
-            self.process.setWorkingDirectory(self.current_dir)
         self.write_prompt()
         os.chdir(old_dir)
 
