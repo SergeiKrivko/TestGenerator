@@ -38,6 +38,8 @@ def write_build_config():
         for key in ['USE_WEB_ENGINE', 'USE_TELEGRAM']:
             f.write(f"{key} = {os.getenv(key, 'True').capitalize()}\n")
         f.write(f"{key} = \"{os.getenv('BUILD_NAME', '').capitalize()}\"\n")
+    with open("src/config/build.py", encoding='utf-8') as f:
+        print(f.read())
 
 
 def fix_version():
