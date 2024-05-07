@@ -78,9 +78,8 @@ FORMATS = {
 
 
 class BinaryConverter:
-    def __init__(self, text: str, path=''):
+    def __init__(self, text: str):
         self.text = text
-        self.path = path
         self.encoding = 'utf-8'
 
     def preprocessor(self):
@@ -121,7 +120,7 @@ class BinaryConverter:
         return defines
 
     def convert(self):
-        file = open(self.path, 'bw')
+        lst = []
         for i, line in enumerate(self.preprocessor()):
             if not line.strip():
                 continue
@@ -135,9 +134,10 @@ class BinaryConverter:
                 raise BinaryConverterError(BinaryConverterError.INVALID_VALUES_COUNT, i, line, expected=n, found=found)
 
             try:
-                file.write(self.convert_line(line))
+                lst.append(self.convert_line(line))
             except BinaryConverterError as ex:
                 raise BinaryConverterError(ex.error_type, i, line, **ex.kwargs)
+        return b''.join(lst)
 
     def convert_line(self, line: str):
         lst = BinaryConverter.split_line(line)
@@ -239,18 +239,25 @@ class BinaryConverter:
             raise BinaryConverterError(BinaryConverterError.INVALID_MASK)
 
 
-def convert(text='', path='', in_path='', exceptions=True):
+def convert_bytes(text):
+    encoder = BinaryConverter(text)
+    return encoder.convert()
+
+
+def convert_file(text='', path='', in_path='', exceptions=True):
     try:
         if in_path:
             with open(in_path, encoding='utf-8') as f:
                 path, name = os.path.split(in_path)
                 if '.' in name and (ind := name.rindex('.')) != 0:
                     path = os.path.join(path, name[:ind] + '.bin')
-                encoder = BinaryConverter(f.read(), path)
-                encoder.convert()
+                encoder = BinaryConverter(f.read())
+                res = encoder.convert()
         else:
-            encoder = BinaryConverter(text, path)
-            encoder.convert()
+            encoder = BinaryConverter(text)
+            res = encoder.convert()
+        with open(path, 'bw') as f:
+            f.write(res)
     except Exception as ex:
         if exceptions:
             raise ex
@@ -268,7 +275,7 @@ if __name__ == '__main__':
         else:
             try:
                 with open(argv[1], encoding='utf-8') as f:
-                    convert(f.read(), argv[2])
+                    convert_file(f.read(), argv[2])
             except BinaryConverterError as ex:
                 print(ex)
                 code = 2
@@ -282,7 +289,7 @@ if __name__ == '__main__':
         file2 = input("Enter output file: ")
         try:
             with open(file1, encoding='utf-8') as f:
-                convert(f.read(), file2)
+                convert_file(f.read(), file2)
         except BinaryConverterError as ex:
             print(ex)
             code = 2

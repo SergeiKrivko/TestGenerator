@@ -5,8 +5,8 @@ import shutil
 from src.backend.commands import read_json
 from src.backend.backend_types.build import Build
 
-from src.language.testing.c import *
-from src.language.testing.python import *
+from src.backend.language.testing.c import *
+from src.backend.language.testing.python import *
 
 
 class Util:

@@ -1,2 +1,2 @@
-USE_WEB_ENGINE = True
+USE_WEB_ENGINE = False
 USE_TELEGRAM = True

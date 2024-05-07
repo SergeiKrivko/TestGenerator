@@ -1,15 +1,14 @@
 from PyQt6.QtWidgets import QVBoxLayout, QPushButton
+from PyQtUIkit.widgets import KitDialog
 
 from src.backend.commands import write_file
 from src.config import APP_NAME
-from src.ui.custom_dialog import CustomDialog
 
 
-class MarkdownPatternsDialog(CustomDialog):
-    def __init__(self, sm, tm, file):
-        super().__init__(tm, "Шаблоны", True, True)
-        self._sm = sm
-        self._file = file
+class MarkdownPatternsDialog(KitDialog):
+    def __init__(self, parent, bm):
+        super().__init__(parent)
+        self._bm = bm
 
         layout = QVBoxLayout()
         self.setLayout(layout)

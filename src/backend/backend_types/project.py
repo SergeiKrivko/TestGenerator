@@ -11,9 +11,8 @@ class Project:
     SETTINGS_FILE = "TestGeneratorSettings.json"
     DATA_FILE = "TestGeneratorData.json"
 
-    def __init__(self, path, sm, parent=None, makedirs=False, load=False):
+    def __init__(self, path, sm, parent=None, makedirs=False):
         self._path = os.path.abspath(path)
-        sm.all_projects[self._path] = self
 
         self._sm = sm
         self._data = dict()
@@ -27,10 +26,6 @@ class Project:
             self.create_gitignore()
         elif not os.path.isdir(os.path.join(self._path, Project.TEST_GENERATOR_DIR)):
             raise FileNotFoundError
-
-        if load:
-            self.load_settings()
-            self.load_projects()
 
         self.load_settings()
         self['version'] = APP_VERSION
@@ -51,36 +46,6 @@ class Project:
 
     def children(self) -> dict[str: 'Project']:
         return self._children
-
-    def load_projects(self):
-        if self._parent is None:
-            self._search_parent()
-        self._search_children(self._path)
-
-    def _search_parent(self):
-        path = self._path
-        while True:
-            path, name = os.path.split(path)
-            if not name:
-                break
-            if os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR)):
-                if path in self._sm.all_projects:
-                    self._parent = self._sm.all_projects[path]
-                else:
-                    self._parent = Project(path, self._sm, load=True)
-                break
-
-    def _search_children(self, path):
-        for el in os.listdir(path):
-            pp = os.path.join(path, el)
-            if os.path.isdir(pp):
-                if os.path.isdir(os.path.join(pp, Project.TEST_GENERATOR_DIR)):
-                    if pp in self._sm.all_projects:
-                        self._children[pp] = self._sm.all_projects[pp]
-                    else:
-                        self._children[pp] = Project(pp, self._sm, self, load=True)
-                else:
-                    self._search_children(pp)
 
     def load_settings(self):
         try:
@@ -145,14 +110,6 @@ class Project:
             self._data.pop(key)
         self.save_settings()
 
-    def get_child(self, name):
-        return self._children[name]
-
-    def add_child(self, path):
-        if not os.path.isabs(path):
-            path = os.path.join(self._path, path)
-        self._children[path] = Project(path, self._sm, parent=self, makedirs=True)
-
     def test_in_path(self, test_type, number):
         if not self.get('func_tests_in_project', True):
             return f"{self.data_path()}/func_tests_data/{test_type}_{number}_in.txt"
@@ -181,6 +138,12 @@ class Project:
         return os.path.join(self._path, self.get(
             'fin_pattern', "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}").format(
             test_type=test_type, number=number + 1, index=file_number + 1, extension=('bin' if binary else 'txt')))
+
+    def test_temp_file_path(self, file_number=1, binary=False):
+        if not self.get('func_tests_in_project', True):
+            return f"{self._sm.app_data_dir}/temp_files/temp_{file_number}." \
+                   f"{'bin' if binary else 'txt'}"
+        return f"{self.temp_dir()}/temp_{file_number}.{'bin' if binary else 'txt'}"
 
     def test_out_file_path(self, test_type, number, file_number=1, binary=False):
         if not self.get('func_tests_in_project', True):

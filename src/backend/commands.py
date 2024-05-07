@@ -5,6 +5,7 @@ import pathlib
 import subprocess
 import sys
 
+
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     os.environ["PYMORPHY2_DICT_PATH"] = str(pathlib.Path(sys._MEIPASS).joinpath('pymorphy3_dicts_ru/data'))
 import pymorphy3
@@ -19,15 +20,14 @@ def get_si():
         return None
 
 
-ENCODINGS = ['utf-8', 'utf-16', 'ansi', 'ascii', 'charmap']
+ENCODINGS = ['utf-8', 'utf-16', 'ansi', 'ascii', 'charmap', 'windows-1251']
 
 
-def cmd_command(args, **kwargs):
+def cmd_command(command, **kwargs):
     if isinstance(text := kwargs.get('input', b''), str):
         kwargs['input'] = text.encode(kwargs.get('encoding', 'utf-8'))
-    print_args(args)
-    # print(args, f"({kwargs.get('cwd')})")
-    res = subprocess.run(args, capture_output=True, startupinfo=get_si(), **kwargs)
+    print_args(command)
+    res = subprocess.run(command, capture_output=True, startupinfo=get_si(), **kwargs)
     for encoding in ENCODINGS:
         try:
             res.stdout = res.stdout.decode(encoding)
@@ -109,6 +109,12 @@ def get_sorted_jsons(path: str):
     lst = list(filter(lambda s: s.rstrip('.json').isdigit(), os.listdir(path)))
     lst.sort(key=lambda el: int(el.rstrip('.json')))
     return lst
+
+
+def get_jsons(path: str):
+    if not os.path.isdir(path):
+        return []
+    return filter(lambda s: s.endswith('.json'), os.listdir(path))
 
 
 def wsl_path(path: str, build=None):
@@ -195,3 +201,13 @@ def remove_files(path, extensions):
         for ex in extensions:
             if file.endswith(ex):
                 os.remove(os.path.join(path, file))
+
+
+def get_files(path: str, extensions: str | list[str]):
+    if isinstance(extensions, str):
+        extensions = [extensions]
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            for ex in extensions:
+                if file.endswith(ex):
+                    yield os.path.join(root, file)

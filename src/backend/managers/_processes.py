@@ -1,12 +1,12 @@
+import asyncio
 import sys
-import types
+from typing import Callable, Any
 
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 if sys.platform == 'win32':
     import PyTaskbar
 
 from src.backend.settings_manager import SettingsManager
-from src.ui import main_window
 
 
 class ProcessManager(QObject):
@@ -18,6 +18,8 @@ class ProcessManager(QObject):
         self._sm = sm
         self._bm = bm
 
+        self._win_id = None
+
         self._background_processes: dict[str: dict[str: QThread]] = dict()
         self._background_process_count = 0
 
@@ -25,7 +27,10 @@ class ProcessManager(QObject):
 
         self._process_with_progress = None
 
-    def run(self, thread: types.FunctionType | types.LambdaType | QThread, group: str, name: str):
+    def set_win_id(self, win_id):
+        self._win_id = win_id
+
+    def run(self, thread: Callable[[], Any] | QThread, group: str, name: str) -> QThread:
         if not isinstance(thread, QThread):
             thread = _Looper(thread)
         if group not in self._background_processes:
@@ -36,9 +41,9 @@ class ProcessManager(QObject):
         self._background_processes[group][name] = thread
         self._background_process_count += 1
         thread.finished.connect(lambda: self._on_thread_finished(group, name, thread))
-        if isinstance(thread, CustomThread) and sys.platform == 'win32':
+        if isinstance(thread, CustomThread) and sys.platform == 'win32' and self._win_id:
             if self._taskbar_progress is None:
-                self._taskbar_progress = PyTaskbar.Progress(int(main_window.win_id()))
+                self._taskbar_progress = PyTaskbar.Progress(int(self._win_id))
                 self._taskbar_progress.init()
                 self._taskbar_progress.setState('normal')
             self._set_process_with_progress(group, name)
@@ -46,6 +51,14 @@ class ProcessManager(QObject):
         thread.start()
         self.statusChanged.emit(group, name)
         return thread
+
+    async def run_async(self, thread: Callable[[], Any] | QThread, group: str, name: str):
+        thread = self.run(thread, group, name)
+        while not thread.finished:
+            await asyncio.sleep(0.5)
+        if isinstance(thread, _Looper):
+            return thread.res
+        return None
 
     def _on_thread_finished(self, group, name, process):
         self._background_process_count -= 1
@@ -73,6 +86,12 @@ class ProcessManager(QObject):
     @property
     def groups(self):
         return self._background_processes.keys()
+
+    @property
+    def all(self):
+        for group_name, group in self._background_processes.items():
+            for process_name, process in group.items():
+                yield group_name, process_name, process
 
     def get_processes(self, group: str):
         return self._background_processes.get(group, dict()).keys()

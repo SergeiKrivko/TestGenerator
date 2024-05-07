@@ -5,8 +5,8 @@ from src.backend.backend_types.project import Project
 from src.backend.backend_types.unit_test import UnitTest
 from src.backend.backend_types.unit_tests_module import UnitTestsModule
 from src.backend.backend_types.unit_tests_suite import UnitTestsSuite
-from src.language.languages import languages
-from src.language.utils import get_files
+from src.backend.language.languages import LANGUAGES
+from src.backend.commands import get_files
 
 
 class CheckConverter:
@@ -19,7 +19,7 @@ class CheckConverter:
 
         self._tests_count = 0
         self._modules = {os.path.basename(path): UnitTestsModule(os.path.basename(path)) for path in get_files(
-                project.path(), languages[project.get('language', 'C')].get('files')[0])}
+                project.path(), LANGUAGES[project.get('language', 'C')].get('files')[0])}
         for suite in suites:
             if os.path.basename(suite.module()) not in self._modules:
                 continue

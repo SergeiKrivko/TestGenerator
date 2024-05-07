@@ -57,15 +57,15 @@ def fix_version():
 
 def delete_unused_code():
     if not os.getenv('USE_TELEGRAM'):
-        shutil.rmtree('src/side_tabs/telegram')
+        shutil.rmtree('src/ui/side_tabs/telegram')
         os.remove('src/ui/resources_emoji.py')
 
 
 def main():
-    if sys.platform == 'win32':
-        if os.getenv('USE_TELEGRAM', '').lower().strip() == 'true':
-            download_zip('lib_win.zip', r"venv/Lib/site-packages/pywtdlib/lib/Windows/AMD64")
-        download_zip('libcairo_win.zip', r"venv/Lib/site-packages/cairocffi/dlls")
+    # if sys.platform == 'win32':
+    #     if os.getenv('USE_TELEGRAM', '').lower().strip() == 'true':
+    #         download_zip('lib_win.zip', r"venv/Lib/site-packages/pywtdlib/lib/Windows/AMD64")
+    #     download_zip('libcairo_win.zip', r"venv/Lib/site-packages/cairocffi/dlls")
 
     try:
         write_secrets()

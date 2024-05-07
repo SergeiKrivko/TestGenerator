@@ -5,7 +5,7 @@ from PyQt6.QtCore import QThread
 from src.backend.backend_types.func_test import FuncTest
 from src.backend.backend_types.project import Project
 from src.backend.commands import inflect
-from src.other.binary_redactor.convert_binary import convert as convert_binary
+from src.other.binary_redactor.convert_binary import convert_file as convert_binary
 
 
 class MacrosConverter(QThread):
@@ -40,26 +40,22 @@ class MacrosConverter(QThread):
             print(f"{ex.__class__.__name__}: {ex}")
 
     @staticmethod
-    def convert_args(text, path, test_type, index, in_files, out_files, data_path, line_sep='\n'):
-        text = text.split()
-        for i in range(len(text)):
-            if text[i] == '#fin':
-                text[i] = '#fin1'
-            if text[i].startswith('#fin') and (n := text[i].lstrip('#fin')).isdigit():
-                text[i] = in_files.get(int(n), '#fin').replace('\\', '/')
-            if text[i] == '#fout':
-                text[i] = '#fout1'
-            if text[i].startswith('#fout') and (n := text[i].lstrip('#fout')).isdigit():
-                if int(n) in out_files:
-                    text[i] = f"{data_path}/temp_{int(n)}{out_files[int(n)][-4:]}".replace('\\', '/')
-                else:
-                    text[i] = f"{data_path}/temp_{int(n)}".replace('\\', '/')
-        if path:
-            os.makedirs(os.path.split(path)[0], exist_ok=True)
-            with open(path, 'w', encoding='utf-8', newline=line_sep) as f:
-                f.write(' '.join(text))
-        else:
-            return ' '.join(text)
+    def convert_args(test: FuncTest, index, project: Project):
+        args = test.args.split()
+        for i in range(len(args)):
+            if args[i] == '#fin':
+                args[i] = '#fin1'
+            if args[i].startswith('#fin') and (n := args[i].lstrip('#fin')).isdigit():
+                n = int(n) - 1
+                args[i] = project.test_in_file_path(test.type, index, n, test.in_files[n].type == 'bin').replace('\\', '/')
+
+            if args[i] == '#fout':
+                args[i] = '#fout1'
+            if args[i].startswith('#fout') and (n := args[i].lstrip('#fout')).isdigit():
+                n = int(n) - 1
+                project.test_temp_file_path(n, test.in_files[n].type == 'bin')
+
+        return ' '.join(args)
 
     def add_file(self, path: str):
         path = os.path.relpath(path, self.dst_dir)

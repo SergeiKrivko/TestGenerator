@@ -6,138 +6,110 @@ from uuid import UUID
 
 from PyQt6.QtCore import pyqtSignal
 
-from src.backend.commands import read_file, read_binary, cmd_command
+from src.backend.backend_types import Build
+from src.backend.commands import read_file, read_binary, cmd_command, get_files
 from src.backend.backend_types.func_test import FuncTest
 from src.backend.backend_types.project import Project
 from src.backend.backend_types.util import Util
-from src.backend.managers import CustomThread
-from src.language.utils import get_files
+from src.backend.managers._processes import CustomThread
 from src.other.binary_redactor.binary_decoder import decode, comparator as bytes_comparator
 from src.backend.macros_converter import MacrosConverter
 
 
 class TestingLooper(CustomThread):
-    testStatusChanged = pyqtSignal(FuncTest, int)
+    testStatusChanged = pyqtSignal(FuncTest, object)
     compileFailed = pyqtSignal(str)
     utilFailed = pyqtSignal(str, str, str)
 
-    def __init__(self, sm, project: Project, manager, tests: list[FuncTest], verbose=False):
+    def __init__(self, bm, project: Project, tests: list[FuncTest], verbose=False):
         super(TestingLooper, self).__init__()
-        self.sm = sm
+        self._bm = bm
         self._project = project
-        self._manager = manager
-        self.tests = tests
-        self.path = self._project.path()
+
+        self._tests = tests
+        self._path = self._project.path()
         self.util_res = dict()
         self.util_output = dict()
         self.utils = []
         self.coverage = None
         self.coverage_html = None
-        self._temp_dir = f"{self.sm.temp_dir()}/out"
-        self._build_id = UUID(self._project.get('build'))
+        self._temp_dir = f"{self._bm.sm.temp_dir()}/out"
+
         self._build = None
-        if self._build_id is not None:
-            self._build = self._manager.builds.get(self._build_id)
-        self.verbose = verbose
+        build_id = self._project.get_data('func_tests_build')
+        if build_id:
+            self._build: Build = self._bm.builds.get(UUID(build_id))
+
+        self._verbose = verbose
 
     def prepare_test(self, test: FuncTest, index: int):
-        test.clear_output()
-        if self._project.get('func_tests_in_project'):
-            test.args = read_file(self._project.test_args_path(test.type(), index), '')
+        if False and self._project.get('func_tests_in_project'):        # TODO: remove False
+            test.res.args = read_file(self._project.test_args_path(test.type, index), '')
         else:
-            test.args = MacrosConverter.convert_args(
-                test.get('args', ''), '', test.type(), index,
-                {j + 1: self._project.test_in_file_path(test.type(), index, j, binary=d.get('type', 'txt') == 'bin')
-                 for j, d in enumerate(test.get('in_files', []))},
-                {j + 1: self._project.test_out_file_path(test.type(), index, j, binary=d.get('type', 'txt') == 'bin')
-                 for j, d in enumerate(test.get('out_files', []))}, self._temp_dir)
-            self.convert_test_files('in', test, test.type(), index)
-            self.convert_test_files('out', test, test.type(), index)
-            self.convert_test_files('check', test, test.type(), index)
-
-    def pos_comparator(self, str1, str2):
-        comparator = self._project.get('pos_comparator', -1)
-        if comparator == -1:
-            comparator = self._project.get('pos_comparator', 0)
-        if comparator == 0:
-            return comparator1(str1, str2, self._project.get('epsilon', 0))
-        if comparator == 1:
-            return comparator2(str1, str2)
-        if comparator == 2:
-            return comparator3(str1, str2, self._project.get('pos_substring', ''))
-        if comparator == 3:
-            return comparator4(str1, str2, self._project.get('pos_substring', ''))
-        if comparator == 4:
-            return comparator5(str1, str2)
-        if comparator == 5:
-            return comparator6(str1, str2)
-
-    def neg_comparator(self, str1, str2):
-        comparator = self._project.get('neg_comparator', -1)
-        if comparator == -1:
-            comparator = self._project.get('neg_comparator', 0)
-        if comparator == 0:
-            return True
-        if comparator == 1:
-            return comparator1(str1, str2, self._project.get('epsilon', 0))
-        if comparator == 2:
-            return comparator2(str1, str2)
-        if comparator == 3:
-            return comparator3(str1, str2, self._project.get('neg_substring', ''))
-        if comparator == 4:
-            return comparator4(str1, str2, self._project.get('neg_substring', ''))
-        if comparator == 5:
-            return comparator5(str1, str2)
-        if comparator == 6:
-            return comparator6(str1, str2)
+            test.res.args = MacrosConverter.convert_args(test, index, self._project)
+            self.convert_test_files(test, index)
 
     def comparator(self, test: FuncTest, str1, str2):
-        if test.type() == 'pos':
-            return self.pos_comparator(str1, str2)
-        return self.neg_comparator(str1, str2)
+        comparator = FuncTest.Comparator(self._project.get_data(f'{test.type.value}_comparator', -1))
+        if comparator == FuncTest.Comparator.DEFAULT:
+            comparator = FuncTest.Comparator(self._project.get(f'{test.type.value}_comparator', 0))
+
+        match comparator:
+            case FuncTest.Comparator.NONE:
+                return True
+            case FuncTest.Comparator.NUMBERS:
+                return comparator_numbers(str1, str2, self._project.get('epsilon', 0))
+            case FuncTest.Comparator.NUMBERS_AS_STRING:
+                return comparator_numbers_as_string(str1, str2)
+            case FuncTest.Comparator.TEXT_AFTER:
+                return comparator_text_after(str1, str2, self._project.get(f'{test.type.value}_substring', ''))
+            case FuncTest.Comparator.WORDS_AFTER:
+                return comparator_words_after(str1, str2, self._project.get(f'{test.type.value}_substring', ''))
+            case FuncTest.Comparator.TEXT:
+                return comparator_text(str1, str2)
+            case FuncTest.Comparator.WORDS:
+                return comparetor_words(str1, str2)
 
     def run_comparators(self, test: FuncTest, index: int):
-        test.results['STDOUT'] = self.comparator(test, test.get('out', ''), test.prog_out.get('STDOUT'))
+        test.res.results['STDOUT'] = self.comparator(test, test.stdout, test.res.files.get('STDOUT'))
 
-        expected_code = test.get('exit', '')
-        if expected_code:
-            code_res = test.exit == int(expected_code)
-        elif test.type() == 'pos':
-            code_res = test.exit == 0
+        if test.exit:
+            code_res = test.res.code == int(test.exit)
+        elif test.type == FuncTest.Type.POS:
+            code_res = test.res.code == 0
         else:
-            code_res = test.exit != 0
-        test.results['Exit code'] = code_res
+            code_res = test.res.code != 0
+        test.res.results['Exit code'] = code_res
 
-        for j, file in enumerate(test.get('out_files', [])):
-            path = self._project.temp_dir() + '/' if self._project.get('func_tests_in_project') else \
-                f"{self._temp_dir}/"
-            if file.get('type', 'txt') == 'txt':
-                text = read_file(f"{path}temp_{j + 1}.txt", '')
-                test.results[f"out_file_{j + 1}.txt"] = self.comparator(test, file['text'], text)
-                test.prog_out[f"out_file_{j + 1}.txt"] = text
+        for j, file in enumerate(test.out_files):
+            path = self._project.test_temp_file_path(j, binary=file.type == 'bin')
+            if file.type == 'txt':
+                text = read_file(path, '')
+                test.res.results[f"out_file_{j + 1}.txt"] = self.comparator(test, file.data, text)
+                test.res.files[f"out_file_{j + 1}.txt"] = text
             else:
-                text = read_binary(f"{path}temp_{j + 1}.bin", b'')
-                test.results[f"out_file_{j + 1}.bin"] = bytes_comparator(
-                    text, file['text'],
-                    read_binary(self._project.test_out_file_path(test.type(), index, j, True), b''))
-                test.prog_out[f"out_file_{j + 1}.bin"], _ = decode(file['text'], text)
+                text = read_binary(path, b'')
+                test.res.results[f"out_file_{j + 1}.bin"] = bytes_comparator(
+                    text, file.data,
+                    read_binary(self._project.test_out_file_path(test.type, index, j, True), b''))
+                test.res.files[f"out_file_{j + 1}.bin"], _ = decode(file.data, text)
 
-        for j, file in enumerate(test.get('in_files', [])):
-            if 'check' in file:
-                if file.get('type', 'txt') == 'txt':
-                    text = read_file(self._project.test_in_file_path(test.type(), index, j, False), '')
-                    test.results[f"in_file_{j + 1}.txt"] = self.comparator(test, file['check'], text)
-                    test.prog_out[f"in_file_{j + 1}.txt"] = text
+        for j, file in enumerate(test.in_files):
+            if file.check:
+                if file.type == 'txt':
+                    text = read_file(self._project.test_in_file_path(test.type, index, j, False), '')
+                    test.res.results[f"in_file_{j + 1}.txt"] = self.comparator(test, file.check, text)
+                    test.res.files[f"in_file_{j + 1}.txt"] = text
                 else:
-                    text = read_binary(self._project.test_in_file_path(test.type(), index, j, True), b'')
-                    test.results[f"in_file_{j + 1}.bin"] = bytes_comparator(
-                        text, file['check'], read_binary(
-                            self._project.test_check_file_path(test.type(), index, j, True), b''))
-                    test.prog_out[f"in_file_{j + 1}.bin"], _ = decode(file['check'], text)
+                    text = read_binary(self._project.test_in_file_path(test.type, index, j, True), b'')
+                    test.res.results[f"in_file_{j + 1}.bin"] = bytes_comparator(
+                        text, file.check, read_binary(
+                            self._project.test_check_file_path(test.type, index, j, True), b''))
+                    test.res.files[f"in_file_{j + 1}.bin"], _ = decode(file.check, text)
 
     def clear_after_run(self, test: FuncTest, index: int):
         if self._project.get('func_tests_in_project'):
-            self.convert_test_files('in', test, test.type(), index)
+            self.convert_test_files(test, index, in_only=True)
         elif os.path.isdir(self._temp_dir):
             shutil.rmtree(self._temp_dir)
 
@@ -160,8 +132,8 @@ class TestingLooper(CustomThread):
         name = self.parse_util_name(util)
         temp_path = f"{self._temp_dir}/dist.txt"
         res = cmd_command(util.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
-                                                         files=' '.join(get_files(self.path, '.c'))),
-                          shell=True, cwd=self.path)
+                                                         files=' '.join(get_files(self._path, '.c'))),
+                          shell=True, cwd=self._path)
         if util.get('1_output_format', 0) == 0:
             output = res.stdout
         elif util.get('1_output_format', 0) == 1:
@@ -188,8 +160,8 @@ class TestingLooper(CustomThread):
         name = self.parse_util_name(util)
         temp_path = f"{self._temp_dir}/dist.txt"
         res = cmd_command(util.get('program', '').format(app='./app.exe', file='main.c', dict=temp_path,
-                                                         files=' '.join(get_files(self.path, '.c'))),
-                          shell=True, cwd=self.path)
+                                                         files=' '.join(get_files(self._path, '.c'))),
+                          shell=True, cwd=self._path)
         if util.get('2_output_format', 0) == 0:
             output = res.stdout
         elif util.get('2_output_format', 0) == 1:
@@ -201,7 +173,7 @@ class TestingLooper(CustomThread):
             result = result and not bool(output)
         if util.get('2_exit_code_res', False):
             result = result and res.returncode == 0
-        for el in self.tests:
+        for el in self._tests:
             el.utils_output[name] = output
             el.results[name] = result
 
@@ -212,48 +184,50 @@ class TestingLooper(CustomThread):
             return
         name = util.get('name', '-')
         temp_path = f"{self._temp_dir}/dist.txt"
-        res, output = util.run(self._project, self._build, test.args, input=test.get('in', ''))
-        test.results[name] = res
-        test.utils_output[name] = output
+        res, output = util.run(self._project, self._build, test.args, input=test.stdin)
+        test.res.results[name] = res
+        test.res.utils_output[name] = output
         self.clear_after_run(test, index)
 
     def run_test(self, test: FuncTest, index: int):
         self.prepare_test(test, index)
         try:
             t = time()
-            res = self._manager.run_build(self._build_id, test.args, test.get('in', ''))
+            res = cmd_command(self._build.command(test.res.args), shell=True, input=test.stdin, cwd=self._path)
             t = time() - t
-            test.exit = res.returncode
-            test.prog_out = {'STDOUT': res.stdout, 'STDERR': res.stderr}
-            test.time = t
+
+            test.res.code = res.returncode
+            test.res.files['STDOUT'] = res.stdout
+            test.res.files['STDERR'] = res.stderr
+            test.res.time = t
+
             self.run_comparators(test, index)
-            self.clear_after_run(test, index)
 
             for util in self.utils:
                 self.run_test_util(test, index, util)
-            test.set_status(FuncTest.PASSED if test.res() else FuncTest.FAILED)
+            test.status = FuncTest.Status.PASSED if all(test.res.results.values()) else FuncTest.Status.FAILED
         except TimeoutExpired:
-            test.set_status(FuncTest.TIMEOUT)
+            test.status = FuncTest.Status.TIMEOUT
         self.clear_after_run(test, index)
 
     def run(self):
         if self._build is None:
             self.compileFailed.emit("Invalid build data!")
             return
-        res, errors = self._manager.run_build_preproc(self._build_id, self._project)
+        res, errors = self._build.run_preproc()
         if res:
-            res, errors = self._manager.compile_build(self._build_id, self._project)
+            res, errors = self._build.compile()
         if not res:
             self.compileFailed.emit(errors)
             return
 
-        self.utils = [self._manager.get_util(item['data']) for item in self._build.get('utils', [])]
+        self.utils = [self._bm.get(item['data']) for item in self._build.get('utils', [])]
         for util in self.utils:
             self.run_preproc_util(util)
 
         pos_count = 0
-        for i, test in enumerate(self.tests):
-            if self.tests[i].type() == 'pos':
+        for i, test in enumerate(self._tests):
+            if self._tests[i].type == 'pos':
                 pos_count += 1
                 index = i
             else:
@@ -261,54 +235,60 @@ class TestingLooper(CustomThread):
 
             self.run_test(test, index)
 
-            self.testStatusChanged.emit(test, test.status())
-            self.progressChanged.emit((i + 1) * 100 // len(self.tests))
+            self.testStatusChanged.emit(test, test.status)
+            self.progressChanged.emit((i + 1) * 100 // len(self._tests))
 
-            if self.verbose:
-                print(f"\033[33m{test.type()}{index + 1:<4}\033[33m",
-                      {1: '\033[32mPASSED\033[0m', 2: '\033[31mFAILED\033[0m'}[test.status()],
-                      '  ', test['desc'],
-                      *[f"\033[{32 if item else 31}m'{key}'\033[33m" for key, item in test.results.items()])
+            if self._verbose:
+                print(f"\033[33m{test.type.value}{index + 1:<4}\033[33m",
+                      {FuncTest.Status.PASSED: '\033[32mPASSED\033[0m',
+                       FuncTest.Status.FAILED: '\033[31mFAILED\033[0m'}[test.status],
+                      '  ', test.description,
+                      *[f"\033[{32 if item else 31}m'{key}'\033[33m" for key, item in test.res.results.items()])
 
             sleep(0.01)
 
         for util in self.utils:
             self.run_postproc_util(util)
-        res, errors = self._manager.run_build_postproc(self._build_id, self._project)
+        res, errors = self._build.run_postproc()
         if not res:
             self.compileFailed.emit(errors)
             return
 
-        self.coverage, self.coverage_html = self._manager.collect_coverage(self._build_id, self._project)
+        self.coverage = self._build.coverage()
+        self.coverage_html = self._build.coverage_html()
 
-    def convert_test_files(self, in_out, test, pos, i):
-        if in_out == 'in':
-            iterator = enumerate(test.get('in_files', []))
-            key = 'text'
-        elif in_out == 'out':
-            iterator = enumerate(test.get('out_files', []))
-            key = 'text'
-        elif in_out == 'check':
-            iterator = enumerate(test.get('in_files', []))
-            key = 'check'
-        else:
-            raise ValueError(f'Unknown files type: "{in_out}". Can be only "in", "out" and "check" files')
+    def convert_test_files(self, test: FuncTest, index, in_only=False):
 
-        for j, file in iterator:
-            if key in file:
-                if file.get('type', 'txt') == 'txt':
-                    MacrosConverter.convert_txt(file[key], self._project.test_in_file_path(pos, i, j, False),
-                                                self.sm.line_sep)
+        for j, file in enumerate(test.in_files):
+            if file.type == 'txt':
+                MacrosConverter.convert_txt(file.data, self._project.test_in_file_path(
+                    test.type, index, j, False), self._bm.sm.line_sep)
+            else:
+                MacrosConverter.convert_bin(file.data, self._project.test_in_file_path(test.type, index, j, True))
+
+            if file.check and not in_only:
+                if file.type == 'txt':
+                    MacrosConverter.convert_txt(file.data, self._project.test_check_file_path(
+                        test.type, index, j, False), self._bm.sm.line_sep)
                 else:
-                    MacrosConverter.convert_bin(file[key], self._project.test_in_file_path(pos, i, j, True))
+                    MacrosConverter.convert_bin(file.data, self._project.test_check_file_path(
+                        test.type, index, j, True))
+
+        if not in_only:
+            for j, file in enumerate(test.out_files):
+                if file.type == 'txt':
+                    MacrosConverter.convert_txt(file.data, self._project.test_out_file_path(
+                        test.type, index, j, False), self._bm.sm.line_sep)
+                else:
+                    MacrosConverter.convert_bin(file.data, self._project.test_out_file_path(test.type, index, j, True))
 
     def terminate(self) -> None:
         sleep(0.1)
         # self.cm.clear_coverage_files()
-        super(TestingLooper, self).terminate()
+        super().terminate()
 
 
-def comparator1(str1, str2, eps=0):
+def comparator_numbers(str1, str2, eps=0):
     lst1 = []
     for word in str1.split():
         try:
@@ -332,7 +312,7 @@ def comparator1(str1, str2, eps=0):
     return True
 
 
-def comparator2(str1, str2):
+def comparator_numbers_as_string(str1, str2):
     lst1 = []
     for word in str1.split():
         try:
@@ -352,23 +332,23 @@ def comparator2(str1, str2):
     return lst1 == lst2
 
 
-def comparator3(str1, str2, substring):
+def comparator_text_after(str1, str2, substring):
     if substring not in str1 or substring not in str2:
         return False
 
     return str1[str1.index(substring):] == str2[str2.index(substring):]
 
 
-def comparator4(str1, str2, substring):
+def comparator_words_after(str1, str2, substring):
     if substring not in str1 or substring not in str2:
         return False
 
     return str1[str1.index(substring):].split() == str2[str2.index(substring):].split()
 
 
-def comparator5(str1, str2):
+def comparator_text(str1, str2):
     return str1.replace('\r', '') == str2.replace('\r', '')
 
 
-def comparator6(str1, str2):
+def comparetor_words(str1, str2):
     return str1.split() == str2.split()

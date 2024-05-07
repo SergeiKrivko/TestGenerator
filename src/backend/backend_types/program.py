@@ -120,6 +120,7 @@ class ProgramInstance:
             kwargs['shell'] = True
         return cmd_command(args, **kwargs)
 
+    @property
     def name(self):
         match self.virtual_system:
             case Program.WSL:

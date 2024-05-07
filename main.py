@@ -30,20 +30,15 @@ def run_console():
 
 
 def run_ui():
-    from PyQt6.QtWidgets import QApplication
+    from PyQtUIkit.widgets import KitAsyncApplication
     from src.ui.main_window import MainWindow
 
-    app = QApplication(sys.argv)
-    app.setOrganizationName(config.ORGANISATION_NAME)
-    app.setOrganizationDomain(config.ORGANISATION_URL)
-    app.setApplicationName(config.APP_NAME)
-    app.setApplicationVersion(config.APP_VERSION)
+    KitAsyncApplication.setOrganizationName(config.ORGANISATION_NAME)
+    KitAsyncApplication.setOrganizationDomain(config.ORGANISATION_URL)
+    KitAsyncApplication.setApplicationName(config.APP_NAME)
+    KitAsyncApplication.setApplicationVersion(config.APP_VERSION)
 
-    window = MainWindow(app, args)
-
-    window.show()
-    window.set_theme()
-    sys.excepthook = except_hook
+    app = KitAsyncApplication(MainWindow)
     sys.exit(app.exec())
 
 

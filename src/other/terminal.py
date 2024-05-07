@@ -6,22 +6,22 @@ from uuid import uuid4
 from PyQt6.QtCore import QByteArray, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QTextCursor
 from PyQt6.QtWidgets import QTextEdit
+from PyQtUIkit.widgets import KitTextEdit
 
 from src.backend.commands import get_si
 from src.backend.managers import BackendManager
 
 
-class Terminal(QTextEdit):
+class Terminal(KitTextEdit):
     processFinished = pyqtSignal()
 
-    def __init__(self, bm: BackendManager, sm, tm, terminal_app='', id=''):
-        super().__init__(None)
+    def __init__(self, bm: BackendManager, terminal_app='', id=''):
+        super().__init__()
         self.bm = bm
-        self.sm = sm
-        self.sm.projectChanged.connect(self.select_project)
-        self.tm = tm
         self._id = id or str(uuid4())
         self._terminal_app = terminal_app
+
+        self.font = 'mono'
 
         self.fixed_text = ""
         self.fixed_html = ""
@@ -106,7 +106,7 @@ class Terminal(QTextEdit):
             return
 
         self.current_process = command
-        self.process = subprocess.Popen(self.current_process + ' ' + command, text=True, startupinfo=get_si(),
+        self.process = subprocess.Popen(self._terminal_app + ' ' + command, text=True, startupinfo=get_si(),
                                         cwd=self.current_dir, shell=True, bufsize=1, encoding='utf-8',
                                         stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         self.stdout_reader = BufferReader(self.process.stdout)
@@ -164,21 +164,25 @@ class Terminal(QTextEdit):
         self.write_text(self.current_dir, color=self._prompt_color)
         self.write_text('$ ')
 
-    def set_theme(self):
-        command = self.toPlainText()[len(self.fixed_text):]
-        self.fixed_html = self.fixed_html.replace(self._prompt_color, self.tm['TestPassed'].name())
-        self.fixed_html = self.fixed_html.replace(self._error_color, self.tm['TestFailed'].name())
-        self._prompt_color = self.tm['TestPassed'].name()
-        self._error_color = self.tm['TestFailed'].name()
-        self.setHtml(self.fixed_html + command)
-
-        self.setStyleSheet(self.tm.text_edit_css('Main'))
-        self.setFont(self.tm.code_font)
-
-    def select_project(self):
-        self.current_dir = self.sm.project.path()
+    def clear(self):
         self.fixed_html = ''
         self.write_prompt()
+
+    def set_cwd(self, path):
+        self.current_dir = path
+
+    def _apply_theme(self):
+        if not self._tm or not self._tm.active:
+            return
+
+        command = self.toPlainText()[len(self.fixed_text):]
+        self.fixed_html = self.fixed_html.replace(self._prompt_color, self._tm.palette('Success').text_only)
+        self.fixed_html = self.fixed_html.replace(self._error_color, self._tm.palette('Danger').text_only)
+        self._prompt_color = self._tm.palette('Success').text_only
+        self._error_color = self._tm.palette('Danger').text_only
+        self.setHtml(self.fixed_html + command)
+
+        super()._apply_theme()
 
 
 class PipeReader(QThread):

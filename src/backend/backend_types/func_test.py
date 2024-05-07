@@ -1,131 +1,265 @@
 import json
 import os.path
+from enum import Enum
+from typing import Literal
 from uuid import uuid4, UUID
 
-from src.backend.commands import read_json
+from src.backend.commands import read_json, write_file
+from src.other.binary_redactor.convert_binary import convert_bytes
 
 
 class FuncTest:
-    IN_PROGRESS = 0
-    PASSED = 1
-    FAILED = 2
-    TERMINATED = 3
-    TIMEOUT = 4
+    class Status(Enum):
+        NONE = 0
+        IN_PROGRESS = 1
+        PASSED = 2
+        FAILED = 3
+        TERMINATED = 4
+        TIMEOUT = 5
 
-    def __init__(self, directory='', test_id=None, test_type='pos'):
+    class Comparator(Enum):
+        DEFAULT = 0
+        NONE = 1
+        NUMBERS = 2
+        NUMBERS_AS_STRING = 3
+        TEXT_AFTER = 4
+        WORDS_AFTER = 5
+        TEXT = 6
+        WORDS = 7
+
+    class Type(Enum):
+        POS = 'pos'
+        NEG = 'neg'
+
+    class InFile:
+        def __init__(self, type: Literal['txt', 'bin'], data: str, check: str | None = None):
+            self.type = type
+            self.data = data
+            self.check = check
+
+        def bytes(self):
+            if self.type == 'txt':
+                return self.data
+            return convert_bytes(self.data)
+
+        def check_bytes(self):
+            if self.type == 'txt':
+                return self.check
+            return convert_bytes(self.check)
+
+        def to_dict(self):
+            return {'type': self.type, 'text': self.data, 'check': self.check}
+
+    class OutFile:
+        def __init__(self, type: Literal['txt', 'bin'], data: str):
+            self.type = type
+            self.data = data
+
+        def bytes(self):
+            if self.type == 'txt':
+                return self.data
+            return convert_bytes(self.data)
+
+        def to_dict(self):
+            return {'type': self.type, 'text': self.data}
+
+    class Result:
+        def __init__(self, test: 'FuncTest'):
+            self._test = test
+
+            self.args = test.args
+
+            self._code = 0
+            self._time = 0
+            self._results: dict[str: bool] = dict()
+            self._files: dict[str: str] = dict()
+            self._utils_output = dict()
+
+        @property
+        def results(self):
+            return self._results
+
+        @property
+        def code(self):
+            return self._code
+
+        @code.setter
+        def code(self, value):
+            self._code = value
+
+        @property
+        def files(self):
+            return self._files
+
+        @property
+        def utils_output(self):
+            return self._utils_output
+
+        @property
+        def time(self):
+            return self._time
+
+        @time.setter
+        def time(self, value):
+            self._time = value
+
+    def __init__(self, directory: str, test_type: Type, test_id=None):
         if test_id:
             self.id = UUID(test_id)
         else:
             self.id = uuid4()
 
+        if not isinstance(test_type, FuncTest.Type):
+            raise TypeError('test_type must be of type FuncTest.Type')
+
         self._directory = directory
         self._path = f"{self._directory}/{self.id}.json"
-        self._name = ''
-        self._test_type = test_type
-        self._data = None
 
-        self.in_data = dict()
-        self.out_data = dict()
-        self.prog_out = dict()
-        self.utils_output = dict()
-
+        self._type = test_type
+        self._desc = ''
+        self._stdin = ''
+        self._stdout = ''
+        self._in_files: list[FuncTest.InFile] = []
+        self._out_files: list[FuncTest.OutFile] = []
+        self._args = ''
+        self._exit = None
+        self._current_in = 0
+        self._current_out = 0
         self.load()
-        self._status = FuncTest.IN_PROGRESS
 
-        self.exit = 0
-        self.time = 0
-        self.args = ''
-        self.results = dict()
+        self._res = FuncTest.Result(self)
 
-    def status(self):
+        self._status = FuncTest.Status.NONE
+
+    def load(self, data=None):
+        if data is None:
+            data = read_json(self._path)
+        self._desc = data.get('desc', '')
+        self._stdin = data.get('in', '')
+        self._stdout = data.get('out', '')
+
+        for el in data.get('in_files', []):
+            self._in_files.append(FuncTest.InFile(el.get('type'), el.get('text'), el.get('check')))
+        for el in data.get('out_files', []):
+            self._out_files.append(FuncTest.OutFile(el.get('type'), el.get('text')))
+
+        self._args = data.get('args', '')
+        self._exit = data.get('exit', '')
+        self._current_in = data.get('current_in', 0)
+        self._current_out = data.get('current_out', 0)
+
+    def to_dict(self):
+        return {
+            'desc': self._desc,
+            'in': self._stdin,
+            'out': self._stdout,
+            'in_files': [el.to_dict() for el in self._in_files],
+            'out_files': [el.to_dict() for el in self._out_files],
+            'args': self._args,
+            'exit': self._exit,
+            'current_in': self._current_in,
+            'current_out': self._current_out,
+        }
+
+    def save(self):
+        write_file(self._path, json.dumps(self.to_dict()))
+
+    @property
+    def type(self) -> Type:
+        return self._type
+
+    @property
+    def description(self) -> str:
+        return self._desc
+
+    @description.setter
+    def description(self, value: str):
+        self._desc = value
+
+    @property
+    def stdin(self) -> str:
+        return self._stdin
+
+    @stdin.setter
+    def stdin(self, value):
+        self._stdin = value
+
+    @property
+    def stdout(self):
+        return self._stdout
+
+    @stdout.setter
+    def stdout(self, value):
+        self._stdout = value
+
+    @property
+    def in_files(self) -> list[InFile]:
+        return self._in_files
+
+    @property
+    def out_files(self) -> list[OutFile]:
+        return self._out_files
+
+    @property
+    def args(self):
+        return self._args
+
+    @args.setter
+    def args(self, value):
+        self._args = value
+
+    @property
+    def exit(self):
+        return self._exit
+
+    @exit.setter
+    def exit(self, value):
+        self._exit = value
+
+    @property
+    def current_in(self):
+        return self._current_in
+
+    @current_in.setter
+    def current_in(self, value):
+        self._current_in = value
+
+    @property
+    def current_out(self):
+        return self._current_out
+
+    @current_out.setter
+    def current_out(self, value):
+        self._current_out = value
+        self.save()
+
+    @property
+    def status(self) -> Status:
         return self._status
 
-    def res(self):
-        return all(self.results.values())
-
-    def name(self):
-        return self._name
-
-    def set_status(self, status):
+    @status.setter
+    def status(self, status: Status):
+        if not isinstance(status, FuncTest.Status):
+            raise TypeError('status must be of type FuncTest.Status')
         self._status = status
 
-    def type(self):
-        return self._test_type
-
-    def is_loaded(self):
-        return self._data is not None
-
-    def set_path(self, path):
-        self._path = path
-
-    def load(self):
-        if self._path is None or not os.path.isfile(self._path):
-            self._data = dict()
-            return
-        try:
-            with open(self._path, encoding='utf-8') as f:
-                self._data = json.loads(f.read())
-                self.load_testing_data()
-        except json.JSONDecodeError:
-            self._data = dict()
-
-    def load_testing_data(self):
-        self.in_data = {'STDIN': self.get('in', '')}
-        self.out_data = {'STDOUT': self.get('out', '')}
-        for i, el in enumerate(self.get('in_files', [])):
-            self.in_data[f"in_file_{i + 1}.{el['type']}"] = el['text']
-            if 'check' in el:
-                self.out_data[f"check_file_{i + 1}.{el['type']}"] = el['check']
-        for i, el in enumerate(self.get('out_files', [])):
-            self.out_data[f"out_file_{i + 1}.{el['type']}"] = el['text']
-
-    def clear_output(self):
-        self.prog_out.clear()
-        self.results.clear()
-        self.utils_output.clear()
-
-    def unload(self):
-        self._data = None
-        self.in_data.clear()
-        self.out_data.clear()
-
-    def delete(self):
-        try:
-            os.remove(self._path)
-        except FileNotFoundError:
-            pass
-
-    def get(self, key, default=None):
-        return self._data.get(key, default)
-
-    def store(self):
-        os.makedirs(os.path.split(self._path)[0], exist_ok=True)
-        with open(self._path, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(self._data))
-
-    def __getitem__(self, item):
-        return self._data[item]
-
-    def __setitem__(self, key, value):
-        self._data[key] = value
-        self.store()
-
-    def pop(self, key):
-        self._data.pop(key)
-        self.store()
+    @property
+    def res(self):
+        return self._res
 
     @staticmethod
     def from_file(path: str, test_type):
-        test = FuncTest(os.path.split(path)[0], test_type=test_type)
-        test._data = read_json(path)
-        test.load_testing_data()
-        test.store()
+        test = FuncTest.from_dict(os.path.split(path)[0], test_type, read_json(path))
+        os.remove(path)
         return test
 
-    def to_dict(self):
-        return self._data
+    @staticmethod
+    def from_dict(path, test_type, data: dict):
+        test = FuncTest(path, test_type)
+        test.load(data)
+        test.save()
+        return test
 
-    def from_dict(self, data: dict):
-        self._data = data
-        self.load_testing_data()
-        self.store()
+    def delete(self):
+        if os.path.isfile(self._path):
+            os.remove(self._path)
