@@ -15,7 +15,7 @@ a = Analysis(
     binaries=[],
     datas=[(r"src/other/report/MML2OMML.XSL", r"src/other/report/MML2OMML.XSL"),
            (os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
-           (os.path.abspath("assets"), "assets")
+           (os.path.abspath("assets"), "assets"),
            (f"venv/{'Lib' if sys.platform == 'win32' else 'lib/python3.11'}/site-packages/pymorphy3_dicts_ru/data", r"pymorphy3_dicts_ru/data"),],
     hiddenimports=[],
     hookspath=[],
