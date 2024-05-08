@@ -11,6 +11,7 @@ class OpeningDialog(KitHBoxLayout):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.border = 1
+        self.main_palette = 'Bg'
         self._parent = parent
         self._bm = bm
         self.button_close = False

@@ -109,19 +109,38 @@ class _ProjectsMenu(KitMenu):
         if dialog.exec():
             proj = await self._bm.projects.new(dialog.path)
             proj.set('func_tests_in_project', dialog.func_tests_in_project)
+            proj.set('name', dialog.proj_name)
             proj.set('language', dialog.language)
 
     @asyncSlot()
     async def _open_project(self):
-        project_path = '~' if self._bm.projects.current.path() is None else self._bm.projects.current.path()
+        project_path = '~' if self._bm.projects.current is None else self._bm.projects.current.path()
         path = os.path.abspath(QFileDialog.getExistingDirectory(directory=project_path))
         if not path:
             return
-        if path in list(self._bm.projects.recent):
+        if path in [proj.path() for proj in self._bm.projects.recent]:
             await self._bm.projects.open(path)
-        elif (os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR)) or
-              KitDialog.question(self, f"Создать новый проект \"{path}\"?")) == 'Yes':
-            await self._bm.projects.new(path)
+        elif os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR) or
+                           KitDialog.question(self, f"Создать новый проект \"{path}\"?")) == 'Yes':
+            await self._bm.projects.new(path, language=self._detect_project_lang(path))
+
+    @staticmethod
+    def _detect_project_lang(path):
+        for lang_name in PROJECT_LANGUAGES:
+            lang = LANGUAGES.get(lang_name)
+            if os.path.isfile(f'{path}/main{lang.extensions[0]}'):
+                return lang.name
+
+        counts = {lang_name: 0 for lang_name in PROJECT_LANGUAGES}
+        for _, _, files in os.walk(path):
+            for filename in files:
+                for lang_name in PROJECT_LANGUAGES:
+                    lang = LANGUAGES.get(lang_name)
+                    if filename.endswith(lang.extensions[0]):
+                        counts[lang_name] += 1
+                        break
+
+        return max(counts, key=counts.get)
 
     def _apply_theme(self):
         super()._apply_theme()
@@ -278,7 +297,9 @@ class NewProjectDialog(KitDialog):
         return self.lang_edit.currentValue()
 
     @property
+    def proj_name(self):
+        return self.proj_name_edit.text
+
+    @property
     def func_tests_in_project(self):
         return self.save_tests_checkbox.state
-
-

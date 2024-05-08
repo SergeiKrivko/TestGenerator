@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import shutil
+import sys
 from uuid import UUID
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -40,6 +41,9 @@ class ProjectManager(QObject):
         self._max_progress = 6
         self.updateProgress.connect(print)
 
+        self._light_edit_project = Project('C:\\' if sys.platform == 'win32' else '/', self._sm,
+                                           makedirs=True, appdata='LightEdit')
+
     @property
     def current(self):
         return self.__current
@@ -47,6 +51,14 @@ class ProjectManager(QObject):
     @property
     def all(self):
         return self.__all_projects
+
+    @property
+    def light_edit_project(self):
+        return self._light_edit_project
+
+    @property
+    def light_edit(self):
+        return self.__current == self._light_edit_project
 
     @property
     def recent(self):
@@ -107,10 +119,11 @@ class ProjectManager(QObject):
         self.__current = project
         self._sm.project = project
 
-        if self.__current.path() in self.__recent_projects:
-            self.__recent_projects.remove(self.__current.path())
-        self.__recent_projects.insert(0, self.__current.path())
-        self._store_projects_list()
+        if self.__current != self._light_edit_project:
+            if self.__current.path() in self.__recent_projects:
+                self.__recent_projects.remove(self.__current.path())
+            self.__recent_projects.insert(0, self.__current.path())
+            self._store_projects_list()
 
         if not self.__utils_loaded:
             await self._bm.processes.run_async(self._load_utils, 'projects', 'utils')
@@ -169,7 +182,7 @@ class ProjectManager(QObject):
         self._sm.set_general('recent_projects', json.dumps(self.__recent_projects))
         self.recentChanged.emit()
 
-    async def new(self, path, open_proj=True):
+    async def new(self, path, open_proj=True, **kwargs):
         path = os.path.abspath(path)
         if path in self.__all_projects:
             res = self.__all_projects[path]
@@ -178,6 +191,8 @@ class ProjectManager(QObject):
             project.set('default_struct', True)
             project.set('default_compiler_settings', True)
             project.set('default_testing_settings', True)
+            for key, item in kwargs.items():
+                project.set(key, item)
             res = project
             self.__all_projects[res.path()] = res
 

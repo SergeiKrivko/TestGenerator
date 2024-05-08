@@ -11,7 +11,7 @@ class Project:
     SETTINGS_FILE = "TestGeneratorSettings.json"
     DATA_FILE = "TestGeneratorData.json"
 
-    def __init__(self, path, sm, parent=None, makedirs=False):
+    def __init__(self, path, sm, parent=None, makedirs=False, appdata=None):
         self._path = os.path.abspath(path)
 
         self._sm = sm
@@ -20,11 +20,12 @@ class Project:
         self._parent = parent
         self._children = dict()
         self._deliting = False
+        self._appdata = None if appdata is None else f'{sm.app_data_dir}/{appdata}'
 
         if makedirs:
-            os.makedirs(os.path.join(self._path, Project.TEST_GENERATOR_DIR), exist_ok=True)
+            os.makedirs(self.data_path(), exist_ok=True)
             self.create_gitignore()
-        elif not os.path.isdir(os.path.join(self._path, Project.TEST_GENERATOR_DIR)):
+        elif not os.path.isdir(self.data_path()):
             raise FileNotFoundError
 
         self.load_settings()
@@ -42,7 +43,7 @@ class Project:
         self._path = path
 
     def data_path(self):
-        return os.path.join(self._path, Project.TEST_GENERATOR_DIR)
+        return os.path.join(self._appdata or self._path, Project.TEST_GENERATOR_DIR)
 
     def children(self) -> dict[str: 'Project']:
         return self._children
