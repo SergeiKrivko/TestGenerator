@@ -220,7 +220,7 @@ jobs:
 
   build-macos-lite:
     name: Build for macOS - Lite
-    runs-on: macos-latest
+    runs-on: macos-12
 
     steps:
       - name: Checkout
