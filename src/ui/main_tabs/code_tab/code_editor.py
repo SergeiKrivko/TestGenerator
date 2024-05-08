@@ -49,7 +49,7 @@ class CodeFileEditor(CodeEditor):
     def _save_file(self):
         if self._file_deleted:
             return
-        with open(self._path, 'w', encoding='utf-8') as f:
+        with open(self._path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(self.text())
 
     def _check_file_deleted(self):

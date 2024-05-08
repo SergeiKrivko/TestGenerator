@@ -54,7 +54,7 @@ class ProcessManager(QObject):
 
     async def run_async(self, thread: Callable[[], Any] | QThread, group: str, name: str):
         thread = self.run(thread, group, name)
-        while not thread.finished:
+        while not thread.isFinished():
             await asyncio.sleep(0.5)
         if isinstance(thread, _Looper):
             return thread.res

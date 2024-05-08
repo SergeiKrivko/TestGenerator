@@ -126,7 +126,7 @@ LANGUAGES = {
     #         'fast_run': [('Распаковать', 'icon-zip', lambda path, *args: ('', ZipManager.extract(path)))]}
 }
 
-PROJECT_LANGUAGES = ['C', 'C++', 'Python']
+PROJECT_LANGUAGES = ['c', 'c++', 'python', 'masm']
 
 
 def detect_language(path, default=None):

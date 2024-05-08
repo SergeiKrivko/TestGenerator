@@ -9,13 +9,10 @@ block_cipher = None
 lib_path = r"venv\Lib\site-packages" if sys.platform == 'win32' else "venv/lib/python3.11/site-packages"
 
 
-binaries = [('icon.png', '.')]
-
-
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=binaries,
+    binaries=[],
     datas=[(r"src/other/report/MML2OMML.XSL", r"src/other/report/MML2OMML.XSL"),
            (os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
            (os.path.abspath("assets"), "assets"),
