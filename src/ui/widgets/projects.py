@@ -70,15 +70,20 @@ class _ProjectsMenu(KitMenu):
         scroll_layout.spacing = 3
         self._scroll_area.setWidget(scroll_layout)
 
-        self._button_new = KitButton('Новый проект', 'line-document')
+        self._button_new = _Button('Новый проект', 'line-document')
         self._button_new.border = 0
         self._button_new.on_click = lambda: self._new_project()
         scroll_layout.addWidget(self._button_new)
 
-        self._button_open = KitButton('Открыть проект', 'line-folder')
+        self._button_open = _Button('Открыть проект', 'line-folder')
         self._button_open.border = 0
         self._button_open.on_click = lambda: self._open_project()
         scroll_layout.addWidget(self._button_open)
+
+        self._button_light_edit = _Button('LightEdit', 'line-text')
+        self._button_light_edit.border = 0
+        # self._button_light_edit.on_click = lambda: self._open_project()
+        scroll_layout.addWidget(self._button_light_edit)
 
         scroll_layout.addWidget(KitHSeparator())
 
@@ -130,6 +135,24 @@ class _ProjectsMenu(KitMenu):
     def _set_tm(self, tm: ThemeManager):
         super()._set_tm(tm)
         self._scroll_area._set_tm(tm)
+
+
+class _Button(KitLayoutButton):
+    HEIGHT = 24
+
+    def __init__(self, text: str, icon: str):
+        super().__init__()
+        self.setFixedHeight(_Button.HEIGHT)
+        self._text = text
+        self.padding = 3
+        self.border = 0
+
+        self._icon_widget = KitIconWidget(icon)
+        self._icon_widget.setFixedSize(_Button.HEIGHT - 6, _Button.HEIGHT - 6)
+        self.addWidget(self._icon_widget)
+
+        self._name_label = KitLabel(self._text)
+        self.addWidget(self._name_label)
 
 
 class _ProjectItem(KitLayoutButton):
