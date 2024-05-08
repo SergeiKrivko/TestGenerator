@@ -3,19 +3,15 @@ from PyQt6.QtGui import QFontMetrics
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QComboBox, QPushButton, QLabel, \
     QScrollArea, QCheckBox, QSpinBox
 
-from src.ui.button import Button
-
 HEIGHT = 22
 BUTTON_WIDTH = HEIGHT
 LINE_EDIT_WIDTH = 100
 
 
 class InDataWidget(QWidget):
-    def __init__(self, sm, bm, tm):
+    def __init__(self, bm):
         super().__init__()
-        self._sm = sm
         self._bm = bm
-        self._tm = tm
 
         # self.setFixedSize(800, 500)
 

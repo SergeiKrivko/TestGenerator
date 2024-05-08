@@ -12,6 +12,7 @@ from src.backend.notification import notification
 from src.ui.main_tabs.code_tab import CodeWidget
 from src.ui.main_tabs.testing import TestingWidget
 from src.ui.main_tabs.tests import TestsWidget
+from src.ui.settings.settings_window import SettingsWindow
 from src.ui.side_tabs.builds import BuildWindow
 from src.ui.side_tabs.files import FilesWidget
 from src.ui.side_tabs.terminal import TerminalTab
@@ -51,10 +52,9 @@ class MainWindow(KitMainWindow):
         main_layout.addWidget(layout)
 
         self.side_bar = SideBar(self.bm)
-        layout.addWidget(self.side_bar)
+        layout.addWidget(self.side_bar, 100)
 
-        for key, item in {
-            # 'projects': (ProjectWidget(self.bm), 'icon-testgen', "Проекты"),
+        for key, item in (side_tabs := {
             'files': (FilesWidget(self.bm), 'line-folder', "Файлы"),
             'build': (BuildWindow(self, self.bm), 'line-hammer', "Конфигурации"),
             'tests': (TestingPanel(self.bm), 'line-play', "Тестирование"),
@@ -63,11 +63,11 @@ class MainWindow(KitMainWindow):
             # 'generator': (GeneratorTab(self.sm, self.bm, self.tm), "Генерация тестов"),
             'terminal': (TerminalTab(self.bm), 'custom-terminal', "Терминал"),
             # 'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
-        }.items():
+        }).items():
             self.side_bar.add_tab(key, *item)
 
         self._tab_layout = KitHBoxLayout()
-        layout.addWidget(self._tab_layout, 100)
+        layout.addWidget(self._tab_layout, 1)
 
         self.code_widget = CodeWidget(self.bm)
         self.add_tab(self.code_widget, 'code', "Код")
@@ -80,12 +80,11 @@ class MainWindow(KitMainWindow):
 
         # self.unit_testing_widget = UnitTestingWidget(self.sm, self.bm, self.cm, self.tm, self.app)
         # self.add_tab(self.unit_testing_widget, 'unit_tests', 'Модульное тестирование')
-        #
-        # self.settings_widget = SettingsWindow(self.sm, self.bm, self.tm, self.side_bar)
-        # self.settings_widget.change_theme.connect(self.set_theme)
-        # self.settings_widget.hide()
-        # self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)
-        #
+
+        self.settings_widget = SettingsWindow(self, self.bm, side_tabs)
+        self.settings_widget.hide()
+        self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)
+
         # self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
         # self.bm.loadingStart.connect(lambda pr: ProgressDialog(self.bm, self.tm, pr).exec())
         self.bm.showMainTab.connect(self.show_tab)

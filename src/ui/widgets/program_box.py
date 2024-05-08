@@ -85,12 +85,12 @@ class ProgramBox(KitHBoxLayout):
         self.button_add.hide()
         self.button_more.hide()
 
-        self.line_edit.setText(self.combo_box.currentValue()._path)
+        self.line_edit.setText(self.combo_box.currentValue().path)
         self.line_edit.selectAll()
         self.line_edit.setFocus()
 
     def _on_return_pressed(self):
-        if text := self.line_edit.text().strip():
+        if text := self.line_edit.text.strip():
             self.set_value(ProgramInstance(self._program, text, self._creation_mode))
 
         self.button_update.show()

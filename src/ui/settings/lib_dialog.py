@@ -4,17 +4,13 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QDialogButtonBox, QHBoxLayout, QVBoxLayout, QListWidget, \
     QListWidgetItem, QTextEdit, QPushButton, QComboBox, QLineEdit, QLabel, QMessageBox, QWidget
-
-from src.settings.remote_libs import ListReader, FileReader
-from src.ui.custom_dialog import CustomDialog
-from src.ui.message_box import MessageBox
+from PyQtUIkit.widgets import KitDialog
 
 
 class LibWidget(QWidget):
-    def __init__(self, sm, tm):
+    def __init__(self, sm):
         super(LibWidget, self).__init__()
         self.sm = sm
-        self.tm = tm
 
         self.new_lib_dialog = NewLibDialog("Библиотеки автозавершения кода", self.tm)
 
@@ -184,7 +180,7 @@ class LibWidget(QWidget):
                 self.lib_list_widget.takeItem(self.lib_list_widget.currentRow())
 
 
-class NewLibDialog(CustomDialog):
+class NewLibDialog(KitDialog):
     def __init__(self, name, tm):
         super(NewLibDialog, self).__init__(tm, name, True)
         super().set_theme()

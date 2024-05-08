@@ -113,10 +113,10 @@ class _ProjectsMenu(KitMenu):
         if not path:
             return
         if path in list(self._bm.projects.recent):
-            self._bm.projects.open(path)
+            await self._bm.projects.open(path)
         elif (os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR)) or
               KitDialog.question(self, f"Создать новый проект \"{path}\"?")) == 'Yes':
-            self._bm.projects.new(path)
+            await self._bm.projects.new(path)
 
     def _apply_theme(self):
         super()._apply_theme()

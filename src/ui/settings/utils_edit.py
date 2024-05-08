@@ -1,56 +1,50 @@
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QVBoxLayout, QListWidgetItem, QLabel, QLineEdit, \
-    QComboBox, QCheckBox
+from PyQtUIkit.widgets import *
 
 from src.backend.backend_types.util import Util
-from src.ui.button import Button
 
 
-class UtilsEdit(QWidget):
-    def __init__(self, bm, tm):
+class UtilsEdit(KitHBoxLayout):
+    def __init__(self, bm):
         super().__init__()
         self.bm = bm
-        self.tm = tm
+        self.padding = 10
+        self.spacing = 6
 
-        layout = QHBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.setContentsMargins(10, 10, 10, 10)
-        self.setLayout(layout)
+        right_layout = KitVBoxLayout()
+        self.addWidget(right_layout)
 
-        right_layout = QVBoxLayout()
-        layout.addLayout(right_layout)
-
-        buttons_layout = QHBoxLayout()
+        buttons_layout = KitHBoxLayout()
         buttons_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addLayout(buttons_layout)
+        right_layout.addWidget(buttons_layout)
 
-        self.button_add = Button(self.tm, 'buttons/plus', css='Main')
+        self.button_add = KitIconButton('line-add')
         self.button_add.setFixedHeight(22)
         self.button_add.setMaximumWidth(40)
         self.button_add.clicked.connect(self.new_util)
         buttons_layout.addWidget(self.button_add, 1)
 
-        self.button_delete = Button(self.tm, 'buttons/delete', css='Main')
+        self.button_delete = KitIconButton('line-trash')
         self.button_delete.setFixedHeight(22)
         self.button_delete.setMaximumWidth(40)
         self.button_delete.clicked.connect(self._on_delete_pressed)
         buttons_layout.addWidget(self.button_delete, 1)
 
-        self._list_widget = QListWidget()
+        self._list_widget = KitListWidget()
         self._list_widget.currentItemChanged.connect(self._on_util_selected)
         self._list_widget.setFixedWidth(225)
         right_layout.addWidget(self._list_widget)
 
         self._util_edit = UtilOptionsEdit(self.tm)
         self._util_edit.nameChanged.connect(self._update_item_text)
-        layout.addWidget(self._util_edit)
+        self.addWidget(self._util_edit)
 
         self.bm.addUtil.connect(self.add_util)
         self.bm.deleteUtil.connect(self.delete_util)
         self.bm.clearUtils.connect(self.clear)
 
     def add_util(self, util):
-        self._list_widget.addItem(ListWidgetItem(self.tm, util))
+        self._list_widget.addItem(ListWidgetItem(util))
 
     def clear(self):
         self._list_widget.clear()
@@ -84,93 +78,66 @@ class UtilsEdit(QWidget):
             return
         self.bm.delete_util(item.util.id)
 
-    def set_theme(self):
-        self.setStyleSheet(self.tm.bg_style_sheet)
-        self._util_edit.set_theme()
-        for el in [self.button_add, self.button_delete, self._list_widget]:
-            self.tm.auto_css(el)
-
     def closeEvent(self, a0) -> None:
         self._util_edit.store_util()
 
 
-class ListWidgetItem(QListWidgetItem):
-    def __init__(self, tm, util: Util):
-        super().__init__()
-        self.tm = tm
+class ListWidgetItem(KitListWidgetItem):
+    def __init__(self, util: Util):
+        super().__init__('')
         self.util = util
-        self.set_theme()
 
     def update_name(self):
         self.setText(self.util.get('name', '-'))
 
-    def set_theme(self):
-        self.update_name()
-        self.setFont(self.tm.font_medium)
-        # self.setIcon(QIcon(self.tm.get_image(BuildTypeDialog.IMAGES.get(self.util.get('type')), 'unknown_file')))
 
-
-class UtilOptionsEdit(QWidget):
+class UtilOptionsEdit(KitVBoxLayout):
     nameChanged = pyqtSignal()
 
     def __init__(self, tm):
         super().__init__()
         self.tm = tm
         self._util = None
+        self.spacing = 6
 
-        main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(main_layout)
+        self.addWidget(KitLabel("Название:"))
 
-        self._labels = []
-
-        label = QLabel("Название:")
-        self._labels.append(label)
-        main_layout.addWidget(label)
-
-        self._name_edit = QLineEdit()
+        self._name_edit = KitLineEdit()
         self._name_edit.textEdited.connect(self._on_name_changed)
-        main_layout.addWidget(self._name_edit)
+        self.addWidget(self._name_edit)
 
-        label = QLabel("Строка запуска:")
-        self._labels.append(label)
-        main_layout.addWidget(label)
+        self.addWidget(KitLabel("Строка запуска:"))
 
-        self._command_edit = QLineEdit()
-        main_layout.addWidget(self._command_edit)
+        self._command_edit = KitLineEdit()
+        self.addWidget(self._command_edit)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = KitHBoxLayout()
+        layout.spacing = 6
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        self.addWidget(layout)
 
-        label = QLabel("Тип:")
-        self._labels.append(label)
-        layout.addWidget(label)
+        layout.addWidget(KitLabel("Тип:"))
 
-        self._type_edit = QComboBox()
+        self._type_edit = KitComboBox()
         self._type_edit.addItems(['Перед тестированием', 'Для теста'])
         layout.addWidget(self._type_edit)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout = KitHBoxLayout()
+        layout.spacing = 6
         layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        main_layout.addLayout(layout)
+        self.addWidget(layout)
 
-        label = QLabel("Тип вывода:")
-        self._labels.append(label)
-        layout.addWidget(label)
+        layout.addWidget(KitLabel("Тип вывода:"))
 
-        self._output_edit = QComboBox()
+        self._output_edit = KitComboBox()
         self._output_edit.addItems(['STDOUT', 'STDERR', 'Файл {dist}'])
         layout.addWidget(self._output_edit)
 
-        self._checkbox1 = QCheckBox("Ненулевой код возврата считается отрицательным результатом")
-        main_layout.addWidget(self._checkbox1)
+        self._checkbox1 = KitCheckBox("Ненулевой код возврата считается отрицательным результатом")
+        self.addWidget(self._checkbox1)
 
-        self._checkbox2 = QCheckBox("Наличие вывода считается отрицательным результатом")
-        main_layout.addWidget(self._checkbox2)
+        self._checkbox2 = KitCheckBox("Наличие вывода считается отрицательным результатом")
+        self.addWidget(self._checkbox2)
 
         self.hide()
 
@@ -206,10 +173,3 @@ class UtilOptionsEdit(QWidget):
 
     def hideEvent(self, a0) -> None:
         self.store_util()
-
-    def set_theme(self):
-        for el in [self._name_edit, self._command_edit, self._type_edit, self._output_edit, self._checkbox1,
-                   self._checkbox2]:
-            self.tm.auto_css(el)
-        for el in self._labels:
-            self.tm.auto_css(el)

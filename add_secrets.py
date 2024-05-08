@@ -56,9 +56,10 @@ def fix_version():
 
 
 def delete_unused_code():
-    if not os.getenv('USE_TELEGRAM'):
-        shutil.rmtree('src/ui/side_tabs/telegram')
-        os.remove('src/ui/resources_emoji.py')
+    pass
+    # if not os.getenv('USE_TELEGRAM'):
+    #     shutil.rmtree('src/ui/side_tabs/telegram')
+    #     os.remove('src/ui/resources_emoji.py')
 
 
 def main():

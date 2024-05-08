@@ -9,6 +9,7 @@ from src.ui.widgets.side_panel_widget import SidePanelWidget
 
 class SideBar(KitHBoxLayout):
     SPACING = 5
+    WIDTH = 40
     BUTTON_SIZE = 30
 
     def __init__(self, bm):
@@ -21,7 +22,7 @@ class SideBar(KitHBoxLayout):
         self._layout.padding = 5
         self._layout.radius = 0
         self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._layout.setFixedWidth(40)
+        self._layout.setFixedWidth(SideBar.WIDTH)
         self.addWidget(self._layout)
 
         self._button_more = SideBarButton('solid-ellipsis-horizontal', 'more')
@@ -45,6 +46,7 @@ class SideBar(KitHBoxLayout):
         self.desc = dict()
         self._tabs = dict()
         self._children = dict()
+        self._apply_width(0)
 
     def move_menu(self):
         pos = self.mapToGlobal(self._button_more.pos())
@@ -65,6 +67,7 @@ class SideBar(KitHBoxLayout):
         if isinstance(widget, SidePanelWidget):
             button.clicked.connect(lambda flag: self.button_clicked(name, flag))
             action.triggered.connect(lambda: self.button_clicked(name, True))
+            widget.resized.connect(self._apply_width)
 
             index = len(self._tabs)
             self._tab_layout.addWidget(widget)
@@ -76,6 +79,9 @@ class SideBar(KitHBoxLayout):
             action.triggered.connect(lambda flag: self.window_button_clicked(name))
 
         self._children[name] = widget
+
+    def _apply_width(self, width):
+        self.setMaximumWidth(SideBar.WIDTH + width)
 
     def calc_visible_buttons(self):
         count = 0
@@ -126,6 +132,8 @@ class SideBar(KitHBoxLayout):
                 item.setChecked(False)
 
         self._tab_layout.setHidden(not flag)
+        if not flag:
+            self._apply_width(0)
         self._tab_layout.setCurrent(self._tabs[key])
         if key in self.buttons:
             if flag:

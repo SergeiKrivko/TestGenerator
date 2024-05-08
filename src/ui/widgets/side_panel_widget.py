@@ -7,6 +7,7 @@ from src.backend.managers import BackendManager
 
 class SidePanelWidget(KitHBoxLayout):
     startResizing = pyqtSignal()
+    resized = pyqtSignal(int)
 
     def __init__(self, bm: BackendManager, name=''):
         super().__init__()
@@ -38,11 +39,17 @@ class SidePanelWidget(KitHBoxLayout):
 
         self.addWidget(KitVSeparator())
 
-        super().setFixedWidth(self.side_panel_width)
+        super().setMaximumWidth(self.side_panel_width)
+        self.resized.emit(self.side_panel_width)
+
+    def showEvent(self, a0):
+        super().showEvent(a0)
+        self.resized.emit(self.maximumWidth())
 
     def _resize(self, w):
         width = max(200, self.width() - w)
-        super().setFixedWidth(width)
+        self.setMaximumWidth(width)
+        self.resized.emit(width)
 
     def setWidget(self, w):
         self.__layout.addWidget(w)

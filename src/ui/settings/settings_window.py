@@ -1,169 +1,175 @@
-from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QTreeWidget, QTreeWidgetItem
+from PyQt6.QtCore import pyqtSignal
+from PyQtUIkit.widgets import *
 
 from src.backend.backend_types.program import PROGRAMS
+from src.backend.language.languages import PROJECT_LANGUAGES
+from src.backend.managers import BackendManager
 from src.config import APP_NAME
-from src.language.languages import PROJECT_LANGUAGES
-from src.settings.in_data_window import InDataWidget
-from src.settings.lib_dialog import LibWidget
-from src.settings.settings_widget import SettingsWidget, LineEdit, CheckBox, ComboBox, KEY_GLOBAL, SpinBox, KEY_LOCAL, \
-    KEY_DATA, SwitchBox, ProgramEdit, TextEdit
-from src.settings.utils_edit import UtilsEdit
-from src.ui.custom_dialog import CustomDialog
+from src.ui.settings.settings_widget import SettingsWidget, ComboBox, CheckBox, KEY_GLOBAL, LineEdit, SwitchBox, \
+    KEY_DATA, TextEdit, KEY_LOCAL, ProgramEdit, SpinBox
+from src.ui.settings.utils_edit import UtilsEdit
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
 
 
-class SettingsWindow(CustomDialog):
-    change_theme = pyqtSignal()
-
-    def __init__(self, sm, bm, tm, side_bar):
-        super(SettingsWindow, self).__init__(tm, f"{APP_NAME} - настройки", True, True)
-        self.sm = sm
+class SettingsWindow(KitDialog):
+    def __init__(self, parent, bm: BackendManager, side_tabs):
+        super(SettingsWindow, self).__init__(parent)
+        self.name = f"{APP_NAME} - настройки"
         self.bm = bm
+        self.sm = bm.sm
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        layout = QHBoxLayout()
+        layout = KitHBoxLayout()
         layout.setSpacing(20)
         layout.setContentsMargins(10, 10, 0, 10)
-        main_layout.addLayout(layout)
+        self.setWidget(layout)
 
         self.setFixedSize(920, 600)
 
-        self.tree_widget = QTreeWidget()
-        self.tree_widget.setHeaderHidden(True)
-        # self.tree_widget.setFocusPolicy(False)
-        self.tree_widget.setFixedWidth(200)
-
-        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Основные']))
-        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Интерфейс']))
-
-        self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Проект']))
-        item.addChild(QTreeWidgetItem(['Структура']))
-        item.addChild(QTreeWidgetItem(['Тестирование']))
-        item.addChild(QTreeWidgetItem(['Входные данные']))
-
-        self.tree_widget.addTopLevelItem(item := QTreeWidgetItem(['Языки']))
-        item.addChild(QTreeWidgetItem(['C']))
-        item.addChild(QTreeWidgetItem(['C++']))
-        item.addChild(QTreeWidgetItem(['Python']))
-        item.addChild(QTreeWidgetItem(['Bash']))
-
-        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Тестирование ']))
-        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Сторонние утилиты']))
-        self.tree_widget.addTopLevelItem(QTreeWidgetItem(['Библиотеки']))
-
+        self.tree_widget = KitTreeWidget()
+        self.tree_widget.border = 0
+        self.tree_widget.main_palette = 'Bg'
+        self.tree_widget.setFixedWidth(175)
         self.tree_widget.currentItemChanged.connect(self.select_tab)
         layout.addWidget(self.tree_widget)
 
+        layout.addWidget(KitVSeparator())
+
+        self.tree_widget.addItem(KitTreeWidgetItem('Основные'))
+        self.tree_widget.addItem(KitTreeWidgetItem('Интерфейс'))
+
+        self.tree_widget.addItem(item := KitTreeWidgetItem('Проект'))
+        item.addItem(KitTreeWidgetItem('Структура'))
+        item.addItem(KitTreeWidgetItem('Тестирование'))
+        item.addItem(KitTreeWidgetItem('Входные данные'))
+
+        self.tree_widget.addItem(item := KitTreeWidgetItem('Языки'))
+        item.addItem(KitTreeWidgetItem('C'))
+        item.addItem(KitTreeWidgetItem('C++'))
+        item.addItem(KitTreeWidgetItem('Python'))
+        item.addItem(KitTreeWidgetItem('Bash'))
+
+        self.tree_widget.addItem(KitTreeWidgetItem('Тестирование '))
+        self.tree_widget.addItem(KitTreeWidgetItem('Сторонние утилиты'))
+        self.tree_widget.addItem(KitTreeWidgetItem('Библиотеки'))
+
         self.main_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            ComboBox("Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
-            CheckBox("Уведомления", key='notifications'),
-            CheckBox("Поиск программ при каждом запуске", key='search_after_start'),
-            CheckBox("Создавать временный проект при открытии файла", key='open_file_temp_project'),
-            CheckBox("Создавать временный проект при открытии директории", key='open_dir_temp_project'),
-            CheckBox("Использовать WSL", key='use_wsl'),
-            LineEdit("Папка с диалогами GPT", key='gpt_dialogs_path', one_line=True, width=400),
+            self.sm,
+            ComboBox(self.bm, "Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
+            CheckBox(self.bm, "Уведомления", key='notifications'),
+            CheckBox(self.bm, "Поиск программ при каждом запуске", key='search_after_start'),
+            CheckBox(self.bm, "Открывать файлы в режиме LightEdit", key='open_file_in_light_edit'),
+            CheckBox(self.bm, "Использовать WSL", key='use_wsl'),
             key_type=KEY_GLOBAL)
         layout.addWidget(self.main_settings_widget)
 
         self.ui_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            ComboBox("Тема: ", list(self.tm.themes.keys()), key='theme', text_mode=True,
-                     on_state_changed=self.change_theme.emit),
-            *[CheckBox(item, True, f'side_button_{key}') for key, item in side_bar.desc.items()],
+            self.sm,
+            ComboBox(self.bm, "Тема: ", ['light', 'dark'], key='theme', text_mode=True,
+                     on_state_changed=self._on_theme_changed),
+            # *[CheckBox(item, True, f'side_button_{key}') for key, item in side_bar.desc.items()],
             key_type=KEY_GLOBAL)
         self.ui_settings_widget.hide()
         layout.addWidget(self.ui_settings_widget)
 
         self.project_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            LineEdit("Название:", '', width=500, key='name', key_type=KEY_DATA),
-            ComboBox("Язык:", PROJECT_LANGUAGES, key='language', text_mode=True),
-            SwitchBox(lambda: self.sm.get('temp'), children={True: [
-                CheckBox("Временный проект", True, key='temp')
+            self.sm,
+            LineEdit(self.bm, "Название:", '', width=500, key='name', key_type=KEY_DATA),
+            ComboBox(self.bm, "Язык:", PROJECT_LANGUAGES, key='language', text_mode=True),
+            SwitchBox(self.bm, lambda: self.sm.get('temp'), children={True: [
+                CheckBox(self.bm, "Временный проект", True, key='temp')
             ]}),
-            TextEdit("Описание:", '', key='description', key_type=KEY_DATA),
+            TextEdit(self.bm, "Описание:", '', key='description', key_type=KEY_DATA),
             key_type=KEY_LOCAL)
         self.project_settings_widget.hide()
         layout.addWidget(self.project_settings_widget)
 
         self.project_struct_widget = SettingsWidget(
-            self.sm, self.tm,
-            CheckBox("Стандартная структура", state=True, key='default_struct', children={False: [
-                CheckBox("Сохранять тесты в папке проекта", state=False, key='func_tests_in_project', children={True: [
-                    LineEdit("Файл с входными данными:", "func_tests/data/{test_type}_{number:0>2}_in.txt",
-                             key='stdin_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
-                    LineEdit("Файл с выходными данными:", "func_tests/data/{test_type}_{number:0>2}_out.txt",
-                             key='stdout_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
-                    LineEdit("Файл с аргументами:", "func_tests/data/{test_type}_{number:0>2}_args.txt",
-                             key='args_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
-                    LineEdit("Входные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}",
-                             key='fin_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
-                    LineEdit("Выходные файлы:", "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}",
-                             key='fout_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
-                    LineEdit("Файлы проверки состояния входных:",
-                             "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}",
-                             key='fcheck_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
-                    LineEdit("Информация о тестах", "func_tests/readme.md",
-                             key='readme_pattern', width=500, check_func=SettingsWindow.check_path)
-                ]}),
-                LineEdit("Папка с модульными тестами", "unit_tests",
+            self.sm,
+            CheckBox(self.bm, "Стандартная структура", state=True, key='default_struct', children={False: [
+                CheckBox(self.bm, "Сохранять тесты в папке проекта", state=False, key='func_tests_in_project',
+                         children={True: [
+                             LineEdit(self.bm, "Файл с входными данными:",
+                                      "func_tests/data/{test_type}_{number:0>2}_in.txt",
+                                      key='stdin_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
+                             LineEdit(self.bm, "Файл с выходными данными:",
+                                      "func_tests/data/{test_type}_{number:0>2}_out.txt",
+                                      key='stdout_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
+                             LineEdit(self.bm, "Файл с аргументами:",
+                                      "func_tests/data/{test_type}_{number:0>2}_args.txt",
+                                      key='args_pattern', width=500, check_func=SettingsWindow.check_std_pattern),
+                             LineEdit(self.bm, "Входные файлы:",
+                                      "func_tests/data_files/{test_type}_{number:0>2}_in{index}.{extension}",
+                                      key='fin_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
+                             LineEdit(self.bm, "Выходные файлы:",
+                                      "func_tests/data_files/{test_type}_{number:0>2}_out{index}.{extension}",
+                                      key='fout_pattern', width=500, check_func=SettingsWindow.check_file_name_pattern),
+                             LineEdit(self.bm, "Файлы проверки состояния входных:",
+                                      "func_tests/data_files/{test_type}_{number:0>2}_check{index}.{extension}",
+                                      key='fcheck_pattern', width=500,
+                                      check_func=SettingsWindow.check_file_name_pattern),
+                             LineEdit(self.bm, "Информация о тестах", "func_tests/readme.md",
+                                      key='readme_pattern', width=500, check_func=SettingsWindow.check_path)
+                         ]}),
+                LineEdit(self.bm, "Папка с модульными тестами", "unit_tests",
                          key='unit_tests_dir', width=500, check_func=SettingsWindow.check_path),
-                LineEdit("Приложение для модульных тестов", "unit_tests.exe",
+                LineEdit(self.bm, "Приложение для модульных тестов", "unit_tests.exe",
                          key='unit_tests_app', width=500, check_func=SettingsWindow.check_path),
-                LineEdit("Папка с временными файлами", "out",
+                LineEdit(self.bm, "Папка с временными файлами", "out",
                          key='temp_files_dir', width=500, check_func=SettingsWindow.check_path)
-        ]}),
+            ]}),
             key_type=KEY_LOCAL
         )
         self.project_struct_widget.hide()
         layout.addWidget(self.project_struct_widget)
 
         self.project_testing_widget = SettingsWidget(
-            self.sm, self.tm,
-            CheckBox("Глобальные настройки компилятора/интерпретатора", key='default_compiler_settings', children={
-                False: SwitchBox(lambda: self.sm.get('language'), {
-                    'C': [
-                        *self.c_settings(),
-                    ],
-                    'C++': [
-                        ProgramEdit("Компилятор:", PROGRAMS['g++']),
-                    ],
-                    'Python': [
-                        ProgramEdit("Python:", PROGRAMS['python']),
-                        ProgramEdit("Python coverage:", PROGRAMS['python_coverage']),
-                    ],
-                })
-            }),
-            CheckBox("Глобальные настройки тестирования", key='default_testing_settings', children={False: [
-                ComboBox("Компаратор для позитивных тестов:", ['Числа', 'Числа как текст', 'Текст после подстроки',
-                                                               'Слова после подстроки', 'Текст', 'Слова'],
+            self.sm,
+            CheckBox(self.bm, "Глобальные настройки компилятора/интерпретатора", key='default_compiler_settings',
+                     children={
+                         False: SwitchBox(self.bm, lambda: self.sm.get('language'), {
+                             'C': [
+                                 *self.c_settings(),
+                             ],
+                             'C++': [
+                                 ProgramEdit(self.bm, "Компилятор:", PROGRAMS['g++']),
+                             ],
+                             'Python': [
+                                 ProgramEdit(self.bm, "Python:", PROGRAMS['python']),
+                                 ProgramEdit(self.bm, "Python coverage:", PROGRAMS['python_coverage']),
+                             ],
+                         })
+                     }),
+            CheckBox(self.bm, "Глобальные настройки тестирования", key='default_testing_settings', children={False: [
+                ComboBox(self.bm, "Компаратор для позитивных тестов:",
+                         ['Числа', 'Числа как текст', 'Текст после подстроки',
+                          'Слова после подстроки', 'Текст', 'Слова'],
                          key='pos_comparator'),
-                ComboBox("Компаратор для негативных тестов:",
+                ComboBox(self.bm, "Компаратор для негативных тестов:",
                          ['Нет', 'Числа', 'Числа как текст', 'Текст после подстроки',
                           'Слова после подстроки', 'Текст', 'Слова'],
                          key='neg_comparator'),
-                SpinBox("Погрешность сравнения чисел:", min_value=0, max_value=1000, key='epsilon', double=True),
-                LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring', one_line=True),
-                LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring', one_line=True),
-                CheckBox("Coverage", key='coverage'),
-                SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
+                SpinBox(self.bm, "Погрешность сравнения чисел:", min_value=0, max_value=1000, key='epsilon',
+                        double=True),
+                LineEdit(self.bm, "Подстрока для позитивных тестов", text='Result:', key='pos_substring',
+                         one_line=True),
+                LineEdit(self.bm, "Подстрока для негативных тестов", text='Error:', key='neg_substring', one_line=True),
+                CheckBox(self.bm, "Coverage", key='coverage'),
+                SpinBox(self.bm, "Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             ]}),
             key_type=KEY_LOCAL
         )
         self.project_testing_widget.hide()
         layout.addWidget(self.project_testing_widget)
 
-        self.project_in_widget = InDataWidget(self.sm, self.bm, self.tm)
+        # self.project_in_widget = InDataWidget(self.bm)
+        self.project_in_widget = KitHBoxLayout()
         self.project_in_widget.hide()
         layout.addWidget(self.project_in_widget)
 
         self.c_settings_widget = SettingsWidget(
-            self.sm, self.tm,
+            self.sm,
             *self.c_settings(),
             key_type=KEY_GLOBAL
         )
@@ -171,76 +177,68 @@ class SettingsWindow(CustomDialog):
         layout.addWidget(self.c_settings_widget)
 
         self.cpp_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            ProgramEdit("Компилятор:", PROGRAMS['g++']),
+            self.sm,
+            ProgramEdit(self.bm, "Компилятор:", PROGRAMS['g++']),
             key_type=KEY_GLOBAL
         )
         self.cpp_settings_widget.hide()
         layout.addWidget(self.cpp_settings_widget)
 
         self.python_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            ProgramEdit("Python:", PROGRAMS['python']),
-            ProgramEdit("Python coverage:", PROGRAMS['python_coverage']),
+            self.sm,
+            ProgramEdit(self.bm, "Python:", PROGRAMS['python']),
+            ProgramEdit(self.bm, "Python coverage:", PROGRAMS['python_coverage']),
             key_type=KEY_GLOBAL
         )
         self.python_settings_widget.hide()
         layout.addWidget(self.python_settings_widget)
 
         self.bash_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            ProgramEdit("Интерпретатор Bash:", PROGRAMS['bash']),
+            self.sm,
+            ProgramEdit(self.bm, "Интерпретатор Bash:", PROGRAMS['bash']),
             key_type=KEY_GLOBAL,
         )
         self.bash_settings_widget.hide()
         layout.addWidget(self.bash_settings_widget)
 
         self.testing_settings_widget = SettingsWidget(
-            self.sm, self.tm,
-            ComboBox("Компаратор для позитивных тестов:", ['Числа', 'Числа как текст', 'Текст после подстроки',
-                                                           'Слова после подстроки', 'Текст', 'Слова'],
+            self.sm,
+            ComboBox(self.bm, "Компаратор для позитивных тестов:", ['Числа', 'Числа как текст', 'Текст после подстроки',
+                                                                    'Слова после подстроки', 'Текст', 'Слова'],
                      key='pos_comparator'),
-            ComboBox("Компаратор для негативных тестов:", ['Нет', 'Числа', 'Числа как текст', 'Текст после подстроки',
-                                                           'Слова после подстроки', 'Текст', 'Слова'],
+            ComboBox(self.bm, "Компаратор для негативных тестов:",
+                     ['Нет', 'Числа', 'Числа как текст', 'Текст после подстроки',
+                      'Слова после подстроки', 'Текст', 'Слова'],
                      key='neg_comparator'),
-            SpinBox("Погрешность сравнения чисел:", min_value=0, max_value=1000, key='epsilon', double=True),
-            LineEdit("Подстрока для позитивных тестов", text='Result:', key='pos_substring', one_line=True),
-            LineEdit("Подстрока для негативных тестов", text='Error:', key='neg_substring', one_line=True),
-            CheckBox("Coverage", key='coverage'),
-            SpinBox("Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
+            SpinBox(self.bm, "Погрешность сравнения чисел:", min_value=0, max_value=1000, key='epsilon', double=True),
+            LineEdit(self.bm, "Подстрока для позитивных тестов", text='Result:', key='pos_substring', one_line=True),
+            LineEdit(self.bm, "Подстрока для негативных тестов", text='Error:', key='neg_substring', one_line=True),
+            CheckBox(self.bm, "Coverage", key='coverage'),
+            SpinBox(self.bm, "Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             key_type=KEY_GLOBAL
         )
         self.testing_settings_widget.hide()
         layout.addWidget(self.testing_settings_widget)
 
-        self.utils_widget = UtilsEdit(self.bm, self.tm)
+        # self.utils_widget = UtilsEdit(self.bm)
+        self.utils_widget = KitVBoxLayout()
         self.utils_widget.hide()
         layout.addWidget(self.utils_widget)
 
-        self.libs_widget = LibWidget(self.sm, self.tm)
+        # self.libs_widget = LibWidget(self.bm)
+        self.libs_widget = KitHBoxLayout()
         self.libs_widget.hide()
         layout.addWidget(self.libs_widget)
 
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setAlignment(Qt.AlignmentFlag.AlignRight)
-        main_layout.addLayout(buttons_layout)
+    def c_settings(self):
+        return [ProgramEdit(self.bm, "Компилятор:", PROGRAMS['gcc']),
+                ProgramEdit(self.bm, "Lcov:", PROGRAMS['lcov']),
+                ProgramEdit(self.bm, "Genhtml:", PROGRAMS['genhtml'])]
 
-        # self.button_cancel = QPushButton("Отмена")
-        # self.button_cancel.setFixedSize(120, 24)
-        # buttons_layout.addWidget(self.button_cancel)
-
-        # self.button_ok = QPushButton("Ок")
-        # self.button_ok.setFixedSize(120, 24)
-        # self.button_ok.clicked.connect(self.accept)
-        # buttons_layout.addWidget(self.button_ok)
-
-        self.setLayout(main_layout)
-
-    @staticmethod
-    def c_settings():
-        return [ProgramEdit("Компилятор:", PROGRAMS['gcc']),
-                ProgramEdit("Lcov:", PROGRAMS['lcov']),
-                ProgramEdit("Genhtml:", PROGRAMS['genhtml'])]
+    def _on_theme_changed(self):
+        theme = self.sm.get_general('theme')
+        if self.theme_manager and self.theme_manager.active and self.theme_manager.current_theme != theme:
+            self.theme_manager.set_theme(theme)
 
     @staticmethod
     def check_path(path: str):
@@ -281,36 +279,15 @@ class SettingsWindow(CustomDialog):
         except Exception:
             return False
 
-    def set_theme(self):
-        super().set_theme()
-        # self.button_ok.setStyleSheet(self.tm.button_css('Main'))
-        # self.button_ok.setFont(self.tm.font_small)
-        self.tree_widget.setStyleSheet(self.tm.tree_widget_css('Bg', border=False))
-        self.tree_widget.setFont(self.tm.font_big)
-        self.libs_widget.set_theme()
-        self.project_settings_widget.set_theme()
-        self.main_settings_widget.set_theme()
-        self.ui_settings_widget.set_theme()
-        self.c_settings_widget.set_theme()
-        self.cpp_settings_widget.set_theme()
-        self.python_settings_widget.set_theme()
-        self.bash_settings_widget.set_theme()
-        self.testing_settings_widget.set_theme()
-        self.project_struct_widget.set_theme()
-        self.project_testing_widget.set_theme()
-        self.project_in_widget.set_theme()
-        self.utils_widget.set_theme()
-
     def exec(self) -> int:
-        self.set_theme()
         for el in self.__dict__.values():
             if isinstance(el, SettingsWidget):
                 el.load_values()
         return super().exec()
 
-    def select_tab(self, item: QTreeWidgetItem):
+    def select_tab(self, item: KitTreeWidgetItem):
         if item is not None:
-            tab = item.text(0)
+            tab = item.name
             if tab == 'Языки':
                 return
 
