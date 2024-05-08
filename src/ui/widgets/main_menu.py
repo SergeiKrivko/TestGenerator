@@ -51,6 +51,9 @@ class MainMenu(KitHBoxLayout):
 
         self._buttons[identifier] = button
 
+    def set_tab_hidden(self, key, hidden):
+        self._buttons[key].setHidden(hidden)
+
     def mousePressEvent(self, a0) -> None:
         if a0.button() == Qt.MouseButton.LeftButton and not self.maximized:
             self.moving = True

@@ -6,6 +6,7 @@ from enum import Enum
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQtUIkit.widgets import *
 
+from src.backend.commands import check_text_file
 from src.backend.language.languages import detect_language
 from src.backend.language.icons import FILE_ICONS
 from src.backend.language.language import Language
@@ -88,8 +89,10 @@ class CodeWidget(MainTab):
         lang = detect_language(path)
         if lang:
             self._open_file(path, LANGUAGES.get(lang))
+        elif check_text_file(path):
+            self._open_file(path, LANGUAGES.get('txt'))
         else:
-            pass
+            self.open_by_system(path)
         self.save_files_list()
 
     def _open_file(self, path: str, lang: Language):
@@ -170,12 +173,14 @@ class CodeWidget(MainTab):
         self._files[ind1], self._files[ind2] = self._files[ind2], self._files[ind1]
         self.save_files_list()
 
-    @staticmethod
-    def open_by_system(filepath):
+    def open_by_system(self, filepath):
         if platform.system() == 'Darwin':  # macOS
             subprocess.call(('open', filepath))
         elif platform.system() == 'Windows':  # Windows
-            os.startfile(filepath)
+            try:
+                os.startfile(filepath)
+            except OSError as ex:
+                KitDialog.danger(self, "Ошибка", str(ex))
         else:  # linux variants
             subprocess.call(('xdg-open', filepath))
 

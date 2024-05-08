@@ -1,10 +1,7 @@
 import os
 
-from PyQt6.QtGui import QFontMetrics
-from PyQt6.Qsci import QsciScintilla, QsciLexer
 from PyQtUIkit.core import *
 from PyQtUIkit.widgets import KitScintilla
-from PyQtUIkit.widgets._widget import _KitWidget
 
 from src.backend.language.languages import LANGUAGES
 

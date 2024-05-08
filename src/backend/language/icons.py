@@ -26,4 +26,11 @@ FILE_ICONS = {
     'py': 'solid-logo-python',
     'gitignore': 'line-ban',
     'asm': 'custom-asm',
+    'css': 'solid-logo-css3',
+    'scss': 'solid-logo-css3',
+    'exe': 'line-settings',
+    'EXE': 'line-settings',
+    'COM': 'line-settings',
+    'js': 'custom-js',
+    'ts': 'custom-ts',
 }

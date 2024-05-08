@@ -1,4 +1,3 @@
-import encodings
 import json
 import os
 import pathlib
@@ -211,3 +210,32 @@ def get_files(path: str, extensions: str | list[str]):
             for ex in extensions:
                 if file.endswith(ex):
                     yield os.path.join(root, file)
+
+
+def check_text_file(file: str):
+    try:
+        with open(file, encoding='utf-8') as f:
+            f.read()
+    except UnicodeDecodeError:
+        return False
+    return True
+
+
+def detect_project_lang(path):
+    from src.backend.language.languages import PROJECT_LANGUAGES, LANGUAGES
+
+    for lang_name in PROJECT_LANGUAGES:
+        lang = LANGUAGES.get(lang_name)
+        if os.path.isfile(f'{path}/main{lang.extensions[0]}'):
+            return lang.name
+
+    counts = {lang_name: 0 for lang_name in PROJECT_LANGUAGES}
+    for _, _, files in os.walk(path):
+        for filename in files:
+            for lang_name in PROJECT_LANGUAGES:
+                lang = LANGUAGES.get(lang_name)
+                if filename.endswith(lang.extensions[0]):
+                    counts[lang_name] += 1
+                    break
+
+    return max(counts, key=counts.get)

@@ -88,6 +88,8 @@ class MainWindow(KitMainWindow):
 
         # self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
         self.bm.projects.startOpening.connect(self._on_start_opening_project)
+        self.bm.projects.startClosing.connect(self._on_start_closing_project)
+        self.bm.projects.finishOpening.connect(self._on_finish_opening_project)
 
         self.bm.showMainTab.connect(self.show_tab)
         self.bm.showSideTab.connect(self.side_bar.select_tab)
@@ -95,7 +97,7 @@ class MainWindow(KitMainWindow):
         self.bm.sideTabCommand.connect(self.side_bar.tab_command)
         # self.bm.showNotification.connect(self.notification)
 
-        # self.sm.finish_change_task()
+        self._current_tab = ''
         self.show_tab('code')
         self._progress_dialog = None
 
@@ -110,6 +112,7 @@ class MainWindow(KitMainWindow):
         widget.hide()
 
     def show_tab(self, tab):
+        self._current_tab = tab
         for key, item in self._tabs.items():
             item.hide()
         self._tabs[tab].show()
@@ -150,6 +153,16 @@ class MainWindow(KitMainWindow):
     def _on_start_opening_project(self):
         self._progress_dialog = OpeningDialog(self, self.bm)
         self._progress_dialog.show()
+
+    def _on_start_closing_project(self):
+        for key, tab in self._tabs.items():
+            self.menu_bar.set_tab_hidden(key, tab.need_project)
+            if key == self._current_tab and tab.need_project:
+                self.show_tab('code')
+
+    def _on_finish_opening_project(self):
+        for key, tab in self._tabs.items():
+            self.menu_bar.set_tab_hidden(key, tab.need_project and self.bm.projects.light_edit)
 
     def showEvent(self, a0):
         super().showEvent(a0)

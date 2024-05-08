@@ -1,10 +1,9 @@
 import json
 import webbrowser
 
-from PyQt6.QtCore import Qt, QUrl, QObject, pyqtSlot
+from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QTextEdit, QLabel, QWidget, QHBoxLayout
-from PyQtUIkit.widgets import KitHBoxLayout, KitTextEdit, KitLabel
+from PyQtUIkit.widgets import KitHBoxLayout, KitTextEdit, KitImageViewer
 
 from src import config
 
@@ -15,7 +14,7 @@ class PreviewWidget(KitHBoxLayout):
         self._path = path
 
         self.text_edit = None
-        self.label = None
+        self.image_viewer = None
         self.web_engine = None
 
         if path.endswith('.md'):
@@ -39,10 +38,9 @@ class PreviewWidget(KitHBoxLayout):
             self.text_edit.setMarkdown(f.read())
 
     def open_image(self):
-        self.label = KitLabel()
-        self.label.setPixmap(QPixmap(self._path))
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.addWidget(self.label)
+        self.image_viewer = KitImageViewer()
+        self.image_viewer.setPixmap(QPixmap(self._path))
+        self.addWidget(self.image_viewer)
 
     def open_web(self):
         file = self._path.replace('\\', '/')

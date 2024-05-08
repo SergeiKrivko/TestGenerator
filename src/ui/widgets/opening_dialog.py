@@ -34,6 +34,7 @@ class OpeningDialog(KitHBoxLayout):
         main_layout.addWidget(self._project_label)
 
         self._progress_bar = KitProgressBar()
+        self._progress_bar.animations = True
         main_layout.addWidget(self._progress_bar)
 
     def showEvent(self, a0):

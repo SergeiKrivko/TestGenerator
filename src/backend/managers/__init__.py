@@ -2,6 +2,7 @@ import os.path
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
+from src.backend.backend_types.project import Project
 from src.backend.backend_types.util import Util
 from src.backend.commands import *
 from src.backend.managers._builds import BuildsManager
@@ -56,14 +57,38 @@ class BackendManager(QObject):
 
     # ------------------- cmd args --------------------------
 
+    async def _open_file_in_project(self, project: Project, file: str):
+        lst = project.get('opened_files', [])
+        if file in lst:
+            lst.remove(file)
+        lst.append(file)
+        project.set('opened_files', lst)
+        await self.projects.open(project)
+
+    async def _open_file(self, file: str):
+        path = os.path.dirname(file)
+        recent = [proj.path() for proj in self.projects.recent]
+        while path != os.path.dirname(path):
+            if path in recent:
+                project = self.projects.get(path)
+                break
+            path = os.path.dirname(path)
+        else:
+            project = self.projects.light_edit_project
+        await self._open_file_in_project(project, file)
+
     async def parse_cmd_args(self, args):
-        if args.file:
-            path = args.file
-            await self.projects.find(path, temp=self._sm.get_general('open_file_temp_project'))
-            # TODO: добавить открытие файла через сигнал к вкладке
+        if args.filename or args.file:
+            path = os.path.abspath(args.filename or args.file)
+            await self._open_file(path)
         elif args.directory:
-            path = args.directory
-            await self.projects.find(path, temp=self._sm.get_general('open_dir_temp_project'))
+            path = os.path.abspath(args.directory)
+            if path in [proj.path() for proj in self.projects.recent]:
+                await self.projects.open(path)
+            else:
+                await self.projects.new(path, language=detect_project_lang(path))
+        elif self._sm.get_general('light_edit_opened', False):
+            await self.projects.open(self.projects.light_edit_project)
         else:
             await self.projects.open(self._sm.get_general('project'))
 

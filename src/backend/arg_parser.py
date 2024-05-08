@@ -4,7 +4,7 @@ from src import config
 
 _parser = argparse.ArgumentParser(prog=config.APP_NAME)
 
-_parser.add_argument('filename', action='count')
+_parser.add_argument('filename', nargs='?')
 _parser.add_argument('-f', '--file', help="Открывает указанный файл. Если он находится в одном из известных проектов,"
                                           "будет открыт этот проект и ближайший к файлу подпроект. Иначе будет создан"
                                           "временный или постоянный проект в директории, где находится файл.")

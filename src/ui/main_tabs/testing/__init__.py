@@ -24,7 +24,7 @@ class TestingWidget(MainTab):
         super(TestingWidget, self).__init__()
         self.sm = bm.sm
         self.bm = bm
-        self.labels = []
+        self.need_project = True
         self._coverage_html = None
 
         self.padding = 10
@@ -57,12 +57,10 @@ class TestingWidget(MainTab):
         top_layout.addWidget(self.coverage_bar)
 
         self.pos_result_bar = TestCountIndicator(FuncTest.Type.POS)
-        self.labels.append(self.pos_result_bar)
         self.pos_result_bar.hide()
         top_layout.addWidget(self.pos_result_bar)
 
         self.neg_result_bar = TestCountIndicator(FuncTest.Type.NEG)
-        self.labels.append(self.neg_result_bar)
         self.neg_result_bar.hide()
         top_layout.addWidget(self.neg_result_bar)
 

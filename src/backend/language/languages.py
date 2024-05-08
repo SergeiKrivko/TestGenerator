@@ -82,7 +82,7 @@ LANGUAGES = {
     'typescript': Language(
         'typescript',
         icon='solid-logo-javascript',
-        extensions=['.js'],
+        extensions=['.ts'],
     ),
     'xml': Language(
         'xml',
@@ -93,6 +93,11 @@ LANGUAGES = {
         name='masm',
         icon='custom-asm',
         extensions=['.asm'],
+    ),
+    'css': Language(
+        name='css',
+        icon='solid-logo-css3',
+        extensions=['css', 'scss'],
     ),
     '__image__': Language(
         '__image__',
@@ -115,8 +120,8 @@ LANGUAGES = {
             LexerBin.Mask: 'Keyword',
             LexerBin.Default: 'Identifier',
             LexerBin.PreProcessor: 'Preprocessor',
-            LexerBin.InvalidValue: 'String',
-            LexerBin.InvalidMask: 'String',
+            LexerBin.InvalidValue: 'Danger',
+            LexerBin.InvalidMask: 'Danger',
             LexerBin.Comment: 'Comment'
         }),
         fast_run=[('Конвертировать', 'icon-bin', lambda path, project, bm: ('', convert_binary(

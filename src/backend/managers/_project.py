@@ -39,10 +39,10 @@ class ProjectManager(QObject):
 
         self._load_projects()
         self._max_progress = 6
-        self.updateProgress.connect(print)
 
         self._light_edit_project = Project('C:\\' if sys.platform == 'win32' else '/', self._sm,
                                            makedirs=True, appdata='LightEdit')
+        self._light_edit_project.set_data('name', 'LightEdit')
 
     @property
     def current(self):
@@ -65,16 +65,16 @@ class ProjectManager(QObject):
         for proj in self.__recent_projects:
             yield self.__all_projects[proj]
 
-    def _get_project(self, path: str) -> Project | None:
+    def get(self, path: str) -> Project | None:
         return self.__all_projects.get(os.path.abspath(path), None)
 
     async def open(self, project: Project | str):
         if isinstance(project, str):
-            project = self._get_project(project)
+            project = self.get(project)
             if project is None:
                 return None
 
-        if project != self._sm.project:
+        if project != self.__current:
             await self.close()
             await self._open(project)
         return project
@@ -119,6 +119,7 @@ class ProjectManager(QObject):
         self.__current = project
         self._sm.project = project
 
+        self._sm.set_general('light_edit_opened', self.__current == self._light_edit_project)
         if self.__current != self._light_edit_project:
             if self.__current.path() in self.__recent_projects:
                 self.__recent_projects.remove(self.__current.path())

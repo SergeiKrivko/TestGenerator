@@ -8,6 +8,7 @@ from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
 from src.backend.backend_types.project import Project
+from src.backend.commands import detect_project_lang
 from src.backend.language.languages import LANGUAGES, PROJECT_LANGUAGES
 from src.backend.managers import BackendManager
 
@@ -18,7 +19,7 @@ class ProjectsWidget(KitLayoutButton):
     def __init__(self, bm: BackendManager):
         super().__init__()
         self._bm = bm
-        self._bm.projects.recentChanged.connect(self._load_current)
+        self._bm.projects.finishOpening.connect(self._load_current)
 
         self.main_palette = 'Menu'
         self.border = 0
@@ -82,7 +83,8 @@ class _ProjectsMenu(KitMenu):
 
         self._button_light_edit = _Button('LightEdit', 'line-text')
         self._button_light_edit.border = 0
-        # self._button_light_edit.on_click = lambda: self._open_project()
+        self._button_light_edit.setCheckable(True)
+        self._button_light_edit.on_click = lambda: self._open_light_edit()
         scroll_layout.addWidget(self._button_light_edit)
 
         scroll_layout.addWidget(KitHSeparator())
@@ -102,6 +104,7 @@ class _ProjectsMenu(KitMenu):
                 item.setChecked(True)
         self._scroll_area.setFixedHeight(min(_ProjectsMenu.HEIGHT, self._scroll_area.height() +
                                              self._scroll_area.verticalScrollBar().maximum()))
+        self._button_light_edit.setChecked(self._bm.projects.light_edit)
 
     @asyncSlot()
     async def _new_project(self):
@@ -109,7 +112,7 @@ class _ProjectsMenu(KitMenu):
         if dialog.exec():
             proj = await self._bm.projects.new(dialog.path)
             proj.set('func_tests_in_project', dialog.func_tests_in_project)
-            proj.set('name', dialog.proj_name)
+            proj.set_data('name', dialog.proj_name)
             proj.set('language', dialog.language)
 
     @asyncSlot()
@@ -122,25 +125,14 @@ class _ProjectsMenu(KitMenu):
             await self._bm.projects.open(path)
         elif os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR) or
                            KitDialog.question(self, f"Создать новый проект \"{path}\"?")) == 'Yes':
-            await self._bm.projects.new(path, language=self._detect_project_lang(path))
+            await self._bm.projects.new(path, language=detect_project_lang(path))
 
-    @staticmethod
-    def _detect_project_lang(path):
-        for lang_name in PROJECT_LANGUAGES:
-            lang = LANGUAGES.get(lang_name)
-            if os.path.isfile(f'{path}/main{lang.extensions[0]}'):
-                return lang.name
 
-        counts = {lang_name: 0 for lang_name in PROJECT_LANGUAGES}
-        for _, _, files in os.walk(path):
-            for filename in files:
-                for lang_name in PROJECT_LANGUAGES:
-                    lang = LANGUAGES.get(lang_name)
-                    if filename.endswith(lang.extensions[0]):
-                        counts[lang_name] += 1
-                        break
-
-        return max(counts, key=counts.get)
+    @asyncSlot()
+    async def _open_light_edit(self):
+        self._button_light_edit.setChecked(True)
+        await self._bm.projects.open(self._bm.projects.light_edit_project)
+        self._load_projects()
 
     def _apply_theme(self):
         super()._apply_theme()

@@ -15,6 +15,7 @@ class TestsWidget(MainTab):
         super(TestsWidget, self).__init__()
         self.bm = bm
         self.sm = bm.sm
+        self.need_project = True
         self.padding = 10
         self.spacing = 6
 
