@@ -17,7 +17,7 @@ Name={config.APP_NAME}
 Exec=/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/{config.APP_NAME}
 StartupNotify=true
 Terminal=false
-Icon=/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/_internal/icon.png
+Icon=/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/_internal/assets/icon.png
 Type=Application
 Categories=Network;WebBrowser;
 """)

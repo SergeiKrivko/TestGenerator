@@ -33,7 +33,7 @@ class MainWindow(KitMainWindow):
         self.bm = BackendManager()
         self.bm.processes.set_win_id(self.winId())
 
-        self.theme_manager.add_icons('assets', 'custom')
+        self.theme_manager.add_icons('assets.icons', 'custom')
         for key, item in themes.items():
             self.theme_manager.add_theme(key, item)
         self.set_theme('dark')

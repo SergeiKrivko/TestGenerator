@@ -45,7 +45,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['build/icon.ico'],
+    icon=['assets/icon.png'],
 )
 coll = COLLECT(
     exe,
@@ -60,5 +60,5 @@ coll = COLLECT(
 
 app = BUNDLE(coll,
              name='TestGeneratorLite.app',
-             icon='icon_macos.png',
+             icon='assets/icon-mac.png',
              bundle_identifier=None)
