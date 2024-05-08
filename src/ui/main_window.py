@@ -95,6 +95,7 @@ class MainWindow(KitMainWindow):
         self.bm.showSideTab.connect(self.side_bar.select_tab)
         self.bm.mainTabCommand.connect(self.tab_command)
         self.bm.sideTabCommand.connect(self.side_bar.tab_command)
+        self.bm.toTopRequired.connect(self.toTop)
         # self.bm.showNotification.connect(self.notification)
 
         self._current_tab = ''
@@ -104,6 +105,7 @@ class MainWindow(KitMainWindow):
     @asyncSlot()
     async def run(self):
         await self.bm.parse_cmd_args(args)
+        await self.bm.poll_shared_files()
 
     def add_tab(self, widget: MainTab, identifier: str, name: str):
         self._tab_layout.addWidget(widget, 1)
@@ -131,24 +133,7 @@ class MainWindow(KitMainWindow):
         if not self.isActiveWindow() and self.sm.get_general('notifications', False):
             notification(title, message, on_click=lambda arg: set_flag())
         if flag:
-            self.to_top()
-
-    def to_top(self):
-        from win32gui import SetWindowPos
-        import win32con
-        SetWindowPos(self.window().winId(),
-                     win32con.HWND_TOPMOST,
-                     # = always on top. only reliable way to bring it to the front on windows
-                     0, 0, 0, 0,
-                     win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
-        SetWindowPos(self.window().winId(),
-                     win32con.HWND_NOTOPMOST,  # disable the always on top, but leave window at its top position
-                     0, 0, 0, 0,
-                     win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
-        self.window().raise_()
-        self.window().show()
-        self.window().showNormal()
-        self.window().activateWindow()
+            self.toTop()
 
     def _on_start_opening_project(self):
         self._progress_dialog = OpeningDialog(self, self.bm)

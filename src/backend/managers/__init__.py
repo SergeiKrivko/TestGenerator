@@ -1,3 +1,5 @@
+import asyncio
+import json
 import os.path
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -21,6 +23,7 @@ class BackendManager(QObject):
     showSideTab = pyqtSignal(str)
     mainTabCommand = pyqtSignal(str, tuple, dict)
     sideTabCommand = pyqtSignal(str, tuple, dict)
+    toTopRequired = pyqtSignal()
     showNotification = pyqtSignal(str, str)
 
     def __init__(self):
@@ -57,16 +60,17 @@ class BackendManager(QObject):
 
     # ------------------- cmd args --------------------------
 
-    async def _open_file_in_project(self, project: Project, file: str):
+    async def _open_files_in_project(self, project: Project, files: list[str]):
         lst = project.get('opened_files', [])
-        if file in lst:
-            lst.remove(file)
-        lst.append(file)
+        for file in files:
+            if file in lst:
+                lst.remove(file)
+        lst.extend(files)
         project.set('opened_files', lst)
         await self.projects.open(project)
 
-    async def _open_file(self, file: str):
-        path = os.path.dirname(file)
+    async def _open_files(self, files: list[str]):
+        path = os.path.dirname(files[0])
         recent = [proj.path() for proj in self.projects.recent]
         while path != os.path.dirname(path):
             if path in recent:
@@ -75,12 +79,23 @@ class BackendManager(QObject):
             path = os.path.dirname(path)
         else:
             project = self.projects.light_edit_project
-        await self._open_file_in_project(project, file)
+        await self._open_files_in_project(project, files)
+
+    async def poll_shared_files(self):
+        while True:
+            await asyncio.sleep(2)
+            if files := json.loads(self._sm.get_general('shared_files', '[]')):
+                for file in files:
+                    self.main_tab_command('code', file)
+                self.main_tab_show('code')
+                self.toTopRequired.emit()
+                self._sm.remove_general('shared_files')
+            print(files)
 
     async def parse_cmd_args(self, args):
-        if args.filename or args.file:
-            path = os.path.abspath(args.filename or args.file)
-            await self._open_file(path)
+        if args.files:
+            path = os.path.abspath(args.files[0])
+            await self._open_files(path)
         elif args.directory:
             path = os.path.abspath(args.directory)
             if path in [proj.path() for proj in self.projects.recent]:

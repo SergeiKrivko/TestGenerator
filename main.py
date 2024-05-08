@@ -1,3 +1,4 @@
+import json
 import sys
 
 from src import config
@@ -31,12 +32,27 @@ def run_console():
 
 def run_ui():
     from PyQtUIkit.widgets import KitAsyncApplication
-    from src.ui.main_window import MainWindow
+    from PyQt6.QtCore import QSharedMemory, QSettings
 
     KitAsyncApplication.setOrganizationName(config.ORGANISATION_NAME)
     KitAsyncApplication.setOrganizationDomain(config.ORGANISATION_URL)
     KitAsyncApplication.setApplicationName(config.APP_NAME)
     KitAsyncApplication.setApplicationVersion(config.APP_VERSION)
+
+    shared_memory = QSharedMemory("SergeiKrivko-TestGenerator-SharedMemoryKey")
+
+    if shared_memory.attach():
+        # Вторая копия программы уже запущена
+        if args.files and not args.new_window:
+            settings = QSettings()
+            settings.setValue('shared_files', json.dumps(args.files))
+            sys.exit(0)
+    elif not shared_memory.create(1):
+        raise MemoryError("Can not create the shared memory")
+    else:
+        pass
+
+    from src.ui.main_window import MainWindow
 
     app = KitAsyncApplication(MainWindow)
     sys.exit(app.exec())
