@@ -1,3 +1,4 @@
+import asyncio
 import os.path
 from typing import Type
 from uuid import uuid4, UUID
@@ -9,10 +10,11 @@ from src.backend.builds.c import BuildCExecutable, BuildCLibrary
 from src.backend.builds.python import BuildPython
 from src.backend.builds.shell import BuildBash, BuildCommand
 from src.backend.commands import read_json
+from src.backend.managers.manager import AbstractManager
 from src.backend.settings_manager import SettingsManager
 
 
-class BuildsManager(QObject):
+class BuildsManager(AbstractManager):
     onAdd = pyqtSignal(Build)
     onDelete = pyqtSignal(Build)
     onRename = pyqtSignal(Build)
@@ -20,7 +22,7 @@ class BuildsManager(QObject):
     onLoad = pyqtSignal(list)
 
     def __init__(self, sm: SettingsManager, bm):
-        super().__init__()
+        super().__init__(bm)
         self._sm = sm
         self._bm = bm
         self._builds = dict()
@@ -59,7 +61,7 @@ class BuildsManager(QObject):
         self._builds[build_id] = build
         return build
 
-    def load(self, files: list[str]):
+    def add_some(self, files: list[str]):
         self._builds.clear()
         builds = []
         for file in files:
@@ -69,6 +71,16 @@ class BuildsManager(QObject):
     @property
     def all(self):
         return self._builds
+
+    def _load_builds(self):
+        path = self._sm.project.path()
+        path = f"{path}/scenarios"
+        if not os.path.isdir(path):
+            return
+        self.add_some([os.path.join(path, el) for el in os.listdir(path)])
+
+    async def load(self):
+        await self._bm.processes.run_async(self._load_builds, 'loading', 'builds')
 
 
 def _select(build_type: str) -> Type:

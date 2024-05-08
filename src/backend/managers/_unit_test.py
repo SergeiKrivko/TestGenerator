@@ -7,16 +7,17 @@ from src.backend.backend_types.unit_test import UnitTest
 from src.backend.backend_types.unit_tests_suite import UnitTestsSuite
 from src.backend.check_converter import CheckConverter
 from src.backend.commands import cmd_command_pipe
+from src.backend.managers.manager import AbstractManager
 
 
-class UnitTestsManager(QObject):
+class UnitTestsManager(AbstractManager):
     suiteAdded = pyqtSignal(UnitTestsSuite)
     suiteDeleted = pyqtSignal(int)
     cleared = pyqtSignal()
     errorOccurred = pyqtSignal(str)
 
     def __init__(self, bm):
-        super().__init__()
+        super().__init__(bm)
         self._bm = bm
         self._sm = bm.sm
         self.unit_tests_suites: list[UnitTestsSuite] = []
@@ -84,7 +85,17 @@ class UnitTestsManager(QObject):
             self.errorOccurred.emit(str(ex))
             return
 
-    def clear_unit_tests(self):
+    def clear(self):
         self.unit_tests_suites.clear()
         self.cleared.emit()
+
+    def _load_unit_tests(self):
+        path = self._sm.project.path()
+        if isinstance(lst := self._sm.project.get_data(f'unit_tests'), str):
+            for suite_id in lst.split(';'):
+                if suite_id:
+                    self._bm.unit_tests.add_suite(UnitTestsSuite(f"{path}/unit_tests", suite_id))
+
+    async def load(self):
+        await self._bm.processes.run_async(self._load_unit_tests, 'loading', 'func_tests')
 

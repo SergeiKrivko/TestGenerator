@@ -5,14 +5,15 @@ import sys
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 
 from src.backend.backend_types.program import ProgramInstance, PROGRAMS, Program
+from src.backend.managers.manager import AbstractManager
 from src.backend.settings_manager import SettingsManager
 
 
-class ProgramsManager(QObject):
+class ProgramsManager(AbstractManager):
     searchComplete = pyqtSignal()
 
     def __init__(self, sm: SettingsManager, bm):
-        super().__init__()
+        super().__init__(bm)
         self._sm = sm
         self._bm = bm
 

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import shutil
@@ -11,6 +12,7 @@ from src.backend.backend_types.project import Project
 from src.backend.backend_types.unit_tests_suite import UnitTestsSuite
 from src.backend.backend_types.util import Util
 from src.backend.commands import get_sorted_jsons, get_jsons
+from src.backend.managers.manager import AbstractManager
 from src.backend.settings_manager import SettingsManager
 
 
@@ -35,6 +37,8 @@ class ProjectManager(QObject):
         self.__current: Project | None = None
 
         self._load_projects()
+        self._max_progress = 6
+        self.updateProgress.connect(print)
 
     @property
     def current(self):
@@ -74,6 +78,7 @@ class ProjectManager(QObject):
         self.finishClosing.emit(project)
 
     def _close_project(self):
+        self._max_progress = 1
         self._progress(0)
         if not self._sm.project:
             return
@@ -97,7 +102,8 @@ class ProjectManager(QObject):
             item.store(path)
 
     async def _open(self, project: Project):
-        self._progress(1)
+        self._max_progress = 1
+        self._progress(0)
         self.__current = project
         self._sm.project = project
 
@@ -109,43 +115,21 @@ class ProjectManager(QObject):
         if not self.__utils_loaded:
             await self._bm.processes.run_async(self._load_utils, 'projects', 'utils')
 
-        self._progress(2)
-
         self.startOpening.emit(self.__current)
-        await self._bm.processes.run_async(lambda: self._open_project(project), 'projects', 'opening')
+        await self._open_project()
         self.finishOpening.emit(self.__current)
 
-    def _open_project(self, project: Project):
-        self._load_func_tests(project.data_path())
-        self._progress(3)
-        self._load_builds(project.data_path())
-        self._progress(4)
-        self._load_unit_tests(project.data_path())
-        self._progress(5)
-
-    def _load_func_tests(self, path):
-        for test_type in FuncTest.Type:
-            if isinstance(lst := self._sm.project.get_data(f'{test_type.value}_func_tests'), str):
-                for test_id in lst.split(';'):
-                    if test_id:
-                        self._bm.func_tests.add(FuncTest(
-                            f"{path}/func_tests/{test_type.value}", test_type, test_id))
-            else:
-                for i, el in enumerate(get_jsons(f"{path}/func_tests/{test_type.value}")):
-                    self._bm.func_tests.add(FuncTest.from_file(
-                        f"{path}/func_tests/{test_type.value}/{el}", test_type))
-
-    def _load_unit_tests(self, path):
-        if isinstance(lst := self._sm.project.get_data(f'unit_tests'), str):
-            for suite_id in lst.split(';'):
-                if suite_id:
-                    self._bm.unit_tests.add_suite(UnitTestsSuite(f"{path}/unit_tests", suite_id))
-
-    def _load_builds(self, path):
-        path = f"{path}/scenarios"
-        if not os.path.isdir(path):
-            return
-        self._bm.builds.load([os.path.join(path, el) for el in os.listdir(path)])
+    async def _open_project(self):
+        managers = []
+        for manager in [self._bm.func_tests, self._bm.unit_tests, self._bm.builds]:
+            if manager.__class__.load != AbstractManager.load:
+                managers.append(manager)
+        self._max_progress = len(managers) + 1
+        self._progress(1)
+        for i, manager in enumerate(managers):
+            await manager.load()
+            self._progress(i + 2)
+        await asyncio.sleep(1)
 
     def _load_utils(self):
         path = f"{self._sm.app_data_dir}/utils"
@@ -156,7 +140,7 @@ class ProjectManager(QObject):
             self._bm.utils.add(Util(UUID(el[:-5]), util_path))
 
     def _progress(self, value):
-        self.updateProgress.emit(value, 6)
+        self.updateProgress.emit(value, self._max_progress)
 
     def _load_projects(self):
         self.__recent_projects.clear()

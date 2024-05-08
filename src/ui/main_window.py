@@ -20,6 +20,7 @@ from src.ui.side_tabs.tests import TestingPanel
 from src.ui.themes import themes
 from src.ui.widgets.main_menu import MainMenu
 from src.ui.widgets.main_tab import MainTab
+from src.ui.widgets.opening_dialog import OpeningDialog
 from src.ui.widgets.side_bar import SideBar
 
 
@@ -86,7 +87,8 @@ class MainWindow(KitMainWindow):
         self.menu_bar.button_settings.clicked.connect(self.settings_widget.exec)
 
         # self.testing_widget.ui_disable_func = self.menu_bar.setDisabled
-        # self.bm.loadingStart.connect(lambda pr: ProgressDialog(self.bm, self.tm, pr).exec())
+        self.bm.projects.startOpening.connect(self._on_start_opening_project)
+
         self.bm.showMainTab.connect(self.show_tab)
         self.bm.showSideTab.connect(self.side_bar.select_tab)
         self.bm.mainTabCommand.connect(self.tab_command)
@@ -95,6 +97,7 @@ class MainWindow(KitMainWindow):
 
         # self.sm.finish_change_task()
         self.show_tab('code')
+        self._progress_dialog = None
 
     @asyncSlot()
     async def run(self):
@@ -143,6 +146,10 @@ class MainWindow(KitMainWindow):
         self.window().show()
         self.window().showNormal()
         self.window().activateWindow()
+
+    def _on_start_opening_project(self):
+        self._progress_dialog = OpeningDialog(self, self.bm)
+        self._progress_dialog.show()
 
     def showEvent(self, a0):
         super().showEvent(a0)

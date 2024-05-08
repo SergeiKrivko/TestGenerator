@@ -3,17 +3,18 @@ from uuid import UUID
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.backend.backend_types.util import Util
+from src.backend.managers.manager import AbstractManager
 from src.backend.settings_manager import SettingsManager
 
 
-class UtilsManager(QObject):
+class UtilsManager(AbstractManager):
     addUtil = pyqtSignal(Util)
     deleteUtil = pyqtSignal(Util)
     renameUtil = pyqtSignal(Util)
     clearUtils = pyqtSignal()
 
     def __init__(self, bm):
-        super().__init__()
+        super().__init__(bm)
         self._bm = bm
         self._utils = dict()
 

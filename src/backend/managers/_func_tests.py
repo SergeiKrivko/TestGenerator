@@ -3,13 +3,15 @@ from typing import Literal
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from src.backend.backend_types.func_test import FuncTest
+from src.backend.commands import get_jsons
 from src.backend.func_testing import TestingLooper
 from src.backend.history_manager import EMPTY_RECORD, HistoryManager
 from src.backend.macros_converter import MacrosConverter
+from src.backend.managers.manager import AbstractManager
 from src.backend.settings_manager import SettingsManager
 
 
-class FuncTestsManager(QObject):
+class FuncTestsManager(AbstractManager):
     onAdd = pyqtSignal(FuncTest, int)
     onDelete = pyqtSignal(FuncTest, int)
     onClear = pyqtSignal()
@@ -21,7 +23,7 @@ class FuncTestsManager(QObject):
     endTesting = pyqtSignal(object, object)
 
     def __init__(self, sm: SettingsManager, bm):
-        super().__init__()
+        super().__init__(bm)
         self._sm = sm
         self._bm = bm
         self._func_tests = {FuncTest.Type.POS: [], FuncTest.Type.NEG: []}
@@ -189,3 +191,19 @@ class FuncTestsManager(QObject):
             self.tests_completed += 1
         test.status = status
         self.onStatusChanged.emit(test)
+
+    def _load_func_tests(self):
+        path = self._sm.project.path()
+        for test_type in FuncTest.Type:
+            if isinstance(lst := self._sm.project.get_data(f'{test_type.value}_func_tests'), str):
+                for test_id in lst.split(';'):
+                    if test_id:
+                        self.add(FuncTest(
+                            f"{path}/func_tests/{test_type.value}", test_type, test_id))
+            else:
+                for i, el in enumerate(get_jsons(f"{path}/func_tests/{test_type.value}")):
+                    self.add(FuncTest.from_file(
+                        f"{path}/func_tests/{test_type.value}/{el}", test_type))
+
+    async def load(self):
+        await self._bm.processes.run_async(self._load_func_tests, 'loading', 'func_tests')
