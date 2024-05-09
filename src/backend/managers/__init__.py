@@ -70,7 +70,7 @@ class BackendManager(QObject):
         await self.projects.open(project)
 
     async def _open_files(self, files: list[str]):
-        path = os.path.dirname(files[0])
+        path = os.path.dirname(os.path.abspath(files[0]))
         recent = [proj.path() for proj in self.projects.recent]
         while path != os.path.dirname(path):
             if path in recent:
@@ -90,12 +90,10 @@ class BackendManager(QObject):
                 self.main_tab_show('code')
                 self.toTopRequired.emit()
                 self._sm.remove_general('shared_files')
-            print(files)
 
     async def parse_cmd_args(self, args):
         if args.files:
-            path = os.path.abspath(args.files[0])
-            await self._open_files(path)
+            await self._open_files(args.files)
         elif args.directory:
             path = os.path.abspath(args.directory)
             if path in [proj.path() for proj in self.projects.recent]:
