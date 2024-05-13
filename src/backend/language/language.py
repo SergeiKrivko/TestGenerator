@@ -15,11 +15,11 @@ class Language:
 
     def __init__(self,
                  name: str,
-                 extensions: list,
+                 extensions: list[str],
                  icon: str,
                  kit_language: str | tuple[Type, dict[str: str]] = None,
                  autocompletion: Type = AcMAbstract,
-                 fast_run: list[tuple[str, str, Callable]] = None,
+                 fast_run: list['_FastRunOption'] = None,
                  preview=PreviewType.NONE):
         self.name = name
         self.icon = icon
@@ -34,3 +34,29 @@ class Language:
         self.autocompletion = autocompletion
         self.fast_run = fast_run or []
         self.preview = preview
+
+
+class _FastRunOption:
+    def __init__(self, name: str, icon: str, function: Callable):
+        self._name = name
+        self._icon = icon
+        self._function = function
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def icon(self):
+        return self._icon
+
+    def __call__(self, path, bm):
+        return self._function(path, bm)
+
+
+class FastRunFunction(_FastRunOption):
+    pass
+
+
+class FastRunCommand(_FastRunOption):
+    pass

@@ -40,7 +40,7 @@ class TestingPanel(SidePanelWidget):
 
     def update_items(self, tests: list[FuncTest]):
         self._completed = 0
-        self.clear()
+        self._clear()
         for i, el in enumerate(tests):
             self.add_item(el, i)
 
@@ -71,7 +71,7 @@ class TestingPanel(SidePanelWidget):
                     item.update_status()
                     break
 
-    def clear(self):
+    def _clear(self):
         self.list_widget.clear()
         self.items.clear()
 

@@ -14,3 +14,14 @@ class BuildBash(Build):
 class BuildCommand(Build):
     def command(self, args=''):
         return f"{self.get('command', 'echo')} {args}"
+
+
+def bash_fast_run(path, bm):
+    interpreter = PROGRAMS['bash'].get(bm.sm)
+    return f"{interpreter.command()} \"{interpreter.convert_path(path)}\""
+
+
+def batch_fast_run(path, bm):
+    if os.path.isabs(path):
+        return path
+    return f".\\{path}"

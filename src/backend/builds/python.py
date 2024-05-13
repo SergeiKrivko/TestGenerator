@@ -36,6 +36,6 @@ class BuildPython(Build):
             return f"{self.temp_dir()}/htmlcov/index.html"
 
 
-def python_fast_run(path, project, bm):
+def python_fast_run(path, bm):
     interpreter = PROGRAMS['python'].get(bm.sm)
-    return f"{interpreter} \"{path}\"", ''
+    return f"{interpreter.command()} \"{interpreter.convert_path(path)}\""

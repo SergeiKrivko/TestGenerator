@@ -15,6 +15,7 @@ from src.ui.main_tabs.tests import TestsWidget
 from src.ui.settings.settings_window import SettingsWindow
 from src.ui.side_tabs.builds import BuildWindow
 from src.ui.side_tabs.files import FilesWidget
+from src.ui.side_tabs.run_console import ConsoleTab
 from src.ui.side_tabs.terminal import TerminalTab
 from src.ui.side_tabs.tests import TestingPanel
 from src.ui.themes import themes
@@ -58,12 +59,12 @@ class MainWindow(KitMainWindow):
         for key, item in (side_tabs := {
             'files': (FilesWidget(self.bm), 'line-folder', "Файлы"),
             'build': (BuildWindow(self, self.bm), 'line-hammer', "Конфигурации"),
-            'tests': (TestingPanel(self.bm), 'line-play', "Тестирование"),
+            'tests': (TestingPanel(self.bm), 'custom-testing', "Тестирование"),
             # 'todo': (TODOPanel(self.sm, self.cm, self.tm), "TODO"),
             # 'git': (GitPanel(self.sm, self.cm, self.tm), "Git"),
             # 'generator': (GeneratorTab(self.sm, self.bm, self.tm), "Генерация тестов"),
             'terminal': (TerminalTab(self.bm), 'custom-terminal', "Терминал"),
-            # 'run': (ConsolePanel(self.sm, self.tm, self.bm), "Выполнение"),
+            'run': (ConsoleTab(self.bm), 'line-play', "Выполнение"),
         }).items():
             self.side_bar.add_tab(key, *item)
 

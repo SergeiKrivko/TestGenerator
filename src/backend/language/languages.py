@@ -1,6 +1,6 @@
-import src.other.report.markdown_parser
 import src.backend.builds
-from src.backend.language.language import Language
+import src.other.report.markdown_parser
+from src.backend.language.language import Language, FastRunFunction, FastRunCommand
 from src.other.binary_redactor.convert_binary import convert_file as convert_binary
 from src.other.binary_redactor.lexer import LexerBin
 
@@ -18,7 +18,7 @@ LANGUAGES = {
         'python',
         extensions=['.py'],
         icon='solid-logo-python',
-        fast_run=[('Запустить', 'icons/run', src.backend.builds.python.python_fast_run)]
+        fast_run=[FastRunCommand('Запустить', 'line-play', src.backend.builds.python.python_fast_run)]
     ),
     'c++': Language(
         'c++',
@@ -29,11 +29,13 @@ LANGUAGES = {
         'bash',
         icon='custom-shell',
         extensions=['.sh'],
+        fast_run=[FastRunCommand('Запустить', 'line-play', src.backend.builds.shell.bash_fast_run)]
     ),
     'batch': Language(
         'batch',
         icon='custom-shell',
         extensions=['.cmd', '.bat', '.ps1'],
+        fast_run=[FastRunCommand('Запустить', 'line-play', src.backend.builds.shell.batch_fast_run)]
     ),
     'markdown': Language(
         'markdown',
@@ -41,10 +43,10 @@ LANGUAGES = {
         icon='custom-markdown',
         preview=Language.PreviewType.SIMPLE,
         fast_run=[
-            ('Конвертировать в Docx', 'icon-docx', lambda path, pr, bm: (src.other.report.markdown_parser.convert(
-                path, pr, bm, pdf=False), '')),
-            ('Конвертировать в Pdf', 'icon-pdf', lambda path, pr, bm: (src.other.report.markdown_parser.convert(
-                path, pr, bm, pdf=True), ''))
+            FastRunFunction('Конвертировать в Docx', 'custom-docx',
+                            lambda path, bm: (src.other.report.markdown_parser.convert(path, bm, pdf=False), '')),
+            FastRunFunction('Конвертировать в Pdf', 'custom-pdf',
+                            lambda path, bm: (src.other.report.markdown_parser.convert(path, bm, pdf=True), ''))
         ]
     ),
     'html': Language(
@@ -124,8 +126,10 @@ LANGUAGES = {
             LexerBin.InvalidMask: 'Danger',
             LexerBin.Comment: 'Comment'
         }),
-        fast_run=[('Конвертировать', 'icon-bin', lambda path, project, bm: ('', convert_binary(
-            in_path=path, exceptions=False)))]
+        fast_run=[
+            FastRunFunction('Конвертировать', 'custom-bin',
+                            lambda path, bm: ('', convert_binary(in_path=path, exceptions=False)))
+        ]
     ),
     # 'ZIP': {'files': ['.zip'], 'open_files': False,
     #         'fast_run': [('Распаковать', 'icon-zip', lambda path, *args: ('', ZipManager.extract(path)))]}
@@ -140,4 +144,3 @@ def detect_language(path, default=None):
             if path.endswith(ext):
                 return lang.name
     return default
-

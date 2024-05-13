@@ -1,5 +1,3 @@
-from PyQt6.QtWidgets import QVBoxLayout
-
 from src.other.terminal import Terminal
 from src.ui.widgets.side_panel_widget import SidePanelWidget, SidePanelButton
 

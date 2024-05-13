@@ -9,224 +9,13 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, QUrl, QMimeData
 from PyQtUIkit.widgets import *
 
-from src.backend.language.icons import FILE_ICONS
-from src.backend.language.languages import LANGUAGES
+from src.backend.language.language import FastRunCommand, FastRunFunction
 from src.backend.managers import BackendManager
-from src.ui.side_tabs.files.open_file_options import get_open_file_options
+from src.ui.side_tabs.files.context_menu import ContextMenu
+from src.ui.side_tabs.files.fast_run_dialog import FastRunDialog
+from src.ui.side_tabs.files.tree import TreeFile, TreeDirectory
 from src.ui.side_tabs.files.zip_manager import ZipManager
 from src.ui.widgets.side_panel_widget import SidePanelWidget, SidePanelButton
-
-
-class TreeFile(KitTreeWidgetItem):
-    def __init__(self, path: str):
-        self.path = path
-        self.name = os.path.basename(self.path)
-        if '.' not in self.name:
-            self.file_type = None
-        else:
-            self.file_type = self.name[self.name.rindex('.') + 1:]
-
-        super().__init__(self.name, FILE_ICONS.get(self.file_type, 'line-help'))
-
-
-class TreeDirectory(KitTreeWidgetItem):
-    def __init__(self, path):
-        super().__init__()
-        self.path = path
-        self.name = os.path.basename(self.path)
-        self.file_type = 'directory'
-        self.always_expandable = True
-
-        super().__init__(self.name, 'line-folder')
-
-        self.update_files_list()
-
-    def update_files_list(self):
-        if not self.expanded():
-            self.clear()
-            return
-
-        i = 0
-        j = 0
-        lst = list(filter(lambda p: os.path.isdir(os.path.join(self.path, p)), os.listdir(self.path))) + \
-              list(filter(lambda p: os.path.isfile(os.path.join(self.path, p)), os.listdir(self.path)))
-        lst = list(map(lambda p: os.path.join(self.path, p), lst))
-        while i < self.childrenCount() and j < len(lst):
-            if (path := self.child(i).path) != lst[j]:
-                if path.startswith(self.path) and (os.path.isfile(path) or os.path.isdir(path)):
-                    if os.path.isdir(lst[j]):
-                        self.insertItem(i, TreeDirectory(lst[j]))
-                    else:
-                        self.insertItem(i, TreeFile(lst[j]))
-                    i += 1
-                    j += 1
-                else:
-                    self.deleteItem(i)
-            elif isinstance(item := self.child(i), TreeDirectory):
-                item.update_files_list()
-                i += 1
-                j += 1
-            else:
-                i += 1
-                j += 1
-        while i < self.childrenCount():
-            self.deleteItem(i)
-        while j < len(lst):
-            if os.path.isdir(lst[j]):
-                self.addItem(TreeDirectory(lst[j]))
-            else:
-                self.addItem(TreeFile(lst[j]))
-            j += 1
-
-    def expand(self):
-        super().expand()
-        self.update_files_list()
-
-    def collapse(self):
-        super().collapse()
-        self.clear()
-
-
-class ContextMenu(KitMenu):
-    CREATE_FILE = 0
-    CREATE_DIR = 1
-    CREATE_PY = 2
-    CREATE_C = 3
-    CREATE_H = 4
-    CREATE_MD = 5
-    CREATE_T2B = 6
-
-    DELETE_FILE = 100
-    RENAME_FILE = 101
-    OPEN_IN_CODE = 102
-    OPEN_BY_SYSTEM = 103
-    OPEN_IN_TERMINAL = 104
-    OPEN_BY_SYSTEM_TERMINAL = 105
-    OPEN_IN_EXPLORER = 106
-    OPEN_BY_COMMAND = 107
-    MOVE_TO_TRASH = 108
-    RUN_FILE = 109
-    COMPRESS_TO_ZIP = 110
-    OPEN_BY_POWER_SHELL = 111
-    OPEN_BY_WSL_TERMINAL = 112
-
-    COPY_FILES = 200
-    PASTE_FILES = 201
-    CUT_FILES = 202
-    COPY_PATH = 203
-
-    def __init__(self, parent, path, directory=False):
-        super().__init__(parent)
-
-        self.setContentsMargins(3, 3, 3, 3)
-        self.setMinimumWidth(150)
-
-        self.create_menu = self.addMenu("Создать", 'line-add')
-
-        self.create_menu.addAction("Файл", 'custom-text').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_FILE))
-        self.create_menu.addAction("Папку", 'line-folder').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_DIR))
-        self.create_menu.addAction("Python file", 'solid-logo-python').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_PY))
-        self.create_menu.addAction("C source file", 'custom-c').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_C))
-        self.create_menu.addAction("Header file", 'custom-header').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_H))
-        self.create_menu.addAction("Markdown file", 'custom-markdown').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_MD))
-        self.create_menu.addAction("Text-to-Binary file", 'custom-t2b').triggered.connect(
-            lambda: self.set_action(ContextMenu.CREATE_T2B))
-
-        self.addSeparator()
-
-        self.addAction("Вырезать", 'line-cut').triggered.connect(
-            lambda: self.set_action(ContextMenu.CUT_FILES))
-        self.addAction("Копировать", 'line-copy').triggered.connect(
-            lambda: self.set_action(ContextMenu.COPY_FILES))
-        self.addAction("Копировать как путь", 'custom-path').triggered.connect(
-            lambda: self.set_action(ContextMenu.COPY_PATH))
-        self.addAction("Вставить", 'line-clipboard').triggered.connect(
-            lambda: self.set_action(ContextMenu.PASTE_FILES))
-
-        self.addSeparator()
-
-        self.add_fast_run_actions(path)
-
-        self.addSeparator()
-
-        self.addAction("Удалить", 'line-trash').triggered.connect(
-            lambda: self.set_action(ContextMenu.DELETE_FILE))
-        self.addAction("Переместить в корзину", 'solid-trash').triggered.connect(
-            lambda: self.set_action(ContextMenu.MOVE_TO_TRASH))
-        self.addAction("Переименовать", 'custom-rename').triggered.connect(
-            lambda: self.set_action(ContextMenu.RENAME_FILE))
-        self.addAction("Сжать в ZIP", 'custom-zip').triggered.connect(
-            lambda: self.set_action(ContextMenu.COMPRESS_TO_ZIP))
-
-        self.addSeparator()
-
-        self.open_menu = self.addMenu("Открыть")
-        if directory:
-            self.open_menu.addAction("Проводник", 'line-folder').triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_IN_EXPLORER))
-            self.open_menu.addAction("Вкладка \"Терминал\"", 'custom-terminal').triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_IN_TERMINAL))
-            if platform.system() == 'Windows':
-                self.open_menu.addAction("PowerShell", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_POWER_SHELL))
-                self.open_menu.addAction("Командная строка", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
-                self.open_menu.addAction("Терминал WSL", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_WSL_TERMINAL))
-            else:
-                self.open_menu.addAction("Терминал", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
-        else:
-            self.open_menu.addAction("Вкладка \"Код\"").triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_IN_CODE))
-            self.open_menu.addAction("Стандартное приложение").triggered.connect(
-                lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM))
-            if platform.system() == 'Windows':
-                self.open_menu.addAction("PowerShell", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_POWER_SHELL))
-                self.open_menu.addAction("Командная строка", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
-                self.open_menu.addAction("Терминал WSL", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_WSL_TERMINAL))
-            else:
-                self.open_menu.addAction("Терминал", 'custom-terminal').triggered.connect(
-                    lambda: self.set_action(ContextMenu.OPEN_BY_SYSTEM_TERMINAL))
-
-            # self.open_menu.addSeparator()
-
-            if '.' in path:
-                for prog_name, prog_icon, prog_command in get_open_file_options(path):
-                    self.add_open_action(prog_name, prog_icon, prog_command)
-
-        self.action = None
-        self.action_data = None
-
-    def add_fast_run_actions(self, path):
-        for language in LANGUAGES.values():
-            for el in language.extensions:
-                if path.endswith(el):
-
-                    for name, icon, func in language.fast_run:
-                        action = self.addAction(name, icon)
-                        self.connect_run_action(action, func)
-                    return
-
-    def connect_run_action(self, action, func):
-        action.triggered.connect(lambda: self.set_action(ContextMenu.RUN_FILE, func))
-
-    def add_open_action(self, name, icon, command):
-        self.open_menu.addAction(name).triggered.connect(
-            lambda: self.set_action(ContextMenu.OPEN_BY_COMMAND, command))
-
-    def set_action(self, action, data=None):
-        self.action = action
-        self.action_data = data
 
 
 class FilesWidget(SidePanelWidget):
@@ -325,6 +114,7 @@ class FilesWidget(SidePanelWidget):
             self.shift_pressed = False
 
     def run_context_menu(self, point, item):
+        item = self.tree.currentItem()
         if item is None:
             file = None
             path = self.bm.projects.current.path()
@@ -403,11 +193,16 @@ class FilesWidget(SidePanelWidget):
                 os.rename(item.path, new_path)
                 self.update_files_list()
 
-    def fast_run_file(self, func):
+    def fast_run_file(self, option: FastRunCommand | FastRunFunction):
         item = self.tree.currentItem()
         if isinstance(item, TreeFile) or isinstance(item, TreeDirectory):
-            self.bm.side_tab_show('run')
-            self.bm.side_tab_command('run', item.path, func)
+            if isinstance(option, FastRunCommand):
+                self.bm.side_tab_show('run')
+                self.bm.side_tab_command('run', option(item.path, self.bm),
+                                         cwd=self.bm.projects.current.path())
+            elif isinstance(option, FastRunFunction):
+                FastRunDialog(self, self.bm, item.path, option).exec()
+                self.update_files_list()
 
     def copy_file(self):
         item = self.tree.currentItem()

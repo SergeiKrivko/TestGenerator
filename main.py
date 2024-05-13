@@ -45,7 +45,8 @@ def run_ui():
         # Вторая копия программы уже запущена
         if args.files and not args.new_window:
             settings = QSettings()
-            settings.setValue('shared_files', json.dumps(args.files))
+            lst = json.loads(settings.value('shared_files', '[]')) + args.files
+            settings.setValue('shared_files', json.dumps(lst))
             sys.exit(0)
     elif not shared_memory.create(1):
         raise MemoryError("Can not create the shared memory")

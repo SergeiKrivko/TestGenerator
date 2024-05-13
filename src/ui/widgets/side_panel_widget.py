@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal, Qt, QPoint
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QCursor
 from PyQtUIkit.widgets import KitVBoxLayout, KitHBoxLayout, KitIconButton, KitLabel, KitVSeparator
 
@@ -45,6 +45,9 @@ class SidePanelWidget(KitHBoxLayout):
     def showEvent(self, a0):
         super().showEvent(a0)
         self.resized.emit(self.maximumWidth())
+
+    def clear(self):
+        self.__layout.clear()
 
     def _resize(self, w):
         width = max(200, self.width() - w)
