@@ -100,6 +100,10 @@ class BuildWindow(SideBarDialog):
         self._build_edit.store_build()
         self._build_edit.clear()
 
+    def showEvent(self, a0) -> None:
+        super().showEvent(a0)
+        self._build_edit.open(self._build_edit.current_build)
+
 
 class ListWidgetItem(KitListWidgetItem):
     def __init__(self, build: Build):

@@ -100,7 +100,7 @@ class BackendManager(QObject):
                 await self.projects.open(path)
             else:
                 await self.projects.new(path, language=detect_project_lang(path))
-        elif self._sm.get_general('light_edit_opened', False):
+        elif self._sm.get_general('light_edit_opened', 'false').lower() == 'true':
             await self.projects.open(self.projects.light_edit_project)
         else:
             await self.projects.open(self._sm.get_general('project'))

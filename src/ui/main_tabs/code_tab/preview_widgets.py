@@ -1,4 +1,3 @@
-import json
 import webbrowser
 
 from PyQt6.QtCore import Qt, QUrl
@@ -39,6 +38,8 @@ class PreviewWidget(KitHBoxLayout):
 
     def open_image(self):
         self.image_viewer = KitImageViewer()
+        self.image_viewer.min_zoom = 0.125
+        self.image_viewer.max_zoom = 16
         self.image_viewer.setPixmap(QPixmap(self._path))
         self.addWidget(self.image_viewer)
 
@@ -52,7 +53,7 @@ class PreviewWidget(KitHBoxLayout):
             self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, True)
             self.web_engine.settings().setAttribute(QWebEngineSettings.WebAttribute.PdfViewerEnabled, True)
             self.addWidget(self.web_engine)
-            self.web_engine.setUrl(QUrl(f"file:///{file}"))
+            self.web_engine.setUrl(QUrl.fromLocalFile(file))
             self.web_engine.show()
         else:
             webbrowser.open(f"file:///{file}")

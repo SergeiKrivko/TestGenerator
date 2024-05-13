@@ -1,9 +1,8 @@
-import asyncio
 import os.path
 from typing import Type
 from uuid import uuid4, UUID
 
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 
 from src.backend.backend_types.build import Build
 from src.backend.builds.c import BuildCExecutable, BuildCLibrary
@@ -73,7 +72,7 @@ class BuildsManager(AbstractManager):
         return self._builds
 
     def _load_builds(self):
-        path = self._sm.project.path()
+        path = self._sm.project.data_path()
         path = f"{path}/scenarios"
         if not os.path.isdir(path):
             return

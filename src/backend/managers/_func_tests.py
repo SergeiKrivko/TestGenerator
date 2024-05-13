@@ -40,7 +40,7 @@ class FuncTestsManager(AbstractManager):
         if index is None:
             index = len(self._func_tests[test.type])
         self._func_tests[test.type].insert(index, test)
-        self._sm.set_data(f'{test.type}_func_tests',
+        self._sm.set_data(f'{test.type.value}_func_tests',
                           ';'.join(str(test.id) for test in self._func_tests[test.type]))
         self.onAdd.emit(test, index)
 
@@ -67,7 +67,7 @@ class FuncTestsManager(AbstractManager):
         record.add_data(('delete', test, index))
         self._func_tests[type].pop(index)
         test.delete()
-        self._sm.set_data(f'{type}_func_tests', ';'.join(str(test.id) for test in self._func_tests[type]))
+        self._sm.set_data(f'{type.value}_func_tests', ';'.join(str(test.id) for test in self._func_tests[type]))
         self.onDelete.emit(test, index)
 
     def add_some(self, type: FuncTest.Type, tests: list[int] | dict[int: dict]):
@@ -193,7 +193,7 @@ class FuncTestsManager(AbstractManager):
         self.onStatusChanged.emit(test)
 
     def _load_func_tests(self):
-        path = self._sm.project.path()
+        path = self._sm.project.data_path()
         for test_type in FuncTest.Type:
             if isinstance(lst := self._sm.project.get_data(f'{test_type.value}_func_tests'), str):
                 for test_id in lst.split(';'):

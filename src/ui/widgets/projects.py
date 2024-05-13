@@ -78,7 +78,7 @@ class _ProjectsMenu(KitMenu):
 
         self._button_open = _Button('Открыть проект', 'line-folder')
         self._button_open.border = 0
-        self._button_open.on_click = lambda: self._open_project()
+        self._button_open.on_click = self._on_open_project_clicked
         scroll_layout.addWidget(self._button_open)
 
         self._button_light_edit = _Button('LightEdit', 'line-text')
@@ -115,18 +115,28 @@ class _ProjectsMenu(KitMenu):
             proj.set_data('name', dialog.proj_name)
             proj.set('language', dialog.language)
 
-    @asyncSlot()
-    async def _open_project(self):
+    def _on_open_project_clicked(self):
         project_path = '~' if self._bm.projects.current is None else self._bm.projects.current.path()
         path = os.path.abspath(QFileDialog.getExistingDirectory(directory=project_path))
         if not path:
             return
         if path in [proj.path() for proj in self._bm.projects.recent]:
-            await self._bm.projects.open(path)
-        elif os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR) or
-                           KitDialog.question(self, f"Создать новый проект \"{path}\"?")) == 'Yes':
-            await self._bm.projects.new(path, language=detect_project_lang(path))
+            print('open')
+            self._open_project(path)
+        elif os.path.isdir(os.path.join(path, Project.TEST_GENERATOR_DIR)) or \
+                KitDialog.question(self, f"Создать новый проект \"{path}\"?") == 'Yes':
+            print('new')
+            self._new_project(path)
+        else:
+            print('else')
 
+    @asyncSlot()
+    async def _open_project(self, path):
+        await self._bm.projects.open(path)
+
+    @asyncSlot()
+    async def _new_project(self, path):
+        await self._bm.projects.new(path, language=detect_project_lang(path))
 
     @asyncSlot()
     async def _open_light_edit(self):

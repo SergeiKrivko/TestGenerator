@@ -73,6 +73,10 @@ class BuildEdit(KitScrollArea):
         self._layout.clear()
         self._widgets.clear()
 
+    @property
+    def current_build(self):
+        return self._build
+
     def open(self, build: Build | None):
         self.store_build()
         self._build = build

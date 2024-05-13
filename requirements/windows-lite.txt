@@ -1,6 +1,6 @@
 PyQt6~=6.6.1
 PyQt6-QScintilla~=2.14.1
-PyQtUIkit~=2.10.2
+PyQtUIkit~=2.10.3
 Pillow~=10.2.0
 lxml~=5.0.0
 requests~=2.31.0

@@ -40,7 +40,7 @@ class CodeWidget(MainTab):
         self.tab_bar.tabs_palette = 'Bg'
         self.tab_bar.currentChanged.connect(self._on_current_file_changed)
         self.tab_bar.tabCloseRequested.connect(self._close_tab)
-        # self.tab_bar.tabMoved.connect(self.tab_moved)
+        self.tab_bar.tabMoved.connect(self._on_tab_moved)
         self.tab_bar.setTabsMovable(True)
         self.tab_bar.setTabsClosable(True)
         top_layout.addWidget(self.tab_bar, 1000)
@@ -152,7 +152,7 @@ class CodeWidget(MainTab):
             self.open_file(file)
 
     def save_files_list(self):
-        self.bm.sm.set('opened_files', list(self._tabs.keys()))
+        self.bm.sm.set('opened_files', [self.tab_bar.tab(i).value for i in range(len(self._tabs))])
 
     def _close_tab(self, index, save=True):
         tab = self.tab_bar.tab(index)
@@ -169,8 +169,7 @@ class CodeWidget(MainTab):
         widget = self.__widgets[path]
         widget.set_state(_FileEditor.State.PREVIEW if flag else _FileEditor.State.CODE)
 
-    def move_tab(self, ind1, ind2):
-        self._files[ind1], self._files[ind2] = self._files[ind2], self._files[ind1]
+    def _on_tab_moved(self, ind1, ind2):
         self.save_files_list()
 
     def open_by_system(self, filepath):
