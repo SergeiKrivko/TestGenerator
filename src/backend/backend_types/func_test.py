@@ -175,6 +175,7 @@ class FuncTest:
     @description.setter
     def description(self, value: str):
         self._desc = value
+        self.save()
 
     @property
     def stdin(self) -> str:
@@ -183,6 +184,7 @@ class FuncTest:
     @stdin.setter
     def stdin(self, value):
         self._stdin = value
+        self.save()
 
     @property
     def stdout(self):
@@ -191,6 +193,7 @@ class FuncTest:
     @stdout.setter
     def stdout(self, value):
         self._stdout = value
+        self.save()
 
     @property
     def in_files(self) -> list[InFile]:
@@ -207,6 +210,7 @@ class FuncTest:
     @args.setter
     def args(self, value):
         self._args = value
+        self.save()
 
     @property
     def exit(self):
@@ -215,6 +219,7 @@ class FuncTest:
     @exit.setter
     def exit(self, value):
         self._exit = value
+        self.save()
 
     @property
     def current_in(self):
@@ -223,6 +228,7 @@ class FuncTest:
     @current_in.setter
     def current_in(self, value):
         self._current_in = value
+        self.save()
 
     @property
     def current_out(self):
@@ -242,6 +248,7 @@ class FuncTest:
         if not isinstance(status, FuncTest.Status):
             raise TypeError('status must be of type FuncTest.Status')
         self._status = status
+        self.save()
 
     @property
     def res(self):

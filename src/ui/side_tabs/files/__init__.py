@@ -71,6 +71,7 @@ class FilesWidget(SidePanelWidget):
         if hard:
             self.root_item = TreeDirectory(path)
             self.tree.addItem(self.root_item)
+            self.root_item.expand()
 
     def move_file(self, item1, item2):
         file = item1.path

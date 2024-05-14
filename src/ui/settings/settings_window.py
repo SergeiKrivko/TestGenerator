@@ -1,4 +1,4 @@
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt
 from PyQtUIkit.widgets import *
 
 from src.backend.backend_types.program import PROGRAMS
@@ -7,7 +7,6 @@ from src.backend.managers import BackendManager
 from src.config import APP_NAME
 from src.ui.settings.settings_widget import SettingsWidget, ComboBox, CheckBox, KEY_GLOBAL, LineEdit, SwitchBox, \
     KEY_DATA, TextEdit, KEY_LOCAL, ProgramEdit, SpinBox
-from src.ui.settings.utils_edit import UtilsEdit
 
 line_sep = {'\n': 'LF (\\n)', '\r\n': 'CRLF (\\r\\n)', '\r': 'CR (\\r)'}
 line_sep_reverse = {'LF (\\n)': '\n', 'CRLF (\\r\\n)': '\r\n', 'CR (\\r)': '\r'}
@@ -20,10 +19,13 @@ class SettingsWindow(KitDialog):
         self.bm = bm
         self.sm = bm.sm
 
-        layout = KitHBoxLayout()
-        layout.setSpacing(20)
-        layout.setContentsMargins(10, 10, 0, 10)
-        self.setWidget(layout)
+        self.__layout = KitHBoxLayout()
+        self.__layout.setSpacing(20)
+        self.__layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.__layout.setContentsMargins(10, 10, 0, 10)
+        self.setWidget(self.__layout)
+
+        self.__tabs = dict()
 
         self.setFixedSize(920, 600)
 
@@ -32,48 +34,27 @@ class SettingsWindow(KitDialog):
         self.tree_widget.main_palette = 'Bg'
         self.tree_widget.setFixedWidth(175)
         self.tree_widget.currentItemChanged.connect(self.select_tab)
-        layout.addWidget(self.tree_widget)
+        self.__layout.addWidget(self.tree_widget)
 
-        layout.addWidget(KitVSeparator())
+        self.__layout.addWidget(KitVSeparator())
 
-        self.tree_widget.addItem(KitTreeWidgetItem('Основные'))
-        self.tree_widget.addItem(KitTreeWidgetItem('Интерфейс'))
-
-        self.tree_widget.addItem(item := KitTreeWidgetItem('Проект'))
-        item.addItem(KitTreeWidgetItem('Структура'))
-        item.addItem(KitTreeWidgetItem('Тестирование'))
-        item.addItem(KitTreeWidgetItem('Входные данные'))
-
-        self.tree_widget.addItem(item := KitTreeWidgetItem('Языки'))
-        item.addItem(KitTreeWidgetItem('C'))
-        item.addItem(KitTreeWidgetItem('C++'))
-        item.addItem(KitTreeWidgetItem('Python'))
-        item.addItem(KitTreeWidgetItem('Bash'))
-
-        self.tree_widget.addItem(KitTreeWidgetItem('Тестирование '))
-        self.tree_widget.addItem(KitTreeWidgetItem('Сторонние утилиты'))
-        self.tree_widget.addItem(KitTreeWidgetItem('Библиотеки'))
-
-        self.main_settings_widget = SettingsWidget(
+        self.add_tab('Основные', SettingsWidget(
             self.sm,
             ComboBox(self.bm, "Символ переноса строки: ", list(line_sep.values()), key='line_sep'),
             CheckBox(self.bm, "Уведомления", key='notifications'),
             CheckBox(self.bm, "Поиск программ при каждом запуске", key='search_after_start'),
             CheckBox(self.bm, "Открывать файлы в режиме LightEdit", key='open_file_in_light_edit'),
             CheckBox(self.bm, "Использовать WSL", key='use_wsl'),
-            key_type=KEY_GLOBAL)
-        layout.addWidget(self.main_settings_widget)
+            key_type=KEY_GLOBAL))
 
-        self.ui_settings_widget = SettingsWidget(
+        self.add_tab('Интерфейс', SettingsWidget(
             self.sm,
-            ComboBox(self.bm, "Тема: ", ['light', 'dark'], key='theme', text_mode=True,
+            ComboBox(self.bm, "Тема:", ['light', 'dark'], key='theme', text_mode=True,
                      on_state_changed=self._on_theme_changed),
             # *[CheckBox(item, True, f'side_button_{key}') for key, item in side_bar.desc.items()],
-            key_type=KEY_GLOBAL)
-        self.ui_settings_widget.hide()
-        layout.addWidget(self.ui_settings_widget)
+            key_type=KEY_GLOBAL))
 
-        self.project_settings_widget = SettingsWidget(
+        self.add_tab('Проект', SettingsWidget(
             self.sm,
             LineEdit(self.bm, "Название:", '', width=500, key='name', key_type=KEY_DATA),
             ComboBox(self.bm, "Язык:", PROJECT_LANGUAGES, key='language', text_mode=True),
@@ -81,11 +62,9 @@ class SettingsWindow(KitDialog):
                 CheckBox(self.bm, "Временный проект", True, key='temp')
             ]}),
             TextEdit(self.bm, "Описание:", '', key='description', key_type=KEY_DATA),
-            key_type=KEY_LOCAL)
-        self.project_settings_widget.hide()
-        layout.addWidget(self.project_settings_widget)
+            key_type=KEY_LOCAL))
 
-        self.project_struct_widget = SettingsWidget(
+        self.add_tab('Проект/Структура', SettingsWidget(
             self.sm,
             CheckBox(self.bm, "Стандартная структура", state=True, key='default_struct', children={False: [
                 CheckBox(self.bm, "Сохранять тесты в папке проекта", state=False, key='func_tests_in_project',
@@ -120,11 +99,9 @@ class SettingsWindow(KitDialog):
                          key='temp_files_dir', width=500, check_func=SettingsWindow.check_path)
             ]}),
             key_type=KEY_LOCAL
-        )
-        self.project_struct_widget.hide()
-        layout.addWidget(self.project_struct_widget)
+        ))
 
-        self.project_testing_widget = SettingsWidget(
+        self.add_tab('Проект/Тестирование', SettingsWidget(
             self.sm,
             CheckBox(self.bm, "Глобальные настройки компилятора/интерпретатора", key='default_compiler_settings',
                      children={
@@ -137,7 +114,6 @@ class SettingsWindow(KitDialog):
                              ],
                              'Python': [
                                  ProgramEdit(self.bm, "Python:", PROGRAMS['python']),
-                                 ProgramEdit(self.bm, "Python coverage:", PROGRAMS['python_coverage']),
                              ],
                          })
                      }),
@@ -159,49 +135,33 @@ class SettingsWindow(KitDialog):
                 SpinBox(self.bm, "Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             ]}),
             key_type=KEY_LOCAL
-        )
-        self.project_testing_widget.hide()
-        layout.addWidget(self.project_testing_widget)
+        ))
 
-        # self.project_in_widget = InDataWidget(self.bm)
-        self.project_in_widget = KitHBoxLayout()
-        self.project_in_widget.hide()
-        layout.addWidget(self.project_in_widget)
-
-        self.c_settings_widget = SettingsWidget(
+        self.add_tab('Языки/C', SettingsWidget(
             self.sm,
             *self.c_settings(),
             key_type=KEY_GLOBAL
-        )
-        self.c_settings_widget.hide()
-        layout.addWidget(self.c_settings_widget)
+        ))
 
-        self.cpp_settings_widget = SettingsWidget(
+        self.add_tab('Языки/C++', SettingsWidget(
             self.sm,
             ProgramEdit(self.bm, "Компилятор:", PROGRAMS['g++']),
             key_type=KEY_GLOBAL
-        )
-        self.cpp_settings_widget.hide()
-        layout.addWidget(self.cpp_settings_widget)
+        ))
 
-        self.python_settings_widget = SettingsWidget(
+        self.add_tab('Языки/Python', SettingsWidget(
             self.sm,
             ProgramEdit(self.bm, "Python:", PROGRAMS['python']),
-            ProgramEdit(self.bm, "Python coverage:", PROGRAMS['python_coverage']),
             key_type=KEY_GLOBAL
-        )
-        self.python_settings_widget.hide()
-        layout.addWidget(self.python_settings_widget)
+        ))
 
-        self.bash_settings_widget = SettingsWidget(
+        self.add_tab('Языки/Bash', SettingsWidget(
             self.sm,
             ProgramEdit(self.bm, "Интерпретатор Bash:", PROGRAMS['bash']),
             key_type=KEY_GLOBAL,
-        )
-        self.bash_settings_widget.hide()
-        layout.addWidget(self.bash_settings_widget)
+        ))
 
-        self.testing_settings_widget = SettingsWidget(
+        self.add_tab('Тестирование', SettingsWidget(
             self.sm,
             ComboBox(self.bm, "Компаратор для позитивных тестов:", ['Числа', 'Числа как текст', 'Текст после подстроки',
                                                                     'Слова после подстроки', 'Текст', 'Слова'],
@@ -216,19 +176,7 @@ class SettingsWindow(KitDialog):
             CheckBox(self.bm, "Coverage", key='coverage'),
             SpinBox(self.bm, "Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             key_type=KEY_GLOBAL
-        )
-        self.testing_settings_widget.hide()
-        layout.addWidget(self.testing_settings_widget)
-
-        # self.utils_widget = UtilsEdit(self.bm)
-        self.utils_widget = KitVBoxLayout()
-        self.utils_widget.hide()
-        layout.addWidget(self.utils_widget)
-
-        # self.libs_widget = LibWidget(self.bm)
-        self.libs_widget = KitHBoxLayout()
-        self.libs_widget.hide()
-        layout.addWidget(self.libs_widget)
+        ))
 
     def c_settings(self):
         return [ProgramEdit(self.bm, "Компилятор:", PROGRAMS['gcc']),
@@ -239,6 +187,7 @@ class SettingsWindow(KitDialog):
         theme = self.sm.get_general('theme')
         if self.theme_manager and self.theme_manager.active and self.theme_manager.current_theme != theme:
             self.theme_manager.set_theme(theme)
+            self._apply_theme()
 
     @staticmethod
     def check_path(path: str):
@@ -279,55 +228,46 @@ class SettingsWindow(KitDialog):
         except Exception:
             return False
 
+    def add_tab(self, key, widget):
+        if '/' not in key:
+            name = key
+            parent = self.tree_widget
+        else:
+            name = key.split('/')[-1]
+            path = key.split('/')[0]
+            items = {item.key: item for item in self.tree_widget.items()}
+            if path in items:
+                parent = items[path]
+            else:
+                parent = _TreeWidgetItem(path, path)
+                self.tree_widget.addItem(parent)
+
+        item = _TreeWidgetItem(name, key)
+        parent.addItem(item)
+        self.__tabs[key] = widget
+        widget.hide()
+        self.__layout.addWidget(widget)
+
+    def select_tab(self, item: '_TreeWidgetItem'):
+        if item.key not in self.__tabs:
+            return
+        for key, el in self.__tabs.items():
+            if key != item.key:
+                el.hide()
+        self.__tabs[item.key].show()
+        
+    def showEvent(self, a0) -> None:
+        if not self._tm:
+            super().showEvent(a0)
+
     def exec(self) -> int:
         for el in self.__dict__.values():
             if isinstance(el, SettingsWidget):
                 el.load_values()
         return super().exec()
 
-    def select_tab(self, item: KitTreeWidgetItem):
-        if item is not None:
-            tab = item.name
-            if tab == 'Языки':
-                return
 
-            self.main_settings_widget.hide()
-            self.ui_settings_widget.hide()
-            self.project_settings_widget.hide()
-            self.project_struct_widget.hide()
-            self.project_testing_widget.hide()
-            self.project_in_widget.hide()
-            self.c_settings_widget.hide()
-            self.cpp_settings_widget.hide()
-            self.python_settings_widget.hide()
-            self.bash_settings_widget.hide()
-            self.testing_settings_widget.hide()
-            self.libs_widget.hide()
-            self.utils_widget.hide()
-
-            if tab == 'Основные':
-                self.main_settings_widget.show()
-            if tab == 'Интерфейс':
-                self.ui_settings_widget.show()
-            if tab == 'Проект':
-                self.project_settings_widget.show()
-            if tab == 'Структура':
-                self.project_struct_widget.show()
-            if tab == 'Тестирование':
-                self.project_testing_widget.show()
-            if tab == 'Входные данные':
-                self.project_in_widget.show()
-            if tab == 'C':
-                self.c_settings_widget.show()
-            if tab == 'C++':
-                self.cpp_settings_widget.show()
-            if tab == 'Python':
-                self.python_settings_widget.show()
-            if tab == 'Bash':
-                self.bash_settings_widget.show()
-            if tab == 'Тестирование ':
-                self.testing_settings_widget.show()
-            if tab == 'Библиотеки':
-                self.libs_widget.show()
-            if tab == 'Сторонние утилиты':
-                self.utils_widget.show()
+class _TreeWidgetItem(KitTreeWidgetItem):
+    def __init__(self, name, key):
+        super().__init__(name)
+        self.key = key

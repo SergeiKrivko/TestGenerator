@@ -465,3 +465,7 @@ class SettingsWidget(KitScrollArea):
         for el in self._widgets:
             if hasattr(el, 'load_value'):
                 el.load_value()
+
+    def showEvent(self, a0):
+        super().showEvent(a0)
+        super()._apply_theme()

@@ -94,6 +94,8 @@ class Project:
         return self._data.get(key, default)
 
     def set(self, key, value):
+        if 'POS' in key or 'NEG' in key:
+            raise KeyError
         self._settings[key] = value
         self.save_settings()
 
