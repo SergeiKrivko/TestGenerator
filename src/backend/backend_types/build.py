@@ -18,6 +18,7 @@ class Build:
         C_EXE = 'C'
         C_LIB = 'C-lib'
         CPP_EXE = 'C++'
+        CPP_LIB = 'C++lib'
         PYTHON = 'python'
         BASH = 'bash'
         COMMAND = 'command'

@@ -5,6 +5,7 @@ from src.backend.backend_types.program import PROGRAMS
 from src.backend.language.languages import PROJECT_LANGUAGES
 from src.backend.managers import BackendManager
 from src.config import APP_NAME
+from src.ui.settings.plugins_widget import PluginsWidget
 from src.ui.settings.settings_widget import SettingsWidget, ComboBox, CheckBox, KEY_GLOBAL, LineEdit, SwitchBox, \
     KEY_DATA, TextEdit, KEY_LOCAL, ProgramEdit, SpinBox
 
@@ -177,6 +178,8 @@ class SettingsWindow(KitDialog):
             SpinBox(self.bm, "Ограничение по времени:", min_value=0, max_value=600, key='time_limit', double=True),
             key_type=KEY_GLOBAL
         ))
+
+        self.add_tab('Расширения', PluginsWidget(self.bm))
 
     def c_settings(self):
         return [ProgramEdit(self.bm, "Компилятор:", PROGRAMS['gcc']),

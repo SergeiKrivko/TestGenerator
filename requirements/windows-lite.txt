@@ -20,3 +20,4 @@ matplotlib~=3.8.2
 PyTaskbarProgress~=0.0.8
 pymorphy3-dicts-ru
 qasync~=0.27.1
+TestGeneratorPluginLib~=1.0.3

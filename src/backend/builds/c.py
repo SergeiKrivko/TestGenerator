@@ -1,14 +1,15 @@
 import os
+from uuid import UUID
 
 from src.backend.backend_types.build import Build
 from src.backend.commands import check_files_mtime, cmd_command, remove_files
 
 
 class _BuildCAbstract(Build):
-    def compile(self, lib=False):
+    def compile(self, lib=False, _compiler='gcc', _extension='.c'):
         sm = self._bm.sm
         coverage = self.get('coverage', False)
-        compiler = self.program('gcc')
+        compiler = self.program(_compiler)
 
         path = self._project.path()
         temp_dir = self.temp_dir()
@@ -17,7 +18,7 @@ class _BuildCAbstract(Build):
         c_files = []
         h_dirs = set()
         for key in self.get('files', []):
-            if key.endswith('.c'):
+            if key.endswith(_extension):
                 c_files.append(f"{path}/{key}")
             else:
                 h_dirs.add(compiler.convert_path(f"{path}/{os.path.split(key)[0]}"))
@@ -84,12 +85,12 @@ class _BuildCAbstract(Build):
         remove_files(self.temp_dir(), ['.gcda', '.gcno', '.gcov', 'coverage.info'])
 
 
-class BuildCExecutable(_BuildCAbstract):
-    def compile(self, *args):
+class _BuildCExecutable(_BuildCAbstract):
+    def compile(self, _compiler='gcc', _extension='.c', *args):
         return super().compile(lib=False)
 
-    def command(self, args=''):
-        compiler = self.program('gcc')
+    def command(self, args='', _compiler='gcc'):
+        compiler = self.program(_compiler)
         path = compiler.convert_path(os.path.join(self._project.path(), self.get('app_file')))
         return f"{compiler.vs_args()} {path} {args}"
 
@@ -136,7 +137,22 @@ class BuildCExecutable(_BuildCAbstract):
             return None
 
 
+class BuildCExecutable(_BuildCExecutable):
+    def compile(self, *args):
+        return super().compile(_compiler='gcc', _extension='.c')
+
+
+class BuildCppExecutable(_BuildCExecutable):
+    def compile(self, *args):
+        return super().compile(_compiler='g++', _extension='.cpp')
+
+
 class BuildCLibrary(_BuildCAbstract):
     def compile(self, *args):
-        return super().compile(lib=True)
+        return super().compile(lib=True, _compiler='gcc', _extension='.c')
+
+
+class BuildCppLibrary(_BuildCAbstract):
+    def compile(self, *args):
+        return super().compile(lib=True, _compiler='g++', _extension='.cpp')
 

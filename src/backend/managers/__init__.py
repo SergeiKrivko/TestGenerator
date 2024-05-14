@@ -9,6 +9,7 @@ from src.backend.backend_types.util import Util
 from src.backend.commands import *
 from src.backend.managers._builds import BuildsManager
 from src.backend.managers._func_tests import FuncTestsManager
+from src.backend.managers._plugins import PluginManager
 from src.backend.managers._processes import CustomThread
 from src.backend.managers._processes import ProcessManager
 from src.backend.managers._programs import ProgramsManager
@@ -37,6 +38,7 @@ class BackendManager(QObject):
         self.projects = ProjectManager(self)
         self.utils = UtilsManager(self)
         self.unit_tests = UnitTestsManager(self)
+        self.plugins = PluginManager(self)
 
         self.changing_project = False
 

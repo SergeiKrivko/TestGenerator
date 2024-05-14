@@ -1,11 +1,9 @@
-import os
 import sys
 
-from PyQtUIkit.themes import icons
+import TestGeneratorPluginLib
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
-from src import config
 from src.backend.arg_parser import args
 from src.backend.managers import BackendManager
 from src.backend.notification import notification
@@ -97,6 +95,9 @@ class MainWindow(KitMainWindow):
         self.bm.mainTabCommand.connect(self.tab_command)
         self.bm.sideTabCommand.connect(self.side_bar.tab_command)
         self.bm.toTopRequired.connect(self.toTop)
+        self.bm.plugins.newMainTab.connect(self._main_tab_from_plugin)
+        self.bm.plugins.newSideTab.connect(self._side_tab_from_plugin)
+        self.bm.plugins.init()
         # self.bm.showNotification.connect(self.notification)
 
         self._current_tab = ''
@@ -120,6 +121,12 @@ class MainWindow(KitMainWindow):
             item.hide()
         self._tabs[tab].show()
         self.menu_bar.select_tab(tab, True)
+
+    def _main_tab_from_plugin(self, key: str, tab: TestGeneratorPluginLib.MainTab):
+        self.add_tab(tab, key, tab.name)
+
+    def _side_tab_from_plugin(self, key: str, tab: TestGeneratorPluginLib.SideTab):
+        self.side_bar.add_tab(key, tab, tab.icon, tab.name)
 
     def tab_command(self, tab, args: tuple, kwargs: dict):
         self._tabs[tab].command(*args, **kwargs)

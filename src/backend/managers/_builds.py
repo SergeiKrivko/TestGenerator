@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 from PyQt6.QtCore import pyqtSignal
 
 from src.backend.backend_types.build import Build
-from src.backend.builds.c import BuildCExecutable, BuildCLibrary
+from src.backend.builds.c import BuildCExecutable, BuildCLibrary, BuildCppExecutable, BuildCppLibrary
 from src.backend.builds.python import BuildPython
 from src.backend.builds.shell import BuildBash, BuildCommand
 from src.backend.commands import read_json
@@ -88,6 +88,10 @@ def _select(build_type: str) -> Type:
             return BuildCExecutable
         case Build.Type.C_LIB:
             return BuildCLibrary
+        case Build.Type.CPP_EXE:
+            return BuildCppExecutable
+        case Build.Type.CPP_LIB:
+            return BuildCppLibrary
         case Build.Type.PYTHON:
             return BuildPython
         case Build.Type.BASH:
