@@ -1,16 +1,11 @@
 PyQt6~=6.6.1
+PyQt6-Qt6~=6.6.3
 PyQt6-QScintilla~=2.14.1
 PyQtUIkit~=2.10.5
 Pillow~=10.2.0
 lxml~=5.0.0
 requests~=2.31.0
-docx2pdf~=0.1.8
-latex2mathml~=3.77.0
-htmldocx~=0.0.6
-CairoSVG~=2.7.1
-pypdf~=3.17.4
 pymorphy3~=2.0.0
-python-docx~=1.1.0
 appdirs~=1.4.4
 Send2Trash~=1.8.2
 py7zr~=0.20.5
@@ -20,4 +15,4 @@ matplotlib~=3.8.2
 PyTaskbarProgress~=0.0.8
 pymorphy3-dicts-ru
 qasync~=0.27.1
-TestGeneratorPluginLib~=1.0.4
+TestGeneratorPluginLib~=1.0.6

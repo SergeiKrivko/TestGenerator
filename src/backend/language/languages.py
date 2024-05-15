@@ -3,8 +3,6 @@ from src.backend.language.language import Language, FastRunFunction, FastRunComm
 from src.other.binary_redactor.convert_binary import convert_file as convert_binary
 from src.other.binary_redactor.lexer import LexerBin
 
-# from src.side_tabs.files.zip_manager import ZipManager
-
 
 LANGUAGES = {
     'txt': Language('txt', ['.txt'], 'custom-text'),
