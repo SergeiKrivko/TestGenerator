@@ -2,6 +2,7 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQtUIkit.widgets import KitHBoxLayout, KitIconButton, KitTabLayout, KitVBoxLayout, KitVSeparator, KitMenu, \
     KitButton
+from TestGeneratorPluginLib import SideTab
 
 from src.ui.widgets.side_bar_window import SideBarDialog
 from src.ui.widgets.side_panel_widget import SidePanelWidget
@@ -52,7 +53,7 @@ class SideBar(KitHBoxLayout):
         pos = self.mapToGlobal(self._button_more.pos())
         self._menu.move(pos.x() + SideBar.BUTTON_SIZE + 5, pos.y())
 
-    def add_tab(self, name: str, widget: SidePanelWidget | SideBarDialog, icon: str, desc: str = ''):
+    def add_tab(self, name: str, widget: SidePanelWidget | SideTab | SideBarDialog, icon: str, desc: str = ''):
         button = SideBarButton(icon, desc)
         self.buttons[name] = button
         self._layout.insertWidget(self._layout.count() - 1, button)
@@ -64,7 +65,7 @@ class SideBar(KitHBoxLayout):
         self.actions[name] = action
         action.setVisible(False)
 
-        if isinstance(widget, SidePanelWidget):
+        if isinstance(widget, (SidePanelWidget, SideTab)):
             button.clicked.connect(lambda flag: self.button_clicked(name, flag))
             action.triggered.connect(lambda: self.button_clicked(name, True))
             widget.resized.connect(self._apply_width)
@@ -79,6 +80,13 @@ class SideBar(KitHBoxLayout):
             action.triggered.connect(lambda flag: self.window_button_clicked(name))
 
         self._children[name] = widget
+
+    def remove_tab(self, name):
+        self._layout.removeWidget(self.buttons[name])
+        self.buttons.pop(name)
+        self.desc.pop(name)
+        self._tab_layout.removeWidget(self._tabs[name])
+        self._tabs.pop(name)
 
     def _apply_width(self, width):
         self.setMaximumWidth(SideBar.WIDTH + width)

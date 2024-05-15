@@ -97,6 +97,8 @@ class MainWindow(KitMainWindow):
         self.bm.toTopRequired.connect(self.toTop)
         self.bm.plugins.newMainTab.connect(self._main_tab_from_plugin)
         self.bm.plugins.newSideTab.connect(self._side_tab_from_plugin)
+        self.bm.plugins.removeMainTab.connect(self.remove_tab)
+        self.bm.plugins.removeSideTab.connect(self.side_bar.remove_tab)
         self.bm.plugins.init()
         # self.bm.showNotification.connect(self.notification)
 
