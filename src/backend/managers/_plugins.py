@@ -22,6 +22,8 @@ class PluginManager(QObject):
         self._plugins: dict[str: BuiltPlugin] = dict()
 
     def init(self):
+        if not os.listdir(self._path):
+            return
         for el in os.listdir(self._path):
             self.load(el)
 
