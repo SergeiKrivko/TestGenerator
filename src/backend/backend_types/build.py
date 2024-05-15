@@ -4,13 +4,11 @@ import shutil
 from uuid import UUID
 
 from src.backend.backend_types.program import ProgramInstance
-from src.backend.commands import read_json, read_file, remove_files
+from src.backend.commands import read_json
 
 from src.backend.language.testing.c import *
 from src.backend.language.testing.cpp import *
 from src.backend.language.testing.python import *
-from src.backend.language.testing.shell import bash_run
-from src.other.report.markdown_parser import MarkdownParser
 
 
 class Build:

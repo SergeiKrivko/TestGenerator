@@ -1,5 +1,4 @@
 import src.backend.builds
-import src.other.report.markdown_parser
 from src.backend.language.language import Language, FastRunFunction, FastRunCommand
 from src.other.binary_redactor.convert_binary import convert_file as convert_binary
 from src.other.binary_redactor.lexer import LexerBin
@@ -42,12 +41,6 @@ LANGUAGES = {
         extensions=['.md'],
         icon='custom-markdown',
         preview=Language.PreviewType.SIMPLE,
-        fast_run=[
-            FastRunFunction('Конвертировать в Docx', 'custom-docx',
-                            lambda path, bm: (src.other.report.markdown_parser.convert(path, bm, pdf=False), '')),
-            FastRunFunction('Конвертировать в Pdf', 'custom-pdf',
-                            lambda path, bm: (src.other.report.markdown_parser.convert(path, bm, pdf=True), ''))
-        ]
     ),
     'html': Language(
         'html',

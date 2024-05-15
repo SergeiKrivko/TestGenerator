@@ -23,7 +23,6 @@ class PluginManager(QObject):
 
         self._path = f"{self._sm.app_data_dir}/plugins"
         self._plugins: dict[str: BuiltPlugin] = dict()
-        self._modules = dict()
 
     def init(self):
         if not os.path.isdir(self._path):
@@ -39,16 +38,11 @@ class PluginManager(QObject):
         return self._plugins.get(name)
 
     def _import_plugin(self, path: str):
+        path = os.path.abspath(path)
         sys.path.insert(0, path)
         sys.path.insert(1, os.path.join(path, '__packages__'))
 
-        path = os.path.abspath(path)
-        if path not in self._modules:
-            module = importlib.import_module('__plugin__')
-            self._modules[path] = module
-        else:
-            module = importlib.reload(self._modules[path])
-            self._modules[path] = module
+        module = importlib.import_module('__plugin__')
 
         plugin: BuiltPlugin = module.__plugin__
         self._plugins[plugin.name] = plugin
@@ -59,12 +53,15 @@ class PluginManager(QObject):
         for key, item in plugin.fast_run_options.items():
             LANGUAGES[key].fast_run.extend(item)
 
+        sys.modules.pop('__plugin__')
         sys.path.pop(0)
         sys.path.pop(0)
         return plugin
 
     def install(self, path: str):
         temp_path = f"{self._sm.temp_dir()}/plugin"
+        if os.path.isdir(temp_path):
+            shutil.rmtree(temp_path)
         shutil.unpack_archive(path, temp_path)
 
         plugin = self._import_plugin(temp_path)
