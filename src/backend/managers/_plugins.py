@@ -6,12 +6,15 @@ import sys
 from PyQt6.QtCore import QObject, pyqtSignal
 from TestGeneratorPluginLib._built_plugin import BuiltPlugin
 
+from src.backend.language.languages import LANGUAGES
 from src.backend.settings_manager import SettingsManager
 
 
 class PluginManager(QObject):
     newMainTab = pyqtSignal(str, object)
     newSideTab = pyqtSignal(str, object)
+    removeMainTab = pyqtSignal(str)
+    removeSideTab = pyqtSignal(str)
 
     def __init__(self, bm):
         super().__init__()
@@ -22,7 +25,7 @@ class PluginManager(QObject):
         self._plugins: dict[str: BuiltPlugin] = dict()
 
     def init(self):
-        if not os.listdir(self._path):
+        if not os.path.isdir(self._path):
             return
         for el in os.listdir(self._path):
             self.load(el)
@@ -38,12 +41,14 @@ class PluginManager(QObject):
         sys.path.insert(0, path)
         sys.path.insert(1, os.path.join(path, '__packages__'))
 
-        plugin = importlib.import_module('__plugin__').__plugin__
+        plugin: BuiltPlugin = importlib.import_module('__plugin__').__plugin__
         self._plugins[plugin.name] = plugin
         for key, item in plugin.main_tabs.items():
             self.newMainTab.emit(key, item(self._bm))
         for key, item in plugin.side_tabs.items():
             self.newSideTab.emit(key, item(self._bm))
+        for key, item in plugin.fast_run_options.items():
+            LANGUAGES[key].fast_run.extend(item)
 
         sys.path.pop(0)
         sys.path.pop(0)
@@ -63,9 +68,15 @@ class PluginManager(QObject):
         return name
 
     def remove(self, name):
+        plugin = self._plugins[name]
+        for el in plugin.main_tabs:
+            self.removeMainTab.emit(el)
+        for el in plugin.side_tabs:
+            self.removeSideTab.emit(el)
+
         self._plugins.pop(name)
         shutil.rmtree(os.path.join(self._path, name))
 
     @property
     def all(self):
-        return os.listdir(self._path)
+        return list(self._plugins.keys())

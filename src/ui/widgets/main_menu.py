@@ -51,6 +51,10 @@ class MainMenu(KitHBoxLayout):
 
         self._buttons[identifier] = button
 
+    def remove_tab(self, identifier):
+        self._buttons_layout.removeWidget(self._buttons[identifier])
+        self._buttons.pop(identifier)
+
     def set_tab_hidden(self, key, hidden):
         self._buttons[key].setHidden(hidden)
 

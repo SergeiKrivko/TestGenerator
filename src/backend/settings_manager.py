@@ -25,6 +25,14 @@ class SettingsManager(QObject):
     def get_general(self, key, default=None):
         return self.q_settings.value(key, default)
 
+    def get_bool(self, key: str, default=False):
+        res = self.q_settings.value(key, default)
+        if isinstance(res, bool):
+            return res
+        if isinstance(res, int):
+            return bool(res)
+        return str(res).lower() == 'true'
+
     def remove_general(self, key):
         self.q_settings.remove(key)
 

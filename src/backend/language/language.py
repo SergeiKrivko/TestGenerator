@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Type, Callable
+from typing import Type
 
 from PyQtUIkit.themes.languages import _languages, _names, _Language
+from TestGeneratorPluginLib._language import _FastRunOption, FastRunFunction, FastRunCommand
 
 from src.backend.language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 
@@ -34,29 +35,3 @@ class Language:
         self.autocompletion = autocompletion
         self.fast_run = fast_run or []
         self.preview = preview
-
-
-class _FastRunOption:
-    def __init__(self, name: str, icon: str, function: Callable):
-        self._name = name
-        self._icon = icon
-        self._function = function
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def icon(self):
-        return self._icon
-
-    def __call__(self, path, bm):
-        return self._function(path, bm)
-
-
-class FastRunFunction(_FastRunOption):
-    pass
-
-
-class FastRunCommand(_FastRunOption):
-    pass

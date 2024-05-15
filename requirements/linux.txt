@@ -20,4 +20,4 @@ beautifulsoup4~=4.12.2
 matplotlib~=3.8.2
 pymorphy3-dicts-ru
 qasync~=0.27.1
-TestGeneratorPluginLib~=1.0.3
+TestGeneratorPluginLib~=1.0.4

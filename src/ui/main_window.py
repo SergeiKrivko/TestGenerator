@@ -115,6 +115,11 @@ class MainWindow(KitMainWindow):
         self.menu_bar.add_tab(identifier, name)
         widget.hide()
 
+    def remove_tab(self, identifier: str):
+        self._tab_layout.removeWidget(self._tabs[identifier])
+        self._tabs.pop(identifier)
+        self.menu_bar.remove_tab(identifier)
+
     def show_tab(self, tab):
         self._current_tab = tab
         for key, item in self._tabs.items():
