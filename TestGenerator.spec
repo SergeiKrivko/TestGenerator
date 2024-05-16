@@ -33,7 +33,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='TestGeneratorLite',
+    name='TestGenerator',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -54,10 +54,10 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='TestGeneratorLite',
+    name='TestGenerator',
 )
 
 app = BUNDLE(coll,
-             name='TestGeneratorLite.app',
+             name='TestGenerator.app',
              icon='assets/icon-mac.png',
              bundle_identifier=None)
