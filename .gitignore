@@ -1,0 +1,5 @@
+TelegramAPI.txt
+src/config/secret.py
+dist/*
+build/*
+**/__pycache__/**
