@@ -28,7 +28,10 @@ class PluginManager(QObject):
         if not os.path.isdir(self._path):
             return
         for el in os.listdir(self._path):
-            self.load(el)
+            try:
+                self.load(el)
+            except Exception as e:
+                print(f"Cannot load plugin {el}: {e.__class__.__name__}: {e}")
 
     def load(self, name: str):
         path = f"{self._path}/{name}"
@@ -37,7 +40,7 @@ class PluginManager(QObject):
     def get(self, name) -> BuiltPlugin:
         return self._plugins.get(name)
 
-    def _import_plugin(self, path: str):
+    def _import_plugin(self, path: str, add=True):
         path = os.path.abspath(path)
         sys.path.insert(0, path)
         sys.path.insert(1, os.path.join(path, '__packages__'))
@@ -45,13 +48,15 @@ class PluginManager(QObject):
         module = importlib.import_module('__plugin__')
 
         plugin: BuiltPlugin = module.__plugin__
-        self._plugins[plugin.name] = plugin
-        for key, item in plugin.main_tabs.items():
-            self.newMainTab.emit(key, item(self._bm))
-        for key, item in plugin.side_tabs.items():
-            self.newSideTab.emit(key, item(self._bm))
-        for key, item in plugin.fast_run_options.items():
-            LANGUAGES[key].fast_run.extend(item)
+        if add:
+            self._plugins[plugin.name] = plugin
+            plugin.init(self._bm)
+            for key, item in plugin.main_tabs.items():
+                self.newMainTab.emit(key, item(self._bm))
+            for key, item in plugin.side_tabs.items():
+                self.newSideTab.emit(key, item(self._bm))
+            for key, item in plugin.fast_run_options.items():
+                LANGUAGES[key].fast_run.extend(item)
 
         sys.modules.pop('__plugin__')
         sys.path.pop(0)
