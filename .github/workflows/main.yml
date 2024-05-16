@@ -19,14 +19,12 @@ jobs:
         run: |
           python -m venv venv
           venv\Scripts\Activate.ps1
-          
-          venv\Scripts\python -m pip install -r requirements/windows.txt
+
+          venv\Scripts\python -m pip install -r requirements.txt
           venv\Scripts\python -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
         env:
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
         run: |
           venv\Scripts\Activate.ps1
@@ -54,103 +52,8 @@ jobs:
           name: TestGenerator_windows
           path: dist\TestGeneratorSetup.exe
 
-#  build-linux:
-#    name: Build for Linux
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#
-#      - name: Setup Python
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: 3.11
-#
-#      - name: Install dependencies
-#        run: |
-#          python3.11 -m pip install -r requirements.txt
-#          python3.11 -m pip install --upgrade pyinstaller==6.3.0
-#
-#      - name: Secrets
-#        env:
-#          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-#          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-#          CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
-#        run: |
-#          python -m add_secrets
-#
-#      - name: Build by Pyinstaller
-#        run: |
-#          pyinstaller --noconfirm TestGenerator.spec
-#
-#      - name: Upload artifacts
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: TestGenerator_linux
-#          path: dist/TestGenerator
-
-# ------------ LITE -------------
-
-  build-windows-lite:
-    name: Build for Windows - Lite
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Install dependencies
-        run: |
-          python -m venv venv
-          venv\Scripts\Activate.ps1
-
-          venv\Scripts\python -m pip install -r requirements/windows-lite.txt
-          venv\Scripts\python -m pip install --upgrade pyinstaller==6.3.0
-
-      - name: Secrets
-        env:
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-          CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
-          USE_WEB_ENGINE: False
-          USE_TELEGRAM: False
-          BUILD_NAME: Lite
-        run: |
-          venv\Scripts\Activate.ps1
-          python -m add_secrets
-
-      - name: Build by Pyinstaller
-        run: |
-          venv\Scripts\Activate.ps1
-          venv\Scripts\pyinstaller --noconfirm TestGeneratorLite.spec
-
-      - name: Compile .ISS to .EXE Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        with:
-          path: build\setup-lite.iss
-          options: /O+
-
-      - name: Upload release
-        env:
-          BUILD_TYPE: Lite
-        run: |
-          venv\Scripts\Activate.ps1
-          python upload_release.py
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: TestGeneratorLite_windows
-          path: dist\TestGeneratorSetup.exe
-
-  build-linux-lite:
-    name: Build for Linux - Lite
+  build-linux:
+    name: Build for Linux
     runs-on: ubuntu-latest
 
     steps:
@@ -166,18 +69,13 @@ jobs:
         run: |
           python3.11 -m venv venv
           source venv/bin/activate
-          python3 -m pip install -r requirements/linux-lite.txt
+          python3 -m pip install -r requirements.txt
           python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
         id: secrets
         env:
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
-          USE_WEB_ENGINE: False
-          USE_TELEGRAM: False
-          BUILD_NAME: Lite
         run: |
           source venv/bin/activate
           python3 -m add_secrets
@@ -187,8 +85,8 @@ jobs:
       - name: Build by Pyinstaller
         run: |
           source venv/bin/activate
-          pyinstaller --noconfirm TestGeneratorLite.spec
-          mv dist/TestGeneratorLite dist/TestGenerator
+          pyinstaller --noconfirm TestGenerator.spec
+          mv dist/TestGenerator dist/TestGenerator
 
       - name: Prepare DEP package
         run: |
@@ -203,11 +101,9 @@ jobs:
           maintainer: SergeiKrivko
           version: ${{ steps.secrets.outputs.version }}
           arch: 'amd64'
-          desc: 'TestGeneratorLite'
+          desc: 'TestGenerator'
 
       - name: Upload release
-        env:
-          BUILD_TYPE: Lite
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -215,11 +111,11 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: TestGeneratorLite_linux
+          name: TestGenerator_linux
           path: testgenerator_${{ steps.secrets.outputs.version }}_amd64.deb
 
-  build-macos-lite:
-    name: Build for macOS - Lite
+  build-macos:
+    name: Build for macOS
     runs-on: macos-12
 
     steps:
@@ -235,17 +131,12 @@ jobs:
         run: |
           python3.11 -m venv venv
           source venv/bin/activate
-          python3 -m pip install -r requirements/linux-lite.txt
+          python3 -m pip install -r requirements.txt
           python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
         env:
-          TELEGRAM_API_KEY: ${{ secrets.TELEGRAM_API_KEY }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
-          USE_WEB_ENGINE: False
-          USE_TELEGRAM: False
-          BUILD_NAME: Lite
         run: |
           source venv/bin/activate
           python3 -m add_secrets
@@ -253,18 +144,16 @@ jobs:
       - name: Build by Pyinstaller
         run: |
           source venv/bin/activate
-          pyinstaller --noconfirm TestGeneratorLite.spec
-          rm -rf dist/TestGeneratorLite
+          pyinstaller --noconfirm TestGenerator.spec
+          rm -rf dist/TestGenerator
 
       - name: Create installer
         uses: QQxiaoming/create-dmg-action@v0.0.2
         with:
-          name: 'TestGeneratorLite'
-          srcdir: 'dist/TestGeneratorLite.app'
+          name: 'TestGenerator'
+          srcdir: 'dist/TestGenerator.app'
 
       - name: Upload release
-        env:
-          BUILD_TYPE: Lite
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -272,5 +161,5 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: TestGeneratorLite_macos
-          path: TestGeneratorLite.dmg
+          name: TestGenerator_macos
+          path: TestGenerator.dmg

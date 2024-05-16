@@ -14,10 +14,11 @@ with open(f'dist/debpkg/usr/share/applications/{config.APP_NAME}.desktop', 'w', 
     f.write(f"""[Desktop Entry]
 Version={config.APP_VERSION}
 Name={config.APP_NAME}
-Exec=/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/{config.APP_NAME}
+Exec=/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/{config.APP_NAME} %U
 StartupNotify=true
 Terminal=false
 Icon=/opt/{config.ORGANISATION_NAME}/{config.APP_NAME}/_internal/assets/icon.png
 Type=Application
+MimeType=application/json;application/javascript;application/rdf+xml;application/rss+xml;application/xhtml+xml;application/xhtml_xml;application/xml;application/x-yaml;text/cmd;text/css;text/csv;text/html;text/javascript;text/plain;text/php;text/xml;text/markdown
 Categories=Network;WebBrowser;
 """)
