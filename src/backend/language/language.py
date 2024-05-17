@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Type
 
 from PyQtUIkit.themes.languages import _languages, _names, _Language
-from TestGeneratorPluginLib._language import _FastRunOption, FastRunFunction, FastRunCommand
+from TestGeneratorPluginLib._language import _FastRunOption, FastRunFunction, FastRunCommand, FastRunAsyncFunction
 
 from src.backend.language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
 

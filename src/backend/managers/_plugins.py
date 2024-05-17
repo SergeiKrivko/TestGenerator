@@ -8,6 +8,7 @@ from TestGeneratorPluginLib._built_plugin import BuiltPlugin
 
 from src.backend.language.languages import LANGUAGES
 from src.backend.settings_manager import SettingsManager
+from StdioBridge.client import *
 
 
 class PluginManager(QObject):

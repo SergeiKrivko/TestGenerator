@@ -9,7 +9,7 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import Qt, QUrl, QMimeData
 from PyQtUIkit.widgets import *
 
-from src.backend.language.language import FastRunCommand, FastRunFunction
+from src.backend.language.language import FastRunCommand, FastRunFunction, FastRunAsyncFunction
 from src.backend.managers import BackendManager
 from src.ui.side_tabs.files.context_menu import ContextMenu
 from src.ui.side_tabs.files.fast_run_dialog import FastRunDialog
@@ -194,14 +194,14 @@ class FilesWidget(SidePanelWidget):
                 os.rename(item.path, new_path)
                 self.update_files_list()
 
-    def fast_run_file(self, option: FastRunCommand | FastRunFunction):
+    def fast_run_file(self, option: FastRunCommand | FastRunFunction | FastRunAsyncFunction):
         item = self.tree.currentItem()
         if isinstance(item, TreeFile) or isinstance(item, TreeDirectory):
             if isinstance(option, FastRunCommand):
                 self.bm.side_tab_show('run')
                 self.bm.side_tab_command('run', option(item.path, self.bm),
                                          cwd=self.bm.projects.current.path())
-            elif isinstance(option, FastRunFunction):
+            elif isinstance(option, (FastRunFunction | FastRunAsyncFunction)):
                 FastRunDialog(self, self.bm, item.path, option).exec()
                 self.update_files_list()
 
