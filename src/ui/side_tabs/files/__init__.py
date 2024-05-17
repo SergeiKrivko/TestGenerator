@@ -143,7 +143,7 @@ class FilesWidget(SidePanelWidget):
             case ContextMenu.CREATE_H:
                 self.create_file(base_path=path, extension='h')
             case ContextMenu.CREATE_MD:
-                file = self.create_markdown(base_path=path)
+                self.create_file(base_path=path, extension='md')
             case ContextMenu.CREATE_T2B:
                 self.create_file(base_path=path, extension='t2b')
             case ContextMenu.DELETE_FILE:
@@ -294,9 +294,14 @@ class FilesWidget(SidePanelWidget):
             base_path = self.bm.projects.current.path()
         elif os.path.isfile(base_path):
             base_path = os.path.dirname(base_path)
+
+        options = [(el[0](), el[1]) for el in self.bm.plugins.file_create_options(extension)]
+
         dialog = KitFormDialog(self,
                                KitForm.Label(f"Введите имя {'папки' if directory else 'файла'}:"),
-                               KitForm.StrField())
+                               KitForm.StrField(),
+                               *[el[0] for el in options]
+                               )
         if dialog.exec():
             if not dialog.res()[0]:
                 KitDialog.danger(self, "Ошибка",
@@ -311,6 +316,10 @@ class FilesWidget(SidePanelWidget):
                 else:
                     os.makedirs(self.bm.projects.current.path(), exist_ok=True)
                     open(path, 'x').close()
+
+                    for form, func in options:
+                        func(path, form.res())
+
             except FileExistsError:
                 KitDialog.danger(self, "Ошибка",
                                  f"Невозможно создать {'директорию' if directory else 'файл'}: "
@@ -321,38 +330,6 @@ class FilesWidget(SidePanelWidget):
             except Exception as ex:
                 KitDialog.danger(self, "Ошибка",
                                  f"Невозможно создать {'директорию' if directory else 'файл'}: {ex.__class__.__name__}: {ex}")
-            else:
-                self.update_files_list()
-                return path
-
-    def create_markdown(self, base_path=None):
-        extension = 'md'
-        if base_path is None:
-            base_path = self.bm.projects.current.path()
-        elif os.path.isfile(base_path):
-            base_path = os.path.dirname(base_path)
-
-        dialog = KitFormDialog(self,
-                               KitForm.Label(f"Введите имя 'файла:"),
-                               KitForm.StrField(),
-                               KitForm.ComboField('', ['Пустой файл', 'Описание проекта', 'Отчет']))
-        if dialog.exec():
-            if not dialog.res()[0]:
-                KitDialog.danger(self, "Ошибка",
-                                 f"Невозможно создать файл: имя файла не задано")
-                return
-            try:
-                path = os.path.join(base_path, dialog.res()[0])
-                if extension and not path.endswith('.' + extension):
-                    path += '.' + extension
-                os.makedirs(self.bm.projects.current.path(), exist_ok=True)
-                open(path, 'x').close()
-            except FileExistsError:
-                KitDialog.danger(self, "Ошибка", f"Невозможно создать файл: файл с таким именем уже существует")
-            except PermissionError:
-                KitDialog.danger(self, "Ошибка", f"Невозможно создать файл: недостаточно прав")
-            except Exception as ex:
-                KitDialog.danger(self, "Ошибка", f"Невозможно создать файл: {ex.__class__.__name__}: {ex}")
             else:
                 self.update_files_list()
                 return path

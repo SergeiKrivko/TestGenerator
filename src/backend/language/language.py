@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Type
+from typing import Type, Callable, Any
 
 from PyQtUIkit.themes.languages import _languages, _names, _Language
+from PyQtUIkit.widgets import KitForm
 from TestGeneratorPluginLib._language import _FastRunOption, FastRunFunction, FastRunCommand, FastRunAsyncFunction
 
 from src.backend.language.autocomplition.abstract import CodeAutocompletionManager as AcMAbstract
@@ -21,7 +22,7 @@ class Language:
                  kit_language: str | tuple[Type, dict[str: str]] = None,
                  autocompletion: Type = AcMAbstract,
                  fast_run: list['_FastRunOption'] = None,
-                 preview=PreviewType.NONE):
+                 preview=PreviewType.NONE,):
         self.name = name
         self.icon = icon
         if isinstance(kit_language, tuple):
