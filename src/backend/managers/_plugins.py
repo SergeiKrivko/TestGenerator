@@ -2,13 +2,31 @@ import importlib
 import os.path
 import shutil
 import sys
+import time
+from urllib.parse import quote
 
+import aiohttp
 from PyQt6.QtCore import QObject, pyqtSignal
 from TestGeneratorPluginLib._built_plugin import BuiltPlugin
 
 from src.backend.language.languages import LANGUAGES
 from src.backend.settings_manager import SettingsManager
-from StdioBridge.client import *
+
+
+class RemotePlugin:
+    def __init__(self, user_id, data: dict):
+        self.user_id = user_id
+        self.name = data.get('name', '')
+        self.description = data.get('description', '')
+        self.author = data.get('author', '')
+        self.url = data.get('url', '')
+
+        versions = data.get('versions', dict())
+
+        all_version = versions.get('all')
+        this_version = versions.get(sys.platform)
+        self.version = all_version or this_version
+        self.platform = 'all' if all_version else sys.platform
 
 
 class PluginManager(QObject):
@@ -24,6 +42,7 @@ class PluginManager(QObject):
 
         self._path = f"{self._sm.app_data_dir}/plugins"
         self._plugins: dict[str: BuiltPlugin] = dict()
+        self._remote: dict[str: RemotePlugin] = dict()
 
         self._file_create_options = dict()
 
@@ -97,7 +116,9 @@ class PluginManager(QObject):
         return name
 
     def remove(self, name):
-        plugin = self._plugins[name]
+        plugin: BuiltPlugin = self._plugins[name]
+        plugin.terminate()
+        time.sleep(0.1)
         for el in plugin.main_tabs:
             self.removeMainTab.emit(el)
         for el in plugin.side_tabs:
@@ -114,6 +135,40 @@ class PluginManager(QObject):
     def file_create_options(self, extension: str):
         return self._file_create_options.get(extension, [])
 
+    async def update_remote(self):
+        self._remote.clear()
+        try:
+            url = f"https://testgenerator-bf37c-default-rtdb.europe-west1.firebasedatabase.app/plugins.json"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as resp:
+                    if resp.ok:
+                        data = await resp.json()
+                        for user_id, data in data.items():
+                            for plugin_name, plugin_data in data.items():
+                                self._remote[plugin_name] = RemotePlugin(user_id=user_id, data=plugin_data)
+        except aiohttp.ClientError:
+            pass
+
+    async def download_plugin(self, plugin: RemotePlugin):
+        url = f"https://firebasestorage.googleapis.com/v0/b/testgenerator-bf37c.appspot.com/o/" \
+              f"{quote(f'plugins/{plugin.user_id}/{plugin.name}/{plugin.platform}.TGPlugin.zip', safe='')}?alt=media"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if not resp.ok:
+                    raise aiohttp.ClientError
+                dst_path = os.path.join(self._sm.temp_dir(), 'plugin.TGPlugin.zip')
+                os.makedirs(self._sm.temp_dir(), exist_ok=True)
+                with open(dst_path, 'bw') as f:
+                    while not resp.closed:
+                        chunk = await resp.content.readany()
+                        f.write(chunk)
+        print('finished downloading plugin')
+        return dst_path
+
     @property
     def all(self):
         return list(self._plugins.keys())
+
+    @property
+    def remote(self):
+        return self._remote

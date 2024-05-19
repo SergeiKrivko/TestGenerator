@@ -16,7 +16,7 @@ a = Analysis(
     datas=[(os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
            (os.path.abspath("assets"), "assets"),
            (f"{lib_path}/pymorphy3_dicts_ru/data", r"pymorphy3_dicts_ru/data"),],
-    hiddenimports=[],
+    hiddenimports=['StdioBridge.client'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

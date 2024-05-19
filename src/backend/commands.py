@@ -239,3 +239,36 @@ def detect_project_lang(path):
                     break
 
     return max(counts, key=counts.get)
+
+
+class Version:
+    def __init__(self, version: str):
+        major, minor, patch = version.split('.')
+        self.major = int(major)
+        self.minor = int(minor)
+        self.patch = int(patch)
+
+    def __cmp__(self, other: 'Version'):
+        if self.major != other.major:
+            return self.major - other.major
+        if self.minor != other.minor:
+            return self.minor - other.minor
+        return self.patch - other.patch
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
+    def __gt__(self, other):
+        return self.__cmp__(other) > 0
+
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
+
+    def __ge__(self, other):
+        return self.__cmp__(other) >= 0
+
+    def __le__(self, other):
+        return self.__cmp__(other) <= 0
+
+    def __str__(self):
+        return f"{self.major}.{self.minor}.{self.patch}"
