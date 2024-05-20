@@ -11,6 +11,7 @@ pymorphy3-dicts-ru
 Send2Trash~=1.8.2
 py7zr~=0.20.5
 StdioBridge~=1.2.2
+aiohttp~=3.9.5
 
 pywin32; sys_platform == 'win32'
 win11toast~=0.34; sys_platform == 'win32'
