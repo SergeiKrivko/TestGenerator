@@ -1,5 +1,8 @@
+import asyncio
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFileDialog
+from PyQtUIkit.core import KitFont, KitIcon
 from PyQtUIkit.widgets import *
 from qasync import asyncSlot
 
@@ -17,7 +20,7 @@ class PluginsWidget(KitHBoxLayout):
 
         self._installed_layout = KitVBoxLayout()
         self._installed_layout.spacing = 6
-        self.addWidget(self._installed_layout)
+        self.addWidget(self._installed_layout, 1)
 
         top_layout = KitHBoxLayout()
         top_layout.alignment = Qt.AlignmentFlag.AlignLeft
@@ -43,7 +46,7 @@ class PluginsWidget(KitHBoxLayout):
         self._remote_layout = KitVBoxLayout()
         self._remote_layout.spacing = 6
         self._remote_layout.hide()
-        self.addWidget(self._remote_layout)
+        self.addWidget(self._remote_layout, 1)
 
         top_layout = KitHBoxLayout()
         top_layout.alignment = Qt.AlignmentFlag.AlignLeft
@@ -66,11 +69,38 @@ class PluginsWidget(KitHBoxLayout):
         self._remote_list_widget.currentItemChanged.connect(self._on_remote_selected)
         self._remote_layout.addWidget(self._remote_list_widget)
 
+        self._progress_layout = KitVBoxLayout()
+        self._progress_layout.spacing = 12
+        self._progress_layout.hide()
+        self.addWidget(self._progress_layout, 1)
+
+        self._progress_layout.addWidget(KitVBoxLayout(), 10)
+        layout = KitHBoxLayout()
+        layout.alignment = Qt.AlignmentFlag.AlignCenter
+        self._progress_layout.addWidget(layout)
+
+        self._spinner = KitSpinner()
+        self._spinner.size = 72
+        self._spinner.width = 5
+        layout.addWidget(self._spinner)
+
+        self._success_icon = KitIconWidget('line-checkmark-circle')
+        self._success_icon.main_palette = 'Success'
+        self._success_icon.setFixedSize(72, 72)
+        self._success_icon.hide()
+        layout.addWidget(self._success_icon)
+
+        self._progress_label = KitLabel()
+        self._progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._progress_label.font_size = KitFont.Size.BIG
+        self._progress_layout.addWidget(self._progress_label)
+        self._progress_layout.addWidget(KitVBoxLayout(), 10)
+
         self._text_area = KitTextBrowser()
         self._text_area.main_palette = 'Transparent'
         self._text_area.border = 0
         self._text_area.setReadOnly(True)
-        self.addWidget(self._text_area)
+        self.addWidget(self._text_area, 1)
 
     def showEvent(self, a0):
         super().showEvent(a0)
@@ -112,9 +142,16 @@ class PluginsWidget(KitHBoxLayout):
 
     @asyncSlot()
     async def _refresh_remote(self):
+        self._remote_layout.hide()
+        self._progress_layout.show()
+        self._progress_label.text = "Обновление"
+
         self._remote_list_widget.clear()
         await self._bm.plugins.update_remote()
         self._remote_list_widget.addItems(self._bm.plugins.remote)
+
+        self._progress_layout.hide()
+        self._remote_layout.show()
 
     def _on_remove_button_clicked(self):
         item = self._list_widget.currentItem()
@@ -141,11 +178,29 @@ class PluginsWidget(KitHBoxLayout):
         item = self._remote_list_widget.currentItem()
         if not item:
             return
+
+        self._remote_layout.hide()
+        self._progress_layout.show()
+        self._progress_label.text = "Загрузка расширения"
+
         plugin = self._bm.plugins.remote.get(item.text())
         path = await self._bm.plugins.download_plugin(plugin)
+
+        self._progress_label.text = "Установка расширения"
         if plugin.name in self._bm.plugins.all:
             self._bm.plugins.remove(plugin.name)
-        self._bm.plugins.install(path)
+        await self._bm.processes.run_async(lambda: self._bm.plugins.install(path), 'plugins', 'installing')
+
+        await self._show_success()
+        self._progress_layout.hide()
+        self._remote_layout.show()
+
+    async def _show_success(self):
+        self._spinner.hide()
+        self._success_icon.show()
+        await asyncio.sleep(1.5)
+        self._success_icon.hide()
+        self._spinner.show()
 
 
 class _Button(KitIconButton):

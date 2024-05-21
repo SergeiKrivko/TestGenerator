@@ -108,6 +108,8 @@ class PluginManager(QObject):
                 raise Exception("Can not find plugin name")
 
         dst_path = os.path.join(self._path, name)
+        if os.path.isdir(dst_path):
+            shutil.rmtree(dst_path)
         os.makedirs(self._path, exist_ok=True)
         os.rename(temp_path, dst_path)
 
