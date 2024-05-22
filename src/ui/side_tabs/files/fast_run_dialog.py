@@ -33,12 +33,18 @@ class FastRunDialog(KitDialog):
         main_layout.addWidget(self._spinner, 10)
 
         spinner = KitSpinner()
-        spinner.width = 2
+        spinner.width = 3
         spinner.size = 40
         self._spinner.addWidget(spinner)
 
+        self._success_icon = KitIconWidget('line-checkmark-circle')
+        self._success_icon.setFixedHeight(50)
+        self._success_icon.main_palette = 'Success'
+        self._success_icon.hide()
+        main_layout.addWidget(self._success_icon)
+
         self._status_label = KitLabel('Готово')
-        self._status_label.main_palette = 'Success'
+        self._status_label.main_palette = 'Danger'
         self._status_label.setWordWrap(True)
         self._status_label.hide()
         self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -61,12 +67,13 @@ class FastRunDialog(KitDialog):
 
     async def _on_finished(self):
         self._spinner.hide()
-        self._status_label.show()
         if self._error:
+            self._status_label.show()
             self._status_label.text = self._error
             self._status_label.main_palette = 'Danger'
             self._apply_theme()
         else:
+            self._success_icon.show()
             await asyncio.sleep(1)
             self.accept()
 

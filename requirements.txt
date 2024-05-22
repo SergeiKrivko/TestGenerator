@@ -1,6 +1,6 @@
 PyQt6~=6.6.1
 PyQt6-QScintilla~=2.14.1
-PyQtUIkit~=2.10.8
+PyQtUIkit~=2.10.9
 qasync~=0.27.1
 TestGeneratorPluginLib~=1.2.3
 appdirs~=1.4.4

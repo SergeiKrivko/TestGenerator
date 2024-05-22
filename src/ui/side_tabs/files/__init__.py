@@ -74,16 +74,17 @@ class FilesWidget(SidePanelWidget):
             self.tree.addItem(self.root_item)
             self.root_item.expand()
 
-    def move_file(self, item1, item2):
-        file = item1.path
-        dist = item2.path
+    def move_file(self, items, item2):
+        files = [item.path for item in items]
+        dst = item2.path
 
-        if not os.path.isdir(dist):
-            dist = os.path.dirname(dist)
-        try:
-            os.rename(file, os.path.join(dist, os.path.basename(file)))
-        except Exception:
-            pass
+        if not os.path.isdir(dst):
+            dst = os.path.dirname(dst)
+        for file in files:
+            try:
+                os.rename(file, os.path.join(dst, os.path.basename(file)))
+            except Exception:
+                pass
         self.update_files_list()
 
     def open_task(self):
@@ -336,24 +337,34 @@ class FilesWidget(SidePanelWidget):
                 return path
 
     def delete_file(self, to_trash=True):
-        item = self.tree.currentItem()
-        if not isinstance(item, (TreeFile, TreeDirectory)):
-            return
+        items = self.tree.selectedItems()
+        files = [item.path for item in items]
 
         if to_trash:
             try:
-                send2trash.send2trash([item.path for item in self.tree.selectedItems()])
+                send2trash.send2trash(files)
             except FileExistsError:
                 pass
             except Exception as ex:
                 KitDialog.danger(self, "Ошибка", f"{ex.__class__.__name__}: {ex}")
         else:
-            if KitDialog.question(self, f"Вы уверены, что хотите удалить файл {self.tree.currentItem().name}?",
-                                  ('Нет', 'Да')) == 'Да':
-                if os.path.isdir(item.path):
-                    shutil.rmtree(item.path)
-                else:
-                    os.remove(item.path)
+            if len(files) // 10 == 1:
+                string = 'файлов'
+            elif len(files) % 10 == 1:
+                string = 'файл'
+            elif len(files) % 10 in [2, 3, 4]:
+                string = 'файла'
+            else:
+                string = 'файлов'
+            if KitDialog.question(
+                    self, f"Вы уверены, что хотите безвозвратно удалить файл {self.tree.currentItem().name}?"
+                    if len(files) == 1 else f"Вы уверены, что хотите безвозвратно удалить {len(files)} {string}?",
+                    ('Нет', 'Да')) == 'Да':
+                for file in files:
+                    if os.path.isdir(file):
+                        shutil.rmtree(file)
+                    else:
+                        os.remove(file)
         self.update_files_list()
 
     def open_file(self, item):
