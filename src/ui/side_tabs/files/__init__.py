@@ -2,6 +2,7 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 import typing
 
 import send2trash
@@ -55,8 +56,6 @@ class FilesWidget(SidePanelWidget):
         self.tree.doubleClicked.connect(self.open_file)
 
         self.dialog = None
-        self.ctrl_pressed = False
-        self.shift_pressed = False
         self.bm.projects.finishOpening.connect(self.open_task)
 
     def update_files_list(self, hard=False):
@@ -93,28 +92,21 @@ class FilesWidget(SidePanelWidget):
     def keyPressEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
         match a0.key():
             case Qt.Key.Key_C:
-                if self.ctrl_pressed:
+                if a0.modifiers() & Qt.KeyboardModifier.ControlModifier:
                     self.copy_file()
             case Qt.Key.Key_X:
-                if self.ctrl_pressed:
+                if a0.modifiers() & Qt.KeyboardModifier.ControlModifier:
                     self.copy_file()
             case Qt.Key.Key_V:
-                if self.ctrl_pressed:
+                if a0.modifiers() & Qt.KeyboardModifier.ControlModifier:
                     self.paste_files()
             case Qt.Key.Key_F2:
                 self.rename_file()
-            case Qt.Key.Key_Control:
-                self.ctrl_pressed = True
-            case Qt.Key.Key_Shift:
-                self.shift_pressed = True
             case Qt.Key.Key_Delete:
-                self.delete_file(to_trash=not self.shift_pressed)
-
-    def keyReleaseEvent(self, a0: typing.Optional[QtGui.QKeyEvent]) -> None:
-        if a0.key() == Qt.Key.Key_Control:
-            self.ctrl_pressed = False
-        if a0.key() == Qt.Key.Key_Shift:
-            self.shift_pressed = False
+                self.delete_file(to_trash=bool(a0.modifiers() & Qt.KeyboardModifier.ShiftModifier))
+            case Qt.Key.Key_Backspace:
+                if sys.platform == 'darwin':
+                    self.delete_file(to_trash=bool(a0.modifiers() & Qt.KeyboardModifier.ShiftModifier))
 
     def run_context_menu(self, point, item):
         item = self.tree.currentItem()
