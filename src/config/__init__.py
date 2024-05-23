@@ -16,7 +16,7 @@ except ImportError:
 ORGANISATION_NAME = "SergeiKrivko"
 ORGANISATION_URL = "https://github.com/SergeiKrivko/TestGenerator"
 APP_NAME = "TestGenerator"
-APP_VERSION = "2.3.4"
+APP_VERSION = "2.3.5"
 
 APP_DIR = os.path.split(argv[0])[0]
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'assets')

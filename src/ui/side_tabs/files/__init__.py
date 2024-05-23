@@ -103,10 +103,10 @@ class FilesWidget(SidePanelWidget):
             case Qt.Key.Key_F2:
                 self.rename_file()
             case Qt.Key.Key_Delete:
-                self.delete_file(to_trash=bool(a0.modifiers() & Qt.KeyboardModifier.ShiftModifier))
+                self.delete_file(to_trash=not (bool(a0.modifiers() & Qt.KeyboardModifier.ShiftModifier)))
             case Qt.Key.Key_Backspace:
                 if sys.platform == 'darwin':
-                    self.delete_file(to_trash=bool(a0.modifiers() & Qt.KeyboardModifier.ShiftModifier))
+                    self.delete_file(to_trash=not (bool(a0.modifiers() & Qt.KeyboardModifier.ShiftModifier)))
 
     def run_context_menu(self, point, item):
         item = self.tree.currentItem()
@@ -214,19 +214,42 @@ class FilesWidget(SidePanelWidget):
     def paste_files(self):
         item = self.tree.currentItem()
         if isinstance(item, TreeFile):
-            path = os.path.split(item.path)[0]
+            path = os.path.abspath(os.path.dirname(item.path))
         elif isinstance(item, TreeDirectory):
-            path = item.path
+            path = os.path.abspath(item.path)
         else:
             return
 
         if KitApplication.clipboard().mimeData().hasUrls():
-            urls = KitApplication.clipboard().mimeData().urls()
-            for url in urls:
-                try:
-                    shutil.copy(url.toLocalFile(), os.path.join(path, os.path.basename(url.toLocalFile())))
-                except FileExistsError:
-                    pass
+            urls = [os.path.abspath(el.toLocalFile()) for el in
+                    filter(lambda u: u.isLocalFile(), KitApplication.clipboard().mimeData().urls())]
+            dst_list = []
+            for url in urls.copy():
+                dst = os.path.join(path, os.path.basename(url))
+                if os.path.isfile(dst):
+                    if url == dst:
+                        if '.' in os.path.basename(dst):
+                            name = dst[:dst.rindex('.')]
+                            ext = dst[dst.rindex('.'):]
+                        else:
+                            name, ext = dst, ''
+                        i = 1
+                        while os.path.exists(dst := f'{name} ({i}){ext}'):
+                            i += 1
+                        dst_list.append(dst)
+                    else:
+                        if KitDialog.question(self, f"{dst} уже существует. Заменить?",
+                                              answers=['Пропустить', 'Заменить'], default='Пропустить') == 'Заменить':
+                            dst_list.append(dst)
+                        else:
+                            urls.remove(url)
+                else:
+                    dst_list.append(dst)
+
+            for url, dst in zip(urls, dst_list):
+                if os.path.exists(dst):
+                    os.remove(dst)
+                shutil.copy(str(url), str(dst))
             self.update_files_list()
 
     def compress_files(self):
