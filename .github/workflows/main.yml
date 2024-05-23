@@ -133,7 +133,7 @@ jobs:
           python3.11 -m venv venv
           source venv/bin/activate
           python3 -m pip install -r requirements.txt
-          python3 -m pip install --upgrade pyinstaller==6.3.0 Pillow
+          python3 -m pip install --upgrade pyinstaller==6.3.0
 
       - name: Secrets
         env:

@@ -4,10 +4,8 @@
 import os
 import sys
 
-
 block_cipher = None
 lib_path = r"venv\Lib\site-packages" if sys.platform == 'win32' else "venv/lib/python3.11/site-packages"
-
 
 a = Analysis(
     ['main.py'],
@@ -15,7 +13,7 @@ a = Analysis(
     binaries=[],
     datas=[(os.path.abspath(f"{lib_path}/PyQtUIkit/fonts"), "PyQtUIkit/fonts"),
            (os.path.abspath("assets"), "assets"),
-           (f"{lib_path}/pymorphy3_dicts_ru/data", r"pymorphy3_dicts_ru/data"),],
+           (f"{lib_path}/pymorphy3_dicts_ru/data", r"pymorphy3_dicts_ru/data"), ],
     hiddenimports=['StdioBridge.client'],
     hookspath=[],
     hooksconfig={},
@@ -57,7 +55,19 @@ coll = COLLECT(
     name='TestGenerator',
 )
 
-app = BUNDLE(coll,
-             name='TestGenerator.app',
-             icon='assets/icon-mac.png',
-             bundle_identifier=None)
+app = BUNDLE(
+    coll,
+    name='TestGenerator.app',
+    icon='assets/icon-mac.icns',
+    bundle_identifier=None,
+    info_plist={
+        'CFBundleDocumentTypes': [
+            {
+                'CFBundleTypeExtension': [ext],
+                'CFBundleTypeIconFile': 'icon-mac.icns',
+                'CFBundleTypeRole': 'Editor'
+            } for ext in {'py', 'c', 'cpp', 'h', 'txt', 'json', 'html', 'css', 'js', 'ts', 'cs', 'java', 'asm', 'xml',
+                          'yaml', 'yml', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'md', 't2b', 'svg', 'sh', 'cmd',
+                          'bat', 'ps1', 'hpp'}
+        ]
+    })
