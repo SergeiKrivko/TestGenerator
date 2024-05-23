@@ -9,20 +9,20 @@ from src.other.binary_redactor.convert_binary import convert_file as convert_bin
 
 
 class MacrosConverter(QThread):
-    def __init__(self, project: Project, tests: dict[str: list[FuncTest]], sm):
-        super(MacrosConverter, self).__init__()
+    def __init__(self, bm):
+        super().__init__()
+        self._bm = bm
 
-        self.src_dir = f"{project.data_path()}/func_tests"
-        self.dst_dir = project.path()
-        self.project = project
-        self.tests = tests
+        self._project = self._bm.projects.current
+        self._dst_dir = self._project.path()
+        self._tests = self._bm.func_tests.all_tests
         self.sm = sm
         os.makedirs(os.path.split(project.readme_path())[0], exist_ok=True)
         self.readme = open(project.readme_path(), 'w', encoding='utf-8')
         self._file = None
         self.closed = False
 
-        self.line_sep = sm.line_sep
+        self._line_sep = bm.sm.line_sep
         self.data_path = project.data_path()
 
     @staticmethod
@@ -72,11 +72,11 @@ class MacrosConverter(QThread):
             self.readme.write(f"- {index + 1:0>2} - {test.get('desc', '-')}\n")
             self.convert_txt(test.get('in', ''),
                              self.project.test_in_path(tests_type, index),
-                             self.line_sep)
+                             self._line_sep)
             self.add_file(self.project.test_in_path(tests_type, index))
             self.convert_txt(test.get('out', ''),
                              self.project.test_out_path(tests_type, index),
-                             self.line_sep)
+                             self._line_sep)
             self.add_file(self.project.test_out_path(tests_type, index))
 
             in_files = dict()
@@ -86,13 +86,13 @@ class MacrosConverter(QThread):
                 if el.get('type', 'txt') == 'txt':
                     self.convert_txt(el['text'],
                                      s := self.project.test_in_file_path(tests_type, index, i, False),
-                                     self.line_sep)
+                                     self._line_sep)
                     self.add_file(s)
                     in_files[i + 1] = os.path.relpath(s, self.dst_dir)
                     if 'check' in el:
                         self.convert_txt(el['check'],
                                          s := self.project.test_check_file_path(tests_type, index, i, False),
-                                         self.line_sep)
+                                         self._line_sep)
                         self.add_file(s)
                 else:
                     self.convert_bin(el['text'],
@@ -108,7 +108,7 @@ class MacrosConverter(QThread):
                 if el.get('type', 'txt') == 'txt':
                     self.convert_txt(el['text'],
                                      s := self.project.test_out_file_path(tests_type, index, i, False),
-                                     self.line_sep)
+                                     self._line_sep)
                     self.add_file(s)
                     out_files[i + 1] = os.path.relpath(s, self.dst_dir)
                 else:
@@ -121,7 +121,7 @@ class MacrosConverter(QThread):
                 self.convert_args(test.get('args', ''),
                                   self.project.test_args_path(tests_type, index),
                                   tests_type, index, in_files, out_files, self.project.get('temp_files_dir', '.'),
-                                  self.line_sep)
+                                  self._line_sep)
                 self.add_file(self.project.test_args_path(tests_type, index))
 
     def close(self):

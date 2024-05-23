@@ -72,6 +72,7 @@ class FilesWidget(SidePanelWidget):
             self.root_item = TreeDirectory(path)
             self.tree.addItem(self.root_item)
             self.root_item.expand()
+        self.bm.main_tab_command('code', 'check_deleted')
 
     def move_file(self, items, item2):
         files = [item.path for item in items]
@@ -180,6 +181,11 @@ class FilesWidget(SidePanelWidget):
                                KitForm.Label(f"Введите новое имя "
                                              f"{'папки' if isinstance(item, TreeDirectory) else 'файла'}:"),
                                KitForm.StrField(default=os.path.basename(item.path)))
+
+        edit: KitLineEdit = dialog._form.fields[0]._line_edit
+        name = os.path.basename(item.path)
+        edit.setSelection(0, len(name) if '.' not in name else name.rindex('.'))
+
         if dialog.exec():
             new_path = os.path.join(os.path.dirname(item.path), dialog.res()[0])
             if os.path.exists(new_path):
@@ -386,4 +392,4 @@ class FilesWidget(SidePanelWidget):
         if isinstance(item, (TreeFile, TreeDirectory)):
             if item.file_type != 'directory':
                 self.bm.main_tab_show('code')
-                self.bm.main_tab_command('code', item.path)
+                self.bm.main_tab_command('code', 'open', file=item.path)

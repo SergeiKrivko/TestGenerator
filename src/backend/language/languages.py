@@ -102,7 +102,7 @@ LANGUAGES = {
         'pdf',
         extensions=['.pdf'],
         icon='custom-pdf',
-        preview=Language.PreviewType.ONLY
+        preview=Language.PreviewType.SYSTEM
     ),
     'text-to-binary': Language(
         'text-to-binary',
@@ -133,5 +133,5 @@ def detect_language(path, default=None):
     for lang in LANGUAGES.values():
         for ext in lang.extensions:
             if path.endswith(ext):
-                return lang.name
+                return lang
     return default

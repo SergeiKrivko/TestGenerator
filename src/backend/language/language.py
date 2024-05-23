@@ -14,6 +14,7 @@ class Language:
         SIMPLE = 1
         ACTIVE = 2
         ONLY = 3
+        SYSTEM = 4
 
     def __init__(self,
                  name: str,

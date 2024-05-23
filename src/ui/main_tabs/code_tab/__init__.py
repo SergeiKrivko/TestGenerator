@@ -87,8 +87,8 @@ class CodeWidget(MainTab):
 
     def open_file(self, path: str, pos=None):
         lang = detect_language(path)
-        if lang:
-            self._open_file(path, LANGUAGES.get(lang))
+        if lang and lang.preview != Language.PreviewType.SYSTEM:
+            self._open_file(path, lang)
         elif check_text_file(path):
             self._open_file(path, LANGUAGES.get('txt'))
         else:
@@ -135,11 +135,12 @@ class CodeWidget(MainTab):
             self.button_preview.setChecked(widget.state == _FileEditor.State.PREVIEW)
             self.button_search.setHidden(not widget.has_code)
 
-    def command(self, file, *args, **kwargs):
-        if len(args) >= 2:
-            self.open_file(file, pos=(args[0], args[1]))
-        else:
-            self.open_file(file)
+    def command(self, action, **kwargs):
+        match action:
+            case 'open':
+                self.open_file(kwargs['file'], kwargs.get('pos'))
+            case 'check_deleted':
+                self._check_deleted()
 
     def first_open(self):
         if not self.bm.projects.current:
@@ -163,6 +164,15 @@ class CodeWidget(MainTab):
         self._layout.removeWidget(self.__widgets[path])
         self.__widgets.pop(path)
         self.save_files_list()
+
+    def _check_deleted(self):
+        lst = [self.tab_bar.tab(i) for i in range(self.tab_bar.tabsCount())]
+        to_close = []
+        for key in self._tabs:
+            if not os.path.isfile(key):
+                to_close.append(lst.index(self._tabs[key]))
+        for i in sorted(to_close, reverse=True):
+            self._close_tab(i)
 
     def _on_preview_clicked(self, flag):
         path = self.tab_bar.currentTab().value

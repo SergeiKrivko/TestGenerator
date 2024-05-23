@@ -88,7 +88,7 @@ class BackendManager(QObject):
             await asyncio.sleep(2)
             if files := json.loads(self._sm.get_general('shared_files', '[]')):
                 for file in files:
-                    self.main_tab_command('code', file)
+                    self.main_tab_command('code', 'open', file=file)
                 self.main_tab_show('code')
                 self.toTopRequired.emit()
                 self._sm.remove_general('shared_files')
