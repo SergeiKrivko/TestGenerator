@@ -103,6 +103,7 @@ class CodeWidget(MainTab):
         extension = '' if '.' not in path else path.split('.')[-1]
 
         widget = _FileEditor(path, lang)
+        widget.fileDeleted.connect(lambda: self._close_file(path))
         self.__widgets[path] = widget
         self._layout.addWidget(widget)
 
@@ -125,15 +126,18 @@ class CodeWidget(MainTab):
             self.button_preview.hide()
             self.button_search.hide()
         else:
-            self.empty_widget.hide()
-            for el in self.__widgets.values():
-                el.hide()
-            self.__widgets[tab.value].show()
+            try:
+                self.empty_widget.hide()
+                for el in self.__widgets.values():
+                    el.hide()
+                self.__widgets[tab.value].show()
 
-            widget = self.__widgets[tab.value]
-            self.button_preview.setHidden(not widget.has_code or not widget.has_preview)
-            self.button_preview.setChecked(widget.state == _FileEditor.State.PREVIEW)
-            self.button_search.setHidden(not widget.has_code)
+                widget = self.__widgets[tab.value]
+                self.button_preview.setHidden(not widget.has_code or not widget.has_preview)
+                self.button_preview.setChecked(widget.state == _FileEditor.State.PREVIEW)
+                self.button_search.setHidden(not widget.has_code)
+            except KeyError:
+                pass
 
     def command(self, action, **kwargs):
         match action:
@@ -150,7 +154,8 @@ class CodeWidget(MainTab):
             self._close_tab(0, save=False)
 
         for file in self.bm.sm.get('opened_files', []):
-            self.open_file(file)
+            if os.path.isfile(file):
+                self.open_file(file)
 
     def save_files_list(self):
         self.bm.sm.set('opened_files', [self.tab_bar.tab(i).value for i in range(len(self._tabs))])
@@ -164,6 +169,12 @@ class CodeWidget(MainTab):
         self._layout.removeWidget(self.__widgets[path])
         self.__widgets.pop(path)
         self.save_files_list()
+
+    def _close_file(self, path):
+        if path not in self._tabs:
+            return
+        lst = [self.tab_bar.tab(i) for i in range(self.tab_bar.tabsCount())]
+        self._close_tab(lst.index(self._tabs[path]))
 
     def _check_deleted(self):
         lst = [self.tab_bar.tab(i) for i in range(self.tab_bar.tabsCount())]
@@ -199,6 +210,8 @@ class _FileEditor(KitHBoxLayout):
         CODE = 1
         PREVIEW = 2
 
+    fileDeleted = pyqtSignal()
+
     def __init__(self, path, lang: Language):
         super().__init__()
         self._path = path
@@ -209,6 +222,7 @@ class _FileEditor(KitHBoxLayout):
 
         if lang.preview != Language.PreviewType.ONLY:
             self._code_editor = CodeFileEditor(self._path)
+            self._code_editor.fileDeleted.connect(self.fileDeleted.emit)
             self.addWidget(self._code_editor)
             if lang.preview == Language.PreviewType.ACTIVE:
                 self._code_editor.hide()

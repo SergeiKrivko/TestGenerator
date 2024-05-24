@@ -1,4 +1,5 @@
 import os
+import time
 
 from PyQtUIkit.core import *
 from PyQtUIkit.widgets import KitScintilla
@@ -48,9 +49,12 @@ class CodeFileEditor(CodeEditor):
             return
         with open(self._path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(self.text())
+        self._mtime = time.time()
 
     def _check_file_deleted(self):
         self._file_deleted = not os.path.isfile(self._path)
+        if self._file_deleted:
+            self.fileDeleted.emit()
 
     def _check_file_modified(self):
         if self._file_deleted:
@@ -58,7 +62,13 @@ class CodeFileEditor(CodeEditor):
         mtime = os.path.getmtime(self._path)
         if mtime > self._mtime:
             self._mtime = mtime
+            print(f"Reloading {self.path} from disk")
             self._load_file()
+
+    def focusInEvent(self, e):
+        super().focusInEvent(e)
+        self._check_file_deleted()
+        self._check_file_modified()
 
     def showEvent(self, a0):
         super().showEvent(a0)
