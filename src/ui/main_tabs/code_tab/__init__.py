@@ -24,7 +24,6 @@ class CodeWidget(MainTab):
     def __init__(self, bm: BackendManager):
         super(CodeWidget, self).__init__()
         self.bm = bm
-        self.current_file = ''
 
         top_layout = KitHBoxLayout()
         top_layout.setFixedHeight(28)
@@ -45,7 +44,7 @@ class CodeWidget(MainTab):
         self.tab_bar.setTabsClosable(True)
         top_layout.addWidget(self.tab_bar, 1000)
 
-        self.button_open = KitIconButton('line-add')
+        self.button_open = KitIconButton('line-folder-open')
         self.button_open.size = 24
         self.button_open.border = 0
         top_layout.addWidget(self.button_open)
@@ -54,6 +53,7 @@ class CodeWidget(MainTab):
         self.button_search.size = 24
         self.button_search.border = 0
         self.button_search.setCheckable(True)
+        self.button_search.on_click = self._on_search_clicked
         top_layout.addWidget(self.button_search)
 
         self.button_preview = KitIconButton('line-image')
@@ -65,16 +65,6 @@ class CodeWidget(MainTab):
         
         self.addWidget(KitHSeparator())
 
-        # self.search_panel = SearchPanel()
-        # self.search_panel.hide()
-        # self.top_panel.button_open.clicked.connect(self.open_non_project_file)
-        # self.top_panel.button_search.clicked.connect(lambda flag:
-        #                                              self.search_panel.show() if flag else self.search_panel.hide())
-        # self.search_panel.selectText.connect(self.select_text)
-        # self.search_panel.button_replace.clicked.connect(self.replace)
-        # self.search_panel.button_replace_all.clicked.connect(self.replace_all)
-        # self.addWidget(self.search_panel)
-
         self._layout = KitHBoxLayout()
         self.addWidget(self._layout)
 
@@ -84,6 +74,7 @@ class CodeWidget(MainTab):
         self._tabs = dict()
         self.bm.projects.finishOpening.connect(self.first_open)
         self.__widgets: dict[str: _FileEditor] = dict()
+        self.__current_file = None
 
     def open_file(self, path: str, pos=None):
         lang = detect_language(path)
@@ -104,6 +95,7 @@ class CodeWidget(MainTab):
 
         widget = _FileEditor(path, lang)
         widget.fileDeleted.connect(lambda: self._close_file(path))
+        widget.searchRequested.connect(self._show_search)
         self.__widgets[path] = widget
         self._layout.addWidget(widget)
 
@@ -125,6 +117,7 @@ class CodeWidget(MainTab):
 
             self.button_preview.hide()
             self.button_search.hide()
+            self.__current_file = None
         else:
             try:
                 self.empty_widget.hide()
@@ -136,6 +129,8 @@ class CodeWidget(MainTab):
                 self.button_preview.setHidden(not widget.has_code or not widget.has_preview)
                 self.button_preview.setChecked(widget.state == _FileEditor.State.PREVIEW)
                 self.button_search.setHidden(not widget.has_code)
+                self.button_search.setChecked(widget.searching)
+                self.__current_file = tab.value
             except KeyError:
                 pass
 
@@ -190,6 +185,17 @@ class CodeWidget(MainTab):
         widget = self.__widgets[path]
         widget.set_state(_FileEditor.State.PREVIEW if flag else _FileEditor.State.CODE)
 
+    def _on_search_clicked(self, flag):
+        path = self.tab_bar.currentTab().value
+        widget = self.__widgets[path]
+        widget.searching = flag
+
+    def _show_search(self, flag):
+        path = self.tab_bar.currentTab().value
+        widget = self.__widgets[path]
+        self.button_search.setChecked(flag)
+        widget.searching = flag
+
     def _on_tab_moved(self, ind1, ind2):
         self.save_files_list()
 
@@ -211,6 +217,7 @@ class _FileEditor(KitHBoxLayout):
         PREVIEW = 2
 
     fileDeleted = pyqtSignal()
+    searchRequested = pyqtSignal(bool)
 
     def __init__(self, path, lang: Language):
         super().__init__()
@@ -223,15 +230,20 @@ class _FileEditor(KitHBoxLayout):
         if lang.preview != Language.PreviewType.ONLY:
             self._code_editor = CodeFileEditor(self._path)
             self._code_editor.fileDeleted.connect(self.fileDeleted.emit)
+            self._code_editor.searchRequested.connect(self.searchRequested.emit)
             self.addWidget(self._code_editor)
             if lang.preview == Language.PreviewType.ACTIVE:
                 self._code_editor.hide()
+        else:
+            self._code_editor = None
 
         if lang.preview != Language.PreviewType.NONE:
             self._preview_widget = PreviewWidget(self._path)
             self.addWidget(self._preview_widget)
             if lang.preview == Language.PreviewType.SIMPLE:
                 self._preview_widget.hide()
+        else:
+            self._preview_widget = None
 
     @property
     def path(self):
@@ -257,3 +269,14 @@ class _FileEditor(KitHBoxLayout):
         else:
             self._preview_widget.hide()
             self._code_editor.show()
+
+    @property
+    def searching(self):
+        if not self._code_editor or self._state != _FileEditor.State.CODE:
+            return False
+        return self._code_editor.searching
+
+    @searching.setter
+    def searching(self, value):
+        if self._code_editor and self._state == _FileEditor.State.CODE:
+            self._code_editor.searching = value

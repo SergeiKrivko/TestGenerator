@@ -1,147 +1,202 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLineEdit, QPushButton, QLabel
+from PyQtUIkit.widgets import *
 
 
-class SearchPanel(QWidget):
-    selectText = pyqtSignal(int, int, int, int)
+class SearchPanel(KitVBoxLayout):
+    textSearched = pyqtSignal(int, int, int, int)
 
-    def __init__(self, sm, tm):
+    def __init__(self, editor: KitScintilla):
         super().__init__()
-        self._sm = sm
-        self._tm = tm
-        self.text = ''
-        self.pos = (0, 0)
 
-        strange_layout = QVBoxLayout()
-        strange_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(strange_layout)
-        strange_widget = QWidget()
-        strange_layout.addWidget(strange_widget)
+        self._editor = editor
+        self._editor.textChanged.connect(self._on_text_edited)
 
-        main_layout = QHBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        strange_widget.setLayout(main_layout)
+        self._lines = []
+        self._results = []
+        self.__replacing = False
 
-        line_edit_layout = QVBoxLayout()
+        main_layout = KitHBoxLayout()
+        self.addWidget(main_layout)
+
+        line_edit_layout = KitVBoxLayout()
         line_edit_layout.setContentsMargins(0, 0, 0, 0)
         line_edit_layout.setSpacing(0)
-        main_layout.addLayout(line_edit_layout)
+        line_edit_layout.setMaximumWidth(400)
+        main_layout.addWidget(line_edit_layout)
 
-        self.search_line_edit = QLineEdit()
-        self.search_line_edit.setFixedHeight(25)
-        self.search_line_edit.setMaximumWidth(400)
+        self.search_line_edit = KitLineEdit()
+        self.search_line_edit.setFixedHeight(30)
+        self.search_line_edit.border = 0
+        self.search_line_edit.main_palette = 'Bg'
+        self.search_line_edit.font = 'mono'
+        self.search_line_edit.radius = 0
+        self.search_line_edit.on_text_changed = self._search_all
         line_edit_layout.addWidget(self.search_line_edit)
 
-        self.replace_line_edit = QLineEdit()
-        self.replace_line_edit.setFixedHeight(24)
-        self.replace_line_edit.setMaximumWidth(400)
+        line_edit_layout.addWidget(KitHSeparator())
+
+        self.replace_line_edit = KitLineEdit()
+        self.replace_line_edit.setFixedHeight(30)
+        self.replace_line_edit.border = 0
+        self.replace_line_edit.main_palette = 'Bg'
+        self.replace_line_edit.font = 'mono'
+        self.replace_line_edit.radius = 0
         line_edit_layout.addWidget(self.replace_line_edit)
 
-        right_layout = QVBoxLayout()
-        right_layout.setSpacing(4)
-        right_layout.setContentsMargins(0, 0, 8, 0)
-        main_layout.addLayout(right_layout)
+        main_layout.addWidget(KitVSeparator())
 
-        top_layout = QHBoxLayout()
+        right_layout = KitVBoxLayout()
+        right_layout.spacing = 3
+        right_layout.setContentsMargins(8, 3, 8, 3)
+        main_layout.addWidget(right_layout)
+
+        top_layout = KitHBoxLayout()
         top_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        top_layout.setContentsMargins(0, 2, 0, 0)
-        right_layout.addLayout(top_layout)
+        top_layout.spacing = 6
+        right_layout.addWidget(top_layout)
 
-        self.label = QLabel()
+        self.label = KitLabel()
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         top_layout.addWidget(self.label)
         self.label.setFixedWidth(120)
 
-        self.button_up = Button(self._tm, 'buttons/button_up', css='Main')
-        self.button_up.setFixedSize(20, 20)
-        self.button_up.clicked.connect(self.search_previous)
+        self.button_up = KitIconButton('line-arrow-up')
+        self.button_up.border = 0
+        self.button_up.main_palette = 'Bg'
+        self.button_up.size = 22
+        self.button_up.on_click = self.search_previous
         top_layout.addWidget(self.button_up)
 
-        self.button_down = Button(self._tm, 'buttons/button_down', css='Main')
-        self.button_down.setFixedSize(20, 20)
-        self.button_down.clicked.connect(self.search_next)
+        self.button_down = KitIconButton('line-arrow-down')
+        self.button_down.border = 0
+        self.button_down.main_palette = 'Bg'
+        self.button_down.size = 22
+        self.button_down.on_click = self.search_next
         top_layout.addWidget(self.button_down)
 
-        bottom_layout = QHBoxLayout()
-        bottom_layout.setContentsMargins(0, 0, 0, 2)
+        bottom_layout = KitHBoxLayout()
+        bottom_layout.spacing = 6
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        right_layout.addLayout(bottom_layout)
+        right_layout.addWidget(bottom_layout)
 
-        self.button_replace = QPushButton("Заменить")
+        self.button_replace = KitButton("Заменить")
+        self.button_replace.main_palette = 'Bg'
+        self.button_replace.on_click = self._replace
         bottom_layout.addWidget(self.button_replace)
 
-        self.button_replace_all = QPushButton("Заменить все")
+        self.button_replace_all = KitButton("Заменить все")
+        self.button_replace_all.main_palette = 'Bg'
+        self.button_replace_all.on_click = self._replace_all
         bottom_layout.addWidget(self.button_replace_all)
+
+        self.addWidget(KitHSeparator())
+
+        self._on_text_edited()
+
+    def _on_text_edited(self):
+        text = self._editor.text()
+        self._lines.clear()
+        length = 0
+        for line in text.split('\n'):
+            self._lines.append(length)
+            length += len(line) + 1
+        self._search_all()
+
+    def _search_all(self):
+        if self.__replacing:
+            return
+        word = self.search_line_edit.text
+        self._results.clear()
+        if not word:
+            return
+        text = self._editor.text()
+        length = 0
+        while True:
+            try:
+                index = text.index(word)
+            except ValueError:
+                break
+            length += index
+            self._results.append(length)
+            length += len(word)
+            text = text[index + len(word):]
+        self.search_any()
+
+    def _line_to_pos(self, line, pos):
+        return self._lines[line] + pos
+
+    def _pos_to_line(self, pos):
+        i = 0
+        while pos > self._lines[i + 1]:
+            i += 1
+        return i, pos - self._lines[i]
+
+    def search_any(self):
+        word = self.search_line_edit.text
+        cursor_pos = self._current_pos()
+        for i, res in enumerate(self._results):
+            if res >= cursor_pos:
+                self._editor.setSelection(*self._pos_to_line(res), *self._pos_to_line(res + len(word)))
+                self.update_label(i)
+                return True
+        if not self.search_previous():
+            self.update_label()
         
     def search_next(self):
-        try:
-            if word := self.search_line_edit.text():
-                current_line, current_symbol = self.pos
-                text = self.text.split('\n')
-                self.update_label(text)
-                if word in text[current_line][current_symbol:]:
-                    index = text[current_line][current_symbol:].index(word) + current_symbol
-                    self.selectText.emit(current_line, index, current_line, index + len(word))
-                    self.update_label(text)
-                    return True
-                else:
-                    for i in range(current_line + 1, len(text)):
-                        if word in text[i]:
-                            index = text[i].index(word)
-                            self.selectText.emit(i, index, i, index + len(word))
-                            self.update_label(text)
-                            return True
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        word = self.search_line_edit.text
+        cursor_pos = self._current_pos() + 1
+        for i, res in enumerate(self._results):
+            if res >= cursor_pos:
+                self._editor.setSelection(*self._pos_to_line(res), *self._pos_to_line(res + len(word)))
+                self.update_label(i)
+                return True
         return False
 
     def search_previous(self):
-        try:
-            if word := self.search_line_edit.text():
-                current_line, current_symbol = self.pos
-                text = self.text.split('\n')
-                if word in text[current_line][:current_symbol - 1]:
-                    index = text[current_line][:current_symbol - 1].rindex(word)
-                    self.selectText.emit(current_line, index, current_line, index + len(word))
-                    self.update_label(text)
-                    return True
-                else:
-                    for i in range(current_line - 1, -1, -1):
-                        if word in text[i]:
-                            index = text[i].rindex(word)
-                            self.selectText.emit(i, index, i, index + len(word))
-                            self.update_label(text)
-                            return True
-        except Exception as ex:
-            print(f"{ex.__class__.__name__}: {ex}")
+        word = self.search_line_edit.text
+        cursor_pos = self._current_pos() - 1
+        for i, res in enumerate(reversed(self._results)):
+            if res < cursor_pos:
+                self._select_text(res, res + len(word))
+                self.update_label(len(self._results) - i - 1)
+                return True
         return False
 
-    def update_label(self, text):
-        count = 0
-        word = self.search_line_edit.text()
-        for i in range(len(text)):
-            if i < self.pos[0]:
-                count += text[i].count(word)
-            else:
-                try:
-                    line = text[i][:self.pos[1] + len(word)]
-                except IndexError:
-                    line = text[i]
-                print(count, line.count(word), repr(line))
-                count += line.count(word)
-                break
-        self.label.setText(f"{count}/{self.text.count(word)}")
+    def _current_pos(self):
+        if self._editor.hasSelectedText():
+            l, p, _, _ = self._editor.getSelection()
+        else:
+            l, p = self._editor.getCursorPosition()
+        return self._line_to_pos(l, p)
 
-    def set_theme(self):
-        self.setStyleSheet(f"background-color: {self._tm['MainColor']}; "
-                           f"border-bottom: 1px solid {self._tm['BorderColor']};")
-        css = f"background-color: {self._tm['MainColor']}; color: {self._tm['TextColor']}; " \
-              f"border-bottom: none; border-right: 1px solid {self._tm['BorderColor']};" \
-              f"border-left: none; border-top: none;"
-        self.replace_line_edit.setStyleSheet(css)
-        self.search_line_edit.setStyleSheet(css.replace('border-bottom: none',
-                                                        f"border-bottom: 1px solid {self._tm['BorderColor']}"))
-        self.search_line_edit.setFont(self._tm.font_medium)
-        self.replace_line_edit.setFont(self._tm.font_medium)
-        for el in [self.button_up, self.button_down, self.button_replace, self.button_replace_all, self.label]:
-            self._tm.auto_css(el)
+    def _select_text(self, pos1, pos2):
+        self._editor.setSelection(*self._pos_to_line(pos1), *self._pos_to_line(pos2))
+
+    def update_label(self, index=0):
+        if not self._results:
+            self.label.text = "Нет результатов"
+            self.label.main_palette = 'Danger'
+            self.label._apply_theme()
+        else:
+            self.label.text = f"{index + 1} / {len(self._results)}"
+            self.label.main_palette = 'Main'
+            self.label._apply_theme()
+
+    def _replace(self):
+        word = self.search_line_edit.text
+        new_word = self.replace_line_edit.text
+        if word and new_word and self._editor.selectedText() == word:
+            self.__replacing = True
+            self._editor.replaceSelectedText(new_word)
+            self.__replacing = False
+            self._search_all()
+
+    def _replace_all(self):
+        word = self.search_line_edit.text
+        new_word = self.replace_line_edit.text
+        if word and new_word:
+            text = self._editor.text().replace(word, new_word)
+            self._editor.setText(text)
+
+    def search(self, word):
+        self.search_line_edit.text = word
