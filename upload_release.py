@@ -8,12 +8,23 @@ import requests
 
 from src import config
 
+token = ""
+headers = dict()
 
-match os.getenv('BUILD_TYPE'):
-    case 'Lite':
-        build_suffix = '-lite'
-    case _:
-        build_suffix = ''
+
+def auth():
+    rest_api_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
+    r = requests.post(rest_api_url,
+                      params={"key": config.FIREBASE_API_KEY},
+                      json={"email": os.getenv("ADMIN_EMAIL"),
+                            "password": os.getenv("ADMIN_PASSWORD"),
+                            "returnSecureToken": True})
+    if not r.ok:
+        raise Exception("Can not authorize")
+    res = r.json()
+    global token
+    token = res['idToken']
+    headers['Authorization'] = 'Bearer ' + token
 
 
 def upload_file(path, name=''):
@@ -22,7 +33,7 @@ def upload_file(path, name=''):
     url = f"https://firebasestorage.googleapis.com/v0/b/testgenerator-bf37c.appspot.com/o/" \
           f"{quote(f'releases/{name or os.path.basename(path)}', safe='')}"
     with open(path, 'br') as f:
-        resp = requests.post(url, data=f.read())
+        resp = requests.post(url, data=f.read(), headers=headers)
         if not resp.ok:
             raise Exception(resp.text)
 
@@ -30,7 +41,7 @@ def upload_file(path, name=''):
 def download_file(name):
     url = f"https://firebasestorage.googleapis.com/v0/b/testgenerator-bf37c.appspot.com/o/" \
           f"{quote(f'releases/{name}', safe='')}?alt=media"
-    resp = requests.get(url, stream=True)
+    resp = requests.get(url, stream=True, headers=headers)
     if resp.ok:
         return b''.join(resp).decode('utf-8')
     else:
@@ -47,6 +58,10 @@ def get_system():
             return 'macos'
 
 
+def get_arch():
+    return os.getenv('ARCHITECTURE')
+
+
 def release_file():
     match sys.platform:
         case 'win32':
@@ -54,36 +69,35 @@ def release_file():
         case 'linux':
             return f"testgenerator_{config.APP_VERSION}_amd64.deb"
         case 'darwin':
-            return f"TestGenerator{os.getenv('BUILD_TYPE', '').capitalize()}.dmg"
+            return f"TestGenerator.dmg"
 
 
 def version_file():
-    return f"{get_system()}{build_suffix}.json"
+    return f"{get_system()}-{get_arch()}.json"
 
 
-def upload_info(zip_file):
+def upload_version(name=None):
     url = f"https://firebasestorage.googleapis.com/v0/b/testgenerator-bf37c.appspot.com/o/" \
-          f"{quote(f'releases/{version_file()}', safe='')}"
+          f"{quote(f'releases/{name or version_file()}', safe='')}"
     resp = requests.post(url, data=json.dumps({
         'version': config.APP_VERSION,
-        'file_size': os.path.getsize(zip_file),
-    }, indent=2).encode('utf-8'))
+        'size': os.path.getsize(release_file()),
+    }, indent=2).encode('utf-8'), headers=headers)
     if not resp.ok:
         raise Exception(resp.text)
 
 
 def compress_to_zip(path):
-    zip_path = f"{os.path.dirname(path) or '.'}/{get_system()}{build_suffix}.zip"
-    archive = zipfile.ZipFile(zip_path, 'w')
+    archive = zipfile.ZipFile(path + '.zip', 'w')
     archive.write(path, os.path.basename(path))
     archive.close()
-    return zip_path
+    return path + '.zip'
 
 
 def main():
-    zip_file = compress_to_zip(release_file())
-    upload_file(zip_file, f"{get_system()}{build_suffix}")
-    upload_info(zip_file)
+    auth()
+    upload_file(compress_to_zip(release_file()), f"{get_system()}-{get_arch()}.zip")
+    upload_version()
 
 
 if __name__ == '__main__':

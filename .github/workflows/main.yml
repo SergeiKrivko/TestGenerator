@@ -26,6 +26,7 @@ jobs:
       - name: Secrets
         env:
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           USE_WEB_ENGINE: False
         run: |
           venv\Scripts\Activate.ps1
@@ -77,6 +78,7 @@ jobs:
         id: secrets
         env:
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           USE_WEB_ENGINE: False
         run: |
           source venv/bin/activate
@@ -138,6 +140,7 @@ jobs:
       - name: Secrets
         env:
           CONVERTIO_API_KEY: ${{ secrets.CONVERTIO_API_KEY }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
           USE_WEB_ENGINE: False
         run: |
           source venv/bin/activate

@@ -29,7 +29,7 @@ def download_zip(name: str, dst: str = None):
 
 def write_secrets():
     with open("src/config/secret.py", 'w', encoding='utf-8') as f:
-        for key in ['TELEGRAM_API_KEY', 'TELEGRAM_API_HASH', 'CONVERTIO_API_KEY']:
+        for key in ['TELEGRAM_API_KEY', 'TELEGRAM_API_HASH', 'CONVERTIO_API_KEY', 'FIREBASE_API_KEY']:
             f.write(f"{key} = {os.getenv(key)}\n")
 
 
