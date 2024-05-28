@@ -20,6 +20,7 @@ def auth():
                             "password": os.getenv("ADMIN_PASSWORD"),
                             "returnSecureToken": True})
     if not r.ok:
+        print(r.text)
         raise Exception("Can not authorize")
     res = r.json()
     global token
