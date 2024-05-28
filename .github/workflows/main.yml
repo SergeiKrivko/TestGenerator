@@ -44,6 +44,9 @@ jobs:
           options: /O+
 
       - name: Upload release
+        env:
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           venv\Scripts\Activate.ps1
           python upload_release.py
@@ -107,6 +110,9 @@ jobs:
           desc: 'TestGenerator'
 
       - name: Upload release
+        env:
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           source venv/bin/activate
           python3 upload_release.py
@@ -159,6 +165,9 @@ jobs:
           srcdir: 'dist/TestGenerator.app'
 
       - name: Upload release
+        env:
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           source venv/bin/activate
           python3 upload_release.py
