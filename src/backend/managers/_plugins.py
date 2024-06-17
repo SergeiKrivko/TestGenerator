@@ -70,8 +70,8 @@ class PluginManager(QObject):
         module = importlib.import_module('__plugin__')
 
         plugin: BuiltPlugin = module.__plugin__
-        self._plugins[plugin.name] = plugin
         plugin.init(self._bm)
+        self._plugins[plugin.name] = plugin
         for key, item in plugin.main_tabs.items():
             self.newMainTab.emit(key, item(self._bm))
         for key, item in plugin.side_tabs.items():
