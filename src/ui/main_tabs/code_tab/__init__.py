@@ -1,6 +1,7 @@
 import os
 import platform
 import subprocess
+import sys
 from enum import Enum
 
 from PyQt6.QtCore import pyqtSignal, Qt
@@ -24,6 +25,7 @@ class CodeWidget(MainTab):
     def __init__(self, bm: BackendManager):
         super(CodeWidget, self).__init__()
         self.bm = bm
+        self.setAcceptDrops(True)
 
         top_layout = KitHBoxLayout()
         top_layout.setFixedHeight(28)
@@ -209,6 +211,17 @@ class CodeWidget(MainTab):
                 KitDialog.danger(self, "Ошибка", str(ex))
         else:  # linux variants
             subprocess.call(('xdg-open', filepath))
+
+    def dragEnterEvent(self, event):
+        mime = event.mimeData()
+        if mime.hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        for url in event.mimeData().urls():
+            file_name = url.toLocalFile()
+            self.open_file(file_name)
+        return super().dropEvent(event)
 
 
 class _FileEditor(KitHBoxLayout):

@@ -23,6 +23,9 @@ class CodeEditor(KitScintilla):
                 self.searchRequested.emit(True)
         elif e.key() == Qt.Key.Key_Escape:
             self.searchRequested.emit(False)
+            
+    def dragEnterEvent(self, e):
+        e.ignore()
 
 
 class CodeFileEditor(KitVBoxLayout):
