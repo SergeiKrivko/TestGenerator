@@ -215,12 +215,16 @@ class CodeWidget(MainTab):
     def dragEnterEvent(self, event):
         mime = event.mimeData()
         if mime.hasUrls():
-            event.acceptProposedAction()
+            for url in mime.urls():
+                if os.path.isfile(url.toLocalFile()):
+                    event.acceptProposedAction()
+                    break
 
     def dropEvent(self, event):
         for url in event.mimeData().urls():
             file_name = url.toLocalFile()
-            self.open_file(file_name)
+            if os.path.isfile(file_name):
+                self.open_file(file_name)
         return super().dropEvent(event)
 
 

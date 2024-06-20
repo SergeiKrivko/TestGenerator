@@ -48,7 +48,7 @@ class FilesWidget(SidePanelWidget):
         self.tree = KitTreeWidget()
         self.tree.selection_type = KitTreeWidget.SelectionType.MULTI
         self.tree.contextMenuRequested.connect(self.run_context_menu)
-        self.tree.movable = True
+        # self.tree.movable = True
         self.tree.moveRequested.connect(self.move_file)
         self.root_item = None
         main_layout.addWidget(self.tree)

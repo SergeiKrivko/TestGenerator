@@ -1,5 +1,7 @@
 import os
 
+from PyQt6.QtCore import Qt, QMimeData, QUrl
+from PyQt6.QtGui import QDrag
 from PyQtUIkit.widgets import KitTreeWidgetItem
 
 from src.backend.language.icons import FILE_ICONS
@@ -15,6 +17,29 @@ class TreeFile(KitTreeWidgetItem):
             self.file_type = self.name[self.name.rindex('.') + 1:]
 
         super().__init__(self.name, FILE_ICONS.get(self.file_type, 'line-help'))
+        self.setAcceptDrops(True)
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            drag = QDrag(self)
+            mime = QMimeData()
+            mime.setUrls([QUrl.fromLocalFile(item.path) for item in self.root().selectedItems()])
+            drag.setMimeData(mime)
+            drag.exec(Qt.DropAction.MoveAction)
+
+    def dragEnterEvent(self, event):
+        mime = event.mimeData()
+        if mime.hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        for url in event.mimeData().urls():
+            src = url.toLocalFile()
+            dst = f"{os.path.dirname(self.path)}/{os.path.basename(src)}"
+            if not os.path.isfile(dst):
+                os.rename(src, dst)
+        self.root().items()[0].update_files_list()
+        return super().dropEvent(event)
 
 
 class TreeDirectory(KitTreeWidgetItem):
@@ -28,6 +53,7 @@ class TreeDirectory(KitTreeWidgetItem):
         super().__init__(self.name, 'line-folder')
 
         self.update_files_list()
+        self.setAcceptDrops(True)
 
     def update_files_list(self):
         if not self.expanded():
@@ -73,3 +99,25 @@ class TreeDirectory(KitTreeWidgetItem):
     def collapse(self):
         super().collapse()
         self.clear()
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() == Qt.MouseButton.LeftButton:
+            drag = QDrag(self)
+            mime = QMimeData()
+            mime.setUrls([QUrl.fromLocalFile(item.path) for item in self.root().selectedItems()])
+            drag.setMimeData(mime)
+            drag.exec(Qt.DropAction.MoveAction)
+
+    def dragEnterEvent(self, event):
+        mime = event.mimeData()
+        if mime.hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        for url in event.mimeData().urls():
+            src = url.toLocalFile()
+            dst = f"{self.path}/{os.path.basename(src)}"
+            if not os.path.isfile(dst):
+                os.rename(src, dst)
+        self.root().items()[0].update_files_list()
+        return super().dropEvent(event)
