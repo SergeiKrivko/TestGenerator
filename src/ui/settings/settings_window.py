@@ -52,6 +52,9 @@ class SettingsWindow(KitDialog):
             self.sm,
             ComboBox(self.bm, "Тема:", ['light', 'dark'], key='theme', text_mode=True,
                      on_state_changed=self._on_theme_changed),
+            ComboBox(self.bm, "Тема редактора кода:", ['classic', 'neon', 'twilight'],
+                     key='code_theme', text_mode=True,
+                     on_state_changed=self._on_theme_changed),
             # *[CheckBox(item, True, f'side_button_{key}') for key, item in side_bar.desc.items()],
             key_type=KEY_GLOBAL))
 
@@ -187,7 +190,7 @@ class SettingsWindow(KitDialog):
                 ProgramEdit(self.bm, "Genhtml:", PROGRAMS['genhtml'])]
 
     def _on_theme_changed(self):
-        theme = self.sm.get_general('theme')
+        theme = f"{self.sm.get_general('theme', 'dark')}-{self.sm.get_general('code_theme', 'classic')}"
         if self.theme_manager and self.theme_manager.active and self.theme_manager.current_theme != theme:
             self.theme_manager.set_theme(theme)
             self._apply_theme()

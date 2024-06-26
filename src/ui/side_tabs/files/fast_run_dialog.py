@@ -43,12 +43,12 @@ class FastRunDialog(KitDialog):
         self._success_icon.hide()
         main_layout.addWidget(self._success_icon)
 
-        self._status_label = KitLabel('Готово')
-        self._status_label.main_palette = 'Danger'
-        self._status_label.setWordWrap(True)
-        self._status_label.hide()
-        self._status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(self._status_label, 10)
+        self._error_label = KitLabel('Ошибка')
+        self._error_label.main_palette = 'Danger'
+        self._error_label.setWordWrap(True)
+        self._error_label.hide()
+        self._error_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self._error_label, 10)
 
         self._button_cancel = KitButton('Отмена')
         self._button_cancel.clicked.connect(self._on_canceled)
@@ -68,9 +68,8 @@ class FastRunDialog(KitDialog):
     async def _on_finished(self):
         self._spinner.hide()
         if self._error:
-            self._status_label.show()
-            self._status_label.text = self._error
-            self._status_label.main_palette = 'Danger'
+            self._error_label.show()
+            self._error_label.text = self._error
             self._apply_theme()
         else:
             self._success_icon.show()

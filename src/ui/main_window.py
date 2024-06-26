@@ -35,7 +35,7 @@ class MainWindow(KitMainWindow):
         self.theme_manager.add_icons('assets.icons', 'custom')
         for key, item in themes.items():
             self.theme_manager.add_theme(key, item)
-        self.set_theme('dark')
+        self.set_theme(f"{self.bm.sm.get_general('theme', 'dark')}-{self.bm.sm.get_general('code_theme', 'neon')}")
 
         self._tabs = dict()
 
