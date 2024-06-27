@@ -6,6 +6,7 @@ from PyQt6.QtCore import pyqtSignal
 
 from src.backend.backend_types.build import Build
 from src.backend.builds.c import BuildCExecutable, BuildCLibrary, BuildCppExecutable, BuildCppLibrary
+from src.backend.builds.c_sharp import BuildCSharp
 from src.backend.builds.python import BuildPython
 from src.backend.builds.shell import BuildBash, BuildCommand
 from src.backend.commands import read_json
@@ -92,6 +93,8 @@ def _select(build_type: str) -> Type:
             return BuildCppExecutable
         case Build.Type.CPP_LIB:
             return BuildCppLibrary
+        case Build.Type.C_SHARP:
+            return BuildCSharp
         case Build.Type.PYTHON:
             return BuildPython
         case Build.Type.BASH:

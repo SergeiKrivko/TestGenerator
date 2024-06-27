@@ -163,7 +163,6 @@ PROGRAMS = {
     'lcov': Program('lcov', validator=_ProgramValidator(prefix='lcov: LCOV version')),
     'genhtml': Program('genhtml', validator=_ProgramValidator(prefix='genhtml: LCOV version')),
     'python': Program('python', linux='python3', validator=_ProgramValidator(prefix=['python', 'Python'])),
-    'python_coverage': Program('python_coverage', win='coverage.exe', linux='coverage',
-                               validator=_ProgramValidator(prefix='Coverage.py, version')),
+    'dotnet': Program('dotnet', validator=_ProgramValidator()),
     'bash': Program('bash', validator=_ProgramValidator(prefix='GNU bash, version')),
 }

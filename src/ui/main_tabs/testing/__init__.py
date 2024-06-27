@@ -275,6 +275,7 @@ class TestingWidget(MainTab):
                                        dialog.goto[1], dialog.goto[2])
 
     def testing_is_terminated(self, errors=''):
+        print('terminating...')
         if errors:
             dialog = CompilerErrorWindow(self, errors) # languages[self.sm.get('language', 'C')].compiler_mask
             if dialog.exec():

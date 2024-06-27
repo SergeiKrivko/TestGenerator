@@ -50,7 +50,7 @@ class TestingLooper(CustomThread):
             self.convert_test_files(test, index)
 
     def comparator(self, test: FuncTest, str1, str2):
-        comparator = FuncTest.Comparator(self._project.get_data(f'{test.type.value}_comparator', -1))
+        comparator = FuncTest.Comparator(self._project.get_data(f'{test.type.value}_comparator', 0))
         if comparator == FuncTest.Comparator.DEFAULT:
             comparator = FuncTest.Comparator(self._project.get(f'{test.type.value}_comparator', 0))
 
@@ -212,12 +212,14 @@ class TestingLooper(CustomThread):
 
     def run(self):
         if self._build is None:
+            print('fail 1')
             self.compileFailed.emit("Invalid build data!")
             return
         res, errors = self._build.run_preproc()
         if res:
             res, errors = self._build.compile()
         if not res:
+            print('fail 2')
             self.compileFailed.emit(errors)
             return
 
@@ -251,6 +253,7 @@ class TestingLooper(CustomThread):
             self.run_postproc_util(util)
         res, errors = self._build.run_postproc()
         if not res:
+            print('fail 3')
             self.compileFailed.emit(errors)
             return
 

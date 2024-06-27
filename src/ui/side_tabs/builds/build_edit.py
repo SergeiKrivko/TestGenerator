@@ -121,7 +121,7 @@ class BuildEdit(KitScrollArea):
                     CheckboxField('dynamic', False, 'Динамическая библиотека'),
                     LineField('lib_file', 'lib.a', "Файл библиотеки:"),
                     ProgramField(self.bm, PROGRAMS['gcc'], "Компилятор", checkbox=True),
-                    # TreeField('files', self.sm.project.path(), ('.c', '.h'), "Файлы:")
+                    TreeField('files', self.sm.project.path(), ('.c', '.h'), "Файлы:")
                 )
             case Build.Type.CPP_EXE:
                 self._load_struct(
@@ -132,7 +132,14 @@ class BuildEdit(KitScrollArea):
                     LineField('app_file', 'app.exe', "Исполняемый файл:"),
                     ProgramField(self.bm, PROGRAMS['g++'], "Компилятор", checkbox=True),
                     ProgramField(self.bm, PROGRAMS['gcov'], "Gcov", checkbox=True),
-                    # TreeField('files', self.sm.project.path(), ('.cpp', '.h'), "Файлы:")
+                    TreeField('files', self.sm.project.path(), ('.cpp', '.h'), "Файлы:")
+                )
+            case Build.Type.C_SHARP:
+                self._load_struct(
+                    name_edit := LineField('name', '-', "Название:"),
+                    LineField('configuration', 'Debug', 'Конфигурация'),
+                    LineField('project', '.', 'Директория проекта'),
+                    ProgramField(self.bm, PROGRAMS['dotnet'], "Компилятор", checkbox=True),
                 )
             case Build.Type.PYTHON:
                 self._load_struct(

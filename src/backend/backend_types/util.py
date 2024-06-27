@@ -2,11 +2,8 @@ import json
 import os.path
 import shutil
 
-from src.backend.commands import read_json
+from src.backend.commands import read_json, cmd_command
 from src.backend.backend_types.build import Build
-
-from src.backend.language.testing.c import *
-from src.backend.language.testing.python import *
 
 
 class Util:

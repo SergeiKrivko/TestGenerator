@@ -59,7 +59,7 @@ LANGUAGES = {
     ),
     'c#': Language(
         'c#',
-        icon='custom-text',
+        icon='custom-csharp',
         extensions=['.cs'],
     ),
     'java': Language(
@@ -126,7 +126,7 @@ LANGUAGES = {
     #         'fast_run': [('Распаковать', 'icon-zip', lambda path, *args: ('', ZipManager.extract(path)))]}
 }
 
-PROJECT_LANGUAGES = ['c', 'c++', 'python', 'masm']
+PROJECT_LANGUAGES = ['c', 'c++', 'c#', 'python', 'masm']
 
 
 def detect_language(path, default=None):

@@ -3,12 +3,8 @@ import os.path
 import shutil
 from uuid import UUID
 
-from src.backend.backend_types.program import ProgramInstance
-from src.backend.commands import read_json
-
-from src.backend.language.testing.c import *
-from src.backend.language.testing.cpp import *
-from src.backend.language.testing.python import *
+from src.backend.backend_types.program import ProgramInstance, PROGRAMS
+from src.backend.commands import read_json, cmd_command
 
 
 class Build:
@@ -17,6 +13,7 @@ class Build:
         C_LIB = 'C-lib'
         CPP_EXE = 'C++'
         CPP_LIB = 'C++lib'
+        C_SHARP = 'C#'
         PYTHON = 'python'
         BASH = 'bash'
         COMMAND = 'command'

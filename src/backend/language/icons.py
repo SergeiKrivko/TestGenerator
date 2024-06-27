@@ -2,6 +2,7 @@ FILE_ICONS = {
     'bin': 'custom-bin',
     'c': 'custom-c',
     'cpp': 'custom-cpp',
+    'cs': 'custom-csharp',
     'docx': 'custom-docx',
     'h': 'custom-header',
     'html': 'custom-html',
